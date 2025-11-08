@@ -1,0 +1,89 @@
+    {% extends "base.html" %}
+
+    {% block title %}Đăng nhập{% endblock %}
+
+    {% block login_content %}
+    <div class="container-fluid vh-100">
+        <div class="row h-100">
+            <!-- Left Side - Branding -->
+            <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center position-relative p-0"
+                 style="background: url('{{ url_for('static', filename='images/login-bg.webp') }}') center center/cover no-repeat;">
+
+                <!-- Lớp phủ gradient xám nhẹ -->
+                <div class="position-absolute top-0 start-0 w-100 h-100"
+                     style="background: linear-gradient(135deg, rgba(0,0,0,0.25), rgba(80,80,80,0.4));"></div>
+
+                <!-- Nội dung hiển thị (nổi lên trên lớp phủ) -->
+                <div class="text-center text-white position-relative z-1 bg-dark bg-opacity-50 p-5 rounded-4">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                         alt="BRICON Logo"
+                         style="max-width: 320px; height: auto;">
+                    <h1 class="display-4 fw-bold mt-4">Bricon Bussiness App</h1>
+                    <p class="lead">Hệ thống quản lý công việc Bricon</p>
+                </div>
+            </div>
+
+
+
+            <!-- Right Side - Login Form -->
+            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+                <div class="w-100" style="max-width: 400px; padding: 20px;">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="card shadow-lg border-0">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="text-center mb-4">
+                                <i class="bi bi-shield-lock-fill text-primary" style="font-size: 3rem;"></i>
+                                <h3 class="mt-3 fw-bold">Đăng nhập</h3>
+                                <p class="text-muted">Nhập thông tin của bạn để tiếp tục</p>
+                            </div>
+
+                            <form method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-1"></i> Email
+                                    </label>
+                                    <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="your@email.com" required autofocus>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label fw-semibold">
+                                        <i class="bi bi-key me-1"></i> Mật khẩu
+                                    </label>
+                                    <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="••••••••" required>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i> Đăng nhập
+                                </button>
+                            </form>
+
+                            <div class="text-center mt-4">
+                                <small class="text-muted">
+                                    Make by Vũ Văn Hoàng - © 2025
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}

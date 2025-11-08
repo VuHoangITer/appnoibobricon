@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo bảng lương{% endblock %}
+{% block page_title %}Tạo Bảng Lương{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Tạo bảng lương mới</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="salaryForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <!-- Thông tin nhân viên -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="employee_name" class="form-label">Tên nhân viên *</label>
+                            <input type="text" class="form-control" id="employee_name" name="employee_name"
+                                   placeholder="Nhập họ và tên nhân viên" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Tháng/Năm *</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <select class="form-select" id="month_select" name="month_select" required>
+                                        <option value="">Chọn tháng</option>
+                                        <option value="1">Tháng 1</option>
+                                        <option value="2">Tháng 2</option>
+                                        <option value="3">Tháng 3</option>
+                                        <option value="4">Tháng 4</option>
+                                        <option value="5">Tháng 5</option>
+                                        <option value="6">Tháng 6</option>
+                                        <option value="7">Tháng 7</option>
+                                        <option value="8">Tháng 8</option>
+                                        <option value="9">Tháng 9</option>
+                                        <option value="10">Tháng 10</option>
+                                        <option value="11">Tháng 11</option>
+                                        <option value="12">Tháng 12</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <select class="form-select" id="year_select" name="year_select" required>
+                                        <option value="">Chọn năm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="month" name="month">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="work_days_in_month" class="form-label"> Quy định số Công/ tháng của tháng *</label>
+                            <input type="number" class="form-control calc-input" id="work_days_in_month"
+                                   name="work_days_in_month" step="0.5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="actual_work_days" class="form-label">Số công của tháng *</label>
+                            <input type="number" class="form-control calc-input" id="actual_work_days"
+                                   name="actual_work_days" step="0.5" required>
+                            <small class="text-muted">Số ngày thực tế đi làm</small>
+                        </div>
+                    </div>
+
+                    <!-- Lương cơ bản và trách nhiệm -->
+                    <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương cơ bản</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="basic_salary" class="form-label">Lương cơ bản/tháng (₫) *</label>
+                            <input type="number" class="form-control calc-input" id="basic_salary"
+                                   name="basic_salary" step="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="responsibility_salary" class="form-label">Lương trách nhiệm/tháng (₫)</label>
+                            <input type="number" class="form-control calc-input" id="responsibility_salary"
+                                   name="responsibility_salary" step="1" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Lương năng lực -->
+                    <h5 class="mb-3"><i class="bi bi-award"></i> Lương năng lực</h5>
+                    <div id="capacity-container" class="mb-4">
+                        <div class="capacity-item row mb-2">
+                            <div class="col-md-7">
+                                <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control calc-input capacity-amount"
+                                       name="capacity_amount[]" placeholder="Số tiền" step="1" value="0">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-capacity">
+                        <i class="bi bi-plus-circle"></i> Thêm lương năng lực
+                    </button>
+
+                    <!-- Các khoản khấu trừ -->
+                    <h5 class="mb-3"><i class="bi bi-dash-circle"></i> Các khoản khấu trừ</h5>
+                    <div id="deduction-container" class="mb-4">
+                        <div class="deduction-item row mb-2">
+                            <div class="col-md-7">
+                                <input type="text" class="form-control" name="deduction_content[]" placeholder="Nội dung">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control calc-input deduction-amount"
+                                       name="deduction_amount[]" placeholder="Số tiền" step="1" value="0">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm remove-deduction">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-deduction">
+                        <i class="bi bi-plus-circle"></i> Thêm khoản khấu trừ
+                    </button>
+
+                    <hr>
+
+                    <!-- Kết quả tính toán -->
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-calculator"></i> Kết quả tính toán</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>Lương cơ bản/ngày:</strong>
+                                    <span id="display_basic_per_day" class="float-end">0 ₫</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Lương trách nhiệm/ngày:</strong>
+                                    <span id="display_resp_per_day" class="float-end">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <strong class="text-primary">Lương chính:</strong>
+                                    <span id="display_main_salary" class="float-end text-primary fw-bold">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <strong>Tổng lương năng lực:</strong>
+                                    <span id="display_capacity_bonus" class="float-end">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <strong class="text-info" style="font-size: 1.1rem;">Tổng thu nhập:</strong>
+                                    <span id="display_total_income" class="float-end text-info fw-bold" style="font-size: 1.1rem;">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <strong class="text-danger">Tổng khấu trừ:</strong>
+                                    <span id="display_total_deduction" class="float-end text-danger fw-bold">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <hr style="border-width: 2px;">
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <strong class="text-success" style="font-size: 1.3rem;">
+                                        <i class="bi bi-cash-coin"></i> Lương thực lĩnh:
+                                    </strong>
+                                    <span id="display_net_salary" class="float-end text-success fw-bold" style="font-size: 1.3rem;">0 ₫</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Tạo bảng lương
+                        </button>
+                        <a href="{{ url_for('salaries.list_salaries') }}" class="btn btn-secondary btn-lg">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Populate year dropdown
+const yearSelect = document.getElementById('year_select');
+const currentYear = new Date().getFullYear();
+for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = 'Năm ' + year;
+    if (year === currentYear) {
+        option.selected = true;
+    }
+    yearSelect.appendChild(option);
+}
+
+// Set current month as default
+const currentMonth = new Date().getMonth() + 1;
+document.getElementById('month_select').value = currentMonth;
+
+// Update hidden month field when month or year changes
+function updateMonthField() {
+    const month = document.getElementById('month_select').value;
+    const year = document.getElementById('year_select').value;
+    if (month && year) {
+        const monthStr = month.padStart(2, '0');
+        document.getElementById('month').value = `${monthStr}-${year}`;
+    }
+}
+
+document.getElementById('month_select').addEventListener('change', updateMonthField);
+document.getElementById('year_select').addEventListener('change', updateMonthField);
+
+// Initialize on load
+updateMonthField();
+
+// Add capacity bonus row
+document.getElementById('add-capacity').addEventListener('click', function() {
+    const container = document.getElementById('capacity-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'capacity-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input capacity-amount"
+                   name="capacity_amount[]" placeholder="Số tiền" step="1" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+    attachCalculateEvent();
+});
+
+// Remove capacity bonus row
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-capacity')) {
+        const item = e.target.closest('.capacity-item');
+        if (document.querySelectorAll('.capacity-item').length > 1) {
+            item.remove();
+            calculate();
+        }
+    }
+});
+
+// Add deduction row
+document.getElementById('add-deduction').addEventListener('click', function() {
+    const container = document.getElementById('deduction-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'deduction-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="deduction_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input deduction-amount"
+                   name="deduction_amount[]" placeholder="Số tiền" step="1" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-deduction">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+    attachCalculateEvent();
+});
+
+// Remove deduction row
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-deduction')) {
+        const item = e.target.closest('.deduction-item');
+        if (document.querySelectorAll('.deduction-item').length > 1) {
+            item.remove();
+            calculate();
+        }
+    }
+});
+
+// Calculate function
+function calculate() {
+    const workDays = parseFloat(document.getElementById('work_days_in_month').value) || 0;
+    const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
+    const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
+    const respSalary = parseFloat(document.getElementById('responsibility_salary').value) || 0;
+    
+    // Lương cơ bản/ngày
+    const basicPerDay = workDays > 0 ? basicSalary / workDays : 0;
+    document.getElementById('display_basic_per_day').textContent = formatMoney(basicPerDay);
+    
+    // Lương trách nhiệm/ngày
+    const respPerDay = workDays > 0 ? respSalary / workDays : 0;
+    document.getElementById('display_resp_per_day').textContent = formatMoney(respPerDay);
+    
+    // Lương chính
+    const mainSalary = (basicPerDay + respPerDay) * actualDays;
+    document.getElementById('display_main_salary').textContent = formatMoney(mainSalary);
+    
+    // Tổng lương năng lực
+    let totalCapacity = 0;
+    document.querySelectorAll('.capacity-amount').forEach(input => {
+        totalCapacity += parseFloat(input.value) || 0;
+    });
+    document.getElementById('display_capacity_bonus').textContent = formatMoney(totalCapacity);
+    
+    // Tổng thu nhập
+    const totalIncome = mainSalary + totalCapacity;
+    document.getElementById('display_total_income').textContent = formatMoney(totalIncome);
+    
+    // Tổng khấu trừ
+    let totalDeduction = 0;
+    document.querySelectorAll('.deduction-amount').forEach(input => {
+        totalDeduction += parseFloat(input.value) || 0;
+    });
+    document.getElementById('display_total_deduction').textContent = formatMoney(totalDeduction);
+    
+    // Lương thực lĩnh
+    const netSalary = totalIncome - totalDeduction;
+    document.getElementById('display_net_salary').textContent = formatMoney(netSalary);
+}
+
+function formatMoney(amount) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
+}
+
+function attachCalculateEvent() {
+    document.querySelectorAll('.calc-input').forEach(input => {
+        input.removeEventListener('input', calculate);
+        input.addEventListener('input', calculate);
+    });
+}
+
+// Initial setup
+attachCalculateEvent();
+calculate();
+</script>
+{% endblock %}

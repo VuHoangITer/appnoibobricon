@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết Task{% endblock %}
+{% block page_title %}Chi tiết Công việc{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    <i class="bi bi-card-text"></i> {{ task.title }}
+                    {% if task | is_overdue %}
+                    <span class="badge bg-danger ms-2">QUÁ HẠN</span>
+                    {% endif %}
+                    {% if task.status == 'DONE' %}
+                    <span class="badge bg-success ms-2">ĐÃ HOÀN THÀNH</span>
+                    {% endif %}
+                </h4>
+                <div>
+                    <span class="badge bg-{{ task.status | status_badge }}">
+                        {{ task.status | status_vn }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p><strong>Mô tả:</strong></p>
+                <p>{{ task.description or 'Không có mô tả' }}</p>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Người tạo:</strong> {{ task.creator.full_name }}</p>
+                        <p><strong>Ngày tạo:</strong> {{ task.created_at | vn_datetime }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Hạn hoàn thành:</strong>
+                            {% if task.due_date %}
+                            <span class="badge bg-{{ 'danger' if (task | is_overdue) else 'secondary' }}">
+                                {{ task.due_date | vn_datetime('%H:%M - %d/%m/%Y') }}
+                            </span>
+                            {% if task | is_overdue %}
+                            <span class="text-danger ms-2"><i class="bi bi-exclamation-triangle-fill"></i> Quá hạn</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">Chưa có</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Cập nhật lần cuối:</strong> {{ task.updated_at | vn_datetime }}</p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Accept/Reject buttons for pending group assignments -->
+                {% if user_assignment and not user_assignment.accepted and user_assignment.assigned_group %}
+                <div class="alert alert-info">
+                    <h5><i class="bi bi-info-circle"></i> Task này được gán cho nhóm {{ user_assignment.assigned_group }}</h5>
+                    <p>Bạn cần chấp nhận task này để nó xuất hiện trong danh sách task của bạn.</p>
+                    <form method="POST" action="{{ url_for('tasks.accept_task', task_id=task.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Chấp nhận task
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('tasks.reject_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn từ chối task này?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Từ chối
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- KIỂM TRA: Task quá hạn VÀ user là HR/Accountant -->
+                {% set is_overdue_locked = (task | is_overdue) and current_user.role not in ['director', 'manager'] %}
+
+                <!-- KIỂM TRA: Task đã DONE VÀ user là HR/Accountant -->
+                {% set is_done_locked = (task.status == 'DONE') and current_user.role not in ['director', 'manager'] %}
+
+                <!-- Hiển thị cảnh báo nếu task bị lock do QUÁ HẠN -->
+                {% if is_overdue_locked %}
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-lock-fill"></i> Nhiệm vụ đã bị khóa</h5>
+                    <p class="mb-0">Task này đã quá hạn. Chỉ <strong>Director</strong> hoặc <strong>Manager</strong> mới có thể cập nhật trạng thái.</p>
+                </div>
+                {% endif %}
+
+                <!-- Hiển thị cảnh báo nếu task bị lock do ĐÃ HOÀN THÀNH -->
+                {% if is_done_locked %}
+                <div class="alert alert-success border-success">
+                    <h5><i class="bi bi-lock-fill"></i> Nhiệm vụ đã hoàn thành và bị khóa</h5>
+                    <p class="mb-0">Task này đã được đánh dấu hoàn thành. Chỉ <strong>Giám đốc</strong> hoặc <strong>Trưởng phòng</strong> mới có thể thay đổi trạng thái.</p>
+                </div>
+                {% endif %}
+
+                <!-- Update status -->
+                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+                <div class="mb-3">
+                    <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="row g-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="col-auto">
+                            <label class="form-label">Cập nhật trạng thái:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select class="form-select" name="status" {% if is_overdue_locked or is_done_locked %}disabled{% endif %}>
+                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chờ xác nhận</option>
+                                <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                                <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                                <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary" {% if is_overdue_locked or is_done_locked %}disabled{% endif %}>
+                                {% if is_overdue_locked or is_done_locked %}
+                                <i class="bi bi-lock-fill"></i> Đã khóa
+                                {% else %}
+                                <i class="bi bi-arrow-repeat"></i> Cập nhật
+                                {% endif %}
+                            </button>
+                        </div>
+                        {% if is_overdue_locked or is_done_locked %}
+                        <div class="col-auto">
+                            <small class="text-danger">
+                                <i class="bi bi-info-circle"></i> Liên hệ Giám đốc/Trưởng phòng để cập nhật
+                            </small>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Delete button -->
+                {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+                <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}" onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Xóa
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-people"></i> Người được giao nhiệm vụ</h5>
+            </div>
+            <div class="card-body">
+                {% if assignments %}
+                <ul class="list-group">
+                    {% for assignment in assignments %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ assignment.user.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ assignment.user.role | role_vn }}</small>
+                                {% if assignment.assigned_group %}
+                                <br>
+                                <small><span class="badge bg-secondary">Nhóm: {{ assignment.assigned_group }}</span></small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if assignment.accepted %}
+                                <span class="badge bg-success">Đã chấp nhận</span>
+                                {% else %}
+                                <span class="badge bg-warning">Chờ chấp nhận</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if assignment.accepted and assignment.accepted_at %}
+                        <small class="text-muted">Chấp nhận lúc: {{ assignment.accepted_at | vn_datetime }}</small>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">Chưa có người được gán.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Thông tin bổ sung về lock status -->
+        {% if task | is_overdue or task.status == 'DONE' %}
+        <div class="card mt-3 border-{% if current_user.role in ['director', 'manager'] %}warning{% else %}{% if task.status == 'DONE' %}success{% else %}danger{% endif %}{% endif %}">
+            <div class="card-header bg-{% if current_user.role in ['director', 'manager'] %}warning{% else %}{% if task.status == 'DONE' %}success{% else %}danger{% endif %}{% endif %} text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-{% if current_user.role in ['director', 'manager'] %}unlock{% else %}lock{% endif %}-fill"></i>
+                    Trạng thái nhiệm vụ
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if current_user.role in ['director', 'manager'] %}
+                <p class="text-warning mb-0">
+                    <i class="bi bi-shield-check"></i> Bạn có quyền cập nhật task này
+                    {% if task.status == 'DONE' %}(đã hoàn thành){% endif %}
+                    {% if task | is_overdue %}(quá hạn){% endif %}.
+                </p>
+                {% else %}
+                    {% if task.status == 'DONE' %}
+                    <p class="text-success mb-2">
+                        <i class="bi bi-check-circle-fill"></i> Nhiệm vụ này đã hoàn thành và bị khóa.
+                    </p>
+                    <small class="text-muted">
+                        Vui lòng liên hệ Giám đốc hoặc Trưởng phòng nếu cần thay đổi trạng thái nhiệm vụ này.
+                    </small>
+                    {% elif task | is_overdue %}
+                    <p class="text-danger mb-2">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Nhiệm vụ này đã quá hạn và bị khóa.
+                    </p>
+                    <small class="text-muted">
+                        Vui lòng liên hệ Giám đốc hoặc Trưởng phòng để cập nhật trạng thái nhiệm vụ này.
+                    </small>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại danh sách
+    </a>
+</div>
+{% endblock %}

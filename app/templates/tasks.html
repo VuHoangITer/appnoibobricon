@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách Tasks{% endblock %}
+{% block page_title %}Quản lý Công việc{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-list-task"></i></h2>
+    <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Tạo nhiệm vụ
+    </a>
+</div>
+
+<!-- Advanced Filter -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Bộ lọc</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-flag"></i> Trạng thái:</label>
+                <select class="form-select" name="status">
+                    <option value="">Tất cả</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
+                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                    <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                    <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                <small class="text-muted">Lọc theo hạn hoàn thành</small>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                <small class="text-muted">Lọc theo hạn hoàn thành</small>
+            </div>
+
+            {% if current_user.role in ['director', 'manager'] %}
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-person"></i> Người được gán:</label>
+                <select class="form-select" name="assigned_user">
+                    <option value="">-- Tất cả --</option>
+                    {% for user in all_users %}
+                    <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
+                        {{ user.full_name }} ({{ user.role | role_vn }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel-fill"></i> Áp dụng bộ lọc
+                </button>
+                <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                </a>
+
+                <!-- Show filter info -->
+                {% if status_filter or date_from or date_to or assigned_user %}
+                <span class="ms-3 text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Đang lọc:
+                    {% if status_filter %}
+                        <span class="badge bg-secondary">{{ status_filter | status_vn }}</span>
+                    {% endif %}
+                    {% if date_from %}
+                        <span class="badge bg-secondary">Từ: {{ date_from }}</span>
+                    {% endif %}
+                    {% if date_to %}
+                        <span class="badge bg-secondary">Đến: {{ date_to }}</span>
+                    {% endif %}
+                    {% if assigned_user and all_users %}
+                        {% for user in all_users %}
+                            {% if user.id == assigned_user|int %}
+                                <span class="badge bg-secondary">Người: {{ user.full_name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tasks table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Danh sách nhiệm vụ
+            <span class="badge bg-primary ms-2">{{ pagination.total }} nhiệm vụ</span>
+            {% if pagination.pages > 1 %}
+            <span class="badge bg-secondary ms-1">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+            {% endif %}
+        </h5>
+
+        {% if current_user.role in ['director', 'manager'] and tasks %}
+        <div>
+            <button type="button" class="btn btn-danger" id="bulkDeleteBtn" disabled onclick="confirmBulkDelete()">
+                <i class="bi bi-trash"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+        <form id="bulkDeleteForm" method="POST" action="{{ url_for('tasks.bulk_delete_tasks') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% if current_user.role in ['director', 'manager'] %}
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            {% endif %}
+                            <th>Tiêu đề</th>
+                            <th>Người tạo</th>
+                            <th>Người được gán</th>
+                            <th>Hạn</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr {% if task | is_overdue %}class="table-danger"{% endif %}>
+                            {% if current_user.role in ['director', 'manager'] %}
+                            <td>
+                                <input type="checkbox" class="form-check-input task-checkbox" name="task_ids[]" value="{{ task.id }}">
+                            </td>
+                            {% endif %}
+                            <td>
+                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
+                                    {{ task.title }}
+                                </a>
+                                {% if task | is_overdue %}
+                                <span class="badge bg-danger ms-2">QUÁ HẠN</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.creator.full_name }}</td>
+                            <td>
+                                <small>
+                                    {% if task.assignments.count() > 0 %}
+                                        {% set assigned_names = [] %}
+                                        {% for assignment in task.assignments %}
+                                            {% if assignment.accepted %}
+                                                {% set _ = assigned_names.append(assignment.user.full_name) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if assigned_names %}
+                                            {{ assigned_names|join(', ') }}
+                                        {% else %}
+                                            <span class="text-warning">Chờ chấp nhận</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Chưa gán</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if task.due_date %}
+                                <span class="badge bg-{{ 'danger' if (task | is_overdue) else 'secondary' }}">
+                                    {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">Chưa có</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ task.status | status_badge }}">
+                                    {{ task.status | status_vn }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ task.created_at | vn_date }}</small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Task pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- Previous button -->
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    {% if pagination.has_prev %}
+                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                    {% else %}
+                    <span class="page-link"><i class="bi bi-chevron-left"></i> Trước</span>
+                    {% endif %}
+                </li>
+
+                <!-- Page numbers -->
+                {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next button -->
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    {% if pagination.has_next %}
+                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="page-link">Sau <i class="bi bi-chevron-right"></i></span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Page info -->
+        <div class="text-center text-muted">
+            <small>
+                Hiển thị {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
+                -
+                {{ min(pagination.page * pagination.per_page, pagination.total) }}
+                /
+                {{ pagination.total }} nhiệm vụ
+            </small>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Không tìm thấy nhiệm vụ nào phù hợp với bộ lọc.</p>
+            <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Xóa bộ lọc
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if current_user.role in ['director', 'manager'] %}
+<script>
+// Select all checkbox
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBulkDeleteButton();
+});
+
+// Individual checkbox change
+document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        updateBulkDeleteButton();
+
+        // Update "select all" checkbox
+        const allCheckboxes = document.querySelectorAll('.task-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('selectAll');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+        }
+    });
+});
+
+// Update bulk delete button state
+function updateBulkDeleteButton() {
+    const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectedCount = document.getElementById('selectedCount');
+
+    if (bulkDeleteBtn && selectedCount) {
+        selectedCount.textContent = checkedBoxes.length;
+        bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+    }
+}
+
+// Confirm bulk delete
+function confirmBulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
+    const count = checkedBoxes.length;
+
+    if (count === 0) {
+        alert('Vui lòng chọn ít nhất một nhiệm vụ để xóa.');
+        return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn xóa ${count} nhiệm vụ đã chọn?\n\nHành động này không thể hoàn tác!`)) {
+        document.getElementById('bulkDeleteForm').submit();
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Xem trước: {{ file.original_filename }}{% endblock %}
+{% block page_title %}Xem trước File{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 600px;
+    }
+    
+    .file-header {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .preview-content {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .preview-content iframe {
+        width: 100%;
+        height: 800px;
+        border: none;
+        border-radius: 4px;
+    }
+    
+    .preview-content img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        border-radius: 4px;
+    }
+    
+    .office-preview {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .office-preview i {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+
+    .office-preview .bi-file-word {
+        color: #2b579a;
+    }
+
+    .office-preview .bi-file-excel {
+        color: #217346;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <!-- File Header -->
+    <div class="file-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4>
+                    <i class="bi bi-file-earmark-text"></i>
+                    {{ file.original_filename }}
+                </h4>
+                <div class="text-muted">
+                    <small>
+                        <i class="bi bi-person"></i> Người upload: {{ file.uploader.full_name }} |
+                        <i class="bi bi-calendar"></i> {{ file.uploaded_at | vn_datetime }} |
+                        <i class="bi bi-hdd"></i> {{ (file.file_size / 1024 / 1024) | round(2) }} MB
+                    </small>
+                </div>
+                {% if file.description %}
+                <p class="mt-2 mb-0">
+                    <strong>Mô tả:</strong> {{ file.description }}
+                </p>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Tải về
+                </a>
+                <a href="{{ url_for('files.list_files') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Content -->
+    <div class="preview-content">
+        {% if file_type == 'pdf' %}
+            <!-- PDF Preview -->
+            <iframe src="{{ url_for('files.view_file', file_id=file.id) }}" type="application/pdf"></iframe>
+
+        {% elif file_type == 'image' %}
+            <!-- Image Preview -->
+            <img src="{{ url_for('files.view_file', file_id=file.id) }}" alt="{{ file.original_filename }}">
+
+        {% elif file_type == 'word' %}
+            <!-- Word Document Preview with Microsoft Office Viewer -->
+            <div class="office-preview">
+                <i class="bi bi-file-word"></i>
+                <h4>File Microsoft Word</h4>
+                <p class="text-muted">{{ file.original_filename }}</p>
+                <p>Xem trực tuyến bằng Microsoft Office:</p>
+                <iframe
+                    src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root }}files/view/{{ file.id }}"
+                    width="100%"
+                    height="600px"
+                    frameborder="0">
+                </iframe>
+                <div class="mt-3">
+                    <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-download"></i> Tải về để xem đầy đủ
+                    </a>
+                </div>
+            </div>
+
+        {% elif file_type == 'excel' %}
+            <!-- Excel Preview with Microsoft Office Viewer -->
+            <div class="office-preview">
+                <i class="bi bi-file-excel"></i>
+                <h4>File Microsoft Excel</h4>
+                <p class="text-muted">{{ file.original_filename }}</p>
+                <p>Xem trực tuyến bằng Microsoft Office:</p>
+                <iframe
+                    src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root }}files/view/{{ file.id }}"
+                    width="100%"
+                    height="600px"
+                    frameborder="0">
+                </iframe>
+                <div class="mt-3">
+                    <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-download"></i> Tải về để xem đầy đủ
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Unknown file type -->
+            <div class="office-preview">
+                <i class="bi bi-file-earmark" style="color: #6c757d;"></i>
+                <h4>Không thể xem trước</h4>
+                <p class="text-muted">{{ file.original_filename }}</p>
+                <p>Loại file này không hỗ trợ xem trước trực tuyến.</p>
+                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-download"></i> Tải về
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

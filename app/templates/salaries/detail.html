@@ -1,0 +1,684 @@
+{% extends "base.html" %} {% block title %}Chi tiết bảng lương{% endblock %} {%
+block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
+<style>
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    nav,
+    .sidebar,
+    .top-navbar,
+    .page-title {
+      display: none !important;
+    }
+    .main-wrapper {
+      margin-left: 0 !important;
+    }
+    body {
+      margin: 0;
+      padding: 8px 12px;
+      font-family: Arial, sans-serif;
+    }
+
+    .header-banner {
+      margin-bottom: 6px;
+    }
+    .header-banner img {
+      width: 100%;
+      height: auto;
+      max-height: 70px;
+      object-fit: contain;
+    }
+
+    .print-title {
+      display: block !important;
+      background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+      color: white;
+      text-align: center;
+      padding: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .section-title {
+      background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
+      color: white;
+      padding: 5px 8px;
+      font-weight: bold;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+
+    table {
+      page-break-inside: avoid;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 4px 8px;
+      border: 1px solid #999;
+      font-size: 10px;
+    }
+
+    .info-table .label-cell {
+      background: linear-gradient(to right, #e3f2fd 0%, #bbdefb 100%);
+      font-weight: 600;
+      width: 55%;
+      color: #1565c0;
+    }
+
+    .info-table .value-cell {
+      background-color: white;
+      font-weight: 500;
+    }
+
+    .detail-table th {
+      background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+      color: white;
+      padding: 5px 4px;
+      border: 1px solid #1976d2;
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .detail-table td {
+      padding: 4px 6px;
+      border: 1px solid #bbb;
+      font-size: 10px;
+    }
+
+    .section-header {
+      background: linear-gradient(to right, #fff9c4 0%, #fff59d 100%);
+      font-weight: normal;
+      color: #ee0d0dff;
+      border: 1px solid #ee0d0dff !important;
+    }
+
+    .subsection-header {
+      background: linear-gradient(to right, #e1f5fe 0%, #b3e5fc 100%);
+      font-weight: normal;
+      color: #0277bd;
+    }
+
+    .item-row .label-cell {
+      background: linear-gradient(to right, #fafafa 0%, #f5f5f5 100%);
+      color: #424242;
+    }
+
+    .item-row .value-cell {
+      background-color: white;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .signature-section {
+      margin-top: 12px;
+      page-break-inside: avoid;
+    }
+
+    .signature-box {
+      text-align: center;
+      padding: 4px;
+    }
+
+    .signature-title {
+      font-weight: bold;
+      font-size: 10px;
+      color: #1976d2;
+      margin-bottom: 2px;
+    }
+
+    .signature-note {
+      font-size: 8px;
+      font-style: italic;
+      color: #666;
+      margin-bottom: 3px;
+    }
+
+    .signature-name {
+      font-weight: bold;
+      font-size: 10px;
+      margin-top: 25px;
+      color: #333;
+    }
+
+    .amount-red {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
+    .note-section {
+      margin-top: 8px;
+      padding: 5px 6px;
+      background: linear-gradient(to right, #fffde7 0%, #fff9c4 100%);
+      border-radius: 2px;
+      font-size: 8px;
+      line-height: 1.3;
+      color: #5d4037;
+    }
+
+    .footer-info {
+      margin-top: 8px;
+      text-align: right;
+      font-size: 8px;
+      color: #666;
+      font-style: italic;
+    }
+
+    /* Tối ưu để vừa 1 trang A4 */
+    @page {
+      margin: 10mm;
+      size: A4;
+    }
+
+    /* Giảm khoảng cách giữa các section */
+    .section-title:not(:first-child) {
+      margin-top: 6px;
+    }
+
+    /* Đảm bảo phần chữ ký không bị tách */
+    .signature-section,
+    .note-section,
+    .footer-info {
+      page-break-inside: avoid;
+    }
+
+    /* Giữ phần tổng kết với chữ ký */
+    .total-row {
+      page-break-after: avoid;
+    }
+  }
+
+  .no-print {
+  }
+
+  .print-title {
+    display: none;
+  }
+
+  .header-banner {
+    display: none;
+  }
+
+  @media print {
+    .header-banner {
+      display: block;
+    }
+  }
+   @media print {
+  .highlight-yellow td {
+    background-color: #fff8b3 !important;
+    color: #000 !important;
+    font-weight: bold;
+  }
+}
+
+</style>
+
+<!-- Header Banner (only visible when printing) -->
+<div class="header-banner">
+  <img
+    src="{{ url_for('static', filename='images/thanhtoanluong.png') }}"
+    alt="Company Banner"
+  />
+</div>
+
+<!-- Print Title (only visible when printing) -->
+<div class="print-title">Phiếu Lương Nhân Viên {{ salary.employee_name }}</div>
+
+<div class="row no-print">
+  <div class="col-md-10 offset-md-1">
+    <!-- Header -->
+    <div class="card mb-3">
+      <div
+        class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+      >
+        <h4 class="mb-0">
+          <i class="bi bi-file-earmark-text"></i>
+          Bảng lương tháng {{ salary.month }}
+        </h4>
+        <div>
+          <button onclick="window.print()" class="btn btn-info btn-sm me-2">
+            <i class="bi bi-printer"></i> In phiếu lương
+          </button>
+          <a
+            href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
+            class="btn btn-light btn-sm"
+          >
+            <i class="bi bi-pencil"></i> Chỉnh sửa
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              <strong><i class="bi bi-person-badge"></i> Nhân viên:</strong> {{
+              salary.employee_name }}
+            </p>
+            <p>
+              <strong><i class="bi bi-calendar"></i> Tháng:</strong> {{
+              salary.month }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p>
+              <strong
+                ><i class="bi bi-calendar-check"></i> Số ngày chấm công:</strong
+              >
+              {{ salary.work_days_in_month }} ngày
+            </p>
+            <p>
+              <strong
+                ><i class="bi bi-calendar2-check"></i> Số công thực tế:</strong
+              >
+              {{ salary.actual_work_days }} ngày
+            </p>
+            <p>
+              <strong><i class="bi bi-person-badge"></i> Người tạo:</strong> {{
+              salary.creator.full_name }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chi tiết tính lương -->
+    <div class="card mb-3">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+          <i class="bi bi-calculator"></i> Chi tiết tính lương
+        </h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr>
+            <td width="60%"><strong>Lương cơ bản/tháng:</strong></td>
+            <td class="text-end">
+              {{ "{:,.0f}".format(salary.basic_salary) }} ₫
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Lương trách nhiệm/tháng:</strong></td>
+            <td class="text-end">
+              {{ "{:,.0f}".format(salary.responsibility_salary) }} ₫
+            </td>
+          </tr>
+          <tr class="table-light">
+            <td>Lương cơ bản/ngày:</td>
+            <td class="text-end">
+              {{ "{:,.0f}".format(salary.basic_salary_per_day) }} ₫
+            </td>
+          </tr>
+          <tr class="table-light">
+            <td>Lương trách nhiệm/ngày:</td>
+            <td class="text-end">
+              {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }} ₫
+            </td>
+          </tr>
+          <tr class="table-primary">
+            <td>
+              <strong>Lương chính ({{ salary.actual_work_days }} ngày):</strong>
+            </td>
+            <td class="text-end">
+              <strong>{{ "{:,.0f}".format(salary.main_salary) }} ₫</strong>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Lương năng lực -->
+    {% set capacity_bonuses = salary.get_capacity_bonuses() %} {% if
+    capacity_bonuses %}
+    <div class="card mb-3">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-award"></i> Lương năng lực</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          {% for bonus in capacity_bonuses %}
+          <tr>
+            <td width="60%">{{ bonus.content }}</td>
+            <td class="text-end">{{ "{:,.0f}".format(bonus.amount) }} ₫</td>
+          </tr>
+          {% endfor %}
+          <tr class="table-success">
+            <td><strong>Tổng lương năng lực:</strong></td>
+            <td class="text-end">
+              <strong
+                >{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</strong
+              >
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Các khoản khấu trừ -->
+    {% set deductions = salary.get_deductions() %} {% if deductions %}
+    <div class="card mb-3">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">Các khoản khấu trừ</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          {% for deduction in deductions %}
+          <tr>
+            <td width="60%">{{ deduction.content }}</td>
+            <td class="text-end text-danger">
+              -{{ "{:,.0f}".format(deduction.amount) }} ₫
+            </td>
+          </tr>
+          {% endfor %}
+          <tr class="table-warning">
+            <td><strong>Tổng khấu trừ:</strong></td>
+            <td class="text-end text-danger">
+              <strong>-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</strong>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Kết quả cuối cùng -->
+    <div class="card mb-3 border-success" style="border-width: 3px">
+      <div class="card-body bg-light">
+        <table class="table table-borderless mb-0">
+          <tr>
+            <td width="60%">
+              <h5><i class="bi bi-cash-stack"></i> Tổng thu nhập:</h5>
+            </td>
+            <td class="text-end">
+              <h5 class="text-info">
+                {{ "{:,.0f}".format(salary.total_income) }} ₫
+              </h5>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h5><i class="bi bi-dash-circle-fill"></i> Tổng khấu trừ:</h5>
+            </td>
+            <td class="text-end">
+              <h5 class="text-danger">
+                -{{ "{:,.0f}".format(salary.total_deduction) }} ₫
+              </h5>
+            </td>
+          </tr>
+          <tr style="border-top: 3px solid #198754">
+            <td>
+              <h4 class="text-success">
+                <i class="bi bi-cash-coin"></i>
+                <strong>LƯƠNG THỰC LĨNH:</strong>
+              </h4>
+            </td>
+            <td class="text-end">
+              <h3 class="text-success mb-0">
+                <strong>{{ "{:,.0f}".format(salary.net_salary) }} ₫</strong>
+              </h3>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 mb-4">
+      <a
+        href="{{ url_for('salaries.list_salaries') }}"
+        class="btn btn-secondary"
+      >
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
+      <a
+        href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
+        class="btn btn-primary"
+      >
+        <i class="bi bi-pencil"></i> Chỉnh sửa
+      </a>
+      <form
+        method="POST"
+        action="{{ url_for('salaries.delete_salary', salary_id=salary.id) }}"
+        style="display: inline"
+        onsubmit="return confirm('Bạn có chắc muốn xóa bảng lương này?');"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash"></i> Xóa
+        </button>
+      </form>
+      <button onclick="window.print()" class="btn btn-info ms-auto">
+        <i class="bi bi-printer"></i> In bảng lương
+      </button>
+    </div>
+
+    <!-- Metadata -->
+    <div class="card">
+      <div class="card-body">
+        <small class="text-muted">
+          <i class="bi bi-clock"></i> Tạo lúc: {{
+          salary.created_at.strftime('%d/%m/%Y %H:%M') }} | Cập nhật: {{
+          salary.updated_at.strftime('%d/%m/%Y %H:%M') }}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Layout -->
+<div class="d-none" id="print-content">
+  <!-- A. THÔNG TIN NHÂN VIÊN -->
+  <div class="section-title">A. THÔNG TIN NHÂN VIÊN VÀ CHẤM CÔNG</div>
+  <table class="info-table">
+    <tr>
+      <td class="label-cell">Mã Nhân Viên</td>
+      <td class="value-cell">{{ salary.id }}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Tên Nhân Viên</td>
+      <td class="value-cell"><strong>{{ salary.employee_name }}</strong></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Tháng</td>
+      <td class="value-cell">
+        <strong>{{ salary.month.split('-')[0] }}</strong>
+      </td>
+    </tr>
+    <tr>
+      <td class="label-cell">
+        a. Quy định số Công/ tháng của tháng làm việc này
+      </td>
+      <td class="value-cell">{{ salary.work_days_in_month }}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">b. Ngày Công Nhân Viên được duyệt</td>
+      <td class="value-cell"><strong>{{ salary.actual_work_days }}</strong></td>
+    </tr>
+  </table>
+
+  <!-- B. CÁC KHOẢN THU NHẬP -->
+  <div class="section-title">B. CHI TIẾT CÁC KHOẢN THU NHẬP</div>
+  <table class="detail-table">
+    <thead>
+      <tr>
+        <th style="width: 45%">CHI TIẾT</th>
+        <th style="width: 15%">THÁNG</th>
+        <th style="width: 15%">NGÀY</th>
+        <th style="width: 10%">MỨC</th>
+        <th style="width: 15%">THÀNH TIỀN</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- TỔNG THU NHẬP -->
+      <tr class="section-header">
+        <td colspan="4">TỔNG THU NHẬP</td>
+        <td style="text-align: right" class="amount-red">
+          {{ "{:,.0f}".format(salary.total_income) }}
+        </td>
+      </tr>
+
+      <!-- P1. LƯƠNG CHÍNH -->
+      <tr class="subsection-header">
+        <td colspan="4">Lương Chính</td>
+        <td style="text-align: right">
+          {{ "{:,.0f}".format(salary.main_salary) }}
+        </td>
+      </tr>
+
+      <tr class="item-row">
+        <td class="label-cell">a. Lương Cơ Bản</td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.basic_salary) }}
+        </td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.basic_salary_per_day) }}
+        </td>
+        <td class="value-cell" style="text-align: center">
+          {{ salary.actual_work_days }}
+        </td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.basic_salary_per_day *
+          salary.actual_work_days) }}
+        </td>
+      </tr>
+
+      <tr class="item-row">
+        <td class="label-cell">b. Lương Trách Nhiệm</td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.responsibility_salary) }}
+        </td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }}
+        </td>
+        <td class="value-cell" style="text-align: center">
+          {{ salary.actual_work_days }}
+        </td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(salary.responsibility_salary_per_day *
+          salary.actual_work_days) }}
+        </td>
+      </tr>
+
+      <!-- P3. LƯƠNG NĂNG LỰC -->
+      {% set capacity_bonuses = salary.get_capacity_bonuses() %} {% if
+      capacity_bonuses %}
+      <tr class="subsection-header">
+        <td colspan="4">Lương Năng Lực</td>
+        <td style="text-align: right">
+          {{ "{:,.0f}".format(salary.total_capacity_bonus) }}
+        </td>
+      </tr>
+
+      {% for bonus in capacity_bonuses %}
+      <tr class="item-row">
+        <td class="label-cell">{{ bonus.content }}</td>
+        <td class="value-cell"></td>
+        <td class="value-cell"></td>
+        <td class="value-cell"></td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(bonus.amount) }}
+        </td>
+      </tr>
+      {% endfor %} {% endif %}
+    </tbody>
+  </table>
+
+  <!-- C. KHẤU TRỪ -->
+  {% set deductions = salary.get_deductions() %} {% if deductions %}
+  <div class="section-title">C. CÁC KHOẢN KHẤU TRỪ</div>
+  <table class="detail-table">
+    <tbody>
+      <tr class="section-header">
+        <td colspan="4" style="width: 85%">TỔNG KHẤU TRỪ</td>
+        <td style="text-align: right; width: 15%" class="amount-red">
+          {{ "{:,.0f}".format(salary.total_deduction) }}
+        </td>
+      </tr>
+
+      {% for deduction in deductions %}
+      <tr class="item-row">
+        <td colspan="4" class="label-cell">{{ deduction.content }}</td>
+        <td class="value-cell" style="text-align: right">
+          {{ "{:,.0f}".format(deduction.amount) }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- TỔNG KẾT -->
+  <table class="detail-table" style="margin-top: 6px">
+    <tbody>
+        <tr class="total-row highlight-yellow">
+          <td colspan="3" style="width: 55%; font-weight: bold;">TỔNG TIỀN THỰC LÃNH THÁNG</td>
+          <td style="text-align: center; width: 15%; font-size: 11px">
+            {{ salary.month.replace('-', '/') }}
+          </td>
+          <td style="text-align: right; width: 30%; font-size: 12px">
+            {{ "{:,.0f}".format(salary.net_salary) }}
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <!-- GHI CHÚ -->
+  <div class="note-section">
+    <strong>Ghi chú:</strong>
+    Vui lòng kiểm tra kỹ thông tin. Mọi thắc mắc liên hệ bộ phận nhân sự trong 3
+    ngày.
+  </div>
+
+  <!-- CHỮ KÝ -->
+  <div class="signature-section">
+    <table style="width: 100%">
+      <tr>
+        <td style="width: 33%; text-align: center" class="signature-box">
+          <div class="signature-title">KẾ TOÁN</div>
+          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+          <div style="height: 30px"></div>
+          <div class="signature-name">___________________</div>
+        </td>
+        <td style="width: 34%; text-align: center" class="signature-box">
+          <div class="signature-title">NHÂN VIÊN</div>
+          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+          <div style="height: 30px"></div>
+          <div class="signature-name">{{ salary.employee_name }}</div>
+        </td>
+        <td style="width: 33%; text-align: center" class="signature-box">
+          <div class="signature-title">NGƯỜI LẬP PHIẾU</div>
+          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+          <div style="height: 30px"></div>
+          <div class="signature-name">{{ salary.creator.full_name }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-info">
+    TP. HCM, Ngày {{ salary.created_at.strftime('%d') }} Tháng {{
+    salary.created_at.strftime('%m') }} Năm {{ salary.created_at.strftime('%Y')
+    }}
+  </div>
+</div>
+
+<style>
+  @media print {
+    #print-content {
+      display: block !important;
+    }
+  }
+</style>
+{% endblock %}

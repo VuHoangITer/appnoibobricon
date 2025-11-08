@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ thống quản lý công việc{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('tasks.dashboard') }}" class="sidebar-brand">
+                <img src="{{ url_for('static', filename='images/logo.png') }}"
+                 alt="BRICON Logo"
+                 style="max-width: 160px; height: auto;">
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            {% if current_user.role == 'director' %}
+            <div class="nav-item">
+                <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth.users' in request.endpoint or 'auth.register' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Quản lý Tài Khoản</span>
+                </a>
+            </div>
+            {% endif %}
+            <div class="nav-section-title">MENU CHÍNH</div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('tasks.dashboard') }}" class="nav-link {% if request.endpoint == 'tasks.dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-list-task"></i>
+                    <span>Công việc</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Thư viện File</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('notes.list_notes') }}" class="nav-link {% if 'notes' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Ghi chú</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('notifications.list_notifications') }}" class="nav-link {% if 'notifications' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-bell"></i>
+                    <span>Thông báo</span>
+                    <span class="badge bg-danger ms-auto" id="sidebar-notif-count" style="display: none;"></span>
+                </a>
+            </div>
+            {% if current_user.role in ['director', 'manager', 'accountant'] %}
+                <div class="nav-section-title">Lương</div>
+                <div class="nav-item">
+                    <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">
+                        <i class="bi bi-cash-coin"></i>
+                        <span>Quản lý Lương</span>
+                    </a>
+                </div>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {{ current_user.full_name[0].upper() }}
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{ current_user.full_name }}</div>
+                    <div class="user-role">{{ current_user.role | role_vn }}</div>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Đăng xuất">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Navbar -->
+        <nav class="top-navbar">
+            <div class="navbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+
+            <div class="navbar-right">
+                <button class="notification-btn" onclick="window.location.href='{{ url_for('notifications.list_notifications') }}'">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-badge" id="notif-count" style="display: none;"></span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+    <!-- Login Page (No Sidebar) -->
+    {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script>
+        // Mobile Menu Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            });
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            });
+        }
+
+        // Update notification count
+        {% if current_user.is_authenticated %}
+        function updateNotifCount() {
+            fetch('{{ url_for("notifications.unread_count") }}')
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('notif-count');
+                    const sidebarBadge = document.getElementById('sidebar-notif-count');
+
+                    if (data.count > 0) {
+                        if (badge) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'inline-block';
+                        }
+                        if (sidebarBadge) {
+                            sidebarBadge.textContent = data.count > 99 ? '99+' : data.count;
+                            sidebarBadge.style.display = 'inline-block';
+                        }
+                    } else {
+                        if (badge) badge.style.display = 'none';
+                        if (sidebarBadge) sidebarBadge.style.display = 'none';
+                    }
+                })
+                .catch(err => console.error('Error fetching notifications:', err));
+        }
+
+        // Update every 30 seconds
+        updateNotifCount();
+        setInterval(updateNotifCount, 30000);
+        {% endif %}
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

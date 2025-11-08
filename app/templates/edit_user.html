@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa tài khoản{% endblock %}
+{% block page_title %}Chỉnh sửa User{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-pencil-square"></i> Chỉnh sửa tài khoản</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Họ tên *</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role *</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="director" {% if user.role == 'director' %}selected{% endif %}>Giám đốc</option>
+                            <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Trưởng phòng</option>
+                            <option value="accountant" {% if user.role == 'accountant' %}selected{% endif %}>Kế toán</option>
+                            <option value="hr" {% if user.role == 'hr' %}selected{% endif %}>Nhân viên</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mật khẩu mới</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Để trống nếu không đổi mật khẩu">
+                        <small class="text-muted">Chỉ nhập nếu muốn thay đổi mật khẩu</small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div>
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Thông tin tài khoản:</strong><br>
+                        Ngày tạo: {{ user.created_at | vn_datetime }}<br>
+                        Trạng thái: 
+                        {% if user.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <br>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu thay đổi
+                        </button>
+                        <a href="{{ url_for('auth.users') }}" class="btn btn-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Lương{% endblock %}
+{% block page_title %}Quản lý Lương{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-cash-coin"></i> Bảng lương</h2>
+    <a href="{{ url_for('salaries.create_salary') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Tạo bảng lương mới
+    </a>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Bộ lọc</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-calendar"></i> Tháng:</label>
+                <select class="form-select" name="month_select" id="month_select">
+                    <option value="">Tất cả</option>
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-calendar"></i> Năm:</label>
+                <select class="form-select" name="year_select" id="year_select">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="bi bi-person"></i> Tên nhân viên:</label>
+                <input type="text" class="form-control" name="employee_name"
+                       value="{{ name_filter }}" placeholder="Nhập tên để tìm kiếm">
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Lọc
+                </button>
+                <a href="{{ url_for('salaries.list_salaries') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Xóa
+                </a>
+            </div>
+            <input type="hidden" name="month" id="month_hidden">
+        </form>
+    </div>
+</div>
+
+<!-- Salary Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Danh sách bảng lương
+            <span class="badge bg-primary ms-2">{{ salaries|length }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if salaries %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Tháng</th>
+                        <th>Nhân viên</th>
+                        <th>Số công</th>
+                        <th>Lương chính</th>
+                        <th>Lương năng lực</th>
+                        <th>Tổng thu nhập</th>
+                        <th>Khấu trừ</th>
+                        <th class="text-end">Thực lĩnh</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for salary in salaries %}
+                    <tr>
+                        <td>
+                            <strong>{{ salary.month }}</strong>
+                        </td>
+                        <td>
+                            <i class="bi bi-person-badge"></i> {{ salary.employee_name }}
+                        </td>
+                        <td>
+                            {{ salary.actual_work_days }}/{{ salary.work_days_in_month }}
+                        </td>
+                        <td>{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
+                        <td>{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</td>
+                        <td><strong>{{ "{:,.0f}".format(salary.total_income) }} ₫</strong></td>
+                        <td class="text-danger">{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
+                        <td class="text-end">
+                            <strong class="text-success" style="font-size: 1.1rem;">
+                                {{ "{:,.0f}".format(salary.net_salary) }} ₫
+                            </strong>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}"
+                                   class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST"
+                                      action="{{ url_for('salaries.delete_salary', salary_id=salary.id) }}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa bảng lương này?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Chưa có bảng lương nào.</p>
+            <a href="{{ url_for('salaries.create_salary') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Tạo bảng lương đầu tiên
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Populate year dropdown
+const yearSelect = document.getElementById('year_select');
+const currentYear = new Date().getFullYear();
+for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = 'Năm ' + year;
+    yearSelect.appendChild(option);
+}
+
+// Parse existing filter value
+const existingFilter = "{{ month_filter }}";
+if (existingFilter) {
+    const parts = existingFilter.split('-');
+    if (parts.length === 2) {
+        document.getElementById('month_select').value = parseInt(parts[0], 10);
+        document.getElementById('year_select').value = parts[1];
+    }
+}
+
+// Update hidden field before form submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    const month = document.getElementById('month_select').value;
+    const year = document.getElementById('year_select').value;
+
+    if (month && year) {
+        const monthStr = month.padStart(2, '0');
+        document.getElementById('month_hidden').value = `${monthStr}-${year}`;
+    } else {
+        document.getElementById('month_hidden').value = '';
+    }
+});
+</script>
+{% endblock %}
