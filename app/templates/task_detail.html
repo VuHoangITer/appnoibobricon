@@ -55,13 +55,13 @@
 
                 <!-- Accept/Reject buttons for pending group assignments -->
                 {% if user_assignment and not user_assignment.accepted and user_assignment.assigned_group %}
-                <div class="alert alert-info">
-                    <h5><i class="bi bi-info-circle"></i> Task này được gán cho nhóm {{ user_assignment.assigned_group }}</h5>
-                    <p>Bạn cần chấp nhận task này để nó xuất hiện trong danh sách task của bạn.</p>
+                <div>
+                    <h5><i class="bi bi-info-circle"></i> Nhiệm vụ này được giao cho nhóm {{ user_assignment.assigned_group | role_vn }}</h5>
+                    <p>Bạn cần chấp nhận nhiệm vụ này để nó xuất hiện trong danh sách task của bạn.</p>
                     <form method="POST" action="{{ url_for('tasks.accept_task', task_id=task.id) }}" style="display: inline;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Chấp nhận task
+                            <i class="bi bi-check-circle"></i> Chấp nhận
                         </button>
                     </form>
                     <form method="POST" action="{{ url_for('tasks.reject_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn từ chối task này?');">
@@ -161,7 +161,7 @@
                                 <small class="text-muted">{{ assignment.user.role | role_vn }}</small>
                                 {% if assignment.assigned_group %}
                                 <br>
-                                <small><span class="badge bg-secondary">Nhóm: {{ assignment.assigned_group }}</span></small>
+                                <small><span class="badge bg-secondary">Nhóm: {{ assignment.assigned_group | role_vn }}</span></small>
                                 {% endif %}
                             </div>
                             <div>

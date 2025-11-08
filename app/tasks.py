@@ -488,7 +488,7 @@ def create_task():
                         user_id=user.id,
                         type='task_assigned',
                         title='Nhiệm vụ mới cho nhóm',
-                        body=f'{current_user.full_name} đã giao nhiệm vụ {title} cho nhóm {assign_to_group}. Vui lòng chấp nhận.',
+                        body=f'{current_user.full_name} đã giao nhiệm vụ {title} cho nhóm. Vui lòng chấp nhận.',
                         link=f'/tasks/{task.id}'
                     )
                     db.session.add(notif)
