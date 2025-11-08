@@ -43,7 +43,7 @@
 
             {% if current_user.role in ['director', 'manager'] %}
             <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-person"></i> Người được gán:</label>
+                <label class="form-label"><i class="bi bi-person"></i> Người được giao nv:</label>
                 <select class="form-select" name="assigned_user">
                     <option value="">-- Tất cả --</option>
                     {% for user in all_users %}
@@ -126,7 +126,7 @@
                             {% endif %}
                             <th>Tiêu đề</th>
                             <th>Người tạo</th>
-                            <th>Người được gán</th>
+                            <th>Người được giao nv</th>
                             <th>Hạn</th>
                             <th>Trạng thái</th>
                             <th>Ngày tạo</th>
@@ -165,7 +165,7 @@
                                             <span class="text-warning">Chờ chấp nhận</span>
                                         {% endif %}
                                     {% else %}
-                                        <span class="text-muted">Chưa gán</span>
+                                        <span class="text-muted">Chưa giao</span>
                                     {% endif %}
                                 </small>
                             </td>
