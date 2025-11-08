@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Run script for Flask application
-Usage: python run.py
+Usage: python run.py (development) or gunicorn run:app (production)
 """
 
 from app import create_app, db
@@ -10,6 +10,12 @@ import os
 # Tạo Flask app instance
 app = create_app()
 
+# Tạo thư mục uploads khi khởi động (cho cả development và production)
+upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+if not os.path.exists(upload_folder):
+    os.makedirs(upload_folder)
+    print(f"Created upload folder: {upload_folder}")
+
 
 @app.cli.command()
 def init_db():
@@ -17,14 +23,9 @@ def init_db():
     db.create_all()
     print("Database initialized!")
 
-if __name__ == '__main__':
-    # Tạo thư mục uploads nếu chưa có
-    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
-    if not os.path.exists(upload_folder):
-        os.makedirs(upload_folder)
-        print(f"Created upload folder: {upload_folder}")
 
-    # Chạy development server
+if __name__ == '__main__':
+    # Chỉ chạy development server khi chạy trực tiếp file này
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
 
