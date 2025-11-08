@@ -3,7 +3,8 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app import db
 from app.models import User
 from app.decorators import role_required
-from werkzeug.urls import url_parse
+from urllib.parse import urlsplit
+
 
 bp = Blueprint('auth', __name__)
 
@@ -30,7 +31,7 @@ def login():
 
         login_user(user, remember=remember)
         next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
+        if not next_page or urlsplit(next_page).netloc != '':
             next_page = url_for('tasks.dashboard')
         return redirect(next_page)
 
