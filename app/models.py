@@ -2,6 +2,8 @@ from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import json
+import secrets
 
 # Role priorities
 ROLE_PRIORITIES = {
@@ -185,9 +187,6 @@ class Note(db.Model):
         return f'<Note {self.title}>'
 
 
-import json
-
-
 class Salary(db.Model):
     __tablename__ = 'salaries'
 
@@ -223,6 +222,12 @@ class Salary(db.Model):
 
     # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
+    share_links = db.relationship(
+        'SalaryShareLink',
+        backref='salary',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
     def get_capacity_bonuses(self):
         """Parse JSON capacity bonuses"""
@@ -277,6 +282,52 @@ class Salary(db.Model):
 
     def __repr__(self):
         return f'<Salary {self.employee_name} - {self.month}>'
+
+
+class SalaryShareLink(db.Model):
+    __tablename__ = 'salary_share_links'
+
+    id = db.Column(db.Integer, primary_key=True)
+    salary_id = db.Column(db.Integer, db.ForeignKey('salaries.id'), nullable=False)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    max_views = db.Column(db.Integer, nullable=True)  # Null = không giới hạn
+    view_count = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Relationships
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)
+
+    def is_valid(self):
+        """Kiểm tra link còn hiệu lực không"""
+        if not self.is_active:
+            return False
+
+        # Kiểm tra hết hạn
+        if datetime.utcnow() > self.expires_at:
+            return False
+
+        # Kiểm tra số lượt xem
+        if self.max_views and self.view_count >= self.max_views:
+            return False
+
+        return True
+
+    def increment_view(self):
+        """Tăng số lượt xem"""
+        self.view_count += 1
+        db.session.commit()
+
+    def __repr__(self):
+        return f'<SalaryShareLink {self.token[:8]}...>'
+
 
 @login_manager.user_loader
 def load_user(user_id):

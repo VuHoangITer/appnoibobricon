@@ -11,6 +11,9 @@ login_manager = LoginManager()
 migrate = Migrate()
 csrf = CSRFProtect()
 
+# THÊM: Import scheduler
+scheduler = None
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -123,6 +126,13 @@ def create_app(config_class=Config):
         if current_user.is_authenticated:
             return redirect(url_for('tasks.dashboard'))
         return redirect(url_for('auth.login'))
+
+    # THÊM: Khởi động scheduler (chỉ chạy khi không phải debug mode hoặc reloader)
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        global scheduler
+        if scheduler is None:
+            from app.scheduler import start_scheduler
+            scheduler = start_scheduler(app)
 
     return app
 

@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import login_required, current_user
 from app import db
-from app.models import Salary, User
+from app.models import Salary, User, SalaryShareLink
 from app.decorators import role_required
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 bp = Blueprint('salaries', __name__)
@@ -211,3 +211,169 @@ def delete_salary(salary_id):
 
     flash('Đã xóa bảng lương thành công.', 'success')
     return redirect(url_for('salaries.list_salaries'))
+
+
+# ========== SHARE LINK ROUTES ==========
+@bp.route('/<int:salary_id>/share-links')
+@login_required
+@role_required(['director', 'manager', 'accountant'])
+def manage_share_links(salary_id):
+    """Quản lý các link chia sẻ"""
+    salary = Salary.query.get_or_404(salary_id)
+
+    # Lấy tất cả share links
+    share_links = SalaryShareLink.query.filter_by(
+        salary_id=salary_id
+    ).order_by(SalaryShareLink.created_at.desc()).all()
+
+    return render_template('salaries/share_links.html',
+                           salary=salary,
+                           share_links=share_links,
+                           now=datetime.utcnow())
+
+
+@bp.route('/<int:salary_id>/create-share-link', methods=['POST'])
+@login_required
+@role_required(['director', 'manager', 'accountant'])
+def create_share_link(salary_id):
+    """Tạo link chia sẻ bảng lương"""
+    salary = Salary.query.get_or_404(salary_id)
+
+    try:
+        days = int(request.form.get('days', 3))
+        max_views = request.form.get('max_views')
+
+        # Validate days (1-30)
+        if days < 1 or days > 30:
+            flash('Số ngày phải từ 1 đến 30.', 'danger')
+            return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
+
+        # Validate max_views
+        if max_views:
+            max_views = int(max_views)
+            if max_views < 1:
+                flash('Số lượt xem phải lớn hơn 0.', 'danger')
+                return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
+        else:
+            max_views = None
+
+        # Tạo link chia sẻ
+        expires_at = datetime.utcnow() + timedelta(days=days)
+
+        share_link = SalaryShareLink(
+            salary_id=salary_id,
+            created_by=current_user.id,
+            expires_at=expires_at,
+            max_views=max_views
+        )
+
+        db.session.add(share_link)
+        db.session.commit()
+
+        flash('Tạo link chia sẻ thành công!', 'success')
+        return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
+
+    except Exception as e:
+        flash(f'Có lỗi xảy ra: {str(e)}', 'danger')
+        return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
+
+
+@bp.route('/share-link/<int:link_id>/revoke', methods=['POST'])
+@login_required
+@role_required(['director', 'manager', 'accountant'])
+def revoke_share_link(link_id):
+    """Vô hiệu hóa link chia sẻ"""
+    share_link = SalaryShareLink.query.get_or_404(link_id)
+
+    # Kiểm tra quyền
+    if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
+        flash('Bạn không có quyền vô hiệu hóa link này.', 'danger')
+        return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
+
+    share_link.is_active = False
+    db.session.commit()
+
+    flash('Đã vô hiệu hóa link chia sẻ.', 'success')
+    return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
+
+
+@bp.route('/share-link/<int:link_id>/delete', methods=['POST'])
+@login_required
+@role_required(['director', 'manager', 'accountant'])
+def delete_share_link(link_id):
+    """Xóa link chia sẻ"""
+    share_link = SalaryShareLink.query.get_or_404(link_id)
+
+    # Kiểm tra quyền
+    if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
+        flash('Bạn không có quyền xóa link này.', 'danger')
+        return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
+
+    salary_id = share_link.salary_id
+    db.session.delete(share_link)
+    db.session.commit()
+
+    flash('Đã xóa link chia sẻ.', 'success')
+    return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
+
+
+@bp.route('/shared/<token>')
+def view_shared_salary(token):
+    """Xem bảng lương qua link chia sẻ (không cần đăng nhập)"""
+    share_link = SalaryShareLink.query.filter_by(token=token).first()
+
+    if not share_link:
+        return render_template('salaries/share_error.html',
+                               error='Link không tồn tại hoặc đã bị xóa.')
+
+    # THÊM: Tự động xóa nếu đã hết hạn
+    if datetime.utcnow() > share_link.expires_at:
+        db.session.delete(share_link)
+        db.session.commit()
+        return render_template('salaries/share_error.html',
+                               error='Link đã hết hạn và đã bị xóa tự động.')
+
+    # Kiểm tra tính hợp lệ
+    if not share_link.is_valid():
+        reason = ''
+        if not share_link.is_active:
+            reason = 'Link đã bị vô hiệu hóa.'
+        elif share_link.max_views and share_link.view_count >= share_link.max_views:
+            # THÊM: Tự động xóa nếu hết lượt xem
+            db.session.delete(share_link)
+            db.session.commit()
+            reason = 'Link đã hết lượt xem và đã bị xóa tự động.'
+
+        return render_template('salaries/share_error.html', error=reason)
+
+    # Tăng số lượt xem
+    share_link.increment_view()
+
+    # THÊM: Tự động xóa nếu vừa hết lượt xem
+    if share_link.max_views and share_link.view_count >= share_link.max_views:
+        salary = share_link.salary
+        db.session.delete(share_link)
+        db.session.commit()
+
+        # Tính thời gian còn lại (cho hiển thị)
+        time_left = share_link.expires_at - datetime.utcnow()
+        hours_left = int(time_left.total_seconds() / 3600)
+
+        return render_template('salaries/shared_view.html',
+                               salary=salary,
+                               share_link=share_link,
+                               hours_left=hours_left,
+                               is_last_view=True)
+
+    # Lấy thông tin bảng lương
+    salary = share_link.salary
+
+    # Tính thời gian còn lại
+    time_left = share_link.expires_at - datetime.utcnow()
+    hours_left = int(time_left.total_seconds() / 3600)
+
+    return render_template('salaries/shared_view.html',
+                           salary=salary,
+                           share_link=share_link,
+                           hours_left=hours_left,
+                           is_last_view=False)

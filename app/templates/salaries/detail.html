@@ -1,5 +1,8 @@
-{% extends "base.html" %} {% block title %}Chi tiết bảng lương{% endblock %} {%
-block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Chi tiết bảng lương{% endblock %}
+{% block page_title %}Chi Tiết Bảng Lương{% endblock %}
+
+{% block content %}
 <style>
   @media print {
     .no-print {
@@ -174,27 +177,29 @@ block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
       font-style: italic;
     }
 
-    /* Tối ưu để vừa 1 trang A4 */
     @page {
       margin: 10mm;
       size: A4;
     }
 
-    /* Giảm khoảng cách giữa các section */
     .section-title:not(:first-child) {
       margin-top: 6px;
     }
 
-    /* Đảm bảo phần chữ ký không bị tách */
     .signature-section,
     .note-section,
     .footer-info {
       page-break-inside: avoid;
     }
 
-    /* Giữ phần tổng kết với chữ ký */
     .total-row {
       page-break-after: avoid;
+    }
+
+    .highlight-yellow td {
+      background-color: #fff8b3 !important;
+      color: #000 !important;
+      font-weight: bold;
     }
   }
 
@@ -214,14 +219,6 @@ block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
       display: block;
     }
   }
-   @media print {
-  .highlight-yellow td {
-    background-color: #fff8b3 !important;
-    color: #000 !important;
-    font-weight: bold;
-  }
-}
-
 </style>
 
 <!-- Header Banner (only visible when printing) -->
@@ -247,6 +244,15 @@ block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
           Bảng lương tháng {{ salary.month }}
         </h4>
         <div>
+          <!-- NÚT CHIA SẺ LINK -->
+          <a
+            href="{{ url_for('salaries.manage_share_links', salary_id=salary.id) }}"
+            class="btn btn-success btn-sm me-2"
+            title="Tạo link chia sẻ"
+          >
+            <i class="bi bi-share"></i> Chia sẻ
+          </a>
+
           <button onclick="window.print()" class="btn btn-info btn-sm me-2">
             <i class="bi bi-printer"></i> In phiếu lương
           </button>
@@ -442,6 +448,12 @@ block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
         <i class="bi bi-arrow-left"></i> Quay lại
       </a>
       <a
+        href="{{ url_for('salaries.manage_share_links', salary_id=salary.id) }}"
+        class="btn btn-success"
+      >
+        <i class="bi bi-share"></i> Chia sẻ link
+      </a>
+      <a
         href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
         class="btn btn-primary"
       >
@@ -467,9 +479,8 @@ block page_title %}Chi Tiết Bảng Lương{% endblock %} {% block content %}
     <div class="card">
       <div class="card-body">
         <small class="text-muted">
-          <i class="bi bi-clock"></i> Tạo lúc: {{
-          salary.created_at.strftime('%d/%m/%Y %H:%M') }} | Cập nhật: {{
-          salary.updated_at.strftime('%d/%m/%Y %H:%M') }}
+          <i class="bi bi-clock"></i> Tạo lúc: {{ salary.created_at|vn_datetime }}
+          | Cập nhật: {{ salary.updated_at|vn_datetime }}
         </small>
       </div>
     </div>

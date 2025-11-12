@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Link Chia Sẻ{% endblock %}
+{% block page_title %}Quản Lý Link Chia Sẻ{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <!-- Header -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-share"></i> Link chia sẻ bảng lương: {{ salary.employee_name }} - {{ salary.month }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại chi tiết
+                </a>
+            </div>
+        </div>
+
+        <!-- Tạo link mới -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Tạo Link Chia Sẻ Mới</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('salaries.create_share_link', salary_id=salary.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="days" class="form-label">
+                                <i class="bi bi-calendar-check"></i> Thời hạn (số ngày) *
+                            </label>
+                            <input type="number" class="form-control" id="days" name="days" 
+                                   value="3" min="1" max="30" required>
+                            <small class="text-muted">Link sẽ tự động hết hạn sau số ngày này</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="max_views" class="form-label">
+                                <i class="bi bi-eye"></i> Giới hạn lượt xem
+                            </label>
+                            <input type="number" class="form-control" id="max_views" name="max_views" 
+                                   min="1" placeholder="Không giới hạn">
+                            <small class="text-muted">Để trống nếu không muốn giới hạn</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-link-45deg"></i> Tạo Link
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh sách link đã tạo -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Danh Sách Link Đã Tạo
+                    <span class="badge bg-light text-dark ms-2">{{ share_links|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if share_links %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Link</th>
+                                <th>Người tạo</th>
+                                <th>Tạo lúc</th>
+                                <th>Hết hạn</th>
+                                <th>Lượt xem</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for link in share_links %}
+                            {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
+                            <tr>
+                                <td>
+                                    {% if link.is_valid() %}
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control"
+                                               value="{{ request.url_root }}salaries/shared/{{ link.token }}"
+                                               id="link-{{ link.id }}" readonly>
+                                        <button class="btn btn-outline-primary" type="button"
+                                                onclick="copyLink('link-{{ link.id }}')">
+                                            <i class="bi bi-clipboard"></i> Copy
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">Link không còn hiệu lực</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ link.creator.full_name }}</td>
+                                <td>
+                                    <small>{{ link.created_at|vn_datetime }}</small>
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ link.expires_at|vn_datetime }}
+                                        {% if link.is_active %}
+                                        <br>
+                                        <!-- THÊM data-expires-at để JavaScript đếm ngược -->
+                                        <!-- Thêm 'Z' để chỉ định UTC time -->
+                                        <span class="text-warning"
+                                              data-expires-at="{{ link.expires_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">
+                                            {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
+                                            {% if time_left > 0 %}
+                                            (Còn {{ time_left|int }} giờ)
+                                            {% else %}
+                                            (Đã hết hạn)
+                                            {% endif %}
+                                        </span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    {{ link.view_count }}
+                                    {% if link.max_views %}
+                                    / {{ link.max_views }}
+                                    {% else %}
+                                    / ∞
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if link.is_valid() %}
+                                    <span class="badge bg-success">Đang hoạt động</span>
+                                    {% elif not link.is_active %}
+                                    <span class="badge bg-secondary">Đã vô hiệu hóa</span>
+                                    {% elif now > link.expires_at %}
+                                    <span class="badge bg-danger">Hết hạn</span>
+                                    {% elif link.max_views and link.view_count >= link.max_views %}
+                                    <span class="badge bg-warning">Hết lượt xem</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if link.is_valid() %}
+                                    <form method="POST"
+                                          action="{{ url_for('salaries.revoke_share_link', link_id=link.id) }}"
+                                          style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-warning"
+                                                title="Vô hiệu hóa"
+                                                onclick="return confirm('Bạn có chắc muốn vô hiệu hóa link này?');">
+                                            <i class="bi bi-pause-circle"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    <form method="POST"
+                                          action="{{ url_for('salaries.delete_share_link', link_id=link.id) }}"
+                                          style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                title="Xóa"
+                                                onclick="return confirm('Bạn có chắc muốn xóa link này?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-link-45deg" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-2">Chưa có link chia sẻ nào.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyLink(elementId) {
+    const input = document.getElementById(elementId);
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(input.value).then(function() {
+        const button = input.nextElementSibling;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> Đã copy!';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    }, function(err) {
+        alert('Không thể copy link: ' + err);
+    });
+}
+</script>
+<script>
+// Hàm format thời gian còn lại dạng giờ:phút:giây
+function formatTimeLeft(totalSeconds) {
+    if (totalSeconds <= 0) {
+        return '<span class="text-danger fw-bold">Đã hết hạn</span>';
+    }
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    // Format số thành 2 chữ số (01, 02, ..., 59)
+    const pad = (num) => String(num).padStart(2, '0');
+
+    if (days > 0) {
+        return `${days} ngày ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    } else {
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+}
+
+// Cập nhật đếm ngược
+function updateCountdowns() {
+    document.querySelectorAll('[data-expires-at]').forEach(element => {
+        // Parse expires_at as UTC time
+        const expiresAtUTC = new Date(element.dataset.expiresAt);
+
+        // Get current time in UTC
+        const nowUTC = new Date();
+
+        // Calculate difference in seconds
+        const diffMs = expiresAtUTC - nowUTC;
+        const diffSeconds = Math.floor(diffMs / 1000);
+
+        if (diffSeconds > 0) {
+            element.innerHTML = `(Còn ${formatTimeLeft(diffSeconds)})`;
+
+            // Đổi màu theo thời gian còn lại
+            if (diffSeconds < 60) {
+                // < 1 phút: Đỏ, nhấp nháy
+                element.className = 'text-danger fw-bold blink';
+            } else if (diffSeconds < 3600) {
+                // < 1 giờ: Đỏ đậm
+                element.className = 'text-danger fw-bold';
+            } else if (diffSeconds < 86400) {
+                // < 1 ngày: Vàng đậm
+                element.className = 'text-warning fw-bold';
+            } else {
+                // > 1 ngày: Vàng bình thường
+                element.className = 'text-warning';
+            }
+        } else {
+            element.innerHTML = '(Đã hết hạn)';
+            element.className = 'text-danger fw-bold';
+
+            // Tự động reload trang khi link hết hạn
+            setTimeout(() => location.reload(), 2000);
+        }
+    });
+}
+
+// Chạy ngay khi load trang
+updateCountdowns();
+
+// Cập nhật mỗi 1 giây
+setInterval(updateCountdowns, 1000);
+</script>
+
+<style>
+/* Animation cho số đếm ngược */
+[data-expires-at] {
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace; /* Font monospace cho số đẹp hơn */
+}
+
+/* Animation nhấp nháy khi sắp hết hạn */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.blink {
+    animation: blink 1s ease-in-out infinite;
+}
+</style>
+{% endblock %}
