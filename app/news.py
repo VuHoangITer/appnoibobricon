@@ -144,12 +144,16 @@ def edit_news(news_id):
         # Xử lý xóa ảnh hiện tại nếu được yêu cầu
         if delete_image == '1' and news.image_filename:
             old_image_path = os.path.join(
-                current_app.config['UPLOAD_FOLDER'],
-                'news_images',
-                news.image_filename
+                current_app.root_path, 'uploads', 'news_images', news.image_filename
             )
             if os.path.exists(old_image_path):
-                os.remove(old_image_path)
+                try:
+                    os.remove(old_image_path)
+                    print(f"[DEBUG] Đã xóa ảnh theo yêu cầu: {old_image_path}")
+                except Exception as e:
+                    print(f"[LỖI] Xóa ảnh theo yêu cầu thất bại: {e}")
+            else:
+                print(f"[CẢNH BÁO] Không tìm thấy ảnh để xóa: {old_image_path}")
             news.image_filename = None
 
         # Xử lý upload ảnh mới
@@ -159,12 +163,14 @@ def edit_news(news_id):
                 # Xóa ảnh cũ nếu có (khi upload ảnh mới)
                 if news.image_filename:
                     old_image_path = os.path.join(
-                        current_app.config['UPLOAD_FOLDER'],
-                        'news_images',
-                        news.image_filename
+                        current_app.root_path, 'uploads', 'news_images', news.image_filename
                     )
                     if os.path.exists(old_image_path):
-                        os.remove(old_image_path)
+                        try:
+                            os.remove(old_image_path)
+                            print(f"[DEBUG] Đã xóa ảnh cũ: {old_image_path}")
+                        except Exception as e:
+                            print(f"[LỖI] Xóa ảnh cũ thất bại: {e}")
 
                 # Lưu ảnh mới
                 original_filename = secure_filename(file.filename)
@@ -200,12 +206,16 @@ def delete_news(news_id):
     # Xóa ảnh nếu có
     if news.image_filename:
         image_path = os.path.join(
-            current_app.config['UPLOAD_FOLDER'],
-            'news_images',
-            news.image_filename
+            current_app.root_path, 'uploads', 'news_images', news.image_filename
         )
         if os.path.exists(image_path):
-            os.remove(image_path)
+            try:
+                os.remove(image_path)
+                print(f"[DEBUG] Đã xóa ảnh: {image_path}")
+            except Exception as e:
+                print(f"[LỖI] Không xóa được ảnh: {e}")
+        else:
+            print(f"[CẢNH BÁO] Không tìm thấy ảnh: {image_path}")
 
     # Xóa thông báo liên quan
     Notification.query.filter(Notification.link == f'/news/{news_id}').delete()
