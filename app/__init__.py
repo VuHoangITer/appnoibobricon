@@ -131,11 +131,14 @@ def create_app(config_class=Config):
         return redirect(url_for('auth.login'))
 
     # THÊM: Khởi động scheduler (chỉ chạy khi không phải debug mode hoặc reloader)
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    if os.environ.get('ENABLE_SCHEDULER') == 'true':
         global scheduler
         if scheduler is None:
             from app.scheduler import start_scheduler
             scheduler = start_scheduler(app)
+            print("Scheduler enabled in Flask app")
+    else:
+        print("Scheduler disabled - run separately via systemd service")
 
     return app
 
