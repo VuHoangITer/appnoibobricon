@@ -79,7 +79,7 @@ def create_news():
                 unique_filename = f"news_{uuid.uuid4().hex}.{file_ext}"
 
                 # Tạo thư mục news_images nếu chưa có
-                news_images_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'news_images')
+                news_images_folder = os.path.join(current_app.root_path, 'uploads', 'news_images')
                 if not os.path.exists(news_images_folder):
                     os.makedirs(news_images_folder)
 
@@ -171,7 +171,7 @@ def edit_news(news_id):
                 file_ext = original_filename.rsplit('.', 1)[1].lower()
                 unique_filename = f"news_{uuid.uuid4().hex}.{file_ext}"
 
-                news_images_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'news_images')
+                news_images_folder = os.path.join(current_app.root_path, 'uploads', 'news_images')
                 if not os.path.exists(news_images_folder):
                     os.makedirs(news_images_folder)
 
@@ -307,5 +307,5 @@ def get_news_image(news_id):
     if not news.image_filename:
         return "No image", 404
 
-    news_images_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'news_images')
+    news_images_folder = os.path.join(current_app.root_path, 'uploads', 'news_images')
     return send_from_directory(news_images_folder, news.image_filename)

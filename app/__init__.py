@@ -29,8 +29,10 @@ def create_app(config_class=Config):
     login_manager.login_message = 'Vui lòng đăng nhập để truy cập trang này.'
 
     # Create upload folder
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
+    upload_path = app.config['UPLOAD_FOLDER']
+    news_images_path = os.path.join(upload_path, 'news_images')
+    os.makedirs(upload_path, exist_ok=True)
+    os.makedirs(news_images_path, exist_ok=True)
 
     # THÊM: Register built-in Python functions to Jinja2
     app.jinja_env.globals.update(min=min, max=max)
