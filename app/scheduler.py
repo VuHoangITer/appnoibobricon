@@ -1,17 +1,16 @@
 """
 Scheduler để tự động xóa link hết hạn
-Sử dụng APScheduler để chạy background job
+SỬA: Chỉ chạy trong 1 worker duy nhất để tránh duplicate jobs
 """
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
+import os
 
 
 def cleanup_expired_links(app):
     """Tự động xóa các link đã hết hạn"""
-    # Chạy trong Flask application context
     with app.app_context():
-        # Import bên trong hàm để tránh circular import
         from app import db
         from app.models import SalaryShareLink
 
@@ -48,10 +47,21 @@ def cleanup_expired_links(app):
 
 
 def start_scheduler(app):
-    """Khởi động scheduler"""
+    """
+    Khởi động scheduler - CHỈ CHẠY TRONG 1 WORKER DUY NHẤT
+    """
+    # ===== THÊM: Kiểm tra chỉ chạy trong worker đầu tiên =====
+    worker_id = os.environ.get('GUNICORN_WORKER_ID', '0')
+
+    # Nếu không phải worker đầu tiên, không khởi động scheduler
+    if worker_id != '0':
+        print(f"ℹ️  Worker {worker_id}: Bỏ qua scheduler (chỉ chạy ở worker 0)")
+        return None
+    # ===== END =====
+
     scheduler = BackgroundScheduler()
 
-    # Chạy cleanup mỗi 1 giờ - QUAN TRỌNG: Truyền app vào lambda
+    # Chạy cleanup mỗi 1 giờ
     scheduler.add_job(
         func=lambda: cleanup_expired_links(app),
         trigger="interval",
@@ -61,7 +71,7 @@ def start_scheduler(app):
         replace_existing=True
     )
 
-    # Chạy ngay lần đầu khi start - QUAN TRỌNG: Truyền app vào lambda
+    # Chạy ngay lần đầu khi start
     scheduler.add_job(
         func=lambda: cleanup_expired_links(app),
         trigger="date",
@@ -71,6 +81,6 @@ def start_scheduler(app):
     )
 
     scheduler.start()
-    print("✅ Scheduler đã khởi động - tự động xóa link hết hạn mỗi 1 giờ")
+    print(f"✅ Worker 0: Scheduler đã khởi động - tự động xóa link hết hạn mỗi 1 giờ")
 
     return scheduler

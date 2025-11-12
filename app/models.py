@@ -25,32 +25,32 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
-    # Relationships
+    # Relationships - SỬA: Xóa backref, thay bằng back_populates
     created_tasks = db.relationship(
         'Task',
         foreign_keys='Task.creator_id',
-        backref='creator',
+        back_populates='creator',
         lazy='dynamic'
     )
 
     task_assignments = db.relationship(
         'TaskAssignment',
         foreign_keys='TaskAssignment.user_id',
-        backref='user',
+        back_populates='user',
         lazy='dynamic'
     )
 
     assigned_tasks = db.relationship(
         'TaskAssignment',
         foreign_keys='TaskAssignment.assigned_by',
-        backref='assigner',
+        back_populates='assigner',
         lazy='dynamic'
     )
 
     notifications = db.relationship(
         'Notification',
         foreign_keys='Notification.user_id',
-        backref='user',
+        back_populates='user',
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
@@ -58,7 +58,7 @@ class User(UserMixin, db.Model):
     notes = db.relationship(
         'Note',
         foreign_keys='Note.user_id',
-        backref='user',
+        back_populates='user',
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
@@ -66,7 +66,7 @@ class User(UserMixin, db.Model):
     uploaded_files = db.relationship(
         'File',
         foreign_keys='File.uploader_id',
-        backref='uploader',
+        back_populates='uploader',
         lazy='dynamic'
     )
 
@@ -111,13 +111,19 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # THAY ĐỔI: Thêm cascade='all, delete-orphan' để tự động xóa assignments khi xóa task
+    # SỬA: Dùng back_populates thay vì backref
+    creator = db.relationship(
+        'User',
+        foreign_keys=[creator_id],
+        back_populates='created_tasks'
+    )
+
     assignments = db.relationship(
         'TaskAssignment',
         foreign_keys='TaskAssignment.task_id',
-        backref='task',
+        back_populates='task',
         lazy='dynamic',
-        cascade='all, delete-orphan'  # Thêm dòng này
+        cascade='all, delete-orphan'
     )
 
     def __repr__(self):
@@ -137,6 +143,25 @@ class TaskAssignment(db.Model):
     seen = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # SỬA: Thêm back_populates
+    task = db.relationship(
+        'Task',
+        foreign_keys=[task_id],
+        back_populates='assignments'
+    )
+
+    user = db.relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='task_assignments'
+    )
+
+    assigner = db.relationship(
+        'User',
+        foreign_keys=[assigned_by],
+        back_populates='assigned_tasks'
+    )
+
     def __repr__(self):
         return f'<TaskAssignment task={self.task_id} user={self.user_id}>'
 
@@ -152,6 +177,13 @@ class File(db.Model):
     description = db.Column(db.Text)
     file_size = db.Column(db.Integer)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # SỬA: Thêm back_populates
+    uploader = db.relationship(
+        'User',
+        foreign_keys=[uploader_id],
+        back_populates='uploaded_files'
+    )
 
     def __repr__(self):
         return f'<File {self.original_filename}>'
@@ -169,6 +201,13 @@ class Notification(db.Model):
     link = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # SỬA: Thêm back_populates
+    user = db.relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='notifications'
+    )
+
     def __repr__(self):
         return f'<Notification {self.title}>'
 
@@ -183,6 +222,13 @@ class Note(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # SỬA: Thêm back_populates
+    user = db.relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='notes'
+    )
+
     def __repr__(self):
         return f'<Note {self.title}>'
 
@@ -191,36 +237,30 @@ class Salary(db.Model):
     __tablename__ = 'salaries'
 
     id = db.Column(db.Integer, primary_key=True)
-    employee_name = db.Column(db.String(200), nullable=False)  # Tên nhân viên (tự nhập)
-    month = db.Column(db.String(7), nullable=False)  # Format: MM-YYYY
-    work_days_in_month = db.Column(db.Float, nullable=False)  # Quy định số Công/ tháng của tháng
-    actual_work_days = db.Column(db.Float, nullable=False)  # Số công của tháng
+    employee_name = db.Column(db.String(200), nullable=False)
+    month = db.Column(db.String(7), nullable=False)
+    work_days_in_month = db.Column(db.Float, nullable=False)
+    actual_work_days = db.Column(db.Float, nullable=False)
 
-    # Lương cơ bản và trách nhiệm
-    basic_salary = db.Column(db.Float, nullable=False)  # Lương cơ bản/tháng
-    responsibility_salary = db.Column(db.Float, default=0)  # Lương trách nhiệm/tháng
+    basic_salary = db.Column(db.Float, nullable=False)
+    responsibility_salary = db.Column(db.Float, default=0)
 
-    # Lương năng lực
-    capacity_bonuses = db.Column(db.Text)  # Stored as JSON
+    capacity_bonuses = db.Column(db.Text)
+    deductions = db.Column(db.Text)
 
-    # Các khoản khấu trừ
-    deductions = db.Column(db.Text)  # Stored as JSON
-
-    # Các giá trị tính toán
     basic_salary_per_day = db.Column(db.Float)
     responsibility_salary_per_day = db.Column(db.Float)
-    main_salary = db.Column(db.Float)  # Lương chính
-    total_capacity_bonus = db.Column(db.Float)  # Tổng lương năng lực
-    total_income = db.Column(db.Float)  # Tổng thu nhập
-    total_deduction = db.Column(db.Float)  # Tổng khấu trừ
-    net_salary = db.Column(db.Float)  # Lương thực lĩnh
+    main_salary = db.Column(db.Float)
+    total_capacity_bonus = db.Column(db.Float)
+    total_income = db.Column(db.Float)
+    total_deduction = db.Column(db.Float)
+    net_salary = db.Column(db.Float)
 
-    # Metadata
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
+    # Relationships - GIỮ NGUYÊN vì không có conflict
     creator = db.relationship('User', foreign_keys=[created_by])
     share_links = db.relationship(
         'SalaryShareLink',
@@ -230,7 +270,6 @@ class Salary(db.Model):
     )
 
     def get_capacity_bonuses(self):
-        """Parse JSON capacity bonuses"""
         if self.capacity_bonuses:
             try:
                 return json.loads(self.capacity_bonuses)
@@ -239,11 +278,9 @@ class Salary(db.Model):
         return []
 
     def set_capacity_bonuses(self, bonuses_list):
-        """Set capacity bonuses from list"""
         self.capacity_bonuses = json.dumps(bonuses_list)
 
     def get_deductions(self):
-        """Parse JSON deductions"""
         if self.deductions:
             try:
                 return json.loads(self.deductions)
@@ -252,32 +289,19 @@ class Salary(db.Model):
         return []
 
     def set_deductions(self, deductions_list):
-        """Set deductions from list"""
         self.deductions = json.dumps(deductions_list)
 
     def calculate(self):
-        """Tính toán tất cả các giá trị"""
-        # Lương cơ bản/ngày
         self.basic_salary_per_day = self.basic_salary / self.work_days_in_month if self.work_days_in_month > 0 else 0
-
-        # Lương trách nhiệm/ngày
         self.responsibility_salary_per_day = self.responsibility_salary / self.work_days_in_month if self.work_days_in_month > 0 else 0
-
-        # Lương chính = (Lương cơ bản/ngày + Lương trách nhiệm/ngày) * Số công
         self.main_salary = (self.basic_salary_per_day + self.responsibility_salary_per_day) * self.actual_work_days
 
-        # Tổng lương năng lực
         bonuses = self.get_capacity_bonuses()
         self.total_capacity_bonus = sum(item.get('amount', 0) for item in bonuses)
-
-        # Tổng thu nhập
         self.total_income = self.main_salary + self.total_capacity_bonus
 
-        # Tổng khấu trừ
         deductions = self.get_deductions()
         self.total_deduction = sum(item.get('amount', 0) for item in deductions)
-
-        # Lương thực lĩnh
         self.net_salary = self.total_income - self.total_deduction
 
     def __repr__(self):
@@ -293,11 +317,10 @@ class SalaryShareLink(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=False)
-    max_views = db.Column(db.Integer, nullable=True)  # Null = không giới hạn
+    max_views = db.Column(db.Integer, nullable=True)
     view_count = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
 
-    # Relationships
     creator = db.relationship('User', foreign_keys=[created_by])
 
     def __init__(self, *args, **kwargs):
@@ -306,22 +329,15 @@ class SalaryShareLink(db.Model):
             self.token = secrets.token_urlsafe(32)
 
     def is_valid(self):
-        """Kiểm tra link còn hiệu lực không"""
         if not self.is_active:
             return False
-
-        # Kiểm tra hết hạn
         if datetime.utcnow() > self.expires_at:
             return False
-
-        # Kiểm tra số lượt xem
         if self.max_views and self.view_count >= self.max_views:
             return False
-
         return True
 
     def increment_view(self):
-        """Tăng số lượt xem"""
         self.view_count += 1
         db.session.commit()
 
