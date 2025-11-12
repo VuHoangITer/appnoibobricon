@@ -118,6 +118,9 @@ def create_app(config_class=Config):
     from app.salaries import bp as salaries_bp
     app.register_blueprint(salaries_bp, url_prefix='/salaries')
 
+    from app.news import bp as news_bp
+    app.register_blueprint(news_bp, url_prefix='/news')
+
     # Dashboard route
     @app.route('/')
     def index():

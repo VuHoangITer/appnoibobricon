@@ -11,7 +11,7 @@ bp = Blueprint('salaries', __name__)
 
 @bp.route('/')
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def list_salaries():
     """Danh sách bảng lương"""
     # Filter by month and employee name
@@ -47,7 +47,7 @@ def list_salaries():
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def create_salary():
     """Tạo bảng lương mới"""
     if request.method == 'POST':
@@ -124,7 +124,7 @@ def create_salary():
 
 @bp.route('/<int:salary_id>')
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def salary_detail(salary_id):
     """Chi tiết bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
@@ -133,7 +133,7 @@ def salary_detail(salary_id):
 
 @bp.route('/<int:salary_id>/edit', methods=['GET', 'POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def edit_salary(salary_id):
     """Chỉnh sửa bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
@@ -196,7 +196,7 @@ def edit_salary(salary_id):
 
 @bp.route('/<int:salary_id>/delete', methods=['POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def delete_salary(salary_id):
     """Xóa bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
@@ -216,7 +216,7 @@ def delete_salary(salary_id):
 # ========== SHARE LINK ROUTES ==========
 @bp.route('/<int:salary_id>/share-links')
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def manage_share_links(salary_id):
     """Quản lý các link chia sẻ"""
     salary = Salary.query.get_or_404(salary_id)
@@ -234,7 +234,7 @@ def manage_share_links(salary_id):
 
 @bp.route('/<int:salary_id>/create-share-link', methods=['POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def create_share_link(salary_id):
     """Tạo link chia sẻ bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
@@ -280,7 +280,7 @@ def create_share_link(salary_id):
 
 @bp.route('/share-link/<int:link_id>/revoke', methods=['POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def revoke_share_link(link_id):
     """Vô hiệu hóa link chia sẻ"""
     share_link = SalaryShareLink.query.get_or_404(link_id)
@@ -299,7 +299,7 @@ def revoke_share_link(link_id):
 
 @bp.route('/share-link/<int:link_id>/delete', methods=['POST'])
 @login_required
-@role_required(['director', 'manager', 'accountant'])
+@role_required(['director', 'accountant'])
 def delete_share_link(link_id):
     """Xóa link chia sẻ"""
     share_link = SalaryShareLink.query.get_or_404(link_id)

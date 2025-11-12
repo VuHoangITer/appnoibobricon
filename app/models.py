@@ -345,6 +345,87 @@ class SalaryShareLink(db.Model):
         return f'<SalaryShareLink {self.token[:8]}...>'
 
 
+class News(db.Model):
+    """Bài đăng tin tức nội bộ"""
+    __tablename__ = 'news'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_filename = db.Column(db.String(255))  # Tên file ảnh đính kèm
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    author = db.relationship('User', backref='news_posts', foreign_keys=[author_id])
+    comments = db.relationship(
+        'NewsComment',
+        back_populates='news',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='NewsComment.created_at.desc()'
+    )
+    confirmations = db.relationship(
+        'NewsConfirmation',
+        back_populates='news',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+
+    def __repr__(self):
+        return f'<News {self.title}>'
+
+    def get_confirmation_count(self):
+        """Đếm số người đã xác nhận đọc"""
+        return self.confirmations.count()
+
+    def is_confirmed_by(self, user_id):
+        """Kiểm tra user đã xác nhận đọc chưa"""
+        return self.confirmations.filter_by(user_id=user_id).first() is not None
+
+
+class NewsComment(db.Model):
+    """Bình luận trên bài đăng tin tức"""
+    __tablename__ = 'news_comments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    news = db.relationship('News', back_populates='comments')
+    user = db.relationship('User', backref='news_comments', foreign_keys=[user_id])
+
+    def __repr__(self):
+        return f'<NewsComment {self.id} by {self.user_id}>'
+
+
+class NewsConfirmation(db.Model):
+    """Xác nhận đã đọc tin tức"""
+    __tablename__ = 'news_confirmations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    confirmed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    news = db.relationship('News', back_populates='confirmations')
+    user = db.relationship('User', backref='news_confirmations', foreign_keys=[user_id])
+
+    # Unique constraint: mỗi user chỉ confirm 1 lần cho 1 bài
+    __table_args__ = (
+        db.UniqueConstraint('news_id', 'user_id', name='unique_news_user_confirmation'),
+    )
+
+    def __repr__(self):
+        return f'<NewsConfirmation news={self.news_id} user={self.user_id}>'
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

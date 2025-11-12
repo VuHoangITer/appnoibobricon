@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng tin tức mới{% endblock %}
+{% block page_title %}Đăng Tin Tức{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="news-container">
+    <div class="row">
+        <div class="col-lg-10 col-xl-9 mx-auto">
+            <div class="news-card">
+                <div class="news-card-header primary">
+                    <h5 class="mb-0" style="font-weight: 600;">
+                        <i class="bi bi-newspaper"></i> Đăng tin tức mới
+                    </h5>
+                </div>
+                <div class="news-card-body">
+                    <form method="POST" enctype="multipart/form-data" id="newsForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="news-mb-3">
+                            <label for="title" class="news-form-label">
+                                <i class="bi bi-card-heading"></i> Tiêu đề *
+                            </label>
+                            <input type="text"
+                                   class="news-form-control"
+                                   id="title"
+                                   name="title"
+                                   placeholder="Nhập tiêu đề tin tức..."
+                                   required>
+                        </div>
+
+                        <div class="news-mb-3">
+                            <label for="content" class="news-form-label">
+                                <i class="bi bi-text-paragraph"></i> Nội dung *
+                            </label>
+                            <textarea class="news-form-control"
+                                      id="content"
+                                      name="content"
+                                      rows="10"
+                                      placeholder="Nhập nội dung tin tức..."
+                                      required></textarea>
+                            <small style="color: var(--news-text-muted); font-size: 0.75rem;">
+                                <i class="bi bi-info-circle"></i> Hỗ trợ xuống dòng tự động
+                            </small>
+                        </div>
+
+                        <div class="news-mb-3">
+                            <label for="image" class="news-form-label">
+                                <i class="bi bi-image"></i> Hình ảnh đính kèm
+                            </label>
+                            <input type="file"
+                                   class="news-form-control"
+                                   id="image"
+                                   name="image"
+                                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp">
+                            <small style="color: var(--news-text-muted); font-size: 0.75rem;">
+                                Định dạng: PNG, JPG, JPEG, GIF, WEBP (Tối đa 10MB)
+                            </small>
+
+                            <!-- Image Preview -->
+                            <div id="imagePreview" class="news-mt-2" style="display: none;">
+                                <img id="previewImg" src="" alt="Preview" class="news-image" style="max-height: 250px;">
+                                <button type="button" class="news-btn news-mt-1" onclick="clearImage()" style="color: #dc2626; border-color: #dc2626;">
+                                    <i class="bi bi-x"></i> Xóa ảnh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="news-alert info news-mb-3">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <strong>Lưu ý:</strong>
+                            <ul class="mb-0 news-mt-1" style="padding-left: 1.25rem; font-size: 0.85rem;">
+                                <li>Tin tức sẽ được gửi thông báo đến tất cả nhân viên</li>
+                                <li>Mọi người có thể xem và bình luận</li>
+                                <li>Nhân viên cần xác nhận đã đọc tin tức</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="news-btn primary">
+                                <i class="bi bi-send"></i> Đăng tin tức
+                            </button>
+                            <a href="{{ url_for('news.list_news') }}" class="news-btn">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Image preview
+document.getElementById('image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Check file size (10MB)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('Ảnh quá lớn! Kích thước tối đa: 10MB');
+            e.target.value = '';
+            return;
+        }
+        
+        // Preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function clearImage() {
+    document.getElementById('image').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+}
+</script>
+{% endblock %}

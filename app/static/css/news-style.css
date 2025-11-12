@@ -1,0 +1,389 @@
+/* ============================================
+   NEWS MINIMALIST STYLE
+   Phong cách tối giản, nhiều khoảng trắng
+   ============================================ */
+
+/* Màu sắc nhẹ nhàng */
+:root {
+    --news-bg: #fafafa;
+    --news-card-bg: #ffffff;
+    --news-border: #e8e8e8;
+    --news-text: #2c2c2c;
+    --news-text-muted: #6b7280;
+    --news-primary: #4f46e5;
+    --news-primary-light: #eef2ff;
+    --news-success: #10b981;
+    --news-success-light: #d1fae5;
+    --news-shadow: rgba(0, 0, 0, 0.04);
+}
+
+/* Container chung */
+.news-container {
+    background: var(--news-bg);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Card minimalist */
+.news-card {
+    background: var(--news-card-bg);
+    border: 1px solid var(--news-border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px var(--news-shadow);
+}
+/* Header card */
+.news-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--news-border);
+    background: transparent;
+}
+
+.news-card-header.primary {
+    background: linear-gradient(135deg, var(--news-primary) 0%, #6366f1 100%);
+    border: none;
+    color: white;
+}
+
+/* Avatar minimalist */
+.news-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--news-text);
+    border: 2px solid var(--news-border);
+}
+
+.news-avatar.small {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+}
+
+/* Author info */
+.news-author-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--news-text);
+    margin-bottom: 0.125rem;
+}
+
+.news-author-time {
+    font-size: 0.75rem;
+    color: var(--news-text-muted);
+}
+
+/* Badge minimalist */
+.news-badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border-radius: 6px;
+    background: var(--news-primary-light);
+    color: var(--news-primary);
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+
+.news-badge.success {
+    background: var(--news-success-light);
+    color: var(--news-success);
+    border-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Card body */
+.news-card-body {
+    padding: 1.5rem;
+}
+
+/* Title */
+.news-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--news-text);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.news-title-large {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* Content */
+.news-content {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--news-text);
+    white-space: pre-wrap;
+    margin-bottom: 0;
+}
+
+/* Image */
+.news-image {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 1rem;
+    object-fit: cover;
+}
+
+/* Footer */
+.news-card-footer {
+    padding: 1rem 1.5rem;
+    background: var(--news-bg);
+    border-top: 1px solid var(--news-border);
+}
+
+/* Stats */
+.news-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--news-text-muted);
+}
+
+.news-stats i {
+    margin-right: 0.25rem;
+}
+
+/* Button minimalist */
+.news-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid var(--news-border);
+    background: white;
+    color: var(--news-text);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.news-btn:hover {
+    background: var(--news-bg);
+    border-color: var(--news-text-muted);
+    color: var(--news-text);
+}
+
+.news-btn.primary {
+    background: var(--news-primary);
+    color: white;
+    border-color: var(--news-primary);
+}
+
+.news-btn.primary:hover {
+    background: #4338ca;
+    border-color: #4338ca;
+}
+
+.news-btn.success {
+    background: var(--news-success);
+    color: white;
+    border-color: var(--news-success);
+}
+
+.news-btn.success:hover {
+    background: #059669;
+    border-color: #059669;
+}
+
+.news-btn.small {
+    padding: 0.375rem 1rem;
+    font-size: 0.8rem;
+}
+
+/* Form minimalist */
+.news-form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--news-text);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.news-form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--news-border);
+    border-radius: 8px;
+    background: white;
+    color: var(--news-text);
+    transition: all 0.2s ease;
+}
+
+.news-form-control:focus {
+    outline: none;
+    border-color: var(--news-primary);
+    box-shadow: 0 0 0 3px var(--news-primary-light);
+}
+
+.news-form-control::placeholder {
+    color: var(--news-text-muted);
+}
+
+/* Comment section */
+.news-comment {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--news-border);
+}
+
+.news-comment:last-child {
+    border-bottom: none;
+}
+
+.news-comment-bubble {
+    background: var(--news-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--news-border);
+}
+
+.news-comment-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--news-text);
+    white-space: pre-wrap;
+}
+
+/* Alert minimalist */
+.news-alert {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--news-border);
+    background: var(--news-bg);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.news-alert.info {
+    background: var(--news-primary-light);
+    border-color: rgba(79, 70, 229, 0.2);
+    color: var(--news-primary);
+}
+
+.news-alert.success {
+    background: var(--news-success-light);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: var(--news-success);
+}
+
+/* Pagination minimalist */
+.news-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.news-page-link {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--news-border);
+    border-radius: 8px;
+    background: white;
+    color: var(--news-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.news-page-link:hover {
+    background: var(--news-bg);
+    border-color: var(--news-text-muted);
+}
+
+.news-page-link.active {
+    background: var(--news-primary);
+    color: white;
+    border-color: var(--news-primary);
+}
+
+.news-page-link.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Dropdown minimalist */
+.news-dropdown-btn {
+    background: transparent;
+    border: none;
+    color: var(--news-text-muted);
+    padding: 0.25rem 0.5rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.news-dropdown-btn:hover {
+    background: var(--news-bg);
+    color: var(--news-text);
+}
+
+/* Empty state */
+.news-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.news-empty-icon {
+    font-size: 4rem;
+    color: var(--news-border);
+    margin-bottom: 1rem;
+}
+
+.news-empty-text {
+    font-size: 1rem;
+    color: var(--news-text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Confirmed users */
+.news-confirmed-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.875rem;
+    background: var(--news-success-light);
+    color: var(--news-success);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Spacing utilities */
+.news-mt-1 { margin-top: 0.5rem; }
+.news-mt-2 { margin-top: 1rem; }
+.news-mt-3 { margin-top: 1.5rem; }
+.news-mb-1 { margin-bottom: 0.5rem; }
+.news-mb-2 { margin-bottom: 1rem; }
+.news-mb-3 { margin-bottom: 1.5rem; }
+.news-p-0 { padding: 0; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .news-card-header,
+    .news-card-body,
+    .news-card-footer {
+        padding: 1rem;
+    }
+
+    .news-title {
+        font-size: 1rem;
+    }
+
+    .news-content {
+        font-size: 0.875rem;
+    }
+}

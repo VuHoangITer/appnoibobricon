@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Tin Tức Nội Bộ{% endblock %}
+{% block page_title %}Tin Tức Nội Bộ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="news-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0" style="color: var(--news-text); font-weight: 600;">
+            <i class="bi bi-newspaper"></i> Bảng Tin
+        </h5>
+        {% if current_user.role in ['director', 'manager'] %}
+        <a href="{{ url_for('news.create_news') }}" class="news-btn">
+            <i class="bi bi-plus-circle"></i> Đăng tin mới
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- News Feed -->
+    <div class="row">
+        <div class="col-lg-10 col-xl-9 mx-auto">
+            {% if news_posts %}
+            {% for news in news_posts %}
+            <div class="news-card">
+                <!-- Header -->
+                <div class="news-card-header">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="news-avatar">
+                                    {{ news.author.full_name[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="news-author-name">
+                                        {{ news.author.full_name }}
+                                        <span class="news-badge">{{ news.author.role | role_vn }}</span>
+                                    </div>
+                                    <div class="news-author-time">
+                                        <i class="bi bi-clock"></i> {{ news.created_at | vn_datetime }}
+                                        {% if news.updated_at != news.created_at %}
+                                        <span>(đã sửa)</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if news.author_id == current_user.id or current_user.role == 'director' %}
+                        <div class="dropdown">
+                            <button class="news-dropdown-btn" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border: 1px solid var(--news-border);">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('news.edit_news', news_id=news.id) }}">
+                                        <i class="bi bi-pencil"></i> Chỉnh sửa
+                                    </a>
+                                </li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('news.delete_news', news_id=news.id) }}"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa bài đăng này?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="news-card-body">
+                    <h6 class="news-title">{{ news.title }}</h6>
+                    <div class="news-mt-2">
+                        <a href="{{ url_for('news.news_detail', news_id=news.id) }}" class="news-btn small">
+                            <i class="bi bi-arrow-right"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="news-card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="news-stats">
+                            <span>
+                                <i class="bi bi-chat-dots"></i> {{ news.comments.count() }}
+                            </span>
+                            <span>
+                                <i class="bi bi-check-circle"></i> {{ news.get_confirmation_count() }}
+                            </span>
+                        </div>
+                        {% if news.is_confirmed_by(current_user.id) %}
+                        <span class="news-badge success">
+                            <i class="bi bi-check-circle-fill"></i> Đã xác nhận
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <div class="news-pagination">
+                {% if pagination.has_prev %}
+                <a class="news-page-link" href="{{ url_for('news.list_news', page=pagination.prev_num) }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="news-page-link disabled"><i class="bi bi-chevron-left"></i></span>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                    {% if page_num %}
+                        <a class="news-page-link {% if page_num == pagination.page %}active{% endif %}"
+                           href="{{ url_for('news.list_news', page=page_num) }}">{{ page_num }}</a>
+                    {% else %}
+                        <span class="news-page-link disabled">...</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <a class="news-page-link" href="{{ url_for('news.list_news', page=pagination.next_num) }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="news-page-link disabled"><i class="bi bi-chevron-right"></i></span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="news-empty">
+                <div class="news-empty-icon">
+                    <i class="bi bi-newspaper"></i>
+                </div>
+                <p class="news-empty-text">Chưa có tin tức nào.</p>
+                {% if current_user.role in ['director', 'manager'] %}
+                <a href="{{ url_for('news.create_news') }}" class="news-btn primary">
+                    <i class="bi bi-plus-circle"></i> Đăng tin tức đầu tiên
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

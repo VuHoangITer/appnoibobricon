@@ -70,6 +70,13 @@
             </div>
 
             <div class="nav-item">
+                <a href="{{ url_for('news.list_news') }}" class="nav-link {% if 'news' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-newspaper"></i>
+                    <span>Thông báo nội bộ</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
                 <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>
                     <span>Thư viện File</span>
@@ -86,11 +93,11 @@
             <div class="nav-item">
                 <a href="{{ url_for('notifications.list_notifications') }}" class="nav-link {% if 'notifications' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-bell"></i>
-                    <span>Thông báo</span>
+                    <span>Nhắc nhở</span>
                     <span class="badge bg-danger ms-auto" id="sidebar-notif-count" style="display: none;"></span>
                 </a>
             </div>
-            {% if current_user.role in ['director', 'manager', 'accountant'] %}
+            {% if current_user.role in ['director', 'accountant'] %}
                 <div class="nav-section-title">Lương</div>
                 <div class="nav-item">
                     <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">

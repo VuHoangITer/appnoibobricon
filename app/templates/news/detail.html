@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}{{ news.title }}{% endblock %}
+{% block page_title %}Tin Tức{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="news-container">
+    <div class="row">
+        <div class="col-lg-10 col-xl-9 mx-auto">
+            <!-- Main Post -->
+            <div class="news-card">
+                <!-- Header -->
+                <div class="news-card-header">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="news-avatar" style="width: 44px; height: 44px; font-size: 1rem;">
+                                    {{ news.author.full_name[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="news-author-name">
+                                        {{ news.author.full_name }}
+                                        <span class="news-badge">{{ news.author.role | role_vn }}</span>
+                                    </div>
+                                    <div class="news-author-time">
+                                        <i class="bi bi-clock"></i> {{ news.created_at | vn_datetime }}
+                                        {% if news.updated_at != news.created_at %}
+                                        <span>(sửa {{ news.updated_at | vn_datetime }})</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if news.author_id == current_user.id or current_user.role == 'director' %}
+                        <div class="dropdown">
+                            <button class="news-dropdown-btn" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border: 1px solid var(--news-border);">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('news.edit_news', news_id=news.id) }}">
+                                        <i class="bi bi-pencil"></i> Chỉnh sửa
+                                    </a>
+                                </li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('news.delete_news', news_id=news.id) }}"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa bài đăng này?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="news-title-large">{{ news.title }}</h5>
+                </div>
+
+                <!-- Content -->
+                <div class="news-card-body">
+                    <p class="news-content">{{ news.content }}</p>
+
+                    {% if news.image_filename %}
+                    <img src="{{ url_for('news.get_news_image', news_id=news.id) }}"
+                         class="news-image"
+                         alt="{{ news.title }}">
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Button -->
+                <div class="news-card-footer">
+                    {% if is_confirmed %}
+                    <div class="news-alert success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <strong>Bạn đã xác nhận đọc tin tức này</strong>
+                    </div>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('news.confirm_read', news_id=news.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="news-btn success w-100">
+                            <i class="bi bi-check-circle"></i> Xác nhận đã đọc
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <div class="text-center news-mt-2">
+                        <small style="color: var(--news-text-muted); font-size: 0.8rem;">
+                            <i class="bi bi-people"></i>
+                            <strong>{{ confirmations|length }}</strong> người đã xác nhận
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmed Users -->
+            {% if confirmations %}
+            <div class="news-card">
+                <div class="news-card-header">
+                    <h6 class="mb-0" style="font-size: 0.9rem; font-weight: 600;">
+                        <i class="bi bi-check-circle"></i>
+                        Người đã xác nhận ({{ confirmations|length }})
+                    </h6>
+                </div>
+                <div class="news-card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for conf in confirmations %}
+                        <span class="news-confirmed-badge">
+                            <i class="bi bi-person-check"></i> {{ conf.user.full_name }}
+                            <small style="opacity: 0.8;">({{ conf.user.role | role_vn }})</small>
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Comments Section -->
+            <div class="news-card">
+                <div class="news-card-header">
+                    <h6 class="mb-0" style="font-size: 0.9rem; font-weight: 600;">
+                        <i class="bi bi-chat-dots"></i>
+                        Bình luận ({{ comments|length }})
+                    </h6>
+                </div>
+                <div class="news-card-body">
+                    <!-- Add Comment Form -->
+                    <form method="POST" action="{{ url_for('news.add_comment', news_id=news.id) }}" class="news-mb-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="d-flex gap-2">
+                            <div class="news-avatar small">
+                                {{ current_user.full_name[0].upper() }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <textarea class="news-form-control"
+                                          name="content"
+                                          rows="2"
+                                          placeholder="Viết bình luận..."
+                                          required></textarea>
+                                <button type="submit" class="news-btn primary small news-mt-1">
+                                    <i class="bi bi-send"></i> Gửi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Comments List -->
+                    {% if comments %}
+                    <div class="comments-list">
+                        {% for comment in comments %}
+                        <div class="news-comment">
+                            <div class="d-flex gap-2">
+                                <div class="news-avatar small">
+                                    {{ comment.user.full_name[0].upper() }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="news-comment-bubble">
+                                        <div class="d-flex justify-content-between align-items-start news-mb-1">
+                                            <div>
+                                                <strong style="font-size: 0.85rem;">{{ comment.user.full_name }}</strong>
+                                                <span class="news-badge" style="font-size: 0.65rem; margin-left: 0.25rem;">
+                                                    {{ comment.user.role | role_vn }}
+                                                </span>
+                                            </div>
+                                            {% if comment.user_id == current_user.id or current_user.role == 'director' %}
+                                            <form method="POST"
+                                                  action="{{ url_for('news.delete_comment', comment_id=comment.id) }}"
+                                                  onsubmit="return confirm('Xóa bình luận này?');"
+                                                  style="display: inline;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-link text-danger news-p-0" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                        <p class="news-comment-content">{{ comment.content }}</p>
+                                    </div>
+                                    <small style="color: var(--news-text-muted); font-size: 0.7rem; margin-left: 0.5rem;">
+                                        <i class="bi bi-clock"></i> {{ comment.created_at | vn_datetime }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center news-mb-2" style="color: var(--news-text-muted); font-size: 0.85rem;">
+                        Chưa có bình luận nào. Hãy là người đầu tiên!
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="news-mb-3">
+                <a href="{{ url_for('news.list_news') }}" class="news-btn">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
