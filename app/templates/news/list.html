@@ -142,7 +142,7 @@
                 </div>
                 <p class="news-empty-text">Chưa có tin tức nào.</p>
                 {% if current_user.role in ['director', 'manager'] %}
-                <a href="{{ url_for('news.create_news') }}" class="news-btn primary">
+                <a href="{{ url_for('news.create_news') }}" class="news-btn">
                     <i class="bi bi-plus-circle"></i> Đăng tin tức đầu tiên
                 </a>
                 {% endif %}
