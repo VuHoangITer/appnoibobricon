@@ -108,14 +108,32 @@ class Task(db.Model):
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     due_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='PENDING')
+
+    is_urgent = db.Column(db.Boolean, default=False)
+    is_important = db.Column(db.Boolean, default=False)
+    is_recurring = db.Column(db.Boolean, default=False)
+
+    # Performance rating
+    performance_rating = db.Column(db.String(10), nullable=True)
+    rated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    rated_at = db.Column(db.DateTime, nullable=True)
+
+    # THÊM MỚI: Hoàn thành quá hạn
+    completed_overdue = db.Column(db.Boolean, default=False)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # SỬA: Dùng back_populates thay vì backref
     creator = db.relationship(
         'User',
         foreign_keys=[creator_id],
         back_populates='created_tasks'
+    )
+
+    # THÊM relationship cho rater
+    rater = db.relationship(
+        'User',
+        foreign_keys=[rated_by]
     )
 
     assignments = db.relationship(

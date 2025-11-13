@@ -8,29 +8,68 @@
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-header">
-                <h4><i class="bi bi-plus-circle"></i> Nhiệm vụ </h4>
+                <h4><i class="bi bi-plus-circle"></i> Nhiệm vụ mới</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    
+
                     <div class="mb-3">
                         <label for="title" class="form-label">Tiêu đề *</label>
                         <input type="text" class="form-control" id="title" name="title" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="description" class="form-label">Mô tả</label>
                         <textarea class="form-control" id="description" name="description" rows="4"></textarea>
                     </div>
-                    
-                    <!-- THAY ĐỔI: Từ type="date" thành type="datetime-local" -->
+
                     <div class="mb-3">
                         <label for="due_date" class="form-label">Hạn hoàn thành (Ngày và giờ)</label>
                         <input type="datetime-local" class="form-control" id="due_date" name="due_date">
                         <small class="text-muted">Chọn cả ngày và giờ hạn hoàn thành</small>
                     </div>
-                    
+
+                    <!-- THÊM MỚI: 3 thẻ tags -->
+                    {% if current_user.can_assign_tasks() %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-tags"></i> Gắn thẻ cho nhiệm vụ
+                        </label>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_urgent" id="is_urgent">
+                                <label class="form-check-label" for="is_urgent">
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                                    </span>
+                                    <small class="text-muted ms-2">Nhiệm vụ cần xử lý ngay</small>
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_important" id="is_important">
+                                <label class="form-check-label" for="is_important">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                                    </span>
+                                    <small class="text-muted ms-2">Nhiệm vụ có độ ưu tiên cao</small>
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_recurring" id="is_recurring">
+                                <label class="form-check-label" for="is_recurring">
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                                    </span>
+                                    <small class="text-muted ms-2">Nhiệm vụ định kỳ, lặp lại</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-3">
                         <label class="form-label">Gán cho</label>
                         <div class="form-check">
@@ -39,7 +78,7 @@
                                 Tự gán cho mình
                             </label>
                         </div>
-                        
+
                         {% if current_user.can_assign_tasks() %}
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_user" value="user">
@@ -53,7 +92,7 @@
                             <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role | role_vn }})</option>
                             {% endfor %}
                         </select>
-                        
+
                         <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_group" value="group">
                             <label class="form-check-label" for="assign_group">
@@ -68,10 +107,10 @@
                         </select>
                         {% endif %}
                     </div>
-                    
+
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Tạo
+                            <i class="bi bi-check-circle"></i> Tạo nhiệm vụ
                         </button>
                         <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">Hủy</a>
                     </div>

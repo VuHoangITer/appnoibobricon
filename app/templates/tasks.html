@@ -3,6 +3,29 @@
 {% block title %}Danh sách Tasks{% endblock %}
 {% block page_title %}Quản lý Công việc{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Ẩn filter form trên mobile, hiện nút */
+@media (max-width: 767px) {
+    .desktop-filter-form {
+        display: none !important;
+    }
+    .mobile-filter-btn {
+        display: block !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .desktop-filter-form {
+        display: block !important;
+    }
+    .mobile-filter-btn {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-list-task"></i></h2>
@@ -11,14 +34,26 @@
     </a>
 </div>
 
-<!-- Advanced Filter -->
-<div class="card mb-3">
+<!-- THÊM: Nút mở filter trên mobile -->
+<div class="mobile-filter-btn mb-3" style="display: none;">
+    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
+        <i class="bi bi-funnel-fill"></i> Bộ lọc
+        {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
+        <span class="badge bg-danger ms-2">
+            {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) }}
+        </span>
+        {% endif %}
+    </button>
+</div>
+
+<!-- Advanced Filter - Desktop -->
+<div class="card mb-3 desktop-filter-form">
     <div class="card-header">
         <h5 class="mb-0"><i class="bi bi-funnel"></i> Bộ lọc</h5>
     </div>
     <div class="card-body">
         <form method="GET" class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label"><i class="bi bi-flag"></i> Trạng thái:</label>
                 <select class="form-select" name="status">
                     <option value="">Tất cả</option>
@@ -29,20 +64,37 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <!-- THÊM MỚI: Filter theo thẻ -->
+            <div class="col-md-3 col-6">
+                <label class="form-label"><i class="bi bi-tags"></i> Loại thẻ:</label>
+                <select class="form-select" name="tag">
+                    <option value="">Tất cả</option>
+                    <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>
+                        🔴 Khẩn cấp
+                    </option>
+                    <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>
+                        ⭐ Quan trọng
+                    </option>
+                    <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>
+                        🔄 Lặp lại
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-3 col-6">
                 <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
                 <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
                 <small class="text-muted">Lọc theo hạn hoàn thành</small>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
                 <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
                 <small class="text-muted">Lọc theo hạn hoàn thành</small>
             </div>
 
             {% if current_user.role in ['director', 'manager'] %}
-            <div class="col-md-3">
+            <div class="col-md-12">
                 <label class="form-label"><i class="bi bi-person"></i> Người được giao nv:</label>
                 <select class="form-select" name="assigned_user">
                     <option value="">-- Tất cả --</option>
@@ -64,12 +116,21 @@
                 </a>
 
                 <!-- Show filter info -->
-                {% if status_filter or date_from or date_to or assigned_user %}
+                {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
                 <span class="ms-3 text-muted">
                     <i class="bi bi-info-circle"></i>
                     Đang lọc:
                     {% if status_filter %}
                         <span class="badge bg-secondary">{{ status_filter | status_vn }}</span>
+                    {% endif %}
+                    {% if tag_filter %}
+                        {% if tag_filter == 'urgent' %}
+                        <span class="badge bg-danger">Khẩn cấp</span>
+                        {% elif tag_filter == 'important' %}
+                        <span class="badge bg-warning">Quan trọng</span>
+                        {% elif tag_filter == 'recurring' %}
+                        <span class="badge bg-info">Lặp lại</span>
+                        {% endif %}
                     {% endif %}
                     {% if date_from %}
                         <span class="badge bg-secondary">Từ: {{ date_from }}</span>
@@ -88,6 +149,126 @@
                 {% endif %}
             </div>
         </form>
+    </div>
+</div>
+
+<!-- THÊM: Modal Filter cho Mobile -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" action="{{ url_for('tasks.list_tasks') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-flag"></i> Trạng thái:
+                        </label>
+                        <select class="form-select" name="status">
+                            <option value="">Tất cả</option>
+                            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
+                            <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                            <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                            <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-tags"></i> Loại thẻ:
+                        </label>
+                        <select class="form-select" name="tag">
+                            <option value="">Tất cả</option>
+                            <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>
+                                🔴 Khẩn cấp
+                            </option>
+                            <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>
+                                ⭐ Quan trọng
+                            </option>
+                            <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>
+                                🔄 Lặp lại
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-range"></i> Từ ngày:
+                        </label>
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                        <small class="text-muted">Lọc theo hạn hoàn thành</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-range"></i> Đến ngày:
+                        </label>
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                        <small class="text-muted">Lọc theo hạn hoàn thành</small>
+                    </div>
+
+                    {% if current_user.role in ['director', 'manager'] %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i> Người được giao nhiệm vụ:
+                        </label>
+                        <select class="form-select" name="assigned_user">
+                            <option value="">-- Tất cả --</option>
+                            {% for user in all_users %}
+                            <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
+                                {{ user.full_name }} ({{ user.role | role_vn }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Hiển thị filter đang áp dụng -->
+                    {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-info-circle"></i> Đang lọc:
+                            {% if status_filter %}
+                            <br>• Trạng thái: {{ status_filter | status_vn }}
+                            {% endif %}
+                            {% if tag_filter %}
+                            <br>• Thẻ:
+                                {% if tag_filter == 'urgent' %}Khẩn cấp
+                                {% elif tag_filter == 'important' %}Quan trọng
+                                {% elif tag_filter == 'recurring' %}Lặp lại
+                                {% endif %}
+                            {% endif %}
+                            {% if date_from %}
+                            <br>• Từ: {{ date_from }}
+                            {% endif %}
+                            {% if date_to %}
+                            <br>• Đến: {{ date_to }}
+                            {% endif %}
+                            {% if assigned_user and all_users %}
+                                {% for user in all_users %}
+                                    {% if user.id == assigned_user|int %}
+                                    <br>• Người: {{ user.full_name }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Áp dụng
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -148,6 +329,37 @@
                                 {% if task | is_overdue %}
                                 <span class="badge bg-danger ms-2">QUÁ HẠN</span>
                                 {% endif %}
+                                <!-- Icon hoàn thành quá hạn -->
+                                {% if task.status == 'DONE' and task.completed_overdue %}
+                                <span class="badge bg-danger text-dark ms-2">
+                                    <i class="bi bi-clock-history"></i> QUÁ HẠN
+                                </span>
+                                {% endif %}
+                                <!--  Icon đánh giá -->
+                                {% if task.status == 'DONE' and task.performance_rating %}
+                                    {% if task.performance_rating == 'good' %}
+                                    <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt" style="font-size: 1.2rem;"></i>
+                                    {% else %}
+                                    <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện" style="font-size: 1.2rem;"></i>
+                                    {% endif %}
+                                {% endif %}
+                                <!--  Hiển thị các thẻ tags -->
+                                <br>
+                                {% if task.is_urgent %}
+                                <span class="badge bg-danger mt-1">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                                </span>
+                                {% endif %}
+                                {% if task.is_important %}
+                                <span class="badge bg-warning text-dark mt-1">
+                                    <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                                </span>
+                                {% endif %}
+                                {% if task.is_recurring %}
+                                <span class="badge bg-info text-dark mt-1">
+                                    <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                                </span>
+                                {% endif %}
                             </td>
                             <td data-label="Người tạo">{{ task.creator.full_name }}</td>
                             <td data-label="Người được giao">
@@ -202,10 +414,9 @@
         {% if pagination.pages > 1 %}
         <nav aria-label="Task pagination" class="mt-4">
             <ul class="pagination justify-content-center">
-                <!-- Previous button -->
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                     {% if pagination.has_prev %}
-                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                         <i class="bi bi-chevron-left"></i> Trước
                     </a>
                     {% else %}
@@ -213,7 +424,6 @@
                     {% endif %}
                 </li>
 
-                <!-- Page numbers -->
                 {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                     {% if page_num %}
                         {% if page_num == pagination.page %}
@@ -222,7 +432,7 @@
                         </li>
                         {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                                 {{ page_num }}
                             </a>
                         </li>
@@ -234,10 +444,9 @@
                     {% endif %}
                 {% endfor %}
 
-                <!-- Next button -->
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                     {% if pagination.has_next %}
-                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                         Sau <i class="bi bi-chevron-right"></i>
                     </a>
                     {% else %}
@@ -247,7 +456,6 @@
             </ul>
         </nav>
 
-        <!-- Page info -->
         <div class="text-center text-muted">
             <small>
                 Hiển thị {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
@@ -275,7 +483,6 @@
 {% block scripts %}
 {% if current_user.role in ['director', 'manager'] %}
 <script>
-// Select all checkbox
 document.getElementById('selectAll')?.addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.task-checkbox');
     checkboxes.forEach(checkbox => {
@@ -284,44 +491,35 @@ document.getElementById('selectAll')?.addEventListener('change', function() {
     updateBulkDeleteButton();
 });
 
-// Individual checkbox change
 document.querySelectorAll('.task-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
         updateBulkDeleteButton();
-
-        // Update "select all" checkbox
         const allCheckboxes = document.querySelectorAll('.task-checkbox');
         const checkedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
         const selectAllCheckbox = document.getElementById('selectAll');
-
         if (selectAllCheckbox) {
             selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
         }
     });
 });
 
-// Update bulk delete button state
 function updateBulkDeleteButton() {
     const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
     const selectedCount = document.getElementById('selectedCount');
-
     if (bulkDeleteBtn && selectedCount) {
         selectedCount.textContent = checkedBoxes.length;
         bulkDeleteBtn.disabled = checkedBoxes.length === 0;
     }
 }
 
-// Confirm bulk delete
 function confirmBulkDelete() {
     const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
     const count = checkedBoxes.length;
-
     if (count === 0) {
         alert('Vui lòng chọn ít nhất một nhiệm vụ để xóa.');
         return;
     }
-
     if (confirm(`Bạn có chắc chắn muốn xóa ${count} nhiệm vụ đã chọn?\n\nHành động này không thể hoàn tác!`)) {
         document.getElementById('bulkDeleteForm').submit();
     }
