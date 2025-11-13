@@ -14,9 +14,6 @@ csrf = CSRFProtect()
 # THÊM: Import scheduler
 scheduler = None
 
-# THÊM: Import socketio (phải import sau khi định nghĩa, nhưng trước create_app)
-from app.websocket import socketio
-
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -27,13 +24,6 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
-
-    # THÊM: Initialize SocketIO
-    socketio.init_app(app,
-                      cors_allowed_origins="*",
-                      async_mode='threading',
-                      logger=True,
-                      engineio_logger=True)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Vui lòng đăng nhập để truy cập trang này.'

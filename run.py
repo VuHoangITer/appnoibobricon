@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """
-Run script for Flask application with SocketIO support
+Run script for Flask application
 Usage: python run.py (development) or gunicorn run:app (production)
 """
 
 from app import create_app, db
-from app.websocket import socketio  # THÊM: Import socketio
 import os
 
 # Tạo Flask app instance
@@ -31,18 +30,15 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_ENV') == 'development'
 
     print("=" * 50)
-    print(f"Starting Flask application with SocketIO...")
+    print(f"Starting Flask application...")
     print(f"Environment: {os.environ.get('FLASK_ENV', 'production')}")
     print(f"Debug mode: {debug}")
     print(f"Port: {port}")
     print(f"URL: http://localhost:{port}")
     print("=" * 50)
 
-    # THAY ĐỔI: Dùng socketio.run thay vì app.run
-    socketio.run(
-        app,
+    app.run(
         debug=debug,
         host='0.0.0.0',
-        port=port,
-        allow_unsafe_werkzeug=True
+        port=port
     )

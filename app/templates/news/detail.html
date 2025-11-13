@@ -8,9 +8,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- THÊM: Data attributes cho JavaScript -->
-<body data-user-id="{{ current_user.id }}" data-user-role="{{ current_user.role }}">
-
 <div class="news-container">
     <div class="row">
         <div class="col-lg-10 col-xl-9 mx-auto">
@@ -133,7 +130,7 @@
                     </h6>
                 </div>
                 <div class="news-card-body">
-                    <!-- Add Comment Form - THÊM: onsubmit handler được xử lý bởi JS -->
+                    <!-- Add Comment Form -->
                     <form method="POST" action="{{ url_for('news.add_comment', news_id=news.id) }}" class="news-mb-3">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="d-flex gap-2">
@@ -157,7 +154,7 @@
                     {% if comments %}
                     <div class="comments-list">
                         {% for comment in comments %}
-                        <div class="news-comment" id="comment-{{ comment.id }}">
+                        <div class="news-comment">
                             <div class="d-flex gap-2">
                                 <div class="news-avatar small">
                                     {{ comment.user.full_name[0].upper() }}
@@ -172,10 +169,9 @@
                                                 </span>
                                             </div>
                                             {% if comment.user_id == current_user.id or current_user.role == 'director' %}
-                                            <!-- THÊM: onsubmit handler -->
                                             <form method="POST"
                                                   action="{{ url_for('news.delete_comment', comment_id=comment.id) }}"
-                                                  onsubmit="return handleDeleteComment(event, {{ comment.id }});"
+                                                  onsubmit="return confirm('Xóa bình luận này?');"
                                                   style="display: inline;">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                 <button type="submit" class="btn btn-link text-danger news-p-0" style="font-size: 0.85rem;">
@@ -211,9 +207,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<script src="{{ url_for('static', filename='js/news-realtime.js') }}"></script>
 {% endblock %}
