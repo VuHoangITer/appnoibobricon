@@ -3,52 +3,448 @@
 {% block title %}Thông báo{% endblock %}
 {% block page_title %}Thông báo{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Animation for notification removal */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+}
+
+.notification-removing {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Toast notification */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 250px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Button hover effects */
+.btn-action {
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Notification item hover */
+.list-group-item {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-bell"></i></h2>
-    <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button type="submit" class="btn btn-sm btn-secondary">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2>
+        <i class="bi bi-bell"></i> Thông báo
+        <span class="badge bg-primary ms-2" id="total-count">{{ notifications|length }}</span>
+        <span class="badge bg-danger ms-1" id="unread-badge">
+            {{ notifications|selectattr('read', 'equalto', False)|list|length }}
+        </span>
+    </h2>
+
+    <div class="d-flex gap-2">
+        <!-- Đánh dấu tất cả đã đọc -->
+        <button type="button" class="btn btn-sm btn-secondary btn-action" id="mark-all-read-btn">
             <i class="bi bi-check-all"></i> Đánh dấu tất cả đã đọc
         </button>
-    </form>
+
+        <!-- Xóa dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-sm btn-danger dropdown-toggle btn-action" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-trash"></i> Xóa
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <button class="dropdown-item" id="delete-read-btn">
+                        <i class="bi bi-check-circle"></i> Xóa đã đọc
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <button class="dropdown-item text-danger" id="delete-all-btn">
+                        <i class="bi bi-trash-fill"></i> Xóa tất cả
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <div class="card">
     <div class="card-body">
         {% if notifications %}
-        <div class="list-group">
+        <div class="list-group" id="notifications-list">
             {% for notif in notifications %}
-            <div class="list-group-item {% if not notif.read %}list-group-item-primary{% endif %}">
+            <div class="list-group-item {% if not notif.read %}list-group-item-primary{% endif %}"
+                 data-notif-id="{{ notif.id }}"
+                 data-read="{{ notif.read|lower }}">
                 <div class="d-flex w-100 justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="mb-1">
-                            {% if not notif.read %}<i class="bi bi-circle-fill text-primary" style="font-size: 0.5rem;"></i>{% endif %}
+                            {% if not notif.read %}
+                            <i class="bi bi-circle-fill text-primary" style="font-size: 0.5rem;"></i>
+                            {% endif %}
                             {{ notif.title }}
                         </h6>
                         <p class="mb-1">{{ notif.body }}</p>
-                        <small class="text-muted">{{ notif.created_at | vn_datetime }}</small>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> {{ notif.created_at | vn_datetime }}
+                        </small>
                     </div>
-                    <div class="d-flex gap-2 ms-3">
+
+                    <div class="d-flex gap-2 ms-3 flex-wrap">
+                        <!-- Nút đánh dấu đã đọc (chỉ hiện khi chưa đọc) -->
+                        {% if not notif.read %}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success mark-read-btn"
+                                data-notif-id="{{ notif.id }}"
+                                title="Đánh dấu đã đọc">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        {% endif %}
+
+                        <!-- Nút xem chi tiết -->
                         {% if notif.link %}
                         <a href="{{ notif.link }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-eye"></i> Xem chi tiết
+                            <i class="bi bi-eye"></i> Xem
                         </a>
                         {% endif %}
-                        <form method="POST" action="{{ url_for('notifications.delete_notification', notif_id=notif.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa thông báo này?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn btn-sm btn-danger">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+
+                        <!-- Nút xóa -->
+                        <button type="button"
+                                class="btn btn-sm btn-danger delete-btn"
+                                data-notif-id="{{ notif.id }}"
+                                title="Xóa">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-muted">Bạn không có thông báo nào.</p>
+        <p class="text-center text-muted mb-0" id="no-notifications-msg">
+            <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.3;"></i><br>
+            Bạn không có thông báo nào.
+        </p>
         {% endif %}
     </div>
 </div>
+
+<script>
+(function() {
+    'use strict';
+
+    const CSRF_TOKEN = '{{ csrf_token() }}';
+
+    // Toast notification helper
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification alert alert-${type} alert-dismissible fade show`;
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Update badge counts
+    function updateCounts(unreadCount, totalCount = null) {
+        const unreadBadge = document.getElementById('unread-badge');
+        const totalBadge = document.getElementById('total-count');
+
+        if (unreadBadge) {
+            unreadBadge.textContent = unreadCount;
+            unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+        }
+
+        if (totalCount !== null && totalBadge) {
+            totalBadge.textContent = totalCount;
+        }
+    }
+
+    // Check if any notifications left
+    function checkEmptyState() {
+        const list = document.getElementById('notifications-list');
+        const items = list ? list.querySelectorAll('[data-notif-id]') : [];
+
+        if (items.length === 0) {
+            if (list) list.remove();
+
+            const cardBody = document.querySelector('.card-body');
+            if (!document.getElementById('no-notifications-msg')) {
+                cardBody.innerHTML = `
+                    <p class="text-center text-muted mb-0" id="no-notifications-msg">
+                        <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.3;"></i><br>
+                        Bạn không có thông báo nào.
+                    </p>
+                `;
+            }
+        }
+    }
+
+    // Mark single notification as read
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.mark-read-btn');
+        if (!btn) return;
+
+        const notifId = btn.getAttribute('data-notif-id');
+        const notifItem = document.querySelector(`[data-notif-id="${notifId}"]`);
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+        try {
+            const response = await fetch(`/notifications/${notifId}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `csrf_token=${CSRF_TOKEN}`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Remove unread styling
+                notifItem.classList.remove('list-group-item-primary');
+                notifItem.setAttribute('data-read', 'true');
+
+                // Remove unread dot
+                const dot = notifItem.querySelector('.bi-circle-fill');
+                if (dot) dot.remove();
+
+                // Remove the mark-read button itself
+                btn.remove();
+
+                // Update counts
+                updateCounts(data.unread_count);
+
+                showToast('Đã đánh dấu đã đọc', 'success');
+            } else {
+                throw new Error(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Không thể đánh dấu đã đọc', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check"></i>';
+        }
+    });
+
+    // Delete single notification
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.delete-btn');
+        if (!btn) return;
+
+        if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+
+        const notifId = btn.getAttribute('data-notif-id');
+        const notifItem = document.querySelector(`[data-notif-id="${notifId}"]`);
+
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`/notifications/${notifId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `csrf_token=${CSRF_TOKEN}`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Animate removal
+                notifItem.classList.add('notification-removing');
+                setTimeout(() => {
+                    notifItem.remove();
+                    updateCounts(data.unread_count, data.total_count);
+                    checkEmptyState();
+                    showToast('Đã xóa thông báo', 'success');
+                }, 300);
+            } else {
+                throw new Error(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Không thể xóa thông báo', 'danger');
+            btn.disabled = false;
+        }
+    });
+
+    // Mark all as read
+    document.getElementById('mark-all-read-btn')?.addEventListener('click', async function() {
+        const unreadItems = document.querySelectorAll('[data-read="false"]');
+        if (unreadItems.length === 0) {
+            showToast('Không có thông báo chưa đọc', 'info');
+            return;
+        }
+
+        this.disabled = true;
+        const originalHtml = this.innerHTML;
+        this.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+        try {
+            const response = await fetch('/notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `csrf_token=${CSRF_TOKEN}`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update UI for all unread notifications
+                unreadItems.forEach(item => {
+                    item.classList.remove('list-group-item-primary');
+                    item.setAttribute('data-read', 'true');
+
+                    const dot = item.querySelector('.bi-circle-fill');
+                    if (dot) dot.remove();
+
+                    const markBtn = item.querySelector('.mark-read-btn');
+                    if (markBtn) markBtn.remove();
+                });
+
+                updateCounts(0);
+                showToast(`Đã đánh dấu ${unreadItems.length} thông báo đã đọc`, 'success');
+            } else {
+                throw new Error(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Không thể đánh dấu tất cả đã đọc', 'danger');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = originalHtml;
+        }
+    });
+
+    // Delete read notifications
+    document.getElementById('delete-read-btn')?.addEventListener('click', async function() {
+        const readItems = document.querySelectorAll('[data-read="true"]');
+        if (readItems.length === 0) {
+            showToast('Không có thông báo đã đọc để xóa', 'info');
+            return;
+        }
+
+        if (!confirm(`Xóa ${readItems.length} thông báo đã đọc?`)) return;
+
+        try {
+            const response = await fetch('/notifications/delete-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `csrf_token=${CSRF_TOKEN}&type=read`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Animate removal of read items
+                readItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('notification-removing');
+                        setTimeout(() => {
+                            item.remove();
+                            if (index === readItems.length - 1) {
+                                updateCounts(data.unread_count, data.total_count);
+                                checkEmptyState();
+                                showToast(`Đã xóa ${data.deleted_count} thông báo`, 'success');
+                            }
+                        }, 300);
+                    }, index * 50);
+                });
+            } else {
+                throw new Error(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Không thể xóa thông báo', 'danger');
+        }
+    });
+
+    // Delete all notifications
+    document.getElementById('delete-all-btn')?.addEventListener('click', async function() {
+        const allItems = document.querySelectorAll('[data-notif-id]');
+        if (allItems.length === 0) return;
+
+        if (!confirm(`Xóa tất cả ${allItems.length} thông báo?`)) return;
+
+        try {
+            const response = await fetch('/notifications/delete-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `csrf_token=${CSRF_TOKEN}&type=all`
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Animate removal of all items
+                allItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('notification-removing');
+                        setTimeout(() => {
+                            item.remove();
+                            if (index === allItems.length - 1) {
+                                updateCounts(0, 0);
+                                checkEmptyState();
+                                showToast(`Đã xóa ${data.deleted_count} thông báo`, 'success');
+                            }
+                        }, 300);
+                    }, index * 50);
+                });
+            } else {
+                throw new Error(data.error || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Không thể xóa thông báo', 'danger');
+        }
+    });
+
+    // Initialize badge visibility
+    const unreadCount = document.querySelectorAll('[data-read="false"]').length;
+    updateCounts(unreadCount);
+
+})();
+</script>
 {% endblock %}

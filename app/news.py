@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
@@ -35,12 +35,87 @@ def list_news():
                            pagination=pagination)
 
 
+# ============ API ROUTE - PHẢI ĐẶT TRƯỚC /<int:news_id> ============
+@bp.route('/<int:news_id>/comments/latest')
+@login_required
+def get_latest_comments(news_id):
+    """API để lấy comments mới nhất (dùng cho polling)"""
+    from app.utils import utc_to_vn
+
+    try:
+        news = News.query.get_or_404(news_id)
+
+        # Lấy timestamp từ query parameter
+        last_timestamp = request.args.get('last_timestamp', type=float, default=0)
+
+        print(f"[DEBUG] API called - news_id={news_id}, last_timestamp={last_timestamp}")
+
+        # Convert timestamp về datetime
+        if last_timestamp > 0:
+            last_datetime = datetime.fromtimestamp(last_timestamp)
+            # Lấy comments mới hơn last_datetime
+            comments = NewsComment.query.filter(
+                NewsComment.news_id == news_id,
+                NewsComment.created_at > last_datetime
+            ).order_by(NewsComment.created_at.asc()).all()
+            print(f"[DEBUG] Found {len(comments)} new comments after {last_datetime}")
+        else:
+            # Lần đầu tiên, lấy tất cả
+            comments = NewsComment.query.filter_by(
+                news_id=news_id
+            ).order_by(NewsComment.created_at.desc()).all()
+            print(f"[DEBUG] Initial load, found {len(comments)} total comments")
+
+        # Format comments thành JSON
+        comments_data = []
+        for comment in comments:
+            # Convert UTC to Vietnam time for display
+            vn_time = utc_to_vn(comment.created_at)
+
+            comments_data.append({
+                'id': comment.id,
+                'content': comment.content,
+                'created_at': comment.created_at.isoformat(),
+                'created_at_timestamp': comment.created_at.timestamp(),
+                'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
+                'user': {
+                    'id': comment.user_id,
+                    'full_name': comment.user.full_name,
+                    'role': comment.user.role,
+                    'avatar_letter': comment.user.full_name[0].upper()
+                },
+                'can_delete': comment.user_id == current_user.id or current_user.role == 'director'
+            })
+
+        total_count = NewsComment.query.filter_by(news_id=news_id).count()
+
+        response_data = {
+            'success': True,
+            'comments': comments_data,
+            'total_count': total_count,
+            'server_time': datetime.utcnow().isoformat()
+        }
+
+        print(f"[DEBUG] Returning {len(comments_data)} comments, total={total_count}")
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        print(f"[ERROR] get_latest_comments: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @bp.route('/<int:news_id>')
 @login_required
 def news_detail(news_id):
     """Chi tiết bài đăng"""
     news = News.query.get_or_404(news_id)
-    comments = news.comments.all()
+    comments = news.comments.order_by(NewsComment.created_at.desc()).all()
 
     # Kiểm tra user đã confirm chưa
     is_confirmed = news.is_confirmed_by(current_user.id)
@@ -231,10 +306,20 @@ def delete_news(news_id):
 @login_required
 def add_comment(news_id):
     """Thêm bình luận"""
+    from app.utils import utc_to_vn
+
+    # Check if it's an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     news = News.query.get_or_404(news_id)
     content = request.form.get('content')
 
     if not content or not content.strip():
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'error': 'Nội dung bình luận không được để trống.'
+            }), 400
         flash('Nội dung bình luận không được để trống.', 'danger')
         return redirect(url_for('news.news_detail', news_id=news_id))
 
@@ -244,6 +329,9 @@ def add_comment(news_id):
         content=content.strip()
     )
     db.session.add(comment)
+    db.session.commit()
+
+    print(f"[DEBUG] New comment added: id={comment.id}, created_at={comment.created_at}")
 
     # Gửi thông báo cho tác giả bài viết (nếu không phải chính họ comment)
     if news.author_id != current_user.id:
@@ -255,27 +343,64 @@ def add_comment(news_id):
             link=f'/news/{news.id}'
         )
         db.session.add(notif)
+        db.session.commit()
 
-    db.session.commit()
+    # If AJAX request, return JSON
+    if is_ajax:
+        vn_time = utc_to_vn(comment.created_at)
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': comment.id,
+                'content': comment.content,
+                'created_at': comment.created_at.isoformat(),
+                'created_at_timestamp': comment.created_at.timestamp(),
+                'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
+                'user': {
+                    'id': comment.user_id,
+                    'full_name': comment.user.full_name,
+                    'role': comment.user.role,
+                    'avatar_letter': comment.user.full_name[0].upper()
+                },
+                'can_delete': True  # User just created it
+            }
+        })
 
     flash('Đã thêm bình luận.', 'success')
     return redirect(url_for('news.news_detail', news_id=news_id))
 
 
-@bp.route('/comment/<int:comment_id>/delete', methods=['POST'])
+@bp.route('/comment/<int:comment_id>/delete', methods=['POST', 'DELETE'])
 @login_required
 def delete_comment(comment_id):
     """Xóa bình luận - chỉ người tạo hoặc Director"""
+    # Check if it's an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     comment = NewsComment.query.get_or_404(comment_id)
     news_id = comment.news_id
 
     # Kiểm tra quyền
     if comment.user_id != current_user.id and current_user.role != 'director':
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'error': 'Bạn không có quyền xóa bình luận này.'
+            }), 403
         flash('Bạn không có quyền xóa bình luận này.', 'danger')
         return redirect(url_for('news.news_detail', news_id=news_id))
 
     db.session.delete(comment)
     db.session.commit()
+
+    print(f"[DEBUG] Comment deleted: id={comment_id}")
+
+    # If AJAX request, return JSON
+    if is_ajax:
+        return jsonify({
+            'success': True,
+            'comment_id': comment_id
+        })
 
     flash('Đã xóa bình luận.', 'success')
     return redirect(url_for('news.news_detail', news_id=news_id))
@@ -319,3 +444,17 @@ def get_news_image(news_id):
 
     news_images_folder = os.path.join(current_app.root_path, 'uploads', 'news_images')
     return send_from_directory(news_images_folder, news.image_filename)
+
+
+@bp.route('/<int:news_id>/comments/deleted')
+@login_required
+def get_deleted_comments(news_id):
+    """API để lấy danh sách comment IDs đã bị xóa (cho realtime sync)"""
+    # Lấy danh sách comment IDs hiện tại
+    current_comment_ids = [c.id for c in NewsComment.query.filter_by(news_id=news_id).all()]
+
+    return jsonify({
+        'success': True,
+        'existing_ids': current_comment_ids,
+        'total_count': len(current_comment_ids)
+    })

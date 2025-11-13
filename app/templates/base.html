@@ -14,6 +14,9 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
 
+    <!-- Preload Logo Image - ƯU TIÊN LOAD TRƯỚC -->
+    <link rel="preload" href="{{ url_for('static', filename='images/logo.png') }}" as="image">
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,6 +33,123 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+    <style>
+        /* ============================================
+           LOGO PRELOAD & FIXED HEIGHT
+           ============================================ */
+        .sidebar-header {
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* CRITICAL: Không co lại */
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px;
+            min-height: 80px;
+        }
+
+        .sidebar-brand img {
+            max-width: 160px;
+            height: auto;
+            min-height: 48px;
+            opacity: 0;
+            transition: opacity 0.2s ease-in;
+        }
+
+        .sidebar-brand img.loaded {
+            opacity: 1;
+        }
+
+        .sidebar-brand::before {
+            content: '';
+            display: block;
+            width: 160px;
+            height: 48px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+            position: absolute;
+        }
+
+        .sidebar-brand img.loaded ~ .sidebar-brand::before,
+        .sidebar-brand:has(img.loaded)::before {
+            display: none;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ============================================
+           CRITICAL: SIDEBAR FLEXBOX LAYOUT FIX
+           ============================================ */
+        .sidebar {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        .sidebar-nav {
+            flex: 1 1 auto !important; /* Chiếm hết không gian còn lại */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding: 20px 0 !important;
+        }
+
+        .sidebar-footer {
+            position: relative !important; /* CRITICAL: BỎ absolute */
+            flex-shrink: 0 !important; /* Không co lại */
+            margin-top: 0 !important; /* Không cần margin */
+        }
+
+        /* ============================================
+           SPACING & BORDERS
+           ============================================ */
+        .nav-section-title {
+            margin-top: 20px !important;
+            margin-bottom: 8px !important;
+            padding-top: 20px !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .nav-section-title + .nav-item {
+            margin-top: 5px !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar-header {
+                min-height: 70px;
+            }
+            .sidebar-brand {
+                min-height: 70px;
+                padding: 12px;
+            }
+            .sidebar-brand img {
+                max-width: 140px;
+                min-height: 42px;
+            }
+            .sidebar-brand::before {
+                width: 140px;
+                height: 42px;
+            }
+
+            /* Mobile: Footer vẫn phải relative */
+            .sidebar-footer {
+                position: relative !important;
+            }
+        }
+    </style>
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -39,8 +159,9 @@
         <div class="sidebar-header">
             <a href="{{ url_for('tasks.dashboard') }}" class="sidebar-brand">
                 <img src="{{ url_for('static', filename='images/logo.png') }}"
-                 alt="BRICON Logo"
-                 style="max-width: 160px; height: auto;">
+                     alt="BRICON Logo"
+                     id="sidebar-logo"
+                     onload="this.classList.add('loaded')">
             </a>
         </div>
 
@@ -188,6 +309,17 @@
         }
     </script>
 
+    <!-- Preload Logo Script - Đảm bảo logo load ngay -->
+    <script>
+        // Force load logo immediately
+        (function() {
+            const logo = document.getElementById('sidebar-logo');
+            if (logo && logo.complete) {
+                logo.classList.add('loaded');
+            }
+        })();
+    </script>
+
     <!-- Custom JS -->
     <script>
         // Mobile Menu Toggle
@@ -240,14 +372,14 @@
         setInterval(updateNotifCount, 30000);
         {% endif %}
 
-        // Auto-hide alerts after 5 seconds
+        // Auto-hide alerts
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });
-        }, 5000);
+        }, 3000);
     </script>
 
     {% block scripts %}{% endblock %}

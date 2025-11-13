@@ -4,6 +4,66 @@
 
 {% block content %}
 <style>
+  /* Mobile responsive styles */
+  @media (max-width: 768px) {
+    .salary-info-table {
+      font-size: 0.9rem;
+    }
+
+    .salary-info-table tbody tr {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+    }
+
+    .salary-info-table tbody td {
+      display: block !important;
+      width: 100% !important;
+      padding: 0.25rem 0 !important;
+      border: none !important;
+      text-align: left !important;
+    }
+
+    .salary-info-table tbody td:first-child {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 0.25rem;
+    }
+
+    .salary-info-table tbody td:last-child {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0d6efd;
+    }
+
+    .salary-info-table tbody .table-light td:last-child {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .salary-info-table tbody .table-primary td:last-child,
+    .salary-info-table tbody .table-success td:last-child,
+    .salary-info-table tbody .table-warning td:last-child {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .salary-info-table tbody .table-primary td:last-child {
+      color: #0d6efd;
+    }
+
+    .salary-info-table tbody .table-success td:last-child {
+      color: #198754;
+    }
+
+    .salary-info-table tbody .table-warning td:last-child {
+      color: #dc3545;
+    }
+  }
+
   @media print {
     .no-print {
       display: none !important;
@@ -306,93 +366,100 @@
         </h5>
       </div>
       <div class="card-body">
-        <table class="table table-borderless">
-          <tr>
-            <td width="60%"><strong>Lương cơ bản/tháng:</strong></td>
-            <td class="text-end">
-              {{ "{:,.0f}".format(salary.basic_salary) }} ₫
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Lương trách nhiệm/tháng:</strong></td>
-            <td class="text-end">
-              {{ "{:,.0f}".format(salary.responsibility_salary) }} ₫
-            </td>
-          </tr>
-          <tr class="table-light">
-            <td>Lương cơ bản/ngày:</td>
-            <td class="text-end">
-              {{ "{:,.0f}".format(salary.basic_salary_per_day) }} ₫
-            </td>
-          </tr>
-          <tr class="table-light">
-            <td>Lương trách nhiệm/ngày:</td>
-            <td class="text-end">
-              {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }} ₫
-            </td>
-          </tr>
-          <tr class="table-primary">
-            <td>
-              <strong>Lương chính ({{ salary.actual_work_days }} ngày):</strong>
-            </td>
-            <td class="text-end">
-              <strong>{{ "{:,.0f}".format(salary.main_salary) }} ₫</strong>
-            </td>
-          </tr>
+        <table class="table table-borderless salary-info-table">
+          <tbody>
+            <tr>
+              <td width="60%"><strong>Lương cơ bản/tháng:</strong></td>
+              <td class="text-end">
+                {{ "{:,.0f}".format(salary.basic_salary) }} ₫
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Lương trách nhiệm/tháng:</strong></td>
+              <td class="text-end">
+                {{ "{:,.0f}".format(salary.responsibility_salary) }} ₫
+              </td>
+            </tr>
+            <tr class="table-light">
+              <td>Lương cơ bản/ngày:</td>
+              <td class="text-end">
+                {{ "{:,.0f}".format(salary.basic_salary_per_day) }} ₫
+              </td>
+            </tr>
+            <tr class="table-light">
+              <td>Lương trách nhiệm/ngày:</td>
+              <td class="text-end">
+                {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }} ₫
+              </td>
+            </tr>
+            <tr class="table-primary">
+              <td>
+                <strong>Lương chính ({{ salary.actual_work_days }} ngày):</strong>
+              </td>
+              <td class="text-end">
+                <strong>{{ "{:,.0f}".format(salary.main_salary) }} ₫</strong>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
 
     <!-- Lương năng lực -->
-    {% set capacity_bonuses = salary.get_capacity_bonuses() %} {% if
-    capacity_bonuses %}
+    {% set capacity_bonuses = salary.get_capacity_bonuses() %}
+    {% if capacity_bonuses %}
     <div class="card mb-3">
       <div class="card-header bg-success text-white">
         <h5 class="mb-0"><i class="bi bi-award"></i> Lương năng lực</h5>
       </div>
       <div class="card-body">
-        <table class="table table-borderless">
-          {% for bonus in capacity_bonuses %}
-          <tr>
-            <td width="60%">{{ bonus.content }}</td>
-            <td class="text-end">{{ "{:,.0f}".format(bonus.amount) }} ₫</td>
-          </tr>
-          {% endfor %}
-          <tr class="table-success">
-            <td><strong>Tổng lương năng lực:</strong></td>
-            <td class="text-end">
-              <strong
-                >{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</strong
-              >
-            </td>
-          </tr>
+        <table class="table table-borderless salary-info-table">
+          <tbody>
+            {% for bonus in capacity_bonuses %}
+            <tr>
+              <td width="60%">{{ bonus.content }}</td>
+              <td class="text-end">{{ "{:,.0f}".format(bonus.amount) }} ₫</td>
+            </tr>
+            {% endfor %}
+            <tr class="table-success">
+              <td><strong>Tổng lương năng lực:</strong></td>
+              <td class="text-end">
+                <strong
+                  >{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</strong
+                >
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
     {% endif %}
 
     <!-- Các khoản khấu trừ -->
-    {% set deductions = salary.get_deductions() %} {% if deductions %}
+    {% set deductions = salary.get_deductions() %}
+    {% if deductions %}
     <div class="card mb-3">
       <div class="card-header bg-warning text-dark">
         <h5 class="mb-0">Các khoản khấu trừ</h5>
       </div>
       <div class="card-body">
-        <table class="table table-borderless">
-          {% for deduction in deductions %}
-          <tr>
-            <td width="60%">{{ deduction.content }}</td>
-            <td class="text-end text-danger">
-              -{{ "{:,.0f}".format(deduction.amount) }} ₫
-            </td>
-          </tr>
-          {% endfor %}
-          <tr class="table-warning">
-            <td><strong>Tổng khấu trừ:</strong></td>
-            <td class="text-end text-danger">
-              <strong>-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</strong>
-            </td>
-          </tr>
+        <table class="table table-borderless salary-info-table">
+          <tbody>
+            {% for deduction in deductions %}
+            <tr>
+              <td width="60%">{{ deduction.content }}</td>
+              <td class="text-end text-danger">
+                -{{ "{:,.0f}".format(deduction.amount) }} ₫
+              </td>
+            </tr>
+            {% endfor %}
+            <tr class="table-warning">
+              <td><strong>Tổng khấu trừ:</strong></td>
+              <td class="text-end text-danger">
+                <strong>-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</strong>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -401,46 +468,48 @@
     <!-- Kết quả cuối cùng -->
     <div class="card mb-3 border-success" style="border-width: 3px">
       <div class="card-body bg-light">
-        <table class="table table-borderless mb-0">
-          <tr>
-            <td width="60%">
-              <h5><i class="bi bi-cash-stack"></i> Tổng thu nhập:</h5>
-            </td>
-            <td class="text-end">
-              <h5 class="text-info">
-                {{ "{:,.0f}".format(salary.total_income) }} ₫
-              </h5>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <h5><i class="bi bi-dash-circle-fill"></i> Tổng khấu trừ:</h5>
-            </td>
-            <td class="text-end">
-              <h5 class="text-danger">
-                -{{ "{:,.0f}".format(salary.total_deduction) }} ₫
-              </h5>
-            </td>
-          </tr>
-          <tr style="border-top: 3px solid #198754">
-            <td>
-              <h4 class="text-success">
-                <i class="bi bi-cash-coin"></i>
-                <strong>LƯƠNG THỰC LĨNH:</strong>
-              </h4>
-            </td>
-            <td class="text-end">
-              <h3 class="text-success mb-0">
-                <strong>{{ "{:,.0f}".format(salary.net_salary) }} ₫</strong>
-              </h3>
-            </td>
-          </tr>
+        <table class="table table-borderless mb-0 salary-info-table">
+          <tbody>
+            <tr>
+              <td width="60%">
+                <h5><i class="bi bi-cash-stack"></i> Tổng thu nhập:</h5>
+              </td>
+              <td class="text-end">
+                <h5 class="text-info">
+                  {{ "{:,.0f}".format(salary.total_income) }} ₫
+                </h5>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h5><i class="bi bi-dash-circle-fill"></i> Tổng khấu trừ:</h5>
+              </td>
+              <td class="text-end">
+                <h5 class="text-danger">
+                  -{{ "{:,.0f}".format(salary.total_deduction) }} ₫
+                </h5>
+              </td>
+            </tr>
+            <tr style="border-top: 3px solid #198754">
+              <td>
+                <h4 class="text-success">
+                  <i class="bi bi-cash-coin"></i>
+                  <strong>LƯƠNG THỰC LĨNH:</strong>
+                </h4>
+              </td>
+              <td class="text-end">
+                <h3 class="text-success mb-0">
+                  <strong>{{ "{:,.0f}".format(salary.net_salary) }} ₫</strong>
+                </h3>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="d-flex gap-2 mb-4">
+    <div class="d-flex gap-2 mb-4 flex-wrap">
       <a
         href="{{ url_for('salaries.list_salaries') }}"
         class="btn btn-secondary"

@@ -5,6 +5,31 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}">
+<style>
+/* Animation cho comment mới */
+@keyframes flashNew {
+    0% {
+        background-color: rgba(255, 193, 7, 0.3);
+        transform: scale(0.98);
+    }
+    50% {
+        background-color: rgba(255, 193, 7, 0.2);
+        transform: scale(1);
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+.news-comment.new-comment {
+    animation: flashNew 1.5s ease-in-out;
+}
+
+.news-comment {
+    transition: all 0.3s ease;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -124,14 +149,14 @@
             <!-- Comments Section -->
             <div class="news-card">
                 <div class="news-card-header">
-                    <h6 class="mb-0" style="font-size: 0.9rem; font-weight: 600;">
+                    <h6 class="mb-0" style="font-size: 0.9rem; font-weight: 600;" id="comment-header">
                         <i class="bi bi-chat-dots"></i>
-                        Bình luận ({{ comments|length }})
+                        Bình luận (<span id="comment-count">{{ comments|length }}</span>)
                     </h6>
                 </div>
-                <div class="news-card-body">
+                <div class="news-card-body" id="comments-container">
                     <!-- Add Comment Form -->
-                    <form method="POST" action="{{ url_for('news.add_comment', news_id=news.id) }}" class="news-mb-3">
+                    <form method="POST" action="{{ url_for('news.add_comment', news_id=news.id) }}" class="news-mb-3" id="comment-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="d-flex gap-2">
                             <div class="news-avatar small">
@@ -140,6 +165,7 @@
                             <div class="flex-grow-1">
                                 <textarea class="news-form-control"
                                           name="content"
+                                          id="comment-textarea"
                                           rows="2"
                                           placeholder="Viết bình luận..."
                                           required></textarea>
@@ -152,9 +178,9 @@
 
                     <!-- Comments List -->
                     {% if comments %}
-                    <div class="comments-list">
+                    <div class="comments-list" id="comments-list">
                         {% for comment in comments %}
-                        <div class="news-comment">
+                        <div class="news-comment" data-comment-id="{{ comment.id }}">
                             <div class="d-flex gap-2">
                                 <div class="news-avatar small">
                                     {{ comment.user.full_name[0].upper() }}
@@ -191,7 +217,7 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p class="text-center news-mb-2" style="color: var(--news-text-muted); font-size: 0.85rem;">
+                    <p class="text-center news-mb-2" id="no-comments-msg" style="color: var(--news-text-muted); font-size: 0.85rem;">
                         Chưa có bình luận nào. Hãy là người đầu tiên!
                     </p>
                     {% endif %}
@@ -207,4 +233,444 @@
         </div>
     </div>
 </div>
+
+<script>
+// ============ REALTIME COMMENT POLLING ============
+(function() {
+    'use strict';
+
+    const CONFIG = {
+        POLL_INTERVAL: 3000,
+        NEWS_ID: {{ news.id }},
+        CURRENT_USER_ID: {{ current_user.id }},
+        CURRENT_USER_ROLE: '{{ current_user.role }}',
+        CSRF_TOKEN: '{{ csrf_token() }}'
+    };
+
+    const ROLE_MAP = {
+        'director': 'Giám Đốc',
+        'manager': 'Quản Lý',
+        'accountant': 'Kế Toán',
+        'hr': 'Nhân Sự'
+    };
+
+    // Initialize lastTimestamp - start from 0 to get all comments on first poll
+    let lastTimestamp = 0;
+    console.log('[POLL] Initial lastTimestamp:', lastTimestamp, '(will load all on first poll)');
+
+    let pollTimer = null;
+    let isPolling = false;
+    let isFirstPoll = true;
+    let knownCommentIds = new Set();
+
+    // Initialize known comment IDs from existing comments
+    document.querySelectorAll('[data-comment-id]').forEach(el => {
+        const id = parseInt(el.getAttribute('data-comment-id'));
+        knownCommentIds.add(id);
+    });
+
+    // DOM elements
+    const commentsList = document.getElementById('comments-list');
+    const commentsContainer = document.getElementById('comments-container');
+    const commentCount = document.getElementById('comment-count');
+    const noCommentsMsg = document.getElementById('no-comments-msg');
+    const commentForm = document.getElementById('comment-form');
+    const commentTextarea = document.getElementById('comment-textarea');
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function createCommentHTML(comment) {
+        const deleteBtn = comment.can_delete ? `
+            <form method="POST" action="/news/comment/${comment.id}/delete" onsubmit="return confirm('Xóa bình luận này?');" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="${CONFIG.CSRF_TOKEN}"/>
+                <button type="submit" class="btn btn-link text-danger news-p-0" style="font-size: 0.85rem;">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        ` : '';
+
+        return `
+            <div class="news-comment new-comment" data-comment-id="${comment.id}">
+                <div class="d-flex gap-2">
+                    <div class="news-avatar small">${comment.user.avatar_letter}</div>
+                    <div class="flex-grow-1">
+                        <div class="news-comment-bubble">
+                            <div class="d-flex justify-content-between align-items-start news-mb-1">
+                                <div>
+                                    <strong style="font-size: 0.85rem;">${escapeHtml(comment.user.full_name)}</strong>
+                                    <span class="news-badge" style="font-size: 0.65rem; margin-left: 0.25rem;">
+                                        ${ROLE_MAP[comment.user.role] || comment.user.role}
+                                    </span>
+                                </div>
+                                ${deleteBtn}
+                            </div>
+                            <p class="news-comment-content">${escapeHtml(comment.content)}</p>
+                        </div>
+                        <small style="color: var(--news-text-muted); font-size: 0.7rem; margin-left: 0.5rem;">
+                            <i class="bi bi-clock"></i> ${comment.created_at_display}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function pollComments() {
+        if (isPolling) return;
+        isPolling = true;
+
+        try {
+            const url = `/news/${CONFIG.NEWS_ID}/comments/latest?last_timestamp=${lastTimestamp}`;
+            console.log('[POLL] Fetching:', url, 'lastTimestamp=', lastTimestamp);
+
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('[POLL] Response:', data);
+
+            if (data.success) {
+                // On first poll, just mark existing comments and update timestamp
+                if (isFirstPoll && data.comments && data.comments.length > 0) {
+                    console.log('[POLL] First poll - marking existing comments');
+
+                    // Find the latest timestamp from returned comments
+                    let maxTimestamp = lastTimestamp;
+                    data.comments.forEach(comment => {
+                        if (comment.created_at_timestamp) {
+                            maxTimestamp = Math.max(maxTimestamp, parseFloat(comment.created_at_timestamp));
+                        }
+                    });
+
+                    lastTimestamp = maxTimestamp;
+                    console.log('[POLL] Updated lastTimestamp to:', lastTimestamp);
+                    isFirstPoll = false;
+                    return;
+                }
+
+                isFirstPoll = false;
+
+                // Remove no comments message if we have comments
+                if (data.total_count > 0 && noCommentsMsg) {
+                    noCommentsMsg.remove();
+                }
+
+                // Process new comments
+                if (data.comments && data.comments.length > 0) {
+                    console.log('[POLL] Found', data.comments.length, 'new comments');
+
+                    // Create list if not exists
+                    let list = document.getElementById('comments-list');
+                    if (!list) {
+                        list = document.createElement('div');
+                        list.id = 'comments-list';
+                        list.className = 'comments-list';
+                        commentsContainer.appendChild(list);
+                    }
+
+                    // Add new comments
+                    data.comments.forEach(comment => {
+                        const exists = document.querySelector(`[data-comment-id="${comment.id}"]`);
+                        if (!exists) {
+                            console.log('[POLL] Adding new comment ID:', comment.id, 'timestamp:', comment.created_at_timestamp);
+                            list.insertAdjacentHTML('afterbegin', createCommentHTML(comment));
+                            knownCommentIds.add(comment.id);
+
+                            // Remove animation class after it completes
+                            const newEl = list.querySelector(`[data-comment-id="${comment.id}"]`);
+                            if (newEl) {
+                                setTimeout(() => newEl.classList.remove('new-comment'), 1500);
+                            }
+
+                            // Update timestamp to the latest comment
+                            if (comment.created_at_timestamp) {
+                                const newTimestamp = parseFloat(comment.created_at_timestamp);
+                                console.log('[POLL] Updating lastTimestamp from', lastTimestamp, 'to', newTimestamp);
+                                lastTimestamp = Math.max(lastTimestamp, newTimestamp);
+                            }
+                        }
+                    });
+
+                    // Update count
+                    if (commentCount && data.total_count !== undefined) {
+                        commentCount.textContent = data.total_count;
+                    }
+                } else {
+                    console.log('[POLL] No new comments');
+                }
+
+                // Check for deleted comments
+                await checkDeletedComments();
+            }
+        } catch (error) {
+            console.error('[POLL] Error:', error);
+        } finally {
+            isPolling = false;
+        }
+    }
+
+    async function checkDeletedComments() {
+        try {
+            const response = await fetch(`/news/${CONFIG.NEWS_ID}/comments/deleted`);
+            const data = await response.json();
+
+            if (data.success) {
+                const existingIds = new Set(data.existing_ids);
+
+                // Find comments that should be removed
+                knownCommentIds.forEach(id => {
+                    if (!existingIds.has(id)) {
+                        console.log('[POLL] Comment deleted:', id);
+                        const element = document.querySelector(`[data-comment-id="${id}"]`);
+                        if (element) {
+                            // Fade out animation
+                            element.style.transition = 'opacity 0.3s ease-out';
+                            element.style.opacity = '0';
+                            setTimeout(() => {
+                                element.remove();
+                                knownCommentIds.delete(id);
+
+                                // Update count
+                                if (commentCount) {
+                                    commentCount.textContent = data.total_count;
+                                }
+
+                                // Show "no comments" message if all comments deleted
+                                if (data.total_count === 0) {
+                                    const list = document.getElementById('comments-list');
+                                    if (list) list.remove();
+                                    if (!document.getElementById('no-comments-msg')) {
+                                        const msg = document.createElement('p');
+                                        msg.id = 'no-comments-msg';
+                                        msg.className = 'text-center news-mb-2';
+                                        msg.style.cssText = 'color: var(--news-text-muted); font-size: 0.85rem;';
+                                        msg.textContent = 'Chưa có bình luận nào. Hãy là người đầu tiên!';
+                                        commentsContainer.appendChild(msg);
+                                    }
+                                }
+                            }, 300);
+                        } else {
+                            knownCommentIds.delete(id);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('[POLL] Error checking deleted comments:', error);
+        }
+    }
+
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(pollComments, CONFIG.POLL_INTERVAL);
+        console.log('[POLL] Started (every 3 seconds)');
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            console.log('[POLL] Stopped');
+        }
+    }
+
+    // Form submit handler - AJAX submission
+    if (commentForm) {
+        commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('[FORM] Submitting comment via AJAX');
+
+            const formData = new FormData(commentForm);
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            const textarea = commentForm.querySelector('#comment-textarea');
+
+            if (!textarea || !textarea.value.trim()) {
+                showToast('Vui lòng nhập nội dung bình luận', 'warning');
+                return;
+            }
+
+            // Disable form
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+
+            try {
+                const response = await fetch(commentForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('[FORM] Comment posted successfully:', data.comment);
+
+                    // Clear textarea
+                    textarea.value = '';
+
+                    // Remove no comments message
+                    const noMsg = document.getElementById('no-comments-msg');
+                    if (noMsg) {
+                        noMsg.remove();
+                    }
+
+                    // Create list if not exists
+                    let list = document.getElementById('comments-list');
+                    if (!list) {
+                        list = document.createElement('div');
+                        list.id = 'comments-list';
+                        list.className = 'comments-list';
+                        const container = document.getElementById('comments-container');
+                        container.appendChild(list);
+                    }
+
+                    // Add comment to UI immediately
+                    list.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
+                    knownCommentIds.add(data.comment.id);
+
+                    // Update timestamp
+                    if (data.comment.created_at_timestamp) {
+                        lastTimestamp = Math.max(lastTimestamp, parseFloat(data.comment.created_at_timestamp));
+                    }
+
+                    // Update count
+                    const countEl = document.getElementById('comment-count');
+                    if (countEl) {
+                        const currentCount = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = currentCount + 1;
+                    }
+
+                    // Show success message
+                    showToast('Đã gửi bình luận', 'success');
+                } else {
+                    showToast(data.error || 'Có lỗi xảy ra', 'danger');
+                }
+            } catch (error) {
+                console.error('[FORM] Error:', error);
+                showToast('Không thể gửi bình luận', 'danger');
+            } finally {
+                // Re-enable form
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send"></i> Gửi';
+            }
+        });
+    }
+
+    // Delete comment handler - AJAX deletion
+    document.addEventListener('click', async function(e) {
+        const deleteBtn = e.target.closest('form[action*="/comment/"][action*="/delete"]');
+        if (deleteBtn) {
+            e.preventDefault();
+
+            if (!confirm('Xóa bình luận này?')) {
+                return;
+            }
+
+            const form = deleteBtn;
+            const commentElement = form.closest('[data-comment-id]');
+            const commentId = parseInt(commentElement.getAttribute('data-comment-id'));
+
+            console.log('[DELETE] Deleting comment:', commentId);
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('[DELETE] Comment deleted successfully:', commentId);
+
+                    // Fade out and remove
+                    commentElement.style.transition = 'opacity 0.3s ease-out';
+                    commentElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        commentElement.remove();
+                        knownCommentIds.delete(commentId);
+
+                        // Update count
+                        if (commentCount) {
+                            const currentCount = parseInt(commentCount.textContent) || 0;
+                            commentCount.textContent = Math.max(0, currentCount - 1);
+                        }
+
+                        // Check if no comments left
+                        const remainingComments = document.querySelectorAll('[data-comment-id]');
+                        if (remainingComments.length === 0) {
+                            const list = document.getElementById('comments-list');
+                            if (list) list.remove();
+
+                            if (!document.getElementById('no-comments-msg')) {
+                                const msg = document.createElement('p');
+                                msg.id = 'no-comments-msg';
+                                msg.className = 'text-center news-mb-2';
+                                msg.style.cssText = 'color: var(--news-text-muted); font-size: 0.85rem;';
+                                msg.textContent = 'Chưa có bình luận nào. Hãy là người đầu tiên!';
+                                commentsContainer.appendChild(msg);
+                            }
+                        }
+
+                        showToast('Đã xóa bình luận', 'success');
+                    }, 300);
+                } else {
+                    showToast(data.error || 'Không thể xóa bình luận', 'danger');
+                }
+            } catch (error) {
+                console.error('[DELETE] Error:', error);
+                showToast('Có lỗi xảy ra', 'danger');
+            }
+        }
+    });
+
+    // Simple toast notification
+    function showToast(message, type = 'info') {
+        // Check if Bootstrap toast exists, otherwise use alert
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+        toast.style.zIndex = '9999';
+        toast.style.minWidth = '200px';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+    // Page visibility
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            startPolling();
+        }
+    });
+
+    // Cleanup
+    window.addEventListener('beforeunload', stopPolling);
+    window.addEventListener('unload', stopPolling);
+
+    // Start
+    startPolling();
+
+})();
+</script>
 {% endblock %}

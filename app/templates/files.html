@@ -31,15 +31,14 @@
                 <tbody>
                     {% for file in files %}
                     <tr>
-                        <td>
-                            <i class="bi bi-file-earmark"></i>
+                        <td data-label="Tên file">
                             {{ file.original_filename }}
                         </td>
-                        <td>{{ file.description or '-' }}</td>
-                        <td>{{ file.uploader.full_name }}</td>
-                        <td>{{ (file.file_size / 1024) | round(2) }} KB</td>
-                        <td>{{ file.uploaded_at | vn_datetime }}</td>
-                        <td>
+                        <td data-label="Mô tả">{{ file.description or '-' }}</td>
+                        <td data-label="Người upload">{{ file.uploader.full_name }}</td>
+                        <td data-label="Kích thước">{{ (file.file_size / 1024) | round(2) }} KB</td>
+                        <td data-label="Ngày upload">{{ file.uploaded_at | vn_datetime }}</td>
+                        <td data-label="Thao tác">
                             <div class="btn-group" role="group">
                                 <!-- Nút Xem trước - Tất cả role đều có thể xem -->
                                 <a href="{{ url_for('files.preview_file', file_id=file.id) }}"

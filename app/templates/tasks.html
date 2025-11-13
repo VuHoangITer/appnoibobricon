@@ -137,11 +137,11 @@
                         {% for task in tasks %}
                         <tr {% if task | is_overdue %}class="table-danger"{% endif %}>
                             {% if current_user.role in ['director', 'manager'] %}
-                            <td>
+                            <td data-label="">
                                 <input type="checkbox" class="form-check-input task-checkbox" name="task_ids[]" value="{{ task.id }}">
                             </td>
                             {% endif %}
-                            <td>
+                            <td data-label="Tiêu đề">
                                 <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
                                     {{ task.title }}
                                 </a>
@@ -149,8 +149,8 @@
                                 <span class="badge bg-danger ms-2">QUÁ HẠN</span>
                                 {% endif %}
                             </td>
-                            <td>{{ task.creator.full_name }}</td>
-                            <td>
+                            <td data-label="Người tạo">{{ task.creator.full_name }}</td>
+                            <td data-label="Người được giao">
                                 <small>
                                     {% if task.assignments.count() > 0 %}
                                         {% set assigned_names = [] %}
@@ -169,7 +169,7 @@
                                     {% endif %}
                                 </small>
                             </td>
-                            <td>
+                            <td data-label="Hạn">
                                 {% if task.due_date %}
                                 <span class="badge bg-{{ 'danger' if (task | is_overdue) else 'secondary' }}">
                                     {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
@@ -178,15 +178,15 @@
                                 <span class="text-muted">Chưa có</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-label="Trạng thái">
                                 <span class="badge bg-{{ task.status | status_badge }}">
                                     {{ task.status | status_vn }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Ngày tạo">
                                 <small>{{ task.created_at | vn_date }}</small>
                             </td>
-                            <td>
+                            <td data-label="Thao tác">
                                 <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-sm btn-primary">
                                     <i class="bi bi-eye"></i> Xem
                                 </a>

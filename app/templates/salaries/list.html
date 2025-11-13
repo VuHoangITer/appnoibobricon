@@ -88,32 +88,34 @@
                 <tbody>
                     {% for salary in salaries %}
                     <tr>
-                        <td>
+                        <td data-label="Tháng">
                             <strong>{{ salary.month }}</strong>
                         </td>
-                        <td>
-                            <i class="bi bi-person-badge"></i> {{ salary.employee_name }}
+                        <td data-label="Nhân viên">
+                            {{ salary.employee_name }}
                         </td>
-                        <td>
+                        <td data-label="Số công">
                             {{ salary.actual_work_days }}/{{ salary.work_days_in_month }}
                         </td>
-                        <td>{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
-                        <td>{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</td>
-                        <td><strong>{{ "{:,.0f}".format(salary.total_income) }} ₫</strong></td>
-                        <td class="text-danger">{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
-                        <td class="text-end">
+                        <td data-label="Lương chính">{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
+                        <td data-label="Lương năng lực">{{ "{:,.0f}".format(salary.total_capacity_bonus) }} ₫</td>
+                        <td data-label="Tổng thu nhập"><strong>{{ "{:,.0f}".format(salary.total_income) }} ₫</strong></td>
+                        <td data-label="Khấu trừ" class="text-danger">{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
+                        <td data-label="Thực lĩnh" class="text-end">
                             <strong class="text-success" style="font-size: 1.1rem;">
                                 {{ "{:,.0f}".format(salary.net_salary) }} ₫
                             </strong>
                         </td>
-                        <td>
+                        <td data-label="Thao tác">
                             <div class="btn-group" role="group">
                                 <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}"
-                                   class="btn btn-sm btn-info">
+                                   class="btn btn-sm btn-info"
+                                   title="Xem chi tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <a href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
-                                   class="btn btn-sm btn-primary">
+                                   class="btn btn-sm btn-primary"
+                                   title="Chỉnh sửa">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form method="POST"
@@ -121,7 +123,7 @@
                                       style="display: inline;"
                                       onsubmit="return confirm('Bạn có chắc muốn xóa bảng lương này?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-danger">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
