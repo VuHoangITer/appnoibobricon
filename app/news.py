@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
@@ -227,14 +227,18 @@ def delete_news(news_id):
     return redirect(url_for('news.list_news'))
 
 
+# ========== REAL-TIME ENDPOINTS (MỚI) ==========
+
 @bp.route('/<int:news_id>/comment', methods=['POST'])
 @login_required
 def add_comment(news_id):
-    """Thêm bình luận"""
+    """Thêm bình luận - Hỗ trợ cả form submit và AJAX"""
     news = News.query.get_or_404(news_id)
     content = request.form.get('content')
 
     if not content or not content.strip():
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': 'Nội dung không được để trống'}), 400
         flash('Nội dung bình luận không được để trống.', 'danger')
         return redirect(url_for('news.news_detail', news_id=news_id))
 
@@ -258,11 +262,40 @@ def add_comment(news_id):
 
     db.session.commit()
 
+    # Broadcast real-time qua WebSocket
+    from app.websocket import broadcast_comment_added
+    from app.utils import utc_to_vn
+
+    vn_time = utc_to_vn(comment.created_at)
+    broadcast_comment_added(news_id, {
+        'id': comment.id,
+        'content': comment.content,
+        'author_name': current_user.full_name,
+        'author_initial': current_user.full_name[0].upper(),
+        'author_role': comment.user.role,
+        'created_at': vn_time.strftime('%d/%m/%Y %H:%M'),
+        'user_id': current_user.id,
+        'can_delete': True  # Người tạo luôn có thể xóa comment của mình
+    })
+
+    # Response cho AJAX
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': comment.id,
+                'content': comment.content,
+                'author_name': current_user.full_name,
+                'created_at': vn_time.strftime('%d/%m/%Y %H:%M')
+            }
+        })
+
+    # Response cho form submit thông thường
     flash('Đã thêm bình luận.', 'success')
     return redirect(url_for('news.news_detail', news_id=news_id))
 
 
-@bp.route('/comment/<int:comment_id>/delete', methods=['POST'])
+@bp.route('/comment/<int:comment_id>/delete', methods=['POST', 'DELETE'])
 @login_required
 def delete_comment(comment_id):
     """Xóa bình luận - chỉ người tạo hoặc Director"""
@@ -271,12 +304,23 @@ def delete_comment(comment_id):
 
     # Kiểm tra quyền
     if comment.user_id != current_user.id and current_user.role != 'director':
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': 'Không có quyền xóa'}), 403
         flash('Bạn không có quyền xóa bình luận này.', 'danger')
         return redirect(url_for('news.news_detail', news_id=news_id))
 
     db.session.delete(comment)
     db.session.commit()
 
+    # Broadcast real-time qua WebSocket
+    from app.websocket import broadcast_comment_deleted
+    broadcast_comment_deleted(news_id, comment_id)
+
+    # Response cho AJAX
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+
+    # Response cho form submit thông thường
     flash('Đã xóa bình luận.', 'success')
     return redirect(url_for('news.news_detail', news_id=news_id))
 
