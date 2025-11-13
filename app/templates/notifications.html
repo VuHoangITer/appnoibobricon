@@ -173,20 +173,42 @@
         }, 3000);
     }
 
-    // Update badge counts
-    function updateCounts(unreadCount, totalCount = null) {
-        const unreadBadge = document.getElementById('unread-badge');
-        const totalBadge = document.getElementById('total-count');
+// Update badge counts
+function updateCounts(unreadCount, totalCount = null) {
+    const unreadBadge = document.getElementById('unread-badge');
+    const totalBadge = document.getElementById('total-count');
 
-        if (unreadBadge) {
-            unreadBadge.textContent = unreadCount;
-            unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
-        }
+    if (unreadBadge) {
+        unreadBadge.textContent = unreadCount;
+        unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+    }
 
-        if (totalCount !== null && totalBadge) {
-            totalBadge.textContent = totalCount;
+    if (totalCount !== null && totalBadge) {
+        totalBadge.textContent = totalCount;
+    }
+
+    // THÊM MỚI: Cập nhật badge ở topbar và sidebar
+    const topbarBadge = document.getElementById('notif-count');
+    const sidebarBadge = document.getElementById('sidebar-notif-count');
+
+    if (topbarBadge) {
+        if (unreadCount > 0) {
+            topbarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            topbarBadge.style.display = 'inline-block';
+        } else {
+            topbarBadge.style.display = 'none';
         }
     }
+
+    if (sidebarBadge) {
+        if (unreadCount > 0) {
+            sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            sidebarBadge.style.display = 'inline-block';
+        } else {
+            sidebarBadge.style.display = 'none';
+        }
+    }
+}
 
     // Check if any notifications left
     function checkEmptyState() {

@@ -19,6 +19,9 @@ def dashboard():
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     assigned_user = request.args.get('assigned_user', '')
+    rating_filter = request.args.get('rating', '')
+    chart_date_from = request.args.get('chart_date_from', '')
+    chart_date_to = request.args.get('chart_date_to', '')
 
     # Statistics for director and manager
     if current_user.role in ['director', 'manager']:
@@ -50,6 +53,15 @@ def dashboard():
                 accepted=True
             ).all()]
             stats_query = stats_query.filter(Task.id.in_(task_ids))
+
+        # Apply rating filter
+        if rating_filter:
+            if rating_filter == 'good':
+                stats_query = stats_query.filter_by(status='DONE', performance_rating='good')
+            elif rating_filter == 'bad':
+                stats_query = stats_query.filter_by(status='DONE', performance_rating='bad')
+            elif rating_filter == 'unrated':
+                stats_query = stats_query.filter_by(status='DONE', performance_rating=None)
 
         # Calculate statistics with filters
         total_tasks = stats_query.count()
@@ -187,6 +199,319 @@ def dashboard():
         # Get all users for filter dropdown
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
 
+        # ===== THÔNG BÁO THÔNG MINH =====
+        # Tính toán hiệu suất
+        completion_rate = (done / total_tasks * 100) if total_tasks > 0 else 0
+        overdue_count = len(overdue_tasks)
+        overdue_rate = (overdue_count / total_tasks * 100) if total_tasks > 0 else 0
+
+        # Đếm nhiệm vụ chưa đánh giá (DONE nhưng chưa rate)
+        unrated_tasks = stats_query.filter_by(status='DONE', performance_rating=None).count()
+
+        # Tính nhiệm vụ hoàn thành quá hạn
+        done_overdue_count = stats_query.filter_by(status='DONE', completed_overdue=True).count()
+
+        # Tính nhiệm vụ bị đánh giá kém
+        bad_rating_count = stats_query.filter_by(status='DONE', performance_rating='bad').count()
+        good_rating_count = stats_query.filter_by(status='DONE', performance_rating='good').count()
+
+        # Quality Score: % nhiệm vụ hoàn thành ĐÚNG HẠN và KHÔNG BỊ ĐÁNH GIÁ KÉM
+        quality_done = done - done_overdue_count - bad_rating_count
+        on_time_rate = (quality_done / done * 100) if done > 0 else 0
+
+        # Rating rate: % đã được đánh giá trong số đã hoàn thành
+        rated_count = good_rating_count + bad_rating_count
+        rating_rate = (rated_count / done * 100) if done > 0 else 0
+
+        # Logic thông báo cho DIRECTOR
+        if current_user.role == 'director':
+            # ĐIỀU KIỆN 1: KHẨN CẤP - Quá nhiều quá hạn hoặc chất lượng quá thấp
+            if overdue_rate >= 30 or (done > 0 and on_time_rate < 30):
+                notification = {
+                    'type': 'danger',
+                    'icon': 'bi-exclamation-triangle-fill',
+                    'title': 'KHẨN CẤP - Cần Can Thiệp Ngay!',
+                    'message': f'Hệ thống có {overdue_count} quá hạn ({overdue_rate:.0f}%), {bad_rating_count} đánh giá kém. Chất lượng công việc đang sụt giảm nghiêm trọng!',
+                    'action': {'text': 'Họp khẩn', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'on_time_rate': on_time_rate,
+                        'bad_rating': bad_rating_count,
+                        'done_overdue': done_overdue_count
+                    }
+                }
+            # ĐIỀU KIỆN 2: CẢNH BÁO - Nhiều task quá hạn hoặc chưa đánh giá
+            elif overdue_count >= 10 or unrated_tasks >= 10 or bad_rating_count >= 5:
+                notification = {
+                    'type': 'warning',
+                    'icon': 'bi-exclamation-circle-fill',
+                    'title': 'Cảnh Báo - Cần Giám Sát',
+                    'message': f'Có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá, {bad_rating_count} đánh giá kém. Đội Ngũ đang gặp khó khăn!',
+                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'on_time_rate': on_time_rate,
+                        'bad_rating': bad_rating_count
+                    }
+                }
+            # ĐIỀU KIỆN 3: XUẤT SẮC - Hoàn thành cao + chất lượng cao + ít quá hạn
+            elif completion_rate >= 70 and on_time_rate >= 70 and overdue_count <= 3:
+                notification = {
+                    'type': 'success',
+                    'icon': 'bi-trophy-fill',
+                    'title': 'Hệ Thống Hoạt Động Xuất Sắc!',
+                    'message': f'Tuyệt vời! {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. Đội Ngũ đang làm việc hiệu quả!',
+                    'action': {'text': 'Xem báo cáo', 'url': url_for('tasks.dashboard')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'on_time_rate': on_time_rate,
+                        'good_rating': good_rating_count
+                    }
+                }
+            # ĐIỀU KIỆN 4: TỐT - Hoàn thành khá, chất lượng ổn
+            elif completion_rate >= 50 and on_time_rate >= 50:
+                notification = {
+                    'type': 'info',
+                    'icon': 'bi-graph-up-arrow',
+                    'title': 'Hệ Thống Hoạt Động Tốt',
+                    'message': f'{done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. Có {unrated_tasks} cần đánh giá.',
+                    'action': {'text': 'Đánh giá ngay', 'url': url_for('tasks.tasks_by_status', status='DONE')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'on_time_rate': on_time_rate
+                    }
+                }
+            # ĐIỀU KIỆN 5: DEFAULT
+            else:
+                notification = {
+                    'type': 'info',
+                    'icon': 'bi-clipboard-data',
+                    'title': 'Giám Sát Tiến Độ',
+                    'message': f'{done}/{total_tasks} hoàn thành ({completion_rate:.0f}%). Có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá.',
+                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'on_time_rate': on_time_rate
+                    }
+                }
+
+        # Logic thông báo cho MANAGER
+        else:  # manager
+            # ĐIỀU KIỆN 1: KHẨN CẤP - Đội Ngũ có vấn đề nghiêm trọng
+            if overdue_count >= 15 or (done > 0 and on_time_rate < 40):
+                notification = {
+                    'type': 'danger',
+                    'icon': 'bi-exclamation-triangle-fill',
+                    'title': 'Khẩn Cấp - Đội Ngũ Cần Hỗ Trợ Ngay!',
+                    'message': f'Đội Ngũ có {overdue_count} quá hạn, {bad_rating_count} đánh giá kém. Chất lượng: {on_time_rate:.0f}%. Cần can thiệp!',
+                    'action': {'text': 'Họp Đội Ngũ', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'Đội Ngũ_done': done,
+                        'on_time_rate': on_time_rate,
+                        'bad_rating': bad_rating_count
+                    }
+                }
+            # ĐIỀU KIỆN 2: CẢNH BÁO - Nhiều task cần xử lý
+            elif overdue_count >= 8 or unrated_tasks >= 8 or bad_rating_count >= 4:
+                notification = {
+                    'type': 'warning',
+                    'icon': 'bi-exclamation-circle-fill',
+                    'title': 'Cảnh Báo - Cần Theo Dõi Sát',
+                    'message': f'Đội Ngũ có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá, {bad_rating_count} đánh giá kém. Hãy hỗ trợ nhân viên!',
+                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'Đội Ngũ_done': done,
+                        'bad_rating': bad_rating_count
+                    }
+                }
+            # ĐIỀU KIỆN 3: XUẤT SẮC - Đội Ngũ làm việc tốt
+            elif completion_rate >= 65 and on_time_rate >= 65 and overdue_count <= 3:
+                notification = {
+                    'type': 'success',
+                    'icon': 'bi-emoji-smile-fill',
+                    'title': 'Đội Ngũ Hoạt Động Xuất Sắc!',
+                    'message': f'Tuyệt vời! Đội Ngũ có {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn!',
+                    'action': {'text': 'Xem báo cáo', 'url': url_for('tasks.dashboard')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'Đội Ngũ_done': done,
+                        'on_time_rate': on_time_rate,
+                        'good_rating': good_rating_count
+                    }
+                }
+            # ĐIỀU KIỆN 4: TỐT
+            elif completion_rate >= 50 and on_time_rate >= 50:
+                notification = {
+                    'type': 'info',
+                    'icon': 'bi-clipboard-check',
+                    'title': 'Đội Ngũ Hoạt Động Tốt',
+                    'message': f'Đội Ngũ: {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. {unrated_tasks} cần đánh giá.',
+                    'action': {'text': 'Đánh giá ngay', 'url': url_for('tasks.tasks_by_status', status='DONE')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'Đội Ngũ_done': done,
+                        'on_time_rate': on_time_rate
+                    }
+                }
+            # ĐIỀU KIỆN 5: DEFAULT
+            else:
+                notification = {
+                    'type': 'info',
+                    'icon': 'bi-clipboard-data',
+                    'title': 'Quản Lý Đội Ngũ',
+                    'message': f'Đội Ngũ: {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%). {unrated_tasks} cần đánh giá, {overdue_count} quá hạn.',
+                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'stats': {
+                        'completion': completion_rate,
+                        'overdue': overdue_count,
+                        'unrated': unrated_tasks,
+                        'Đội Ngũ_done': done
+                    }
+                }
+
+        # ===== DỮ LIỆU CHO BIỂU ĐỒ =====
+
+        # 1. PIE CHART DATA - Phân bổ trạng thái
+        pie_chart_data = {
+            'labels': ['Chờ xử lý', 'Đang thực hiện', 'Hoàn thành'],
+            'data': [pending, in_progress, done],
+            'colors': ['#ffc107', '#0dcaf0', '#198754']
+        }
+
+        # 2. BAR CHART DATA - Hiệu suất nhân viên
+        bar_chart_data = {'labels': [], 'done_on_time': [], 'done_overdue': [], 'overdue': []}
+
+        # Lấy danh sách nhân viên có nhiệm vụ
+        users_with_tasks = User.query.filter(
+            User.is_active == True,
+            User.role.in_(['hr', 'accountant', 'manager'])
+        ).all()
+
+        for user in users_with_tasks:
+            # Lấy tất cả nhiệm vụ của user này
+            user_assignments = TaskAssignment.query.filter_by(
+                user_id=user.id,
+                accepted=True
+            ).all()
+            user_task_ids = [a.task_id for a in user_assignments]
+
+            if not user_task_ids:
+                continue
+
+            user_tasks_query = stats_query.filter(Task.id.in_(user_task_ids))
+
+            # Đếm số nhiệm vụ theo loại
+            done_on_time = user_tasks_query.filter_by(
+                status='DONE',
+                completed_overdue=False
+            ).count()
+
+            done_late = user_tasks_query.filter_by(
+                status='DONE',
+                completed_overdue=True
+            ).count()
+
+            now = datetime.utcnow()
+            overdue = user_tasks_query.filter(
+                Task.due_date < now,
+                Task.status.in_(['PENDING', 'IN_PROGRESS'])
+            ).count()
+
+            # Chỉ thêm nếu user có ít nhất 1 nhiệm vụ
+            if done_on_time > 0 or done_late > 0 or overdue > 0:
+                bar_chart_data['labels'].append(user.full_name)
+                bar_chart_data['done_on_time'].append(done_on_time)
+                bar_chart_data['done_overdue'].append(done_late)
+                bar_chart_data['overdue'].append(overdue)
+
+        # 3. LINE CHART DATA - Xu hướng theo khoảng thời gian tùy chọn
+        line_chart_data = {
+            'labels': [],
+            'completed_on_time': [],  # THÊM: Hoàn thành đúng hạn
+            'completed_overdue': [],  # THÊM: Hoàn thành quá hạn
+            'overdue': [],
+            'created': []
+        }
+
+        # Xác định khoảng thời gian
+        if chart_date_from and chart_date_to:
+            try:
+                start_date = datetime.strptime(chart_date_from, '%Y-%m-%d').replace(hour=0, minute=0, second=0)
+                end_date = datetime.strptime(chart_date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+
+                if (end_date - start_date).days > 90:
+                    end_date = start_date + timedelta(days=90)
+                    flash('Chỉ hiển thị tối đa 90 ngày. Đã điều chỉnh khoảng thời gian.', 'warning')
+            except:
+                end_date = datetime.utcnow().replace(hour=23, minute=59, second=59)
+                start_date = end_date - timedelta(days=29)
+        else:
+            end_date = datetime.utcnow().replace(hour=23, minute=59, second=59)
+            start_date = end_date - timedelta(days=29)
+
+        total_days = (end_date - start_date).days + 1
+
+        # Lấy dữ liệu từng ngày
+        for i in range(total_days):
+            day = start_date + timedelta(days=i)
+            day_start = day.replace(hour=0, minute=0, second=0)
+            day_end = day.replace(hour=23, minute=59, second=59)
+
+            line_chart_data['labels'].append(day.strftime('%d/%m'))
+
+            # THAY ĐỔI: Tách hoàn thành thành 2 loại
+            # Hoàn thành ĐÚNG HẠN trong ngày
+            completed_on_time = stats_query.filter(
+                Task.status == 'DONE',
+                Task.completed_overdue == False,
+                Task.updated_at >= day_start,
+                Task.updated_at <= day_end
+            ).count()
+            line_chart_data['completed_on_time'].append(completed_on_time)
+
+            # Hoàn thành QUÁ HẠN trong ngày
+            completed_late = stats_query.filter(
+                Task.status == 'DONE',
+                Task.completed_overdue == True,
+                Task.updated_at >= day_start,
+                Task.updated_at <= day_end
+            ).count()
+            line_chart_data['completed_overdue'].append(completed_late)
+
+            # Nhiệm vụ quá hạn tính đến cuối ngày (chưa hoàn thành)
+            overdue_count = stats_query.filter(
+                Task.due_date < day_end,
+                Task.status.in_(['PENDING', 'IN_PROGRESS'])
+            ).count()
+            line_chart_data['overdue'].append(overdue_count)
+
+            # Nhiệm vụ tạo mới trong ngày
+            created_count = stats_query.filter(
+                Task.created_at >= day_start,
+                Task.created_at <= day_end
+            ).count()
+            line_chart_data['created'].append(created_count)
+
         return render_template('dashboard.html',
                                total_tasks=total_tasks,
                                pending=pending,
@@ -212,7 +537,15 @@ def dashboard():
                                all_users=all_users,
                                date_from=date_from,
                                date_to=date_to,
-                               assigned_user=assigned_user)
+                               assigned_user=assigned_user,
+                               notification=notification,
+                               rating_filter=rating_filter,
+                               pie_chart_data=pie_chart_data,
+                               bar_chart_data=bar_chart_data,
+                               line_chart_data=line_chart_data,
+                               chart_date_from=chart_date_from,
+                               chart_date_to=chart_date_to
+                               )
     else:
         # ===== ACCOUNTANT/HR: Tasks của họ =====
         my_assignments = TaskAssignment.query.filter_by(
@@ -241,6 +574,14 @@ def dashboard():
                 my_tasks_query = my_tasks_query.filter(Task.created_at <= date_to_utc)
             except:
                 pass
+
+        if rating_filter:
+            if rating_filter == 'good':
+                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating='good')
+            elif rating_filter == 'bad':
+                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating='bad')
+            elif rating_filter == 'unrated':
+                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating=None)
 
         # Statistics
         total_tasks = my_tasks_query.count()
@@ -338,6 +679,137 @@ def dashboard():
             Note.updated_at.desc()
         ).limit(5).all()
 
+        # ===== THÔNG BÁO THÔNG MINH CHO HR/ACCOUNTANT =====
+        completion_rate = (done / total_tasks * 100) if total_tasks > 0 else 0
+        overdue_count = len(overdue_tasks)
+        active_tasks = pending + in_progress
+
+        # Tính nhiệm vụ hoàn thành quá hạn
+        done_overdue_count = my_tasks_query.filter_by(status='DONE', completed_overdue=True).count()
+
+        # Tính nhiệm vụ bị đánh giá kém
+        bad_rating_count = my_tasks_query.filter_by(status='DONE', performance_rating='bad').count()
+
+        # Tính điểm chất lượng (Quality Score)
+        # Công thức: done đúng hạn + đánh giá tốt = chất lượng cao
+        good_rating_count = my_tasks_query.filter_by(status='DONE', performance_rating='good').count()
+        on_time_done = done - done_overdue_count
+
+        # Quality rate: % nhiệm vụ hoàn thành ĐÚNG HẠN và KHÔNG BỊ ĐÁNH GIÁ KÉM
+        quality_done = done - done_overdue_count - bad_rating_count
+        quality_rate = (quality_done / done * 100) if done > 0 else 0
+
+        # LOGIC MỚI - ƯU TIÊN CHẤT LƯỢNG
+        if total_tasks == 0:
+            notification = {
+                'type': 'secondary',
+                'icon': 'bi-inbox',
+                'title': 'Chưa Có Nhiệm Vụ',
+                'message': 'Bạn chưa có nhiệm vụ nào. Hãy liên hệ Giám đốc/Trưởng phòng để nhận công việc.',
+                'action': None,
+                'stats': {
+                    'completion': 0,
+                    'overdue': 0,
+                    'active': 0
+                }
+            }
+        # ĐIỀU KIỆN 1: Có quá nhiều quá hạn hoặc đánh giá kém
+        elif overdue_count >= 5 or bad_rating_count >= 3:
+            notification = {
+                'type': 'danger',
+                'icon': 'bi-exclamation-triangle-fill',
+                'title': 'Báo Động - Hiệu Suất Kém!',
+                'message': f'Bạn có {overdue_count} quá hạn, {bad_rating_count} bị đánh giá kém. Cần cải thiện ngay!',
+                'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.list_tasks')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count,
+                    'bad_rating': bad_rating_count
+                }
+            }
+        # ĐIỀU KIỆN 2: Hoàn thành nhiều nhưng chất lượng thấp
+        elif completion_rate >= 70 and (done_overdue_count >= 2 or bad_rating_count >= 2):
+            notification = {
+                'type': 'warning',
+                'icon': 'bi-exclamation-circle-fill',
+                'title': 'Cần Cải Thiện Chất Lượng',
+                'message': f'Bạn hoàn thành {done}/{total_tasks} nhiệm vụ nhưng có {done_overdue_count} quá hạn và {bad_rating_count} đánh giá kém. Hãy chú ý thời hạn!',
+                'action': {'text': 'Xem đánh giá', 'url': url_for('tasks.list_tasks', status='DONE')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count,
+                    'bad_rating': bad_rating_count,
+                    'quality': quality_rate
+                }
+            }
+        # ĐIỀU KIỆN 3: Có task quá hạn đang chờ
+        elif overdue_count >= 3 or (overdue_count >= 1 and completion_rate < 50):
+            notification = {
+                'type': 'warning',
+                'icon': 'bi-clock-fill',
+                'title': 'Cần Cố Gắng Hơn',
+                'message': f'Bạn có {overdue_count} quá hạn, {pending} chờ xử lý và {in_progress} đang làm. Hãy tập trung!',
+                'action': {'text': 'Xem công việc', 'url': url_for('tasks.list_tasks')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count
+                }
+            }
+        # ĐIỀU KIỆN 4: XUẤT SẮC - Hoàn thành cao + chất lượng cao
+        elif completion_rate >= 80 and quality_rate >= 70 and overdue_count == 0:
+            notification = {
+                'type': 'success',
+                'icon': 'bi-trophy-fill',
+                'title': 'Xuất Sắc!',
+                'message': f'Tuyệt vời! Bạn đã hoàn thành {done}/{total_tasks} nhiệm vụ ({completion_rate:.0f}%) với chất lượng cao ({quality_rate:.0f}% đúng hạn)! Tiếp tục phát huy!',
+                'action': {'text': 'Xem thành tích', 'url': url_for('tasks.list_tasks', status='DONE')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count,
+                    'quality': quality_rate,
+                    'good_rating': good_rating_count
+                }
+            }
+        # ĐIỀU KIỆN 5: Làm tốt - hoàn thành khá + chất lượng tốt
+        elif completion_rate >= 50 and quality_rate >= 60:
+            notification = {
+                'type': 'info',
+                'icon': 'bi-hand-thumbs-up-fill',
+                'title': 'Làm Tốt Lắm!',
+                'message': f'Bạn đã hoàn thành {done}/{total_tasks} nhiệm vụ ({completion_rate:.0f}%). Còn {active_tasks} đang chờ.',
+                'action': {'text': 'Tiếp tục', 'url': url_for('tasks.list_tasks')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count,
+                    'quality': quality_rate
+                }
+            }
+        # ĐIỀU KIỆN 6: Default
+        else:
+            notification = {
+                'type': 'info',
+                'icon': 'bi-clipboard-data',
+                'title': 'Theo Dõi Tiến Độ',
+                'message': f'Bạn có {active_tasks} nhiệm vụ đang xử lý. Hãy hoàn thành đúng hạn để đạt hiệu suất cao!',
+                'action': {'text': 'Xem công việc', 'url': url_for('tasks.list_tasks')},
+                'stats': {
+                    'completion': completion_rate,
+                    'overdue': overdue_count,
+                    'active': active_tasks,
+                    'done_overdue': done_overdue_count
+                }
+            }
+
         return render_template('dashboard.html',
                                # THÊM stats cho HR/Accountant
                                total_tasks=total_tasks,
@@ -364,7 +836,9 @@ def dashboard():
                                upcoming=upcoming,
                                recent_notes=recent_notes,
                                date_from=date_from,
-                               date_to=date_to)
+                               date_to=date_to,
+                               notification=notification,
+                               rating_filter=rating_filter)
 
 
 # THÊM MỚI: Route để xem chi tiết tasks theo status
