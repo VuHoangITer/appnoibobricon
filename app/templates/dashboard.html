@@ -345,6 +345,110 @@
         margin-top: 15px;
     }
 }
+/* ============================================
+   CHART RESPONSIVE OPTIMIZATION
+   ============================================ */
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+}
+
+/* Desktop: Charts có chiều cao cố định */
+@media (min-width: 768px) {
+    .chart-container.pie-chart {
+        min-height: 350px;
+        max-height: 350px;
+    }
+
+    .chart-container.line-chart {
+        min-height: 350px;
+        max-height: 350px;
+    }
+
+    .chart-container.bar-chart {
+        min-height: 400px;
+        max-height: 500px;
+    }
+}
+
+/* Mobile: Charts nhỏ gọn hơn */
+@media (max-width: 767px) {
+    .chart-container.pie-chart {
+        min-height: 280px;
+        max-height: 280px;
+    }
+
+    .chart-container.line-chart {
+        min-height: 300px;
+        max-height: 300px;
+    }
+
+    .chart-container.bar-chart {
+        min-height: 350px;
+        max-height: 450px;
+    }
+
+    /* Mobile: Card header nhỏ gọn */
+    .chart-card .card-header {
+        padding: 12px 15px !important;
+    }
+
+    .chart-card .card-header h5 {
+        font-size: 0.95rem !important;
+    }
+
+    .chart-card .card-header .btn {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Mobile: Ẩn text nút, chỉ giữ icon */
+    .chart-card .btn-filter-text {
+        display: none;
+    }
+}
+
+/* Card body padding điều chỉnh */
+.chart-card .card-body {
+    padding: 20px;
+}
+
+@media (max-width: 767px) {
+    .chart-card .card-body {
+        padding: 15px;
+    }
+}
+
+/* Chart legend responsive */
+@media (max-width: 576px) {
+    /* Legend nhỏ hơn trên mobile */
+    .chart-container canvas {
+        font-size: 10px !important;
+    }
+}
+
+/* Loading placeholder */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: #6c757d;
+}
+
+.chart-loading i {
+    font-size: 3rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
 </style>
 {% endblock %}
 
@@ -787,28 +891,32 @@ function setChartDateRange(days) {
 <!-- ===== BIỂU ĐỒ PHÂN TÍCH ===== -->
 <div class="row mb-4">
     <!-- PIE CHART - Phân bổ trạng thái -->
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-4 col-md-12 mb-4">
+        <div class="card h-100 chart-card">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-pie-chart-fill"></i> Phân Bổ Trạng Thái
                 </h5>
             </div>
-            <div class="card-body d-flex align-items-center justify-content-center">
-                <canvas id="pieChart" style="max-height: 300px;"></canvas>
+            <div class="card-body">
+                <div class="chart-container pie-chart">
+                    <canvas id="pieChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
+
     <!-- LINE CHART - Xu hướng theo thời gian -->
-    <div class="col-lg-8 col-md-6 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-8 col-md-12 mb-4">
+        <div class="card h-100 chart-card">
             <div class="card-header bg-info text-white">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0">
                         <i class="bi bi-graph-up"></i> Xu Hướng Theo Thời Gian
                     </h5>
                     <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#chartFilterModal">
-                        <i class="bi bi-calendar-range"></i> Chọn khoảng thời gian
+                        <i class="bi bi-calendar-range"></i>
+                        <span class="chart-filter-text"> Chọn khoảng thời gian</span>
                     </button>
                 </div>
             </div>
@@ -824,7 +932,9 @@ function setChartDateRange(days) {
                         {% endif %}
                     </small>
                 </div>
-                <canvas id="lineChart" style="max-height: 300px;"></canvas>
+                <div class="chart-container line-chart">
+                    <canvas id="lineChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -833,14 +943,16 @@ function setChartDateRange(days) {
 <!-- BAR CHART - Hiệu suất nhân viên -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
+        <div class="card chart-card">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-bar-chart-fill"></i> Hiệu Suất Theo Nhân Viên
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="barChart" style="max-height: 400px;"></canvas>
+                <div class="chart-container bar-chart">
+                    <canvas id="barChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -1604,15 +1716,16 @@ function setChartDateRange(days) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,  // THAY ĐỔI: false để dùng container height
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: window.innerWidth < 768 ? 'bottom' : 'right',  // Mobile: bottom, Desktop: right
                         labels: {
-                            padding: 15,
+                            padding: window.innerWidth < 768 ? 10 : 15,
                             font: {
-                                size: 12
-                            }
+                                size: window.innerWidth < 768 ? 11 : 12
+                            },
+                            boxWidth: window.innerWidth < 768 ? 12 : 15
                         }
                     },
                     tooltip: {
@@ -1664,19 +1777,28 @@ function setChartDateRange(days) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,  // THAY ĐỔI
+                indexAxis: window.innerWidth < 768 ? 'y' : 'x',  // Mobile: ngang, Desktop: dọc
                 scales: {
                     x: {
                         stacked: false,
                         grid: {
                             display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: window.innerWidth < 768 ? 10 : 12
+                            }
                         }
                     },
                     y: {
                         stacked: false,
                         beginAtZero: true,
                         ticks: {
-                            precision: 0
+                            precision: 0,
+                            font: {
+                                size: window.innerWidth < 768 ? 10 : 12
+                            }
                         }
                     }
                 },
@@ -1684,10 +1806,11 @@ function setChartDateRange(days) {
                     legend: {
                         position: 'top',
                         labels: {
-                            padding: 15,
+                            padding: window.innerWidth < 768 ? 10 : 15,
                             font: {
-                                size: 12
-                            }
+                                size: window.innerWidth < 768 ? 10 : 12
+                            },
+                            boxWidth: window.innerWidth < 768 ? 12 : 15
                         }
                     },
                     tooltip: {
@@ -1699,7 +1822,7 @@ function setChartDateRange(days) {
         });
     }
 
-    // 3. LINE CHART - Xu hướng 30 ngày
+    // 3. LINE CHART - Xu hướng theo thời gian
     const lineCtx = document.getElementById('lineChart');
     if (lineCtx) {
         new Chart(lineCtx, {
@@ -1742,13 +1865,13 @@ function setChartDateRange(days) {
                         tension: 0.4,
                         fill: true,
                         borderWidth: 2,
-                        borderDash: [5, 5]  // Đường nét đứt
+                        borderDash: [5, 5]
                     }
                 ]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,  // THAY ĐỔI
                 interaction: {
                     mode: 'index',
                     intersect: false
@@ -1757,12 +1880,21 @@ function setChartDateRange(days) {
                     x: {
                         grid: {
                             display: false
+                        },
+                        ticks: {
+                            maxRotation: window.innerWidth < 768 ? 45 : 0,  // Mobile: xoay label
+                            font: {
+                                size: window.innerWidth < 768 ? 9 : 11
+                            }
                         }
                     },
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            precision: 0
+                            precision: 0,
+                            font: {
+                                size: window.innerWidth < 768 ? 10 : 12
+                            }
                         }
                     }
                 },
@@ -1770,11 +1902,12 @@ function setChartDateRange(days) {
                     legend: {
                         position: 'top',
                         labels: {
-                            padding: 15,
+                            padding: window.innerWidth < 768 ? 8 : 15,
                             font: {
-                                size: 12
+                                size: window.innerWidth < 768 ? 10 : 12
                             },
-                            usePointStyle: true
+                            usePointStyle: true,
+                            boxWidth: window.innerWidth < 768 ? 6 : 8
                         }
                     },
                     tooltip: {
