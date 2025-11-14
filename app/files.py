@@ -123,10 +123,26 @@ def preview_file(file_id):
 def view_file(file_id):
     """Serve raw file for viewing in browser"""
     file = File.query.get_or_404(file_id)
+
+    # Xác định MIME type dựa trên extension
+    mime_types = {
+        'pdf': 'application/pdf',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'bmp': 'image/bmp',
+        'webp': 'image/webp'
+    }
+
+    file_ext = file.original_filename.rsplit('.', 1)[1].lower() if '.' in file.original_filename else ''
+    mimetype = mime_types.get(file_ext, 'application/octet-stream')
+
     return send_from_directory(
         current_app.config['UPLOAD_FOLDER'],
         file.filename,
-        as_attachment=False
+        as_attachment=False,
+        mimetype=mimetype
     )
 
 
