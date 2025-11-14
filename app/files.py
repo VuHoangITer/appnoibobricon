@@ -71,11 +71,11 @@ def upload_file():
                 # Get file size
                 file_size = os.path.getsize(filepath)
 
-                # Save to database
+                # Save to database - LƯU ĐƯỜNG DẪN TUYỆT ĐỐI
                 file_record = File(
                     filename=unique_filename,
                     original_filename=original_filename,
-                    path=filepath,
+                    path=filepath,  # Đường dẫn đầy đủ
                     uploader_id=current_user.id,
                     description=description,
                     file_size=file_size
@@ -101,9 +101,19 @@ def upload_file():
 @login_required
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
+
+    # Kiểm tra file có tồn tại không
+    if not os.path.exists(file.path):
+        flash('File không tồn tại.', 'danger')
+        return redirect(url_for('files.list_files'))
+
+    # Lấy thư mục chứa file
+    directory = os.path.dirname(file.path)
+    filename = os.path.basename(file.path)
+
     return send_from_directory(
-        current_app.config['UPLOAD_FOLDER'],
-        file.filename,
+        directory,
+        filename,
         as_attachment=True,
         download_name=file.original_filename
     )
@@ -141,9 +151,18 @@ def view_file(file_id):
     file_ext = file.original_filename.rsplit('.', 1)[1].lower() if '.' in file.original_filename else ''
     mimetype = mime_types.get(file_ext, 'application/octet-stream')
 
+    # Kiểm tra file có tồn tại không
+    if not os.path.exists(file.path):
+        from flask import abort
+        abort(404)
+
+    # Lấy thư mục chứa file
+    directory = os.path.dirname(file.path)
+    filename = os.path.basename(file.path)
+
     return send_from_directory(
-        current_app.config['UPLOAD_FOLDER'],
-        file.filename,
+        directory,
+        filename,
         as_attachment=False,
         mimetype=mimetype
     )
