@@ -1,0 +1,785 @@
+{% extends "base.html" %}
+
+{% block title %}Kanban Board{% endblock %}
+{% block page_title %}Kanban Board - Quản Lý Trực Quan{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   KANBAN BOARD STYLES
+   ============================================ */
+.kanban-container {
+    display: flex;
+    gap: 20px;
+    height: calc(100vh - 200px);
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 320px;
+    background: #fafafa;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.kanban-header {
+    padding: 16px 20px;
+    border-radius: 8px 8px 0 0;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.kanban-header i {
+    font-size: 0.9rem;
+    margin-right: 6px;
+}
+
+.kanban-header.pending {
+    border-bottom-color: #fbbf24;
+}
+
+.kanban-header.in-progress {
+    border-bottom-color: #60a5fa;
+}
+
+.kanban-header.done {
+    border-bottom-color: #34d399;
+}
+
+.task-count-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.kanban-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    min-height: 200px;
+}
+
+/* Custom Scrollbar */
+.kanban-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.kanban-body::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 10px;
+}
+
+.kanban-body::-webkit-scrollbar-thumb {
+    background: #adb5bd;
+    border-radius: 10px;
+}
+
+.kanban-body::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}
+
+/* Task Card */
+.task-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;  /* Changed from 'move' to 'pointer' */
+    transition: all 0.2s ease;
+    border-left: 3px solid white;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Remove dragging state - not needed anymore */
+
+/* Priority background colors - MINIMAL */
+.task-card.overdue {
+    background: #fee2e2;  /* Đỏ sáng cho QUÁ HẠN */
+    border-left-color: white;
+}
+
+.task-card.urgent {
+    background: #fef2f2;  /* Đỏ nhạt cho KHẨN CẤP */
+    border-left-color: white;
+}
+
+.task-card.important {
+    background: #fefce8;  /* Vàng nhạt cho QUAN TRỌNG */
+    border-left-color: white;
+}
+
+.task-card.recurring {
+    background: #eff6ff;  /* Xanh dương nhạt cho LẶP LẠI */
+    border-left-color: white;
+}
+
+/* Không có tag = nền trắng (default) */
+
+.task-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #212529;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.task-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.task-badge.overdue {
+    background: #fef2f2;
+    color: #dc3545;
+    border: 1px solid #fecaca;
+}
+
+.task-badge.urgent {
+    background: #fef2f2;
+    color: #dc3545;
+    border: 1px solid #fecaca;
+}
+
+.task-badge.important {
+    background: #fffbeb;
+    color: #f59e0b;
+    border: 1px solid #fde68a;
+}
+
+.task-badge.recurring {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+.task-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.task-assignees {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.assignee-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.assignee-name {
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.task-due-date {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.task-due-date.overdue {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.task-due-date i {
+    font-size: 0.7rem;
+}
+
+/* Empty State */
+.kanban-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #adb5bd;
+}
+
+.kanban-empty i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+/* Filter Section */
+.kanban-filters {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.filter-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .kanban-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .kanban-column {
+        min-width: 100%;
+        max-height: 500px;
+    }
+}
+
+@media (max-width: 768px) {
+    .kanban-filters {
+        padding: 15px;
+    }
+
+    .filter-row {
+        flex-direction: column;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .task-card {
+        padding: 12px;
+    }
+
+    .kanban-header {
+        padding: 15px;
+        font-size: 1rem;
+    }
+}
+
+/* Loading State - Not used but kept for future */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.loading-spinner i {
+    font-size: 3rem;
+    color: #0d6efd;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<!-- SortableJS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Mobile Filter Button -->
+<div class="mobile-filter-btn d-md-none mb-3">
+    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
+        <i class="bi bi-funnel-fill"></i> Bộ lọc
+        {% if search or assigned_user or tag_filter or date_from or date_to %}
+        <span class="badge bg-danger ms-2">●</span>
+        {% endif %}
+    </button>
+</div>
+
+<!-- Desktop Filters -->
+<div class="kanban-filters d-none d-md-block">
+    <form method="GET" id="filterForm">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="bi bi-calendar-range"></i> Từ ngày:</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+
+            <div class="filter-group">
+                <label><i class="bi bi-calendar-range"></i> Đến ngày:</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+
+            <div class="filter-group">
+                <label><i class="bi bi-search"></i> Tìm kiếm:</label>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Tên công việc...">
+            </div>
+
+            {% if current_user.role in ['director', 'manager'] %}
+            <div class="filter-group">
+                <label><i class="bi bi-person"></i> Người làm:</label>
+                <select class="form-select" name="assigned_user">
+                    <option value="">-- Tất cả --</option>
+                    {% for user in all_users %}
+                    <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
+                        {{ user.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="filter-group">
+                <label><i class="bi bi-tags"></i> Tag:</label>
+                <select class="form-select" name="tag">
+                    <option value="">-- Tất cả --</option>
+                    <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>🔴 Khẩn cấp</option>
+                    <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>🟡 Quan trọng</option>
+                    <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>🔵 Lặp lại</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 0;">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Lọc
+                </button>
+            </div>
+
+            <div class="filter-group" style="flex: 0;">
+                <label>&nbsp;</label>
+                <a href="{{ url_for('tasks.kanban') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Xóa
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Mobile Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" id="mobileFilterForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-search"></i> Tìm kiếm:</label>
+                        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Tên công việc...">
+                    </div>
+
+                    {% if current_user.role in ['director', 'manager'] %}
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-person"></i> Người làm:</label>
+                        <select class="form-select" name="assigned_user">
+                            <option value="">-- Tất cả --</option>
+                            {% for user in all_users %}
+                            <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
+                                {{ user.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-tags"></i> Tag:</label>
+                        <select class="form-select" name="tag">
+                            <option value="">-- Tất cả --</option>
+                            <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>🔴 Khẩn cấp</option>
+                            <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>🟡 Quan trọng</option>
+                            <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>🔵 Lặp lại</option>
+                        </select>
+                    </div>
+
+                    {% if search or assigned_user or tag_filter or date_from or date_to %}
+                    <div class="alert alert-info mb-0">
+                        <small><i class="bi bi-info-circle"></i> Đang áp dụng bộ lọc</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('tasks.kanban') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Áp dụng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-container">
+    <!-- PENDING Column -->
+    <div class="kanban-column">
+        <div class="kanban-header pending">
+            <span><i class="bi bi-hourglass-split"></i> Chờ xử lý</span>
+            <span class="task-count-badge">{{ pending_tasks|length }}</span>
+        </div>
+        <div class="kanban-body" id="pending-column" data-status="PENDING">
+            {% if pending_tasks %}
+                {% for task in pending_tasks %}
+                <div class="task-card {% if task.due_date and task.due_date < now %}overdue{% elif task.is_urgent %}urgent{% elif task.is_important %}important{% elif task.is_recurring %}recurring{% endif %}"
+                     data-task-id="{{ task.id }}"
+                     onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
+
+                    <!-- Title -->
+                    <div class="task-title">{{ task.title }}</div>
+
+                    <!-- Badges -->
+                    <div class="task-meta">
+                        {% if task.due_date and task.due_date < now %}
+                        <span class="task-badge overdue">
+                            <i class="bi bi-exclamation-triangle-fill"></i> QUÁ HẠN
+                        </span>
+                        {% endif %}
+                        {% if task.is_urgent %}
+                        <span class="task-badge urgent">
+                            <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                        </span>
+                        {% endif %}
+                        {% if task.is_important %}
+                        <span class="task-badge important">
+                            <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                        </span>
+                        {% endif %}
+                        {% if task.is_recurring %}
+                        <span class="task-badge recurring">
+                            <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="task-footer">
+                        <div class="task-assignees">
+                            {% for assignment in task.assignments %}
+                                {% if assignment.accepted %}
+                                <div class="assignee-item">
+                                    <div class="assignee-avatar">
+                                        {{ assignment.user.full_name[0].upper() }}
+                                    </div>
+                                    <div class="assignee-name">{{ assignment.user.full_name }}</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if task.assignments|selectattr('accepted')|list|length == 0 %}
+                            <div class="assignee-item">
+                                <div class="assignee-avatar">?</div>
+                                <div class="assignee-name" style="color: #94a3b8;">Chưa giao</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date {% if task.due_date < now %}overdue{% endif %}">
+                            <i class="bi bi-calendar-event"></i>
+                            {{ task.due_date | vn_datetime('%d/%m') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="kanban-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Chưa có nhiệm vụ</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- IN_PROGRESS Column -->
+    <div class="kanban-column">
+        <div class="kanban-header in-progress">
+            <span><i class="bi bi-gear-fill"></i> Đang thực hiện</span>
+            <span class="task-count-badge">{{ in_progress_tasks|length }}</span>
+        </div>
+        <div class="kanban-body" id="in-progress-column" data-status="IN_PROGRESS">
+            {% if in_progress_tasks %}
+                {% for task in in_progress_tasks %}
+                <div class="task-card {% if task.due_date and task.due_date < now %}overdue{% elif task.is_urgent %}urgent{% elif task.is_important %}important{% elif task.is_recurring %}recurring{% endif %}"
+                     data-task-id="{{ task.id }}"
+                     onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
+
+                    <div class="task-title">{{ task.title }}</div>
+
+                    <div class="task-meta">
+                        {% if task.due_date and task.due_date < now %}
+                        <span class="task-badge overdue">
+                            <i class="bi bi-exclamation-triangle-fill"></i> QUÁ HẠN
+                        </span>
+                        {% endif %}
+                        {% if task.is_urgent %}
+                        <span class="task-badge urgent">
+                            <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                        </span>
+                        {% endif %}
+                        {% if task.is_important %}
+                        <span class="task-badge important">
+                            <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                        </span>
+                        {% endif %}
+                        {% if task.is_recurring %}
+                        <span class="task-badge recurring">
+                            <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="task-footer">
+                        <div class="task-assignees">
+                            {% for assignment in task.assignments %}
+                                {% if assignment.accepted %}
+                                <div class="assignee-item">
+                                    <div class="assignee-avatar">
+                                        {{ assignment.user.full_name[0].upper() }}
+                                    </div>
+                                    <div class="assignee-name">{{ assignment.user.full_name }}</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if task.assignments|selectattr('accepted')|list|length == 0 %}
+                            <div class="assignee-item">
+                                <div class="assignee-avatar">?</div>
+                                <div class="assignee-name" style="color: #94a3b8;">Chưa giao</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date {% if task.due_date < now %}overdue{% endif %}">
+                            <i class="bi bi-calendar-event"></i>
+                            {{ task.due_date | vn_datetime('%d/%m') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="kanban-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Chưa có nhiệm vụ</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- DONE Column -->
+    <div class="kanban-column">
+        <div class="kanban-header done">
+            <span><i class="bi bi-check-circle-fill"></i> Hoàn thành</span>
+            <span class="task-count-badge">{{ done_tasks|length }}</span>
+        </div>
+        <div class="kanban-body" id="done-column" data-status="DONE">
+            {% if done_tasks %}
+                {% for task in done_tasks %}
+                <div class="task-card {% if task.completed_overdue %}urgent{% elif task.is_urgent %}urgent{% elif task.is_important %}important{% elif task.is_recurring %}recurring{% endif %}"
+                     data-task-id="{{ task.id }}"
+                     onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
+
+                    <div class="task-title">{{ task.title }}</div>
+
+                    <div class="task-meta">
+                        {% if task.completed_overdue %}
+                        <span class="task-badge overdue">
+                            <i class="bi bi-clock-history"></i> HOÀN THÀNH QUÁ HẠN
+                        </span>
+                        {% endif %}
+                        {% if task.performance_rating == 'good' %}
+                        <span class="task-badge" style="background: #198754; color: white;">
+                            <i class="bi bi-hand-thumbs-up-fill"></i> TỐT
+                        </span>
+                        {% elif task.performance_rating == 'bad' %}
+                        <span class="task-badge" style="background: #dc3545; color: white;">
+                            <i class="bi bi-hand-thumbs-down-fill"></i> KÉM
+                        </span>
+                        {% endif %}
+                        {% if task.is_urgent %}
+                        <span class="task-badge urgent">
+                            <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                        </span>
+                        {% endif %}
+                        {% if task.is_important %}
+                        <span class="task-badge important">
+                            <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                        </span>
+                        {% endif %}
+                        {% if task.is_recurring %}
+                        <span class="task-badge recurring">
+                            <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="task-footer">
+                        <div class="task-assignees">
+                            {% for assignment in task.assignments %}
+                                {% if assignment.accepted %}
+                                <div class="assignee-item">
+                                    <div class="assignee-avatar">
+                                        {{ assignment.user.full_name[0].upper() }}
+                                    </div>
+                                    <div class="assignee-name">{{ assignment.user.full_name }}</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if task.assignments|selectattr('accepted')|list|length == 0 %}
+                            <div class="assignee-item">
+                                <div class="assignee-avatar">?</div>
+                                <div class="assignee-name" style="color: #94a3b8;">Chưa giao</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    <div class="task-due-date" style="color: #10b981; font-weight: 600;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        {{ task.updated_at | vn_datetime('%d/%m %H:%M') }}
+                    </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="kanban-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Chưa có nhiệm vụ</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Kanban is VIEW-ONLY - No drag and drop
+// Cards can only be clicked to view details
+
+// Auto submit filter form
+document.querySelector('select[name="assigned_user"]')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.querySelector('select[name="tag"]')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+// Toast notification function (for future use)
+function showToast(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 10000; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

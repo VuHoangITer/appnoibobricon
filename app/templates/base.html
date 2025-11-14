@@ -174,8 +174,6 @@
                 </a>
             </div>
             {% endif %}
-            <div class="nav-section-title">MENU CHÍNH</div>
-
             <div class="nav-item">
                 <a href="{{ url_for('tasks.dashboard') }}" class="nav-link {% if request.endpoint == 'tasks.dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2"></i>
@@ -187,6 +185,13 @@
                 <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-list-task"></i>
                     <span>Công việc</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ url_for('tasks.kanban') }}" class="nav-link {% if request.endpoint == 'tasks.kanban' %}active{% endif %}">
+                    <i class="bi bi-kanban"></i>
+                    <span>Kanban Board</span>
                 </a>
             </div>
 

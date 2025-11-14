@@ -1482,3 +1482,119 @@ def rate_task(task_id):
 
     flash(f'Đã đánh giá nhiệm vụ: {rating_text}', 'success')
     return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+
+# ============================================
+#  KANBAN BOARD ROUTES
+# ============================================
+
+@bp.route('/kanban')
+@login_required
+def kanban():
+    """Kanban Board - Hiển thị tasks theo dạng cột"""
+    # Get filters
+    assigned_user = request.args.get('assigned_user', '')
+    tag_filter = request.args.get('tag', '')
+    search = request.args.get('search', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+
+    now = datetime.utcnow()
+
+    # Base query theo role
+    if current_user.role in ['director', 'manager']:
+        query = Task.query
+    else:
+        # HR/Accountant: only their tasks
+        accepted_assignments = TaskAssignment.query.filter_by(
+            user_id=current_user.id,
+            accepted=True
+        ).all()
+        assigned_task_ids = [a.task_id for a in accepted_assignments]
+        query = Task.query.filter(
+            or_(
+                Task.id.in_(assigned_task_ids),
+                Task.creator_id == current_user.id
+            )
+        )
+
+    # Apply date filters
+    if date_from:
+        try:
+            date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            from app.utils import vn_to_utc
+            date_from_utc = vn_to_utc(date_from_dt)
+            query = query.filter(Task.created_at >= date_from_utc)
+        except:
+            pass
+
+    if date_to:
+        try:
+            date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
+            from app.utils import vn_to_utc
+            date_to_utc = vn_to_utc(date_to_dt)
+            query = query.filter(Task.created_at <= date_to_utc)
+        except:
+            pass
+
+    # Apply filters
+    if assigned_user:
+        task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
+            user_id=int(assigned_user),
+            accepted=True
+        ).all()]
+        query = query.filter(Task.id.in_(task_ids))
+
+    if tag_filter == 'urgent':
+        query = query.filter_by(is_urgent=True)
+    elif tag_filter == 'important':
+        query = query.filter_by(is_important=True)
+    elif tag_filter == 'recurring':
+        query = query.filter_by(is_recurring=True)
+
+    if search:
+        query = query.filter(Task.title.ilike(f'%{search}%'))
+
+    # Get all tasks
+    all_tasks = query.all()
+
+    # Custom sort function
+    def sort_tasks(task):
+        # Priority 1: Quá hạn (cao nhất)
+        is_overdue = task.due_date and task.due_date < now and task.status != 'DONE'
+
+        # Return tuple for sorting (False comes before True, so negate for priority)
+        return (
+            not is_overdue,  # Quá hạn lên đầu
+            not task.is_urgent,  # Khẩn cấp thứ 2
+            not task.is_important,  # Quan trọng thứ 3
+            not task.is_recurring,  # Lặp lại thứ 4
+            task.created_at.timestamp() * -1  # Mới nhất lên đầu (negate để reverse)
+        )
+
+    def sort_done_tasks(task):
+        """DONE tasks: Sắp xếp theo ngày hoàn thành (updated_at), mới nhất lên đầu"""
+        return task.updated_at.timestamp() * -1
+
+    # Phân loại tasks theo status và sắp xếp
+    pending_tasks = sorted([t for t in all_tasks if t.status == 'PENDING'], key=sort_tasks)
+    in_progress_tasks = sorted([t for t in all_tasks if t.status == 'IN_PROGRESS'], key=sort_tasks)
+    done_tasks = sorted([t for t in all_tasks if t.status == 'DONE'], key=sort_done_tasks)
+
+    # Get all users for filter
+    all_users = None
+    if current_user.role in ['director', 'manager']:
+        all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
+
+    return render_template('kanban.html',
+                           pending_tasks=pending_tasks,
+                           in_progress_tasks=in_progress_tasks,
+                           done_tasks=done_tasks,
+                           all_users=all_users,
+                           assigned_user=assigned_user,
+                           tag_filter=tag_filter,
+                           search=search,
+                           date_from=date_from,
+                           date_to=date_to,
+                           now=now)
