@@ -12,22 +12,24 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # ===== THÊM: DATABASE CONNECTION POOL SETTINGS =====
-    # Quan trọng để tránh lỗi "SSL SYSCALL error: EOF detected"
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,  # Số connection tối đa trong pool
-        'pool_recycle': 3600,  # Recycle connection sau 1 giờ
-        'pool_pre_ping': True,  # Kiểm tra connection trước khi dùng
-        'max_overflow': 5,  # Số connection tạm thời thêm
-        'pool_timeout': 30,  # Timeout khi chờ connection
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'max_overflow': 5,
+        'pool_timeout': 30,
         'connect_args': {
-            'connect_timeout': 10,  # Timeout khi kết nối
+            'connect_timeout': 10,
         }
     }
 
     basedir = os.path.abspath(os.path.dirname(__file__))
-    # FIX: Sử dụng absolute path cho UPLOAD_FOLDER
-    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(basedir, 'app', 'uploads')
+    _upload_folder_env = os.environ.get('UPLOAD_FOLDER')
+    if _upload_folder_env and os.path.isabs(_upload_folder_env):
+        UPLOAD_FOLDER = _upload_folder_env
+    else:
+        UPLOAD_FOLDER = os.path.join(basedir, 'app', 'uploads')
+
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_FILE_SIZE', 15728640))
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'pdf,docx,xlsx,png,jpg,jpeg').split(','))
     WTF_CSRF_ENABLED = True
