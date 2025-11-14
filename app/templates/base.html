@@ -198,6 +198,13 @@
             </div>
 
             <div class="nav-item">
+                <a href="{{ url_for('workflow.workflow_diagram') }}" class="nav-link {% if 'workflow' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-diagram-3-fill"></i>
+                    <span>Luồng Giao Việc</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
                 <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>
                     <span>Thư viện File</span>

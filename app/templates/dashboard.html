@@ -1001,75 +1001,6 @@ function setChartDateRange(days) {
     </div>
 </div>
 {% endif %}
-<!-- ===== BIỂU ĐỒ PHÂN TÍCH ===== -->
-<div class="row mb-4">
-    <!-- PIE CHART - Phân bổ trạng thái -->
-    <div class="col-lg-4 col-md-12 mb-4">
-        <div class="card h-100 chart-card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-pie-chart-fill"></i> Phân Bổ Trạng Thái
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container pie-chart">
-                    <canvas id="pieChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- LINE CHART - Xu hướng theo thời gian -->
-    <div class="col-lg-8 col-md-12 mb-4">
-        <div class="card h-100 chart-card">
-            <div class="card-header bg-info text-white">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Xu Hướng Theo Thời Gian
-                    </h5>
-                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#chartFilterModal">
-                        <i class="bi bi-calendar-range"></i>
-                        <span class="chart-filter-text"> Chọn khoảng thời gian</span>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Hiển thị khoảng thời gian hiện tại -->
-                <div class="mb-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-calendar-check"></i>
-                        {% if chart_date_from and chart_date_to %}
-                            Từ {{ chart_date_from }} đến {{ chart_date_to }}
-                        {% else %}
-                            30 ngày gần đây
-                        {% endif %}
-                    </small>
-                </div>
-                <div class="chart-container line-chart">
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- BAR CHART - Hiệu suất nhân viên -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card chart-card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-bar-chart-fill"></i> Hiệu Suất Theo Nhân Viên
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container bar-chart">
-                    <canvas id="barChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <!-- Tasks cá nhân của Director/Manager -->
 {% if my_personal_tasks %}
 <div class="row mb-4">
@@ -1221,8 +1152,76 @@ function setChartDateRange(days) {
     </div>
 </div>
 {% endif %}
+<!-- ===== BIỂU ĐỒ PHÂN TÍCH ===== -->
+<div class="row mb-4">
+    <!-- PIE CHART - Phân bổ trạng thái -->
+    <div class="col-lg-4 col-md-12 mb-4">
+        <div class="card h-100 chart-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart-fill"></i> Phân Bổ Trạng Thái
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container pie-chart">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Phần còn lại giữ nguyên... -->
+    <!-- LINE CHART - Xu hướng theo thời gian -->
+    <div class="col-lg-8 col-md-12 mb-4">
+        <div class="card h-100 chart-card">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Xu Hướng Theo Thời Gian
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#chartFilterModal">
+                        <i class="bi bi-calendar-range"></i>
+                        <span class="chart-filter-text"> Chọn khoảng thời gian</span>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Hiển thị khoảng thời gian hiện tại -->
+                <div class="mb-2 text-center">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar-check"></i>
+                        {% if chart_date_from and chart_date_to %}
+                            Từ {{ chart_date_from }} đến {{ chart_date_to }}
+                        {% else %}
+                            30 ngày gần đây
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="chart-container line-chart">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BAR CHART - Hiệu suất nhân viên -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card chart-card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart-fill"></i> Hiệu Suất Theo Nhân Viên
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container bar-chart">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-6 mb-4">
         <div class="card h-100">
