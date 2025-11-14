@@ -62,6 +62,8 @@ def upload_file():
                 file_ext = original_filename.rsplit('.', 1)[1].lower()
                 unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
 
+                os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
+
                 filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
                 file.save(filepath)
 
