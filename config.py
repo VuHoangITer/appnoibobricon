@@ -26,7 +26,8 @@ class Config:
     }
 
     basedir = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(basedir, 'app', 'uploads'))
+    # FIX: Sử dụng absolute path cho UPLOAD_FOLDER
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(basedir, 'app', 'uploads')
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_FILE_SIZE', 15728640))
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'pdf,docx,xlsx,png,jpg,jpeg').split(','))
     WTF_CSRF_ENABLED = True
