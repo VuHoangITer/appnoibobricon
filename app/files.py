@@ -65,6 +65,7 @@ def upload_file():
                 # Tạo folder nếu chưa tồn tại
                 os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+                # Lưu file vào UPLOAD_FOLDER (/var/www/appnoibobricon/app/uploads)
                 filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
                 file.save(filepath)
 
@@ -75,7 +76,7 @@ def upload_file():
                 file_record = File(
                     filename=unique_filename,
                     original_filename=original_filename,
-                    path=filepath,  # Đường dẫn đầy đủ
+                    path=filepath,  # Đường dẫn đầy đủ: /var/www/appnoibobricon/app/uploads/xxxxx.png
                     uploader_id=current_user.id,
                     description=description,
                     file_size=file_size
@@ -104,19 +105,23 @@ def download_file(file_id):
 
     # Kiểm tra file có tồn tại không
     if not os.path.exists(file.path):
-        flash('File không tồn tại.', 'danger')
+        flash('File không tồn tại trên server.', 'danger')
         return redirect(url_for('files.list_files'))
 
-    # Lấy thư mục chứa file
-    directory = os.path.dirname(file.path)
-    filename = os.path.basename(file.path)
+    try:
+        # Lấy thư mục chứa file từ đường dẫn tuyệt đối
+        directory = os.path.dirname(file.path)
+        filename = os.path.basename(file.path)
 
-    return send_from_directory(
-        directory,
-        filename,
-        as_attachment=True,
-        download_name=file.original_filename
-    )
+        return send_from_directory(
+            directory,
+            filename,
+            as_attachment=True,
+            download_name=file.original_filename
+        )
+    except Exception as e:
+        flash(f'Lỗi khi tải file: {str(e)}', 'danger')
+        return redirect(url_for('files.list_files'))
 
 
 @bp.route('/preview/<int:file_id>')
@@ -156,16 +161,20 @@ def view_file(file_id):
         from flask import abort
         abort(404)
 
-    # Lấy thư mục chứa file
-    directory = os.path.dirname(file.path)
-    filename = os.path.basename(file.path)
+    try:
+        # Lấy thư mục chứa file từ đường dẫn tuyệt đối
+        directory = os.path.dirname(file.path)
+        filename = os.path.basename(file.path)
 
-    return send_from_directory(
-        directory,
-        filename,
-        as_attachment=False,
-        mimetype=mimetype
-    )
+        return send_from_directory(
+            directory,
+            filename,
+            as_attachment=False,
+            mimetype=mimetype
+        )
+    except Exception as e:
+        from flask import abort
+        abort(500)
 
 
 @bp.route('/<int:file_id>/delete', methods=['POST'])
