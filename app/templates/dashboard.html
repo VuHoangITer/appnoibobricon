@@ -241,7 +241,7 @@
 }
 
 /* ============================================
-   PERFORMANCE NOTIFICATION CARD - PROFESSIONAL
+   PERFORMANCE NOTIFICATION CARD - RESPONSIVE
    ============================================ */
 .performance-card {
     border-left: 5px solid;
@@ -263,19 +263,26 @@
     justify-content: center;
     font-size: 2rem;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    flex-shrink: 0; /* Không co lại */
 }
 
 .performance-stats .stat-item {
-    padding: 8px;
+    padding: 10px 8px;
     background: #f8f9fa;
     border-radius: 8px;
     text-align: center;
+    min-width: 80px;
+}
+
+.performance-stats .stat-item small {
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
 }
 
 .performance-stats .stat-item strong {
     font-size: 1.2rem;
     display: block;
-    margin-top: 4px;
 }
 
 /* Border colors theo type */
@@ -328,21 +335,127 @@
     background: linear-gradient(90deg, #dc3545 0%, #e4606d 100%) !important;
 }
 
-/* Responsive */
+/* ============================================
+   MOBILE RESPONSIVE (QUAN TRỌNG)
+   ============================================ */
 @media (max-width: 767px) {
+    /* Icon nhỏ hơn */
     .performance-icon {
         width: 50px;
         height: 50px;
         font-size: 1.5rem;
+        margin-bottom: 15px; /* Khoảng cách với content */
+    }
+
+    /* Layout thay đổi: Icon ở trên, content ở dưới */
+    .performance-card .card-body > .row {
+        flex-direction: column !important;
+        text-align: center;
+    }
+
+    .performance-card .card-body .col-auto {
+        width: 100% !important;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    .performance-card .card-body .col {
+        width: 100% !important;
+    }
+
+    /* Title và message */
+    .performance-card h5 {
+        font-size: 1rem !important;
+        text-align: center;
+    }
+
+    .performance-card p {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    /* Stats grid - 2 cột trên mobile */
+    .performance-stats .row {
+        justify-content: center;
+    }
+
+    .performance-stats .stat-item {
+        padding: 8px 6px;
+        min-width: 70px;
+        font-size: 0.85rem;
+    }
+
+    .performance-stats .stat-item small {
+        font-size: 0.7rem;
     }
 
     .performance-stats .stat-item strong {
         font-size: 1rem;
     }
 
+    /* Progress bar nhỏ hơn */
+    .performance-card .progress {
+        height: 6px !important;
+        margin-top: 12px !important;
+    }
+
+    /* Action button full width */
+    .performance-card .col-auto:last-child {
+        width: 100% !important;
+        margin-top: 15px;
+    }
+
     .performance-card .btn {
         width: 100%;
-        margin-top: 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Card padding nhỏ hơn */
+    .performance-card .card-body {
+        padding: 15px !important;
+    }
+}
+
+/* Tablet (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .performance-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.75rem;
+    }
+
+    .performance-stats .stat-item {
+        min-width: 75px;
+        padding: 9px 7px;
+    }
+
+    .performance-stats .stat-item strong {
+        font-size: 1.1rem;
+    }
+
+    .performance-card h5 {
+        font-size: 1.05rem !important;
+    }
+}
+
+/* Very small mobile (< 380px) */
+@media (max-width: 379px) {
+    .performance-stats .stat-item {
+        min-width: 65px;
+        padding: 6px 4px;
+    }
+
+    .performance-stats .stat-item small {
+        font-size: 0.65rem;
+    }
+
+    .performance-stats .stat-item strong {
+        font-size: 0.95rem;
+    }
+
+    .performance-card h5 {
+        font-size: 0.95rem !important;
     }
 }
 /* ============================================
@@ -810,7 +923,7 @@ function setChartDateRange(days) {
 {% if notification %}
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card border-{{ notification.type }} shadow-sm performance-card">
+        <div class="card border-white shadow-sm performance-card">
             <div class="card-body p-4">
                 <div class="row align-items-center">
                     <!-- Icon Section -->
@@ -961,7 +1074,7 @@ function setChartDateRange(days) {
 {% if my_personal_tasks %}
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card border-primary">
+        <div class="card border-white">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-person-check-fill"></i> Nhiệm vụ của bạn
@@ -1030,7 +1143,7 @@ function setChartDateRange(days) {
 {% if overdue_tasks %}
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card border-danger">
+        <div class="card border-white">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Nhiệm vụ quá hạn
@@ -1408,7 +1521,7 @@ function setChartDateRange(days) {
 {% if notification %}
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card border-{{ notification.type }} shadow-sm performance-card">
+        <div class="card border-white shadow-sm performance-card">
             <div class="card-body p-4">
                 <div class="row align-items-center">
                     <!-- Icon Section -->
@@ -1564,7 +1677,7 @@ function setChartDateRange(days) {
 {% if overdue_tasks %}
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card border-danger">
+        <div class="card border-white">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Nhiệm vụ của bạn đã quá hạn
@@ -1619,7 +1732,7 @@ function setChartDateRange(days) {
 {% if upcoming %}
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card border-warning">
+        <div class="card border-white">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
                     <i class="bi bi-calendar-event"></i> Nhiệm vụ của bạn sắp đến hạn
