@@ -151,3 +151,42 @@ def unread_count():
         read=False
     ).count()
     return jsonify({'count': count})
+
+
+@bp.route('/unread-ids')
+@login_required
+def unread_ids():
+    """API lấy danh sách IDs thông báo chưa đọc"""
+    notifications = Notification.query.filter_by(
+        user_id=current_user.id,
+        read=False
+    ).order_by(Notification.created_at.desc()).all()
+
+    ids = [notif.id for notif in notifications]
+
+    return jsonify({
+        'ids': ids,
+        'count': len(ids)
+    })
+
+
+@bp.route('/latest')
+@login_required
+def latest_notification():
+    """API lấy thông báo mới nhất (chưa đọc)"""
+    notif = Notification.query.filter_by(
+        user_id=current_user.id,
+        read=False
+    ).order_by(Notification.created_at.desc()).first()
+
+    if notif:
+        return jsonify({
+            'id': notif.id,
+            'title': notif.title,
+            'body': notif.body,
+            'type': notif.type,
+            'link': notif.link,
+            'created_at': notif.created_at.isoformat()
+        })
+    else:
+        return jsonify({'title': None}), 404

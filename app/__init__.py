@@ -26,7 +26,6 @@ def create_app(config_class=Config):
     csrf.init_app(app)
 
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Vui lòng đăng nhập để truy cập trang này.'
 
     # Create upload folder
     upload_path = app.config['UPLOAD_FOLDER']
@@ -125,6 +124,10 @@ def create_app(config_class=Config):
 
     from app.workflow import bp as workflow_bp
     app.register_blueprint(workflow_bp, url_prefix='/workflow')
+
+    from app.tts import bp as tts_bp
+    app.register_blueprint(tts_bp, url_prefix='/tts')
+    csrf.exempt(tts_bp)
 
     # Dashboard route
     @app.route('/')

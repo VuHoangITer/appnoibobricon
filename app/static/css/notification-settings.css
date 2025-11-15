@@ -1,0 +1,129 @@
+/* ============================================
+   NOTIFICATION SETTINGS STYLES
+   ============================================ */
+
+/* Settings button styling */
+.notification-settings-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--dark-color);
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.notification-settings-btn:hover {
+    background: var(--light-bg);
+    color: var(--primary-color);
+}
+
+/* Active/muted state colors */
+.notification-settings-btn .bi-volume-up-fill {
+    color: var(--success-color);
+}
+
+.notification-settings-btn .bi-volume-down-fill {
+    color: var(--warning-color);
+}
+
+.notification-settings-btn .bi-volume-mute-fill {
+    color: var(--danger-color);
+}
+
+/* Modal customization */
+#notificationSettingsModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+#notificationSettingsModal .modal-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0a58ca 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+}
+
+#notificationSettingsModal .modal-title {
+    font-weight: 600;
+}
+
+#notificationSettingsModal .modal-body {
+    padding: 25px;
+}
+
+/* Switch styling */
+.form-check-input:checked {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.form-check-label {
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.form-check-label i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* Range slider styling */
+.form-range {
+    height: 6px;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: var(--primary-color);
+    width: 18px;
+    height: 18px;
+}
+
+.form-range::-moz-range-thumb {
+    background: var(--primary-color);
+    width: 18px;
+    height: 18px;
+}
+
+/* Test button */
+#testNotification {
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+#testNotification:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Modal footer */
+#notificationSettingsModal .modal-footer {
+    background-color: var(--light-bg);
+    border-top: 1px solid #dee2e6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notification-settings-btn {
+        font-size: 1.1rem;
+        padding: 6px;
+    }
+
+    #notificationSettingsModal .modal-body {
+        padding: 20px;
+    }
+}
+
+/* Animation for sound waves (optional enhancement) */
+@keyframes soundWave {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.5; }
+}
+
+.notification-settings-btn.playing .bi-volume-up-fill {
+    animation: soundWave 0.6s ease-in-out;
+}

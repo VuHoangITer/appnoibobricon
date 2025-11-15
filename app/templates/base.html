@@ -32,6 +32,7 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notification-settings.css') }}">
 
     <style>
         /* ============================================
@@ -268,6 +269,8 @@
             </div>
 
             <div class="navbar-right">
+                <!-- Nút Settings Notification sẽ được thêm tự động bởi JavaScript -->
+
                 <button class="notification-btn" onclick="window.location.href='{{ url_for('notifications.list_notifications') }}'">
                     <i class="bi bi-bell-fill"></i>
                     <span class="notification-badge" id="notif-count" style="display: none;"></span>
@@ -328,6 +331,12 @@
         })();
     </script>
 
+    <!-- Notification Sound & Manager -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/notification-sound.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-manager.js') }}"></script>
+    {% endif %}
+
     <!-- Custom JS -->
     <script>
         // Mobile Menu Toggle
@@ -349,7 +358,7 @@
             });
         }
 
-        // Update notification count
+        // Update notification count (legacy support - manager sẽ xử lý)
         {% if current_user.is_authenticated %}
         function updateNotifCount() {
             fetch('{{ url_for("notifications.unread_count") }}')
@@ -375,7 +384,7 @@
                 .catch(err => console.error('Error fetching notifications:', err));
         }
 
-        // Update every 30 seconds
+        // Update every 30 seconds (backup)
         updateNotifCount();
         setInterval(updateNotifCount, 30000);
         {% endif %}
