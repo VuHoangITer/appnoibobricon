@@ -373,6 +373,17 @@
         margin-top: 4px;
     }
 }
+    /* Task cần đánh giá - màu vàng */
+.task-count.needs-rating {
+    background: #fff3cd !important;
+    color: #856404 !important;
+    border-color: #ffc107 !important;
+}
+
+.task-count.needs-rating::after {
+    content: " ⭐";
+    font-size: 10px;
+}
 </style>
 {% endblock %}
 
@@ -439,42 +450,49 @@
                     <div>{{ from_user.full_name }}</div>
                     <span class="role-badge {{ from_user.role }}">{{ role_names[from_user.role] }}</span>
                 </th>
-                {% for to_user in all_users %}
-                <td>
-                    {% if from_user.id == to_user.id %}
-                        <span class="task-count no-tasks">—</span>
-                    {% else %}
-                        {% set key = from_user.id|string ~ '->' ~ to_user.id|string %}
-                        {% if key in workflow_data %}
-                            {% set conn = workflow_data[key] %}
-                            {% if conn.can_view %}
-                                {% set level = 'level-1' %}
-                                {% if conn.count >= 20 %}
-                                    {% set level = 'level-5' %}
-                                {% elif conn.count >= 15 %}
-                                    {% set level = 'level-4' %}
-                                {% elif conn.count >= 10 %}
-                                    {% set level = 'level-3' %}
-                                {% elif conn.count >= 5 %}
-                                    {% set level = 'level-2' %}
-                                {% endif %}
-                                <a href="/workflow/{{ from_user.id }}/{{ to_user.id }}"
-                                   class="task-count has-tasks {{ level }}"
-                                   title="{{ from_user.full_name }} → {{ to_user.full_name }}: {{ conn.count }} công việc">
-                                    {{ conn.count }}
-                                </a>
-                            {% else %}
-                                <span class="task-count locked"
-                                      title="Bạn không có quyền xem">
-                                    {{ conn.count }}
-                                </span>
-                            {% endif %}
-                        {% else %}
-                            <span class="task-count no-tasks">0</span>
-                        {% endif %}
-                    {% endif %}
-                </td>
-                {% endfor %}
+{% for to_user in all_users %}
+<td>
+    {% if from_user.id == to_user.id %}
+        <span class="task-count no-tasks">—</span>
+    {% else %}
+        {% set key = from_user.id|string ~ '->' ~ to_user.id|string %}
+        {% if key in workflow_data %}
+            {% set conn = workflow_data[key] %}
+            {% if conn.can_view %}
+                {% set level = 'level-1' %}
+                {% if conn.count >= 20 %}
+                    {% set level = 'level-5' %}
+                {% elif conn.count >= 15 %}
+                    {% set level = 'level-4' %}
+                {% elif conn.count >= 10 %}
+                    {% set level = 'level-3' %}
+                {% elif conn.count >= 5 %}
+                    {% set level = 'level-2' %}
+                {% endif %}
+
+                {# ===== SỬA: Thêm class needs-rating nếu có tasks cần đánh giá ===== #}
+                {% set extra_class = '' %}
+                {% if conn.needs_rating > 0 %}
+                    {% set extra_class = 'needs-rating' %}
+                {% endif %}
+
+                <a href="/workflow/{{ from_user.id }}/{{ to_user.id }}"
+                   class="task-count has-tasks {{ level }} {{ extra_class }}"
+                   title="{% if conn.active > 0 %}Đang giao: {{ conn.active }}{% endif %}{% if conn.active > 0 and conn.needs_rating > 0 %} | {% endif %}{% if conn.needs_rating > 0 %}Cần đánh giá: {{ conn.needs_rating }}{% endif %}">
+                    {{ conn.count }}
+                </a>
+            {% else %}
+                <span class="task-count locked"
+                      title="Bạn không có quyền xem">
+                    {{ conn.count }}
+                </span>
+            {% endif %}
+        {% else %}
+            <span class="task-count no-tasks">0</span>
+        {% endif %}
+    {% endif %}
+</td>
+{% endfor %}
             </tr>
             {% endfor %}
         </tbody>

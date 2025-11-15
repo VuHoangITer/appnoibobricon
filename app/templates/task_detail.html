@@ -129,6 +129,55 @@
 
                 <hr>
 
+                <!-- BÁO CÁO HOÀN THÀNH -->
+{% if task.status == 'DONE' %}
+<div class="card mb-3 border-{% if task.completed_overdue %}warning{% else %}success{% endif %}">
+    <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
+        <h5 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h5>
+    </div>
+    <div class="card-body">
+        {% set reports = task.completion_reports.all() %}
+        {% if reports %}
+            {% set completion_report = reports[0] %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <p class="mb-1"><strong><i class="bi bi-person-fill"></i> Người hoàn thành:</strong></p>
+                    <p>{{ completion_report.completer.full_name }}
+                        <span class="badge bg-secondary">{{ completion_report.completer.role | role_vn }}</span>
+                    </p>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <p class="mb-1"><strong><i class="bi bi-calendar-check"></i> Thời gian:</strong></p>
+                    <p>{{ completion_report.completed_at | vn_datetime }}</p>
+                </div>
+            </div>
+
+            {% if completion_report.completion_time %}
+            <p class="mb-2">
+                <strong><i class="bi bi-clock-history"></i> Thời gian làm việc:</strong>
+                {% set hours = (completion_report.completion_time // 60) %}
+                {% set minutes = (completion_report.completion_time % 60) %}
+                {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
+            </p>
+            {% endif %}
+
+            {% if completion_report.completion_note %}
+            <div class="alert alert-info mb-0">
+                <p class="mb-1"><strong><i class="bi bi-chat-left-text-fill"></i> Ghi chú:</strong></p>
+                <p class="mb-0" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="alert alert-secondary mb-0">
+                <i class="bi bi-info-circle"></i> Nhiệm vụ hoàn thành trước khi có hệ thống báo cáo.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
                 <!-- Accept/Reject buttons cho task được giao nhóm -->
                 {% if user_assignment and not user_assignment.accepted and user_assignment.assigned_group %}
                 <div class="alert alert-info">
@@ -173,38 +222,65 @@
                 {% endif %}
 
                 <div class="mb-3">
-                    <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}" class="row g-2">
+                    <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="col-auto">
-                            <label class="form-label">Cập nhật trạng thái:</label>
-                        </div>
-                        <div class="col-auto">
-                            <select class="form-select" name="status" {% if is_done_locked %}disabled{% endif %}>
-                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chờ xác nhận</option>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label"><strong>Cập nhật trạng thái:</strong></label>
+                            <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
+                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
                                 <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
-                                <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>
-                                    Hoàn thành{% if (task | is_overdue) and task.status != 'DONE' %} (⚠️ Quá hạn){% endif %}
-                                </option>
+                                <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
                                 <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
                             </select>
                         </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary" {% if is_done_locked %}disabled{% endif %}>
-                                {% if is_done_locked %}
-                                <i class="bi bi-lock-fill"></i> Đã khóa
-                                {% else %}
-                                <i class="bi bi-arrow-repeat"></i> Cập nhật
-                                {% endif %}
-                            </button>
-                        </div>
-                        {% if is_done_locked %}
-                        <div class="col-auto">
-                            <small class="text-danger">
-                                <i class="bi bi-info-circle"></i> Liên hệ Giám đốc/Trưởng phòng để cập nhật
+
+                        <!-- THÊM MỚI: TEXTAREA GHI CHÚ -->
+                        <div class="mb-3" id="completionNoteDiv" style="display: none;">
+                            <label for="completion_note" class="form-label">
+                                <strong><i class="bi bi-chat-left-text"></i> Ghi chú hoàn thành:</strong>
+                                <small class="text-muted">(Tùy chọn)</small>
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="completion_note"
+                                name="completion_note"
+                                rows="3"
+                                placeholder="Nhập ghi chú về cách bạn hoàn thành nhiệm vụ..."></textarea>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Ghi chú này sẽ được gửi đến người giao việc.
                             </small>
                         </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Cập nhật
+                        </button>
+
+                        {% if task.status == 'DONE' %}
+                        {% if current_user.role not in ['director', 'manager'] %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-lock-fill"></i> <strong>Lưu ý:</strong> Nhiệm vụ đã hoàn thành và bị khóa.
+                            Chỉ Giám đốc hoặc Trưởng phòng mới có thể thay đổi trạng thái.
+                        </div>
+                        {% endif %}
                         {% endif %}
                     </form>
+
+                    <script>
+                    function handleStatusChange() {
+                        const statusSelect = document.getElementById('status');
+                        const completionNoteDiv = document.getElementById('completionNoteDiv');
+                        const currentStatus = '{{ task.status }}';
+
+                        if (statusSelect.value === 'DONE' && currentStatus !== 'DONE') {
+                            completionNoteDiv.style.display = 'block';
+                        } else {
+                            completionNoteDiv.style.display = 'none';
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', handleStatusChange);
+                    </script>
                 </div>
                 {% endif %}
 

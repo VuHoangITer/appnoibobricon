@@ -94,6 +94,13 @@ def dashboard():
         my_personal_tasks = [a.task for a in my_assignments if a.task.status != 'DONE']
         # ===== END =====
 
+        tasks_need_rating = Task.query.filter(
+            Task.status == 'DONE',
+            Task.performance_rating == None,
+            Task.creator_id == current_user.id
+        ).order_by(Task.updated_at.desc()).limit(10).all()
+
+
         # ===== NHIỆM VỤ QUÁ HẠN (cho toàn bộ hệ thống) =====
         overdue_query = Task.query.filter(
             Task.due_date < now,
@@ -531,6 +538,7 @@ def dashboard():
                                done_important=done_important,
                                done_recurring=done_recurring,
                                my_personal_tasks=my_personal_tasks,
+                               tasks_need_rating=tasks_need_rating,
                                overdue_tasks=overdue_tasks,
                                upcoming=upcoming,
                                recent_tasks=recent_tasks,
@@ -1293,22 +1301,20 @@ def reject_task(task_id):
 def update_status(task_id):
     task = Task.query.get_or_404(task_id)
     new_status = request.form.get('status')
+    completion_note = request.form.get('completion_note', '')
     old_status = task.status
 
     if new_status not in ['PENDING', 'IN_PROGRESS', 'DONE', 'CANCELLED']:
         flash('Trạng thái không hợp lệ.', 'danger')
         return redirect(url_for('tasks.task_detail', task_id=task_id))
 
-    # Check if task is overdue
     now = datetime.utcnow()
     is_overdue = task.due_date and task.due_date < now and task.status in ['PENDING', 'IN_PROGRESS']
 
     # Check permission
     if current_user.role in ['director', 'manager']:
-        # Director/Manager có thể cập nhật mọi task
         pass
     else:
-        # HR/Accountant
         assignment = TaskAssignment.query.filter_by(
             task_id=task_id,
             user_id=current_user.id,
@@ -1319,53 +1325,155 @@ def update_status(task_id):
             flash('Bạn không có quyền cập nhật nhiệm vụ này.', 'danger')
             return redirect(url_for('tasks.task_detail', task_id=task_id))
 
-        # KIỂM TRA: Nếu task đã DONE, HR/Accountant không thể thay đổi
         if old_status == 'DONE':
             flash('Nhiệm vụ đã hoàn thành và bị khóa. Chỉ Giám đốc hoặc Trưởng phòng mới có thể cập nhật trạng thái.',
                   'danger')
             return redirect(url_for('tasks.task_detail', task_id=task_id))
 
-    # LOGIC MỚI: Kiểm tra nếu chuyển sang DONE khi đang quá hạn
-    if new_status == 'DONE' and is_overdue:
-        task.completed_overdue = True
-        flash('⚠️ Nhiệm vụ đã hoàn thành nhưng QUÁ HẠN!', 'warning')
-    elif new_status == 'DONE':
-        task.completed_overdue = False
+    # ===== XỬ LÝ KHI CHUYỂN SANG DONE =====
+    if new_status == 'DONE' and old_status != 'DONE':
+        # Tính thời gian
+        completion_time = None
+        if task.created_at:
+            time_delta = now - task.created_at
+            completion_time = int(time_delta.total_seconds() / 60)
 
-    # Nếu chuyển từ DONE sang trạng thái khác, reset flag
-    if old_status == 'DONE' and new_status != 'DONE':
+        # Set flag quá hạn
+        if is_overdue:
+            task.completed_overdue = True
+            flash('⚠️ Nhiệm vụ đã hoàn thành nhưng QUÁ HẠN!', 'warning')
+        else:
+            task.completed_overdue = False
+            flash('✅ Nhiệm vụ đã hoàn thành ĐÚNG HẠN!', 'success')
+
+        # TẠO BÁO CÁO
+        from app.models import TaskCompletionReport
+
+        completion_report = TaskCompletionReport(
+            task_id=task.id,
+            completed_by=current_user.id,
+            completion_note=completion_note if completion_note else None,
+            completed_at=now,
+            was_overdue=task.completed_overdue,
+            completion_time=completion_time
+        )
+        db.session.add(completion_report)
+
+        # ===== LOGIC MỚI: TỰ ĐỘNG ĐÁNH GIÁ =====
+        creator = task.creator
+
+        # TRƯỜNG HỢP 1: Giám đốc hoàn thành nhiệm vụ do Trưởng phòng giao
+        # => Tự động đánh giá TỐT
+        if current_user.role == 'director' and creator.role == 'manager':
+            task.performance_rating = 'good'
+            task.rated_by = creator.id  # Người giao việc (manager) đánh giá
+            task.rated_at = now
+
+            flash('✅ Nhiệm vụ được tự động đánh giá TỐT vì Giám đốc hoàn thành!', 'success')
+
+            # Gửi thông báo cho Manager
+            notif = Notification(
+                user_id=creator.id,
+                type='task_completed',
+                title='✅ Giám đốc đã hoàn thành nhiệm vụ',
+                body=f'Giám đốc {current_user.full_name} đã hoàn thành nhiệm vụ "{task.title}" (Tự động đánh giá: TỐT)',
+                link=f'/tasks/{task.id}'
+            )
+            db.session.add(notif)
+
+        # TRƯỜNG HỢP 2: Trưởng phòng hoàn thành nhiệm vụ do Giám đốc giao
+        # => GỬI THÔNG BÁO CHO GIÁM ĐỐC để đánh giá
+        elif current_user.role == 'manager' and creator.role == 'director':
+            # Gửi thông báo cho Giám đốc
+            notif_title = '⚠️ Nhiệm vụ hoàn thành QUÁ HẠN' if task.completed_overdue else '✅ Nhiệm vụ hoàn thành ĐÚNG HẠN'
+            notif_body = f'Trưởng phòng {current_user.full_name} đã hoàn thành: {task.title}'
+            if completion_note:
+                notif_body += f'\n----- Ghi chú: {completion_note}'
+
+            creator_notif = Notification(
+                user_id=creator.id,
+                type='task_completed',
+                title=notif_title,
+                body=notif_body,
+                link=f'/tasks/{task.id}'
+            )
+            db.session.add(creator_notif)
+
+            # Thông báo nhắc đánh giá
+            rating_reminder = Notification(
+                user_id=creator.id,
+                type='task_needs_rating',
+                title='🌟 Cần đánh giá hiệu suất',
+                body=f'Nhiệm vụ "{task.title}" đã hoàn thành bởi Trưởng phòng {current_user.full_name}. Vui lòng đánh giá hiệu suất!',
+                link=f'/tasks/{task.id}'
+            )
+            db.session.add(rating_reminder)
+
+        # TRƯỜNG HỢP 3: Các trường hợp khác (HR, Accountant, etc.)
+        else:
+            # Logic cũ - gửi thông báo cho người giao việc
+            if task.completed_overdue:
+                notif_title = '⚠️ Nhiệm vụ hoàn thành QUÁ HẠN'
+            else:
+                notif_title = '✅ Nhiệm vụ hoàn thành ĐÚNG HẠN'
+
+            notif_body = f'{current_user.full_name} đã hoàn thành: {task.title}'
+            if completion_note:
+                notif_body += f'\n----- Ghi chú: {completion_note}'
+
+            # Gửi cho người giao việc (nếu không phải chính mình)
+            if creator.id != current_user.id:
+                creator_notif = Notification(
+                    user_id=creator.id,
+                    type='task_completed',
+                    title=notif_title,
+                    body=notif_body,
+                    link=f'/tasks/{task.id}'
+                )
+                db.session.add(creator_notif)
+
+                # Nhắc đánh giá
+                rating_reminder = Notification(
+                    user_id=creator.id,
+                    type='task_needs_rating',
+                    title='🌟 Cần đánh giá hiệu suất',
+                    body=f'Nhiệm vụ "{task.title}" đã hoàn thành bởi {current_user.full_name}. Vui lòng đánh giá hiệu suất!',
+                    link=f'/tasks/{task.id}'
+                )
+                db.session.add(rating_reminder)
+
+            # Gửi cho director/manager khác (nếu có)
+            managers = User.query.filter(
+                User.role.in_(['director', 'manager']),
+                User.is_active == True,
+                User.id != current_user.id,
+                User.id != creator.id
+            ).all()
+
+            for manager in managers:
+                manager_notif = Notification(
+                    user_id=manager.id,
+                    type='task_completed',
+                    title=notif_title,
+                    body=notif_body,
+                    link=f'/tasks/{task.id}'
+                )
+                db.session.add(manager_notif)
+
+    elif old_status == 'DONE' and new_status != 'DONE':
         task.completed_overdue = False
+        # Xóa đánh giá tự động nếu mở lại task
+        task.performance_rating = None
+        task.rated_by = None
+        task.rated_at = None
+        flash('Đã mở lại nhiệm vụ.', 'info')
 
     # Update status
     task.status = new_status
     task.updated_at = datetime.utcnow()
     db.session.commit()
 
-    # Gửi thông báo khi hoàn thành
-    if current_user.role in ['hr', 'accountant'] and new_status == 'DONE' and old_status != 'DONE':
-        directors_and_managers = User.query.filter(
-            User.role.in_(['director', 'manager']),
-            User.is_active == True
-        ).all()
-
-        # Thông báo có thêm thông tin quá hạn
-        completion_msg = f'{current_user.full_name} ({current_user.role.upper()}) đã hoàn thành nhiệm vụ: {task.title}'
-        if task.completed_overdue:
-            completion_msg += ' (⚠️ HOÀN THÀNH QUÁ HẠN)'
-
-        for recipient in directors_and_managers:
-            notif = Notification(
-                user_id=recipient.id,
-                type='task_completed',
-                title='Nhiệm vụ đã hoàn thành' + (' - QUÁ HẠN' if task.completed_overdue else ''),
-                body=completion_msg,
-                link=f'/tasks/{task.id}'
-            )
-            db.session.add(notif)
-
-        db.session.commit()
-
-    if not task.completed_overdue:
+    if new_status != 'DONE' and old_status != new_status:
         flash('Cập nhật trạng thái thành công.', 'success')
 
     return redirect(url_for('tasks.task_detail', task_id=task_id))
@@ -1386,16 +1494,29 @@ def bulk_delete_tasks():
         # Convert to integers
         task_ids = [int(id) for id in task_ids]
 
-        # Xóa tất cả task assignments liên quan trước
-        TaskAssignment.query.filter(TaskAssignment.task_id.in_(task_ids)).delete(synchronize_session=False)
+        # QUAN TRỌNG: Thứ tự xóa phải đúng!
+        # 1. Xóa TaskCompletionReport trước (vì có FK đến tasks)
+        from app.models import TaskCompletionReport
+        TaskCompletionReport.query.filter(
+            TaskCompletionReport.task_id.in_(task_ids)
+        ).delete(synchronize_session=False)
 
-        # Xóa tất cả notifications liên quan (nếu có link đến tasks)
-        # Lưu ý: Chỉ xóa notifications có link đến tasks đang xóa
+        # 2. Xóa TaskAssignment
+        TaskAssignment.query.filter(
+            TaskAssignment.task_id.in_(task_ids)
+        ).delete(synchronize_session=False)
+
+        # 3. Xóa Notifications liên quan
         for task_id in task_ids:
-            Notification.query.filter(Notification.link == f'/tasks/{task_id}').delete(synchronize_session=False)
+            Notification.query.filter(
+                Notification.link == f'/tasks/{task_id}'
+            ).delete(synchronize_session=False)
 
-        # Sau đó xóa tasks
-        deleted_count = Task.query.filter(Task.id.in_(task_ids)).delete(synchronize_session=False)
+        # 4. Cuối cùng xóa Tasks
+        deleted_count = Task.query.filter(
+            Task.id.in_(task_ids)
+        ).delete(synchronize_session=False)
+
         db.session.commit()
 
         flash(f'Đã xóa thành công {deleted_count} nhiệm vụ.', 'success')

@@ -166,49 +166,36 @@
         </div>
 
         <nav class="sidebar-nav">
-            {% if current_user.role == 'director' %}
-            <div class="nav-item">
-                <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth.users' in request.endpoint or 'auth.register' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Quản lý Tài Khoản</span>
-                </a>
-            </div>
-            {% endif %}
             <div class="nav-item">
                 <a href="{{ url_for('tasks.dashboard') }}" class="nav-link {% if request.endpoint == 'tasks.dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2"></i>
                     <span>Dashboard</span>
                 </a>
             </div>
-
-            <div class="nav-item">
-                <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-list-task"></i>
-                    <span>Công việc</span>
-                </a>
-            </div>
-
             <div class="nav-item">
                 <a href="{{ url_for('tasks.kanban') }}" class="nav-link {% if request.endpoint == 'tasks.kanban' %}active{% endif %}">
                     <i class="bi bi-kanban"></i>
-                    <span>Kanban Board</span>
+                    <span>Tóm Tắt công việc</span>
                 </a>
             </div>
-
-            <div class="nav-item">
-                <a href="{{ url_for('news.list_news') }}" class="nav-link {% if 'news' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-newspaper"></i>
-                    <span>Thông báo nội bộ</span>
-                </a>
-            </div>
-
             <div class="nav-item">
                 <a href="{{ url_for('workflow.workflow_diagram') }}" class="nav-link {% if 'workflow' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-diagram-3-fill"></i>
                     <span>Luồng Giao Việc</span>
                 </a>
             </div>
-
+            <div class="nav-item">
+                <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-list-task"></i>
+                    <span>Tạo Công việc</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="{{ url_for('news.list_news') }}" class="nav-link {% if 'news' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-newspaper"></i>
+                    <span>Thông báo nội bộ</span>
+                </a>
+            </div>
             <div class="nav-item">
                 <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>
@@ -238,6 +225,15 @@
                         <span>Quản lý Lương</span>
                     </a>
                 </div>
+            {% endif %}
+            {% if current_user.role == 'director' %}
+            <div class="nav-item">
+                <div class="nav-section-title">Giám đốc</div>
+                <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth.users' in request.endpoint or 'auth.register' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Quản lý Tài Khoản</span>
+                </a>
+            </div>
             {% endif %}
         </nav>
 

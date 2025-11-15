@@ -130,7 +130,6 @@ class Task(db.Model):
         back_populates='created_tasks'
     )
 
-    # THÊM relationship cho rater
     rater = db.relationship(
         'User',
         foreign_keys=[rated_by]
@@ -139,6 +138,13 @@ class Task(db.Model):
     assignments = db.relationship(
         'TaskAssignment',
         foreign_keys='TaskAssignment.task_id',
+        back_populates='task',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+
+    completion_reports = db.relationship(
+        'TaskCompletionReport',
         back_populates='task',
         lazy='dynamic',
         cascade='all, delete-orphan'
@@ -443,6 +449,24 @@ class NewsConfirmation(db.Model):
     def __repr__(self):
         return f'<NewsConfirmation news={self.news_id} user={self.user_id}>'
 
+
+class TaskCompletionReport(db.Model):
+    """Báo cáo hoàn thành nhiệm vụ"""
+    __tablename__ = 'task_completion_reports'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    completed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    completion_note = db.Column(db.Text)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    was_overdue = db.Column(db.Boolean, default=False)
+    completion_time = db.Column(db.Integer)
+
+    task = db.relationship('Task', foreign_keys=[task_id], back_populates='completion_reports')
+    completer = db.relationship('User', foreign_keys=[completed_by])
+
+    def __repr__(self):
+        return f'<TaskCompletionReport task={self.task_id}>'
 
 @login_manager.user_loader
 def load_user(user_id):

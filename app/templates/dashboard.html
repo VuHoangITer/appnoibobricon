@@ -1152,6 +1152,67 @@ function setChartDateRange(days) {
     </div>
 </div>
 {% endif %}
+<!-- THÊM MỚI: Card Tasks Cần Đánh Giá -->
+{% if current_user.role in ['director', 'manager'] and tasks_need_rating %}
+<div class="card border-warning mb-4 shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+            <i class="bi bi-star-fill"></i> Cần Đánh Giá Hiệu Suất
+            <span class="badge bg-dark">{{ tasks_need_rating|length }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">
+            <i class="bi bi-info-circle"></i> Các nhiệm vụ đã hoàn thành nhưng chưa được đánh giá:
+        </p>
+        <div class="list-group">
+            {% for task in tasks_need_rating[:5] %}
+            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}"
+               class="list-group-item list-group-item-action list-group-item-warning">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="bi bi-clipboard-check"></i> {{ task.title }}
+                        </h6>
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i>
+                            {% set assignees = task.assignments.filter_by(accepted=True).all() %}
+                            {% if assignees %}
+                                {{ assignees|map(attribute='user.full_name')|join(', ') }}
+                            {% else %}
+                                Chưa gán
+                            {% endif %}
+                            |
+                            <i class="bi bi-calendar-check"></i> Hoàn thành: {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
+                        </small>
+                    </div>
+                    <div>
+                        {% if task.completed_overdue %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Quá hạn
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Đúng hạn
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if tasks_need_rating|length > 5 %}
+        <div class="text-center mt-3">
+            <a href="{{ url_for('tasks.tasks_by_status', status='DONE') }}?rating=unrated"
+               class="btn btn-sm btn-warning">
+                <i class="bi bi-star"></i> Xem tất cả {{ tasks_need_rating|length }} task cần đánh giá
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 <!-- ===== BIỂU ĐỒ PHÂN TÍCH ===== -->
 <div class="row mb-4">
     <!-- PIE CHART - Phân bổ trạng thái -->
