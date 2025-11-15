@@ -130,53 +130,53 @@
                 <hr>
 
                 <!-- BÁO CÁO HOÀN THÀNH -->
-{% if task.status == 'DONE' %}
-<div class="card mb-3 border-{% if task.completed_overdue %}warning{% else %}success{% endif %}">
-    <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
-        <h5 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h5>
-    </div>
-    <div class="card-body">
-        {% set reports = task.completion_reports.all() %}
-        {% if reports %}
-            {% set completion_report = reports[0] %}
+                    {% if task.status == 'DONE' %}
+                    <div class="card mb-3 border-{% if task.completed_overdue %}warning{% else %}success{% endif %}">
+                        <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
+                            <h5 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h5>
+                        </div>
+                        <div class="card-body">
+                            {% set reports = task.completion_reports.all() %}
+                            {% if reports %}
+                                {% set completion_report = reports[0] %}
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <p class="mb-1"><strong><i class="bi bi-person-fill"></i> Người hoàn thành:</strong></p>
-                    <p>{{ completion_report.completer.full_name }}
-                        <span class="badge bg-secondary">{{ completion_report.completer.role | role_vn }}</span>
-                    </p>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <p class="mb-1"><strong><i class="bi bi-calendar-check"></i> Thời gian:</strong></p>
-                    <p>{{ completion_report.completed_at | vn_datetime }}</p>
-                </div>
-            </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1"><strong><i class="bi bi-person-fill"></i> Người hoàn thành:</strong></p>
+                                        <p>{{ completion_report.completer.full_name }}
+                                            <span class="badge bg-secondary">{{ completion_report.completer.role | role_vn }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1"><strong><i class="bi bi-calendar-check"></i> Thời gian:</strong></p>
+                                        <p>{{ completion_report.completed_at | vn_datetime }}</p>
+                                    </div>
+                                </div>
 
-            {% if completion_report.completion_time %}
-            <p class="mb-2">
-                <strong><i class="bi bi-clock-history"></i> Thời gian làm việc:</strong>
-                {% set hours = (completion_report.completion_time // 60) %}
-                {% set minutes = (completion_report.completion_time % 60) %}
-                {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
-            </p>
-            {% endif %}
+                                {% if completion_report.completion_time %}
+                                <p class="mb-2">
+                                    <strong><i class="bi bi-clock-history"></i> Thời gian làm việc:</strong>
+                                    {% set hours = (completion_report.completion_time // 60) %}
+                                    {% set minutes = (completion_report.completion_time % 60) %}
+                                    {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
+                                </p>
+                                {% endif %}
 
-            {% if completion_report.completion_note %}
-            <div class="alert alert-info mb-0">
-                <p class="mb-1"><strong><i class="bi bi-chat-left-text-fill"></i> Ghi chú:</strong></p>
-                <p class="mb-0" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
-            </div>
-            {% endif %}
+                                {% if completion_report.completion_note %}
+                                <div class="alert alert-info mb-0">
+                                    <p class="mb-1"><strong><i class="bi bi-chat-left-text-fill"></i> Nội dung Báo cáo:</strong></p>
+                                    <p class="mb-0" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
+                                </div>
+                                {% endif %}
 
-        {% else %}
-            <div class="alert alert-secondary mb-0">
-                <i class="bi bi-info-circle"></i> Nhiệm vụ hoàn thành trước khi có hệ thống báo cáo.
-            </div>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
+                            {% else %}
+                                <div class="alert alert-secondary mb-0">
+                                    <i class="bi bi-info-circle"></i> Nhiệm vụ hoàn thành trước khi có hệ thống báo cáo.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
 
                 <!-- Accept/Reject buttons cho task được giao nhóm -->
                 {% if user_assignment and not user_assignment.accepted and user_assignment.assigned_group %}
@@ -238,8 +238,7 @@
                         <!-- THÊM MỚI: TEXTAREA GHI CHÚ -->
                         <div class="mb-3" id="completionNoteDiv" style="display: none;">
                             <label for="completion_note" class="form-label">
-                                <strong><i class="bi bi-chat-left-text"></i> Ghi chú hoàn thành:</strong>
-                                <small class="text-muted">(Tùy chọn)</small>
+                                <strong><i class="bi bi-chat-left-text"></i> Nội dung báo cáo:<small class="text-muted">(Nếu có)</small></strong>
                             </label>
                             <textarea
                                 class="form-control"

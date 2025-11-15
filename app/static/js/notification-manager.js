@@ -20,7 +20,7 @@ class NotificationManager {
         this.lastNotificationCount = 0;
         this.seenNotificationIds = this.loadSeenIds(); // THÊM: Load từ localStorage
         this.pollingInterval = null;
-        this.pollingDelay = 10000; // 10 giây
+        this.pollingDelay = 20000;
 
         // UI Elements
         this.toggleButton = null;
@@ -334,68 +334,74 @@ class NotificationManager {
         }
     }
 
-    /**
-     * Text-to-Speech: Đọc tiêu đề BẰNG BACKEND API
-     */
-    async speak(text) {
-        if (!this.settings.ttsEnabled || !text) {
-            console.log('⏸️ TTS disabled hoặc không có text');
-            return;
+/**
+ * Text-to-Speech: Đọc tiêu đề BẰNG BACKEND API
+ */
+async speak(text) {
+    if (!this.settings.ttsEnabled || !text) {
+        console.log('⏸️ TTS disabled hoặc không có text');
+        return;
+    }
+
+    try {
+        console.log('🗣️ Gọi TTS API:', text);
+
+        // Lấy CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        // Gọi backend API
+        const response = await fetch('/tts/speak', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                text: text,
+                speed: this.settings.ttsSpeed
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`TTS API error: ${response.status}`);
         }
 
-        try {
-            console.log('🗣️ Gọi TTS API:', text);
+        // Nhận audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
 
-            // Lấy CSRF token
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        console.log('✅ TTS audio nhận được, đang phát...');
 
-            // Gọi backend API
-            const response = await fetch('/tts/speak', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    text: text,
-                    speed: this.settings.ttsSpeed
-                })
-            });
+        // Phát audio VÀ ĐỢI PHÁT XONG
+        this.audioElement.src = audioUrl;
+        this.audioElement.playbackRate = this.settings.ttsSpeed;
 
-            if (!response.ok) {
-                throw new Error(`TTS API error: ${response.status}`);
-            }
-
-            // Nhận audio blob
-            const audioBlob = await response.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
-
-            console.log('✅ TTS audio nhận được, đang phát...');
-
-            // Phát audio
-            this.audioElement.src = audioUrl;
-
-            // Điều chỉnh playback rate (speed) nếu backend không hỗ trợ
-            // Note: gTTS không hỗ trợ speed, phải điều chỉnh ở client
-            this.audioElement.playbackRate = this.settings.ttsSpeed;
-
-            await this.audioElement.play();
-
-            console.log('🔊 Đang phát TTS...');
-
-            // Cleanup sau khi phát xong
+        // QUAN TRỌNG: Đợi audio phát xong bằng Promise
+        await new Promise((resolve, reject) => {
             this.audioElement.onended = () => {
                 console.log('⏹️ TTS phát xong');
                 URL.revokeObjectURL(audioUrl);
+                resolve();
             };
 
-        } catch (error) {
-            console.error('❌ TTS Error:', error);
+            this.audioElement.onerror = (error) => {
+                console.error('❌ Audio playback error:', error);
+                URL.revokeObjectURL(audioUrl);
+                reject(error);
+            };
 
-            // Fallback: hiện toast thông báo
-            this.showToast('Không thể phát âm thanh thông báo', 'warning');
-        }
+            this.audioElement.play().catch(reject);
+        });
+
+        console.log('🔊 Đã phát xong TTS');
+
+    } catch (error) {
+        console.error('❌ TTS Error:', error);
+
+        // Fallback: hiện toast thông báo
+        this.showToast('Không thể phát âm thanh thông báo', 'warning');
     }
+}
 
     /**
      * Bắt đầu polling
@@ -505,75 +511,103 @@ class NotificationManager {
         }
     }
 
-    /**
-     * Lấy và đọc thông báo mới nhất
-     */
-    async speakLatestNotification() {
-        try {
-            // Gọi API lấy thông báo mới nhất
-            const response = await fetch('/notifications/latest');
+/**
+ * Lấy và đọc TẤT CẢ thông báo mới
+ */
+async speakLatestNotification() {
+    try {
+        // Gọi API lấy TẤT CẢ thông báo chưa đọc
+        const response = await fetch('/notifications/latest-all');
 
-            if (response.ok) {
-                const data = await response.json();
+        if (!response.ok) {
+            throw new Error('API error');
+        }
 
-                console.log('📢 Notification data:', data);
+        const data = await response.json();
+        const notifications = data.notifications || [];
 
-                if (data.title || data.body) {
-                    let textToSpeak = '';
+        console.log(`📢 Có ${notifications.length} thông báo cần đọc`);
+        console.log('📋 FULL DATA:', data);
 
-                    // Kiểm tra setting: Đọc full hay chỉ title?
-                    if (this.settings.readFullContent) {
-                        // ĐỌC CẢ TITLE VÀ BODY
-                        if (data.title) {
-                            textToSpeak = data.title;
-                        }
+        if (notifications.length === 0) {
+            console.log('⚠️ Không có thông báo nào');
+            return;
+        }
 
-                        if (data.body) {
-                            if (textToSpeak) {
-                                textToSpeak += '. ' + data.body;
-                            } else {
-                                textToSpeak = data.body;
-                            }
-                        }
+        // Đọc TỪNG thông báo (tuần tự)
+        for (let i = 0; i < notifications.length; i++) {
+            const notif = notifications[i];
+            let textToSpeak = '';
 
-                        console.log('📖 Đọc TOÀN BỘ (title + body)');
-                    } else {
-                        // CHỈ ĐỌC TITLE
-                        textToSpeak = data.title || data.body || '';
-                        console.log('📖 Chỉ đọc TIÊU ĐỀ');
-                    }
+            console.log(`\n📖 === Đang đọc thông báo ${i + 1}/${notifications.length} ===`);
+            console.log('📋 RAW notification:', notif);
+            console.log('📋 Title:', notif.title);
+            console.log('📋 Body:', notif.body);
+            console.log('📋 readFullContent setting:', this.settings.readFullContent);
 
-                    // Làm sạch text trước khi đọc
-                    textToSpeak = textToSpeak.replace(/<[^>]*>/g, ''); // Xóa HTML
-                    textToSpeak = textToSpeak.replace(/[^\w\s\u00C0-\u1EF9.,!?]/gi, ''); // Chỉ giữ chữ, số, dấu câu
-                    textToSpeak = textToSpeak.trim();
+            // Kiểm tra setting: Đọc full hay chỉ title?
+            if (this.settings.readFullContent) {
+                // ĐỌC CẢ TITLE VÀ BODY
+                if (notif.title) {
+                    textToSpeak = notif.title;
+                }
 
-                    // Giới hạn độ dài (tránh đọc quá dài)
-                    const maxLength = this.settings.readFullContent ? 300 : 150;
-                    if (textToSpeak.length > maxLength) {
-                        textToSpeak = textToSpeak.substring(0, maxLength) + '...';
-                        console.log('⚠️ Text quá dài, đã cắt bớt');
-                    }
-
-                    console.log('📢 Text sẽ đọc:', textToSpeak);
-                    console.log('📏 Độ dài:', textToSpeak.length, 'ký tự');
-
+                if (notif.body) {
                     if (textToSpeak) {
-                        await this.speak(textToSpeak);
+                        textToSpeak += '. ' + notif.body;
+                    } else {
+                        textToSpeak = notif.body;
                     }
                 }
+
+                console.log('✅ Chế độ: Đọc TOÀN BỘ (title + body)');
             } else {
-                // Fallback: đọc thông báo chung
-                const fallbackText = `Bạn có ${this.lastNotificationCount} thông báo mới`;
-                console.log('📢 Fallback - đọc:', fallbackText);
-                await this.speak(fallbackText);
+                // CHỈ ĐỌC TITLE
+                textToSpeak = notif.title || notif.body || '';
+                console.log('✅ Chế độ: Chỉ đọc TIÊU ĐỀ');
             }
-        } catch (error) {
-            console.error('Error fetching latest notification:', error);
-            // Fallback
-            await this.speak('Bạn có thông báo mới');
+
+            console.log('📝 Text trước khi làm sạch:', textToSpeak);
+
+            // Làm sạch text
+            textToSpeak = textToSpeak.replace(/<[^>]*>/g, ''); // Xóa HTML
+            textToSpeak = textToSpeak.trim();
+
+            // Giới hạn độ dài (tránh đọc quá dài)
+            const maxLength = this.settings.readFullContent ? 300 : 150;
+            if (textToSpeak.length > maxLength) {
+                textToSpeak = textToSpeak.substring(0, maxLength) + '...';
+                console.log('⚠️ Text quá dài, đã cắt bớt');
+            }
+
+            console.log('🗣️ Text SAU khi làm sạch:', textToSpeak);
+            console.log('📏 Độ dài:', textToSpeak.length, 'ký tự');
+
+            // Đọc thông báo này
+            if (textToSpeak) {
+                await this.speak(textToSpeak);
+
+                // Delay giữa các thông báo
+                if (i < notifications.length - 1) {
+                    console.log('⏳ Delay 0.2s trước khi đọc thông báo tiếp theo...');
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            } else {
+                console.log('⚠️ Không có text để đọc!');
+            }
         }
+
+        console.log('\n✅ Đã đọc xong tất cả thông báo\n');
+
+    } catch (error) {
+        console.error('❌ Error fetching notifications:', error);
+
+        // Fallback: đọc thông báo chung
+        const fallbackText = `Bạn có thông báo mới`;
+        console.log('📢 Fallback - đọc:', fallbackText);
+        await this.speak(fallbackText);
     }
+}
 
     /**
      * Show toast notification

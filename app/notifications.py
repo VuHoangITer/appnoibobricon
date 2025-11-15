@@ -190,3 +190,27 @@ def latest_notification():
         })
     else:
         return jsonify({'title': None}), 404
+
+
+@bp.route('/latest-all')
+@login_required
+def latest_all_notifications():
+    """API lấy TẤT CẢ thông báo chưa đọc (tối đa 10)"""
+    notifs = Notification.query.filter_by(
+        user_id=current_user.id,
+        read=False
+    ).order_by(Notification.created_at.desc()).limit(10).all()
+
+    return jsonify({
+        'notifications': [
+            {
+                'id': notif.id,
+                'title': notif.title,
+                'body': notif.body,
+                'type': notif.type,
+                'link': notif.link,
+                'created_at': notif.created_at.isoformat()
+            } for notif in notifs
+        ],
+        'count': len(notifs)
+    })

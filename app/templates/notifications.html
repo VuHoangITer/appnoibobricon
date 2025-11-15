@@ -56,7 +56,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>
         <i class="bi bi-bell"></i> Thông báo
-        <span class="badge bg-primary ms-2" id="total-count">{{ notifications|length }}</span>
+        <span class="badge bg-primary ms-2" id="total-count">Tổng: {{ notifications|length }}</span>
         <span class="badge bg-danger ms-1" id="unread-badge">
             {{ notifications|selectattr('read', 'equalto', False)|list|length }}
         </span>
@@ -179,7 +179,7 @@ function updateCounts(unreadCount, totalCount = null) {
     const totalBadge = document.getElementById('total-count');
 
     if (unreadBadge) {
-        unreadBadge.textContent = unreadCount;
+        unreadBadge.textContent = `Chưa Đọc: ${unreadCount}`;
         unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
     }
 
@@ -466,6 +466,62 @@ function updateCounts(unreadCount, totalCount = null) {
     // Initialize badge visibility
     const unreadCount = document.querySelectorAll('[data-read="false"]').length;
     updateCounts(unreadCount);
+    // ==========================================
+    // POLLING: Tự động cập nhật danh sách thông báo
+    // ==========================================
+    let pollingInterval = null;
+    const POLLING_DELAY = 15000; // 15 giây
+
+    async function refreshNotifications() {
+        try {
+            const response = await fetch('/notifications/unread-ids');
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const currentIds = new Set(data.ids || []);
+            const existingIds = new Set(
+                Array.from(document.querySelectorAll('[data-notif-id]'))
+                    .map(item => parseInt(item.getAttribute('data-notif-id')))
+            );
+
+            // Tìm IDs mới
+            const newIds = [...currentIds].filter(id => !existingIds.has(id));
+
+            // Nếu có thông báo mới → reload
+            if (newIds.length > 0) {
+                console.log(`📬 Có ${newIds.length} thông báo mới, đang tải lại...`);
+                showToast(`Có ${newIds.length} thông báo mới! Đang cập nhật...`, 'info');
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+
+            // Cập nhật badge
+            const currentUnreadCount = document.querySelectorAll('[data-read="false"]').length;
+            if (currentIds.size !== currentUnreadCount) {
+                updateCounts(currentIds.size);
+            }
+
+        } catch (error) {
+            console.error('Error polling notifications:', error);
+        }
+    }
+
+    function startPolling() {
+        refreshNotifications();
+        pollingInterval = setInterval(refreshNotifications, POLLING_DELAY);
+        console.log(' Notifications polling started (15s)');
+    }
+
+    window.addEventListener('beforeunload', () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
+
+    // Khởi động polling
+    startPolling();
 
 })();
 </script>

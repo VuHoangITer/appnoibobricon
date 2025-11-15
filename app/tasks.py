@@ -1388,7 +1388,7 @@ def update_status(task_id):
             notif_title = '⚠️ Nhiệm vụ hoàn thành QUÁ HẠN' if task.completed_overdue else '✅ Nhiệm vụ hoàn thành ĐÚNG HẠN'
             notif_body = f'Trưởng phòng {current_user.full_name} đã hoàn thành: {task.title}'
             if completion_note:
-                notif_body += f'\n----- Ghi chú: {completion_note}'
+                notif_body += f'\n Với báo cáo: {completion_note}'
 
             creator_notif = Notification(
                 user_id=creator.id,
