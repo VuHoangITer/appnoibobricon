@@ -470,7 +470,7 @@ function updateCounts(unreadCount, totalCount = null) {
     // POLLING: Tự động cập nhật danh sách thông báo
     // ==========================================
     let pollingInterval = null;
-    const POLLING_DELAY = 15000; // 15 giây
+    const POLLING_DELAY = 30000;
 
     async function refreshNotifications() {
         try {
