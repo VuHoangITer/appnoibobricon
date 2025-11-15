@@ -53,6 +53,13 @@
 {% endblock %}
 
 {% block content %}
+<!-- Alert gợi ý -->
+<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+    <i class="bi bi-info-circle"></i>
+    Nhấn <strong>"Làm mới"</strong> hoặc <strong>F5</strong> để xem thông báo mới nhất.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>
         <i class="bi bi-bell"></i> Thông báo
@@ -63,6 +70,11 @@
     </h2>
 
     <div class="d-flex gap-2">
+        <!-- Nút làm mới -->
+        <button type="button" class="btn btn-sm btn-info btn-action" onclick="window.location.reload()" title="Tải lại trang để xem thông báo mới">
+            <i class="bi bi-arrow-clockwise"></i> Làm mới
+        </button>
+
         <!-- Đánh dấu tất cả đã đọc -->
         <button type="button" class="btn btn-sm btn-secondary btn-action" id="mark-all-read-btn">
             <i class="bi bi-check-all"></i> Đánh dấu tất cả đã đọc
@@ -89,7 +101,6 @@
         </div>
     </div>
 </div>
-
 <div class="card">
     <div class="card-body">
         {% if notifications %}
@@ -173,42 +184,42 @@
         }, 3000);
     }
 
-// Update badge counts
-function updateCounts(unreadCount, totalCount = null) {
-    const unreadBadge = document.getElementById('unread-badge');
-    const totalBadge = document.getElementById('total-count');
+    // Update badge counts
+    function updateCounts(unreadCount, totalCount = null) {
+        const unreadBadge = document.getElementById('unread-badge');
+        const totalBadge = document.getElementById('total-count');
 
-    if (unreadBadge) {
-        unreadBadge.textContent = `Chưa Đọc: ${unreadCount}`;
-        unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
-    }
+        if (unreadBadge) {
+            unreadBadge.textContent = `Chưa Đọc: ${unreadCount}`;
+            unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+        }
 
-    if (totalCount !== null && totalBadge) {
-        totalBadge.textContent = totalCount;
-    }
+        if (totalCount !== null && totalBadge) {
+            totalBadge.textContent = `Tổng: ${totalCount}`;
+        }
 
-    // THÊM MỚI: Cập nhật badge ở topbar và sidebar
-    const topbarBadge = document.getElementById('notif-count');
-    const sidebarBadge = document.getElementById('sidebar-notif-count');
+        // Cập nhật badge ở topbar và sidebar
+        const topbarBadge = document.getElementById('notif-count');
+        const sidebarBadge = document.getElementById('sidebar-notif-count');
 
-    if (topbarBadge) {
-        if (unreadCount > 0) {
-            topbarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            topbarBadge.style.display = 'inline-block';
-        } else {
-            topbarBadge.style.display = 'none';
+        if (topbarBadge) {
+            if (unreadCount > 0) {
+                topbarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                topbarBadge.style.display = 'inline-block';
+            } else {
+                topbarBadge.style.display = 'none';
+            }
+        }
+
+        if (sidebarBadge) {
+            if (unreadCount > 0) {
+                sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                sidebarBadge.style.display = 'inline-block';
+            } else {
+                sidebarBadge.style.display = 'none';
+            }
         }
     }
-
-    if (sidebarBadge) {
-        if (unreadCount > 0) {
-            sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            sidebarBadge.style.display = 'inline-block';
-        } else {
-            sidebarBadge.style.display = 'none';
-        }
-    }
-}
 
     // Check if any notifications left
     function checkEmptyState() {
@@ -254,18 +265,14 @@ function updateCounts(unreadCount, totalCount = null) {
             const data = await response.json();
 
             if (data.success) {
-                // Remove unread styling
                 notifItem.classList.remove('list-group-item-primary');
                 notifItem.setAttribute('data-read', 'true');
 
-                // Remove unread dot
                 const dot = notifItem.querySelector('.bi-circle-fill');
                 if (dot) dot.remove();
 
-                // Remove the mark-read button itself
                 btn.remove();
 
-                // Update counts
                 updateCounts(data.unread_count);
 
                 showToast('Đã đánh dấu đã đọc', 'success');
@@ -305,7 +312,6 @@ function updateCounts(unreadCount, totalCount = null) {
             const data = await response.json();
 
             if (data.success) {
-                // Animate removal
                 notifItem.classList.add('notification-removing');
                 setTimeout(() => {
                     notifItem.remove();
@@ -348,7 +354,6 @@ function updateCounts(unreadCount, totalCount = null) {
             const data = await response.json();
 
             if (data.success) {
-                // Update UI for all unread notifications
                 unreadItems.forEach(item => {
                     item.classList.remove('list-group-item-primary');
                     item.setAttribute('data-read', 'true');
@@ -397,7 +402,6 @@ function updateCounts(unreadCount, totalCount = null) {
             const data = await response.json();
 
             if (data.success) {
-                // Animate removal of read items
                 readItems.forEach((item, index) => {
                     setTimeout(() => {
                         item.classList.add('notification-removing');
@@ -440,7 +444,6 @@ function updateCounts(unreadCount, totalCount = null) {
             const data = await response.json();
 
             if (data.success) {
-                // Animate removal of all items
                 allItems.forEach((item, index) => {
                     setTimeout(() => {
                         item.classList.add('notification-removing');
@@ -466,62 +469,6 @@ function updateCounts(unreadCount, totalCount = null) {
     // Initialize badge visibility
     const unreadCount = document.querySelectorAll('[data-read="false"]').length;
     updateCounts(unreadCount);
-    // ==========================================
-    // POLLING: Tự động cập nhật danh sách thông báo
-    // ==========================================
-    let pollingInterval = null;
-    const POLLING_DELAY = 30000;
-
-    async function refreshNotifications() {
-        try {
-            const response = await fetch('/notifications/unread-ids');
-            if (!response.ok) return;
-
-            const data = await response.json();
-            const currentIds = new Set(data.ids || []);
-            const existingIds = new Set(
-                Array.from(document.querySelectorAll('[data-notif-id]'))
-                    .map(item => parseInt(item.getAttribute('data-notif-id')))
-            );
-
-            // Tìm IDs mới
-            const newIds = [...currentIds].filter(id => !existingIds.has(id));
-
-            // Nếu có thông báo mới → reload
-            if (newIds.length > 0) {
-                console.log(`📬 Có ${newIds.length} thông báo mới, đang tải lại...`);
-                showToast(`Có ${newIds.length} thông báo mới! Đang cập nhật...`, 'info');
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-
-            // Cập nhật badge
-            const currentUnreadCount = document.querySelectorAll('[data-read="false"]').length;
-            if (currentIds.size !== currentUnreadCount) {
-                updateCounts(currentIds.size);
-            }
-
-        } catch (error) {
-            console.error('Error polling notifications:', error);
-        }
-    }
-
-    function startPolling() {
-        refreshNotifications();
-        pollingInterval = setInterval(refreshNotifications, POLLING_DELAY);
-        console.log(' Notifications polling started (15s)');
-    }
-
-    window.addEventListener('beforeunload', () => {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-        }
-    });
-
-    // Khởi động polling
-    startPolling();
 
 })();
 </script>
