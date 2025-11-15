@@ -5,734 +5,1145 @@
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* Fix card header responsive */
-.card-header h5 {
-    font-size: 1.1rem;
-    margin: 0;
-    line-height: 1.4;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-}
-
-.card-header h5 i {
-    flex-shrink: 0;
-    margin-right: 8px;
-}
-
-/* Mobile: giảm font-size cho header */
-@media (max-width: 576px) {
-    .card-header h5 {
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .card-header h5 i {
-        font-size: 1rem;
-        margin-right: 4px;
-    }
-}
-
-/* Đảm bảo table responsive không overflow */
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* THÊM: Ẩn filter form trên mobile, hiện nút */
-@media (max-width: 767px) {
-    .desktop-filter-form {
-        display: none !important;
-    }
-    .mobile-filter-btn {
-        display: block !important;
-    }
-}
-
-@media (min-width: 768px) {
-    .desktop-filter-form {
-        display: block !important;
-    }
-    .mobile-filter-btn {
-        display: none !important;
-    }
-}
-
 /* ============================================
-   STAT CARDS - LAYOUT GIỐNG ẢNH
+   DASHBOARD MODERN REDESIGN - CLEAN & PROFESSIONAL
    ============================================ */
-.stat-card-clickable .card {
-    height: 100%;
-    border: none;
-    border-radius: 16px !important;
-    overflow: hidden;
-    position: relative;
+
+/* Hero Stats Cards - Modern Design */
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.stat-card-clickable .card-body {
-    padding: 30px 25px !important;
+.stat-card {
+    background: linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-end));
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    transition: transform 0.5s;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card:hover::before {
+    transform: translate(-25%, -25%);
+}
+
+.stat-card--primary {
+    --card-gradient-start: #667eea;
+    --card-gradient-end: #764ba2;
+}
+
+.stat-card--warning {
+    --card-gradient-start: #f093fb;
+    --card-gradient-end: #f5576c;
+}
+
+.stat-card--info {
+    --card-gradient-start: #4facfe;
+    --card-gradient-end: #00f2fe;
+}
+
+.stat-card--success {
+    --card-gradient-start: #43e97b;
+    --card-gradient-end: #38f9d7;
+}
+
+.stat-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card__icon {
+    font-size: 2.5rem;
+    opacity: 0.9;
+}
+
+.stat-card__badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.stat-card__badge {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stat-card__content {
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card__title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card__number {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 0;
+}
+
+/* Priority Alert Banner */
+.alert-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.alert-banner__icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.alert-banner__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.alert-banner__text {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin-bottom: 1rem;
+}
+
+.alert-banner__stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.alert-stat {
+    text-align: center;
+}
+
+.alert-stat__number {
+    font-size: 2rem;
+    font-weight: 700;
+    display: block;
+}
+
+.alert-stat__label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-header__title i {
+    color: #667eea;
+}
+
+.section-header__action {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Modern Cards */
+.modern-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    margin-bottom: 1.5rem;
+}
+
+.modern-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.modern-card__header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modern-card__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modern-card__body {
+    padding: 1.5rem;
+}
+
+/* Task List Modern */
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s;
+    background: #f8f9fa;
+    border-left: 4px solid transparent;
+}
+
+.task-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.task-item--overdue {
+    border-left-color: #dc3545;
+    background: #ffe5e5;
+}
+
+.task-item--urgent {
+    border-left-color: #ffc107;
+    background: #fff9e5;
+}
+
+.task-item__content {
+    flex: 1;
+}
+
+.task-item__title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.task-item__title:hover {
+    color: #667eea;
+}
+
+.task-item__meta {
+    font-size: 0.875rem;
+    color: #718096;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.task-item__status {
+    margin-left: auto;
+}
+
+/* Charts Container */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.chart-card__header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chart-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-card__body {
+    padding: 1.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Filter Toggle */
+.filter-toggle {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-form__group {
     display: flex;
     flex-direction: column;
 }
 
-/* HEADER: Title bên trái + Badges bên phải */
-.stat-card-clickable .card-body h5 {
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-    margin-bottom: 20px !important;
-    opacity: 0.95;
-}
-
-/* SỐ LỚNG Ở GIỮA/DƯỚI */
-.stat-card-clickable .card-body h2 {
-    font-size: 3.8rem !important;
-    font-weight: 700 !important;
-    margin-bottom: 0 !important;
-    line-height: 1;
-    margin-top: auto; /* ĐẨY XUỐNG DƯỚI */
-}
-
-/* BADGE GROUP - Ở GÓC PHẢI TRÊN, ICON TRÊN + SỐ DƯỚI */
-.badge-group {
-    position: absolute;
-    top: 25px;
-    right: 25px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-}
-
-.badge-group .badge {
-    display: flex !important;
-    flex-direction: column !important; /* ICON TRÊN, SỐ DƯỚI */
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    font-size: 1.1rem !important; /* SỐ TO HƠN */
-    font-weight: 700 !important;
-    padding: 10px 12px !important;
-    border-radius: 10px !important;
-    min-width: 50px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-}
-
-.badge-group .badge i {
-    font-size: 1.3rem !important; /* ICON TO */
-    margin: 0 !important;
-}
-
-/* Hover effect */
-.stat-card-clickable {
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
-
-.stat-card-clickable:hover {
-    transform: translateY(-5px) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
-    color: inherit;
-    text-decoration: none;
-}
-
-.stat-card-clickable:hover .card {
-    box-shadow: 0 12px 32px rgba(0,0,0,0.25) !important;
-}
-
-/* ============================================
-   RESPONSIVE ORDER - MÁY TÍNH: 2 HÀNG
-   ============================================ */
-.stats-row {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-/* DESKTOP: 2 HÀNG */
-@media (min-width: 768px) {
-    /* HÀNG 1: 3 cards - mỗi card chiếm 33.33% */
-    .stat-card-pending {
-        order: 1;
-        flex: 0 0 33.33% !important;
-        max-width: 33.33% !important;
-    }
-    .stat-card-progress {
-        order: 2;
-        flex: 0 0 33.33% !important;
-        max-width: 33.33% !important;
-    }
-    .stat-card-done {
-        order: 3;
-        flex: 0 0 33.33% !important;
-        max-width: 33.33% !important;
-    }
-
-    /* HÀNG 2: Tổng nhiệm vụ - chiếm full width */
-    .stat-card-total {
-        order: 4;
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-        margin-top: 10px !important; /* KHOẢNG CÁCH GIỮA 2 HÀNG */
-    }
-
-    /* Card Tổng Nhiệm Vụ - TO HƠN */
-    .stat-card-total .card-body {
-        padding: 40px 30px !important;
-    }
-
-    .stat-card-total .card-body h5 {
-        font-size: 1.3rem !important;
-    }
-
-    .stat-card-total .card-body h2 {
-        font-size: 5rem !important; /* TO HƠN NHIỀU */
-    }
-
-    .stat-card-total .badge-group .badge {
-        min-width: 65px !important;
-        padding: 14px 16px !important;
-        font-size: 1.3rem !important;
-    }
-
-    .stat-card-total .badge-group .badge i {
-        font-size: 1.5rem !important;
-    }
-}
-
-/* MOBILE: Giữ nguyên order cũ */
-@media (max-width: 767px) {
-    .stat-card-clickable .card-body {
-        padding: 25px 20px !important;
-    }
-
-    .stat-card-clickable .card-body h5 {
-        font-size: 1rem !important;
-        margin-bottom: 15px !important;
-        padding-right: 140px; /* DỂ TRÁNH BADGE */
-    }
-
-    .stat-card-clickable .card-body h2 {
-        font-size: 3rem !important;
-    }
-
-    .badge-group {
-        top: 20px;
-        right: 20px;
-        gap: 8px;
-    }
-
-    .badge-group .badge {
-        font-size: 0.95rem !important;
-        padding: 8px 10px !important;
-        min-width: 45px !important;
-    }
-
-    .badge-group .badge i {
-        font-size: 1.1rem !important;
-    }
-
-    /* Mobile order */
-    .stat-card-pending { order: 1; }
-    .stat-card-progress { order: 2; }
-    .stat-card-done { order: 3; }
-    .stat-card-total { order: 4; }
-}
-
-/* ============================================
-   PERFORMANCE NOTIFICATION CARD - RESPONSIVE
-   ============================================ */
-.performance-card {
-    border-left: 5px solid;
-    transition: all 0.3s ease;
-    animation: slideInDown 0.5s ease-out;
-}
-
-.performance-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
-}
-
-.performance-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
+.filter-form__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    flex-shrink: 0; /* Không co lại */
+    gap: 0.25rem;
 }
 
-.performance-stats .stat-item {
-    padding: 10px 8px;
-    background: #f8f9fa;
+.filter-form__control {
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    text-align: center;
-    min-width: 80px;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
 }
 
-.performance-stats .stat-item small {
-    display: block;
-    font-size: 0.75rem;
-    margin-bottom: 4px;
+.filter-form__control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.performance-stats .stat-item strong {
-    font-size: 1.2rem;
-    display: block;
-}
-
-/* Border colors theo type */
-.card.border-success {
-    border-left-color: #198754 !important;
-}
-
-.card.border-info {
-    border-left-color: #0dcaf0 !important;
-}
-
-.card.border-warning {
-    border-left-color: #ffc107 !important;
-}
-
-.card.border-danger {
-    border-left-color: #dc3545 !important;
-}
-
-.card.border-secondary {
-    border-left-color: #6c757d !important;
-}
-
-/* Animation */
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Progress bar gradient */
-.progress-bar.bg-success {
-    background: linear-gradient(90deg, #28a745 0%, #20c997 100%) !important;
-}
-
-.progress-bar.bg-info {
-    background: linear-gradient(90deg, #17a2b8 0%, #5bc0de 100%) !important;
-}
-
-.progress-bar.bg-warning {
-    background: linear-gradient(90deg, #ffc107 0%, #ffca2c 100%) !important;
-}
-
-.progress-bar.bg-danger {
-    background: linear-gradient(90deg, #dc3545 0%, #e4606d 100%) !important;
-}
-
-/* ============================================
-   MOBILE RESPONSIVE (QUAN TRỌNG)
-   ============================================ */
-@media (max-width: 767px) {
-    /* Icon nhỏ hơn */
-    .performance-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-        margin-bottom: 15px; /* Khoảng cách với content */
-    }
-
-    /* Layout thay đổi: Icon ở trên, content ở dưới */
-    .performance-card .card-body > .row {
-        flex-direction: column !important;
-        text-align: center;
-    }
-
-    .performance-card .card-body .col-auto {
-        width: 100% !important;
-        display: flex;
-        justify-content: center;
-        margin-bottom: 15px;
-    }
-
-    .performance-card .card-body .col {
-        width: 100% !important;
-    }
-
-    /* Title và message */
-    .performance-card h5 {
-        font-size: 1rem !important;
-        text-align: center;
-    }
-
-    .performance-card p {
-        font-size: 0.9rem;
-        text-align: center;
-    }
-
-    /* Stats grid - 2 cột trên mobile */
-    .performance-stats .row {
-        justify-content: center;
-    }
-
-    .performance-stats .stat-item {
-        padding: 8px 6px;
-        min-width: 70px;
-        font-size: 0.85rem;
-    }
-
-    .performance-stats .stat-item small {
-        font-size: 0.7rem;
-    }
-
-    .performance-stats .stat-item strong {
-        font-size: 1rem;
-    }
-
-    /* Progress bar nhỏ hơn */
-    .performance-card .progress {
-        height: 6px !important;
-        margin-top: 12px !important;
-    }
-
-    /* Action button full width */
-    .performance-card .col-auto:last-child {
-        width: 100% !important;
-        margin-top: 15px;
-    }
-
-    .performance-card .btn {
-        width: 100%;
-        font-size: 0.9rem;
-    }
-
-    /* Card padding nhỏ hơn */
-    .performance-card .card-body {
-        padding: 15px !important;
-    }
-}
-
-/* Tablet (768px - 991px) */
-@media (min-width: 768px) and (max-width: 991px) {
-    .performance-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.75rem;
-    }
-
-    .performance-stats .stat-item {
-        min-width: 75px;
-        padding: 9px 7px;
-    }
-
-    .performance-stats .stat-item strong {
-        font-size: 1.1rem;
-    }
-
-    .performance-card h5 {
-        font-size: 1.05rem !important;
-    }
-}
-
-/* Very small mobile (< 380px) */
-@media (max-width: 379px) {
-    .performance-stats .stat-item {
-        min-width: 65px;
-        padding: 6px 4px;
-    }
-
-    .performance-stats .stat-item small {
-        font-size: 0.65rem;
-    }
-
-    .performance-stats .stat-item strong {
-        font-size: 0.95rem;
-    }
-
-    .performance-card h5 {
-        font-size: 0.95rem !important;
-    }
-}
-/* ============================================
-   CHART RESPONSIVE OPTIMIZATION
-   ============================================ */
-
-/* Chart Container */
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: 250px;
-}
-
-/* Desktop: Charts có chiều cao cố định */
-@media (min-width: 768px) {
-    .chart-container.pie-chart {
-        min-height: 350px;
-        max-height: 350px;
-    }
-
-    .chart-container.line-chart {
-        min-height: 350px;
-        max-height: 350px;
-    }
-
-    .chart-container.bar-chart {
-        min-height: 400px;
-        max-height: 500px;
-    }
-}
-
-/* Mobile: Charts nhỏ gọn hơn */
-@media (max-width: 767px) {
-    .chart-container.pie-chart {
-        min-height: 280px;
-        max-height: 280px;
-    }
-
-    .chart-container.line-chart {
-        min-height: 300px;
-        max-height: 300px;
-    }
-
-    .chart-container.bar-chart {
-        min-height: 350px;
-        max-height: 450px;
-    }
-
-    /* Mobile: Card header nhỏ gọn */
-    .chart-card .card-header {
-        padding: 12px 15px !important;
-    }
-
-    .chart-card .card-header h5 {
-        font-size: 0.95rem !important;
-    }
-
-    .chart-card .card-header .btn {
-        font-size: 0.8rem !important;
-        padding: 4px 8px !important;
-    }
-
-    /* Mobile: Ẩn text nút, chỉ giữ icon */
-    .chart-card .btn-filter-text {
-        display: none;
-    }
-}
-
-/* Card body padding điều chỉnh */
-.chart-card .card-body {
-    padding: 20px;
-}
-
-@media (max-width: 767px) {
-    .chart-card .card-body {
-        padding: 15px;
-    }
-}
-
-/* Chart legend responsive */
-@media (max-width: 576px) {
-    /* Legend nhỏ hơn trên mobile */
-    .chart-container canvas {
-        font-size: 10px !important;
-    }
-}
-
-/* Loading placeholder */
-.chart-loading {
-    display: flex;
+/* Badges */
+.badge-modern {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    color: #6c757d;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.chart-loading i {
-    font-size: 3rem;
-    animation: pulse 1.5s infinite;
+.badge-modern--danger {
+    background: #fee;
+    color: #c53030;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+.badge-modern--warning {
+    background: #fffaf0;
+    color: #c05621;
+}
+
+.badge-modern--info {
+    background: #e6fffa;
+    color: #00A3C4;
+}
+
+.badge-modern--success {
+    background: #f0fff4;
+    color: #22543d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-card__number {
+        font-size: 2.5rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .alert-banner__stats {
+        gap: 1rem;
+    }
+
+    .alert-stat__number {
+        font-size: 1.5rem;
+    }
+
+    .task-item__meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+/* Utility Classes */
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-modern--primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-modern--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn-modern--secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-modern--secondary:hover {
+    background: #cbd5e0;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #a0aec0;
+}
+
+.empty-state__icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state__text {
+    font-size: 1rem;
+    margin: 0;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- THÊM: Nút mở filter trên mobile -->
-<div class="mobile-filter-btn mb-3" style="display: none;">
-    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
-        <i class="bi bi-funnel-fill"></i> Bộ lọc
+<!-- Filter Section - Collapsible -->
+<div class="filter-toggle">
+    <button class="btn-modern btn-modern--secondary w-100 mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#filterSection">
+        <i class="bi bi-funnel-fill"></i>
+        Bộ lọc
         {% if date_from or date_to or assigned_user or rating_filter %}
         <span class="badge bg-danger ms-2">
             {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if rating_filter else 0) }}
         </span>
         {% endif %}
     </button>
-</div>
 
-<!-- Filter Section - Desktop -->
-<div class="card mb-4 desktop-filter-form">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
-                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+    <div class="collapse" id="filterSection">
+        <form method="GET" class="filter-form">
+            <div class="filter-form__group">
+                <label class="filter-form__label">
+                    <i class="bi bi-calendar-range"></i> Từ ngày
+                </label>
+                <input type="date" class="filter-form__control" name="date_from" value="{{ date_from }}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
-                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+
+            <div class="filter-form__group">
+                <label class="filter-form__label">
+                    <i class="bi bi-calendar-range"></i> Đến ngày
+                </label>
+                <input type="date" class="filter-form__control" name="date_to" value="{{ date_to }}">
             </div>
+
             {% if current_user.role in ['director', 'manager'] %}
-            <div class="col-md-4">
-                <label class="form-label"><i class="bi bi-person"></i> Người được giao nhiệm vụ:</label>
-                <select class="form-select" name="assigned_user">
-                    <option value="">-- Tất cả --</option>
+            <div class="filter-form__group">
+                <label class="filter-form__label">
+                    <i class="bi bi-person"></i> Nhân viên
+                </label>
+                <select class="filter-form__control" name="assigned_user">
+                    <option value="">Tất cả</option>
                     {% for user in all_users %}
                     <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
-                        {{ user.full_name }} ({{ user.role | role_vn }})
+                        {{ user.full_name }}
                     </option>
                     {% endfor %}
                 </select>
             </div>
             {% endif %}
 
-            <!-- THÊM MỚI: Filter đánh giá -->
-            <div class="col-md-2">
-                <label class="form-label"><i class="bi bi-star-fill"></i> Đánh giá:</label>
-                <select class="form-select" name="rating">
-                    <option value="">-- Tất cả --</option>
+            <div class="filter-form__group">
+                <label class="filter-form__label">
+                    <i class="bi bi-star-fill"></i> Đánh giá
+                </label>
+                <select class="filter-form__control" name="rating">
+                    <option value="">Tất cả</option>
                     <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
                     <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
                     <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
                 </select>
             </div>
 
-             <div class="col-12 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel"></i> Lọc
+            <div class="filter-form__group">
+                <button type="submit" class="btn-modern btn-modern--primary">
+                    <i class="bi bi-check-circle"></i> Áp dụng
                 </button>
-                <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Xóa
+            </div>
+
+            <div class="filter-form__group">
+                <a href="{{ url_for('tasks.dashboard') }}" class="btn-modern btn-modern--secondary">
+                    <i class="bi bi-x-circle"></i> Xóa bộ lọc
                 </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- THÊM: Modal Filter cho Mobile -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">
-                    <i class="bi bi-funnel-fill"></i> Bộ lọc
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+{% if current_user.role in ['director', 'manager'] %}
+<!-- Director/Manager Dashboard -->
+
+<!-- Overdue Alert Banner -->
+{% if overdue_tasks %}
+<div class="alert-banner">
+    <div class="text-center">
+        <div class="alert-banner__icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 class="alert-banner__title">Cảnh báo: {{ overdue_tasks|length }} nhiệm vụ quá hạn!</h2>
+        <p class="alert-banner__text">Cần xử lý ngay để đảm bảo tiến độ công việc</p>
+        <div class="alert-banner__stats justify-content-center">
+            <div class="alert-stat">
+                <span class="alert-stat__number">{{ overdue_tasks|length }}</span>
+                <span class="alert-stat__label">Quá hạn</span>
             </div>
-            <form method="GET" action="{{ url_for('tasks.dashboard') }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-range"></i> Từ ngày:
-                        </label>
-                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-                    </div>
+            {% if notification %}
+            <div class="alert-stat">
+                <span class="alert-stat__number">{{ notification.stats.completion|round(1) }}%</span>
+                <span class="alert-stat__label">Hoàn thành</span>
+            </div>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('tasks.tasks_by_status', status='ALL') }}" class="btn-modern btn-modern--primary mt-3">
+            <i class="bi bi-eye"></i> Xem chi tiết
+        </a>
+    </div>
+</div>
+{% endif %}
 
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-range"></i> Đến ngày:
-                        </label>
-                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-                    </div>
+<!-- Hero Stats -->
+<div class="hero-stats">
+    <a href="{{ url_for('tasks.tasks_by_status', status='ALL', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+       class="stat-card stat-card--primary">
+        <div class="stat-card__header">
+            <div class="stat-card__icon">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div class="stat-card__badges">
+                {% if total_urgent > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-exclamation-triangle-fill"></i> {{ total_urgent }}</span>
+                {% endif %}
+                {% if total_important > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-star-fill"></i> {{ total_important }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Tổng nhiệm vụ</div>
+            <h2 class="stat-card__number">{{ total_tasks }}</h2>
+        </div>
+    </a>
 
-                    {% if current_user.role in ['director', 'manager'] %}
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-person"></i> Người được giao nhiệm vụ:
-                        </label>
-                        <select class="form-select" name="assigned_user">
-                            <option value="">-- Tất cả --</option>
-                            {% for user in all_users %}
-                            <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
-                                {{ user.full_name }} ({{ user.role | role_vn }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% endif %}
+    <a href="{{ url_for('tasks.tasks_by_status', status='PENDING', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+       class="stat-card stat-card--warning">
+        <div class="stat-card__header">
+            <div class="stat-card__icon">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-card__badges">
+                {% if pending_urgent > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-exclamation-triangle-fill"></i> {{ pending_urgent }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Chờ xử lý</div>
+            <h2 class="stat-card__number">{{ pending }}</h2>
+        </div>
+    </a>
 
-                    <!-- THÊM MỚI: Filter đánh giá cho mobile -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-star-fill"></i> Đánh giá:
-                        </label>
-                        <select class="form-select" name="rating">
-                            <option value="">-- Tất cả --</option>
-                            <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                            <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                            <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                        </select>
-                    </div>
+    <a href="{{ url_for('tasks.tasks_by_status', status='IN_PROGRESS', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+       class="stat-card stat-card--info">
+        <div class="stat-card__header">
+            <div class="stat-card__icon">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="stat-card__badges">
+                {% if in_progress_urgent > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-exclamation-triangle-fill"></i> {{ in_progress_urgent }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Đang thực hiện</div>
+            <h2 class="stat-card__number">{{ in_progress }}</h2>
+        </div>
+    </a>
 
-                    <!-- Hiển thị filter đang áp dụng -->
-                    {% if date_from or date_to or assigned_user or rating_filter %}
-                    <div class="alert alert-info">
-                        <small>
-                            <i class="bi bi-info-circle"></i> Đang lọc:
-                            {% if date_from %}
-                            <br>• Từ: {{ date_from }}
-                            {% endif %}
-                            {% if date_to %}
-                            <br>• Đến: {{ date_to }}
-                            {% endif %}
-                            {% if assigned_user and all_users %}
-                                {% for user in all_users %}
-                                    {% if user.id == assigned_user|int %}
-                                    <br>• Người: {{ user.full_name }}
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if rating_filter %}
-                            <br>• Đánh giá:
-                                {% if rating_filter == 'good' %}👍 Tốt
-                                {% elif rating_filter == 'bad' %}👎 Kém
-                                {% elif rating_filter == 'unrated' %}⏳ Chưa đánh giá
-                                {% endif %}
-                            {% endif %}
-                        </small>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="modal-footer">
-                    <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+    <a href="{{ url_for('tasks.tasks_by_status', status='DONE', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+       class="stat-card stat-card--success">
+        <div class="stat-card__header">
+            <div class="stat-card__icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-card__badges">
+                {% if done_urgent > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-clock-history"></i> {{ done_urgent }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Hoàn thành</div>
+            <h2 class="stat-card__number">{{ done }}</h2>
+        </div>
+    </a>
+</div>
+
+<!-- Tasks Need Rating -->
+{% if tasks_need_rating %}
+<div class="modern-card">
+    <div class="modern-card__header" style="background: #ffc107; color: #000;">
+        <h3 class="modern-card__title">
+            <i class="bi bi-star-fill"></i>
+            Cần đánh giá hiệu suất
+            <span class="badge bg-dark ms-2">{{ tasks_need_rating|length }}</span>
+        </h3>
+        <a href="{{ url_for('tasks.tasks_by_status', status='DONE') }}?rating=unrated" class="btn-modern btn-modern--secondary btn-sm">
+            Xem tất cả <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    <div class="modern-card__body">
+        <ul class="task-list">
+            {% for task in tasks_need_rating[:5] %}
+            <li class="task-item">
+                <div class="task-item__content">
+                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                        {{ task.title }}
                     </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Áp dụng
-                    </button>
+                    <div class="task-item__meta">
+                        <span><i class="bi bi-person"></i>
+                            {% set assignees = task.assignments.filter_by(accepted=True).all() %}
+                            {% if assignees %}{{ assignees|map(attribute='user.full_name')|join(', ') }}{% else %}Chưa gán{% endif %}
+                        </span>
+                        <span><i class="bi bi-calendar-check"></i> {{ task.updated_at | vn_datetime('%d/%m/%Y') }}</span>
+                    </div>
                 </div>
-            </form>
+                <div class="task-item__status">
+                    {% if task.completed_overdue %}
+                    <span class="badge-modern badge-modern--danger">
+                        <i class="bi bi-exclamation-triangle"></i> Quá hạn
+                    </span>
+                    {% else %}
+                    <span class="badge-modern badge-modern--success">
+                        <i class="bi bi-check-circle"></i> Đúng hạn
+                    </span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- My Personal Tasks -->
+{% if my_personal_tasks %}
+<div class="modern-card">
+    <div class="modern-card__header">
+        <h3 class="modern-card__title">
+            <i class="bi bi-person-check-fill"></i>
+            Nhiệm vụ của bạn
+            <span class="badge bg-primary ms-2">{{ my_personal_tasks|length }}</span>
+        </h3>
+    </div>
+    <div class="modern-card__body">
+        <ul class="task-list">
+            {% for task in my_personal_tasks %}
+            <li class="task-item {% if task | is_overdue %}task-item--overdue{% elif task.is_urgent %}task-item--urgent{% endif %}">
+                <div class="task-item__content">
+                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                        {{ task.title }}
+                    </a>
+                    <div class="task-item__meta">
+                        {% if task.due_date %}
+                        <span><i class="bi bi-calendar-event"></i> {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}</span>
+                        {% endif %}
+                        {% if task.is_urgent %}<span class="badge-modern badge-modern--danger"><i class="bi bi-exclamation-triangle-fill"></i> Khẩn cấp</span>{% endif %}
+                        {% if task.is_important %}<span class="badge-modern badge-modern--warning"><i class="bi bi-star-fill"></i> Quan trọng</span>{% endif %}
+                    </div>
+                </div>
+                <div class="task-item__status">
+                    <span class="badge bg-{{ task.status | status_badge }}">
+                        {{ task.status | status_vn }}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Charts Section -->
+<div class="section-header">
+    <h2 class="section-header__title">
+        <i class="bi bi-graph-up"></i>
+        Phân tích & Thống kê
+    </h2>
+    <div class="section-header__action">
+        <button class="btn-modern btn-modern--secondary btn-sm" data-bs-toggle="modal" data-bs-target="#chartFilterModal">
+            <i class="bi bi-calendar-range"></i> Khoảng thời gian
+        </button>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <!-- Pie Chart -->
+    <div class="chart-card">
+        <div class="chart-card__header">
+            <h4 class="chart-card__title">
+                <i class="bi bi-pie-chart-fill"></i>
+                Phân bổ trạng thái
+            </h4>
+        </div>
+        <div class="chart-card__body">
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Chart -->
+    <div class="chart-card" style="grid-column: span 2;">
+        <div class="chart-card__header">
+            <h4 class="chart-card__title">
+                <i class="bi bi-graph-up"></i>
+                Xu hướng theo thời gian
+            </h4>
+            <small style="opacity: 0.9;">
+                <i class="bi bi-calendar-check"></i>
+                {% if chart_date_from and chart_date_to %}
+                    {{ chart_date_from }} - {{ chart_date_to }}
+                {% else %}
+                    30 ngày gần đây
+                {% endif %}
+            </small>
+        </div>
+        <div class="chart-card__body">
+            <div class="chart-container">
+                <canvas id="lineChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
-<div class="modal fade" id="chartFilterModal" tabindex="-1" aria-labelledby="chartFilterModalLabel" aria-hidden="true">
+
+<!-- Bar Chart - Full Width -->
+<div class="chart-card">
+    <div class="chart-card__header">
+        <h4 class="chart-card__title">
+            <i class="bi bi-bar-chart-fill"></i>
+            Hiệu suất theo nhân viên
+        </h4>
+    </div>
+    <div class="chart-card__body">
+        <div class="chart-container" style="height: 400px;">
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Overview Grid -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card__header">
+                <h3 class="modern-card__title">
+                    <i class="bi bi-calendar-event"></i>
+                    Sắp đến hạn
+                </h3>
+            </div>
+            <div class="modern-card__body">
+                {% if upcoming %}
+                <ul class="task-list">
+                    {% for task in upcoming[:5] %}
+                    <li class="task-item">
+                        <div class="task-item__content">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                                {{ task.title }}
+                            </a>
+                            <div class="task-item__meta">
+                                <span><i class="bi bi-person"></i> {{ task.creator.full_name }}</span>
+                                <span><i class="bi bi-calendar"></i> {{ task.due_date | vn_datetime('%d/%m %H:%M') }}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="bi bi-calendar-check"></i></div>
+                    <p class="empty-state__text">Không có task sắp đến hạn</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card__header">
+                <h3 class="modern-card__title">
+                    <i class="bi bi-clock-history"></i>
+                    Hoạt động gần đây
+                </h3>
+            </div>
+            <div class="modern-card__body">
+                {% if recent_tasks %}
+                <ul class="task-list">
+                    {% for task in recent_tasks[:5] %}
+                    <li class="task-item">
+                        <div class="task-item__content">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                                {{ task.title }}
+                            </a>
+                            <div class="task-item__meta">
+                                <span><i class="bi bi-person"></i> {{ task.creator.full_name }}</span>
+                                <span><i class="bi bi-clock"></i> {{ task.updated_at | vn_datetime('%d/%m %H:%M') }}</span>
+                            </div>
+                        </div>
+                        <div class="task-item__status">
+                            <span class="badge bg-{{ task.status | status_badge }}">
+                                {{ task.status | status_vn }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="bi bi-inbox"></i></div>
+                    <p class="empty-state__text">Chưa có hoạt động nào</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Accountant/HR Dashboard -->
+<div class="hero-stats">
+    <a href="{{ url_for('tasks.list_tasks', status='PENDING') }}" class="stat-card stat-card--warning">
+        <div class="stat-card__header">
+            <div class="stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-card__badges">
+                {% if pending_urgent > 0 %}
+                <span class="stat-card__badge"><i class="bi bi-exclamation-triangle-fill"></i> {{ pending_urgent }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Chờ xử lý</div>
+            <h2 class="stat-card__number">{{ pending }}</h2>
+        </div>
+    </a>
+
+    <a href="{{ url_for('tasks.list_tasks', status='IN_PROGRESS') }}" class="stat-card stat-card--info">
+        <div class="stat-card__header">
+            <div class="stat-card__icon"><i class="bi bi-arrow-repeat"></i></div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Đang thực hiện</div>
+            <h2 class="stat-card__number">{{ in_progress }}</h2>
+        </div>
+    </a>
+
+    <a href="{{ url_for('tasks.list_tasks', status='DONE') }}" class="stat-card stat-card--success">
+        <div class="stat-card__header">
+            <div class="stat-card__icon"><i class="bi bi-check-circle-fill"></i></div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Hoàn thành</div>
+            <h2 class="stat-card__number">{{ done }}</h2>
+        </div>
+    </a>
+
+    <a href="{{ url_for('tasks.list_tasks') }}" class="stat-card stat-card--primary">
+        <div class="stat-card__header">
+            <div class="stat-card__icon"><i class="bi bi-list-check"></i></div>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-card__title">Tổng nhiệm vụ</div>
+            <h2 class="stat-card__number">{{ total_tasks }}</h2>
+        </div>
+    </a>
+</div>
+
+<!-- Overdue Alert for HR/Accountant -->
+{% if overdue_tasks %}
+<div class="alert-banner" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+    <div class="text-center">
+        <div class="alert-banner__icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 class="alert-banner__title">Bạn có {{ overdue_tasks|length }} nhiệm vụ quá hạn!</h2>
+        <p class="alert-banner__text">Vui lòng xử lý ngay để tránh ảnh hưởng đến công việc</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card__header">
+                <h3 class="modern-card__title">
+                    <i class="bi bi-list-check"></i>
+                    Nhiệm vụ của tôi
+                </h3>
+            </div>
+            <div class="modern-card__body">
+                {% if my_tasks %}
+                <ul class="task-list">
+                    {% for task in my_tasks %}
+                    <li class="task-item {% if task | is_overdue %}task-item--overdue{% endif %}">
+                        <div class="task-item__content">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                                {{ task.title }}
+                            </a>
+                            <div class="task-item__meta">
+                                {% if task.due_date %}
+                                <span><i class="bi bi-calendar-event"></i> {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="task-item__status">
+                            <span class="badge bg-{{ task.status | status_badge }}">
+                                {{ task.status | status_vn }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="bi bi-inbox"></i></div>
+                    <p class="empty-state__text">Bạn chưa có nhiệm vụ nào</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="modern-card">
+            <div class="modern-card__header">
+                <h3 class="modern-card__title">
+                    <i class="bi bi-inbox"></i>
+                    Chờ chấp nhận
+                </h3>
+            </div>
+            <div class="modern-card__body">
+                {% if pending_assignments %}
+                <ul class="task-list">
+                    {% for assignment in pending_assignments %}
+                    <li class="task-item">
+                        <div class="task-item__content">
+                            <a href="{{ url_for('tasks.task_detail', task_id=assignment.task_id) }}" class="task-item__title">
+                                {{ assignment.task.title }}
+                            </a>
+                            <div class="task-item__meta">
+                                <span><i class="bi bi-person"></i> {{ assignment.assigner.full_name }}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon"><i class="bi bi-check-circle"></i></div>
+                    <p class="empty-state__text">Không có nhiệm vụ chờ chấp nhận</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Tasks for HR/Accountant -->
+{% if upcoming %}
+<div class="modern-card">
+    <div class="modern-card__header">
+        <h3 class="modern-card__title">
+            <i class="bi bi-calendar-event"></i>
+            Sắp đến hạn
+            <span class="badge bg-warning ms-2">{{ upcoming|length }}</span>
+        </h3>
+    </div>
+    <div class="modern-card__body">
+        <ul class="task-list">
+            {% for task in upcoming %}
+            <li class="task-item task-item--urgent">
+                <div class="task-item__content">
+                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="task-item__title">
+                        {{ task.title }}
+                    </a>
+                    <div class="task-item__meta">
+                        <span><i class="bi bi-person"></i> {{ task.creator.full_name }}</span>
+                        <span><i class="bi bi-calendar"></i> {{ task.due_date | vn_datetime('%d/%m %H:%M') }}</span>
+                    </div>
+                </div>
+                <div class="task-item__status">
+                    <span class="badge bg-{{ task.status | status_badge }}">
+                        {{ task.status | status_vn }}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Notes -->
+<div class="modern-card">
+    <div class="modern-card__header">
+        <h3 class="modern-card__title">
+            <i class="bi bi-journal-text"></i>
+            Ghi chú gần đây
+        </h3>
+    </div>
+    <div class="modern-card__body">
+        {% if recent_notes %}
+        <ul class="task-list">
+            {% for note in recent_notes %}
+            <li class="task-item">
+                <div class="task-item__content">
+                    <a href="{{ url_for('notes.edit_note', note_id=note.id) }}" class="task-item__title">
+                        {{ note.title }}
+                    </a>
+                    <div class="task-item__meta">
+                        <span><i class="bi bi-clock"></i> {{ note.updated_at | vn_datetime }}</span>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i class="bi bi-journal"></i></div>
+            <p class="empty-state__text">Bạn chưa có ghi chú nào</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Chart Filter Modal -->
+<div class="modal fade" id="chartFilterModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="chartFilterModalLabel">
-                    <i class="bi bi-calendar-range"></i> Chọn Khoảng Thời Gian Biểu Đồ
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-range"></i> Chọn khoảng thời gian
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="GET" id="chartFilterForm">
+            <form method="GET">
                 <div class="modal-body">
                     <input type="hidden" name="date_from" value="{{ date_from }}">
                     <input type="hidden" name="date_to" value="{{ date_to }}">
@@ -740,38 +1151,26 @@
                     <input type="hidden" name="rating" value="{{ rating_filter }}">
 
                     <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-event"></i> Từ ngày:
-                        </label>
-                        <input type="date" class="form-control" name="chart_date_from" id="chart_date_from" value="{{ chart_date_from }}" required>
+                        <label class="filter-form__label">Từ ngày:</label>
+                        <input type="date" class="filter-form__control" name="chart_date_from" value="{{ chart_date_from }}" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-event"></i> Đến ngày:
-                        </label>
-                        <input type="date" class="form-control" name="chart_date_to" id="chart_date_to" value="{{ chart_date_to }}" required>
+                        <label class="filter-form__label">Đến ngày:</label>
+                        <input type="date" class="filter-form__control" name="chart_date_to" value="{{ chart_date_to }}" required>
                     </div>
 
                     <div class="d-flex gap-2 flex-wrap mb-3">
-                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setChartDateRange(7)">7 ngày</button>
-                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setChartDateRange(14)">14 ngày</button>
-                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setChartDateRange(30)">30 ngày</button>
-                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setChartDateRange(60)">60 ngày</button>
-                        <button type="button" class="btn btn-sm btn-outline-info" onclick="setChartDateRange(90)">90 ngày</button>
-                    </div>
-
-                    <div class="alert alert-info mb-0">
-                        <small><i class="bi bi-info-circle"></i> <strong>Lưu ý:</strong> Tối đa 90 ngày</small>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setChartDateRange(7)">7 ngày</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setChartDateRange(14)">14 ngày</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setChartDateRange(30)">30 ngày</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setChartDateRange(60)">60 ngày</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setChartDateRange(90)">90 ngày</button>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="{{ url_for('tasks.dashboard', date_from=date_from, date_to=date_to, assigned_user=assigned_user, rating=rating_filter) }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-clockwise"></i> Đặt lại (30 ngày)
-                    </a>
-                    <button type="submit" class="btn btn-info">
-                        <i class="bi bi-check-circle"></i> Áp dụng
-                    </button>
+                    <button type="button" class="btn-modern btn-modern--secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn-modern btn-modern--primary">Áp dụng</button>
                 </div>
             </form>
         </div>
@@ -791,1089 +1190,16 @@ function setChartDateRange(days) {
         return `${year}-${month}-${day}`;
     };
 
-    document.getElementById('chart_date_from').value = formatDate(fromDate);
-    document.getElementById('chart_date_to').value = formatDate(today);
+    document.querySelector('[name="chart_date_from"]').value = formatDate(fromDate);
+    document.querySelector('[name="chart_date_to"]').value = formatDate(today);
 }
-</script>
-{% if current_user.role in ['director', 'manager'] %}
-<!-- Director/Manager Dashboard -->
-<div class="row mb-4 stats-row">
-    <!-- Tổng Nhiệm Vụ -->
-    <div class="col-md-3 col-12 mb-3 stat-card-total">
-        <a href="{{ url_for('tasks.tasks_by_status', status='ALL', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Tổng Nhiệm Vụ</h5>
-                    <h2>{{ total_tasks }}</h2>
-                    <div class="badge-group">
-                        {% if total_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ total_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if total_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ total_important }}
-                        </span>
-                        {% endif %}
-                        {% if total_recurring > 0 %}
-                        <span class="badge bg-info">
-                            <i class="bi bi-arrow-repeat"></i> {{ total_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
 
-    <!-- Chờ xử lý -->
-    <div class="col-md-3 col-12 mb-3 stat-card-pending">
-        <a href="{{ url_for('tasks.tasks_by_status', status='PENDING', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Chờ xử lý</h5>
-                    <h2>{{ pending }}</h2>
-                    <div class="badge-group">
-                        {% if pending_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ pending_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if pending_important > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-star-fill"></i> {{ pending_important }}
-                        </span>
-                        {% endif %}
-                        {% if pending_recurring > 0 %}
-                        <span class="badge bg-info">
-                            <i class="bi bi-arrow-repeat"></i> {{ pending_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Đang thực hiện -->
-    <div class="col-md-3 col-12 mb-3 stat-card-progress">
-        <a href="{{ url_for('tasks.tasks_by_status', status='IN_PROGRESS', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Đang thực hiện</h5>
-                    <h2>{{ in_progress }}</h2>
-                    <div class="badge-group">
-                        {% if in_progress_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ in_progress_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if in_progress_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ in_progress_important }}
-                        </span>
-                        {% endif %}
-                        {% if in_progress_recurring > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-arrow-repeat"></i> {{ in_progress_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Hoàn thành -->
-    <div class="col-md-3 col-12 mb-3 stat-card-done">
-        <a href="{{ url_for('tasks.tasks_by_status', status='DONE', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Hoàn thành</h5>
-                    <h2>{{ done }}</h2>
-                    <div class="badge-group">
-                        {% if done_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ done_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if done_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ done_important }}
-                        </span>
-                        {% endif %}
-                        {% if done_recurring > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-arrow-repeat"></i> {{ done_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- PERFORMANCE NOTIFICATION CARD - CHUYÊN NGHIỆP -->
-{% if notification %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-white shadow-sm performance-card">
-            <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <!-- Icon Section -->
-                    <div class="col-auto">
-                        <div class="performance-icon bg-{{ notification.type }} text-white">
-                            <i class="bi {{ notification.icon }}"></i>
-                        </div>
-                    </div>
-
-                    <!-- Content Section -->
-                    <div class="col">
-                        <h5 class="mb-1 text-{{ notification.type }}">
-                            <strong>{{ notification.title }}</strong>
-                        </h5>
-                        <p class="mb-2 text-muted">{{ notification.message }}</p>
-
-                        <!-- Stats Bar -->
-                        <div class="performance-stats">
-                            <div class="row g-2">
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Hoàn thành</small>
-                                        <strong class="text-success">{{ notification.stats.completion|round(1) }}%</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Quá hạn</small>
-                                        <strong class="text-danger">{{ notification.stats.overdue }}</strong>
-                                    </div>
-                                </div>
-                                {% if 'unrated' in notification.stats %}
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Chưa đánh giá</small>
-                                        <strong class="text-warning">{{ notification.stats.unrated }}</strong>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% if 'on_time_rate' in notification.stats %}
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Đúng hạn</small>
-                                        <strong class="text-success">{{ notification.stats.on_time_rate|round(1) }}%</strong>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Progress Bar -->
-                        <div class="progress mt-3" style="height: 8px;">
-                            <div class="progress-bar bg-{{ notification.type }}"
-                                 role="progressbar"
-                                 style="width: {{ notification.stats.completion }}%"
-                                 aria-valuenow="{{ notification.stats.completion }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Action Button -->
-                    {% if notification.action %}
-                    <div class="col-auto">
-                        <a href="{{ notification.action.url }}" class="btn btn-{{ notification.type }}">
-                            {{ notification.action.text }}
-                            <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-<!-- Tasks cá nhân của Director/Manager -->
-{% if my_personal_tasks %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-white">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-person-check-fill"></i> Nhiệm vụ của bạn
-                    <span class="badge bg-light text-primary ms-2">{{ my_personal_tasks|length }}</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group">
-                    {% for task in my_personal_tasks %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
-                                <strong>{{ task.title }}</strong>
-                            </a>
-                            {% if task | is_overdue %}
-                            <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                            {% endif %}
-                            {% if task.status == 'DONE' and task.completed_overdue %}
-                            <span class="badge bg-danger text-dark ms-2">
-                                <i class="bi bi-clock-history"></i> QUÁ HẠN
-                            </span>
-                            {% endif %}
-                            {% if task.status == 'DONE' and task.performance_rating %}
-                                {% if task.performance_rating == 'good' %}
-                                <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt"></i>
-                                {% else %}
-                                <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện"></i>
-                                {% endif %}
-                            {% endif %}
-                            <!-- Hiển thị badges -->
-                            {% if task.is_urgent %}
-                            <span class="badge bg-danger ms-1">
-                                <i class="bi bi-exclamation-triangle-fill"></i> Khẩn cấp
-                            </span>
-                            {% endif %}
-                            {% if task.is_important %}
-                            <span class="badge bg-warning text-dark ms-1">
-                                <i class="bi bi-star-fill"></i> Quan trọng
-                            </span>
-                            {% endif %}
-                            {% if task.is_recurring %}
-                            <span class="badge bg-info ms-1">
-                                <i class="bi bi-arrow-repeat"></i> Lặp lại
-                            </span>
-                            {% endif %}
-                            <br>
-                            <small class="text-muted">
-                                {% if task.due_date %}
-                                <i class="bi bi-calendar-event"></i> Hạn: {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
-                                {% endif %}
-                            </small>
-                        </div>
-                        <span class="badge bg-{{ task.status | status_badge }}">
-                            {{ task.status | status_vn }}
-                        </span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- NHIỆM VỤ QUÁ HẠN -->
-{% if overdue_tasks %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-white">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Nhiệm vụ quá hạn
-                    <span class="badge bg-light text-danger ms-2">{{ overdue_tasks|length }}</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Nhiệm Vụ</th>
-                                <th>Tạo Bởi</th>
-                                <th>Hạn Chót</th>
-                                <th>Trạng Thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for task in overdue_tasks %}
-                            <tr class="table-danger">
-                                <td data-label="Nhiệm Vụ">
-                                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="text-danger fw-bold">
-                                        {{ task.title }}
-                                    </a>
-                                    <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                                    <!-- Hiển thị badges -->
-                                    {% if task.is_urgent %}
-                                    <span class="badge bg-danger ms-1"><i class="bi bi-exclamation-triangle-fill"></i></span>
-                                    {% endif %}
-                                    {% if task.is_important %}
-                                    <span class="badge bg-warning text-dark ms-1"><i class="bi bi-star-fill"></i></span>
-                                    {% endif %}
-                                    {% if task.is_recurring %}
-                                    <span class="badge bg-info ms-1"><i class="bi bi-arrow-repeat"></i></span>
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-muted">
-                                        <i class="bi bi-people-fill"></i> Người làm:
-                                        {% if task.assignments.count() > 0 %}
-                                            {% set accepted_list = [] %}
-                                            {% set pending_list = [] %}
-                                            {% for assignment in task.assignments %}
-                                                {% if assignment.accepted %}
-                                                    {% set _ = accepted_list.append(assignment.user.full_name) %}
-                                                {% else %}
-                                                    {% set _ = pending_list.append(assignment.user.full_name + ' (chưa xác nhận)') %}
-                                                {% endif %}
-                                            {% endfor %}
-                                            {{ (accepted_list + pending_list)|join(', ') }}
-                                        {% else %}
-                                            <span class="text-warning">Chưa gán</span>
-                                        {% endif %}
-                                    </small>
-                                </td>
-                                <td data-label="Tạo Bởi">
-                                    <small>{{ task.creator.full_name }}</small>
-                                </td>
-                                <td data-label="Hạn Chót">
-                                    <span class="badge bg-danger">
-                                        {{ task.due_date | vn_datetime('%d/%m %H:%M') }}
-                                    </span>
-                                </td>
-                                <td data-label="Trạng Thái">
-                                    <span class="badge bg-{{ task.status | status_badge }}">
-                                        {{ task.status | status_vn }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-<!-- THÊM MỚI: Card Tasks Cần Đánh Giá -->
-{% if current_user.role in ['director', 'manager'] and tasks_need_rating %}
-<div class="card border-warning mb-4 shadow-sm">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0">
-            <i class="bi bi-star-fill"></i> Cần Đánh Giá Hiệu Suất
-            <span class="badge bg-dark">{{ tasks_need_rating|length }}</span>
-        </h5>
-    </div>
-    <div class="card-body">
-        <p class="text-muted mb-3">
-            <i class="bi bi-info-circle"></i> Các nhiệm vụ đã hoàn thành nhưng chưa được đánh giá:
-        </p>
-        <div class="list-group">
-            {% for task in tasks_need_rating[:5] %}
-            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}"
-               class="list-group-item list-group-item-action list-group-item-warning">
-                <div class="d-flex w-100 justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">
-                            <i class="bi bi-clipboard-check"></i> {{ task.title }}
-                        </h6>
-                        <small class="text-muted">
-                            <i class="bi bi-person"></i>
-                            {% set assignees = task.assignments.filter_by(accepted=True).all() %}
-                            {% if assignees %}
-                                {{ assignees|map(attribute='user.full_name')|join(', ') }}
-                            {% else %}
-                                Chưa gán
-                            {% endif %}
-                            |
-                            <i class="bi bi-calendar-check"></i> Hoàn thành: {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
-                        </small>
-                    </div>
-                    <div>
-                        {% if task.completed_overdue %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle"></i> Quá hạn
-                        </span>
-                        {% else %}
-                        <span class="badge bg-success">
-                            <i class="bi bi-check-circle"></i> Đúng hạn
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-
-        {% if tasks_need_rating|length > 5 %}
-        <div class="text-center mt-3">
-            <a href="{{ url_for('tasks.tasks_by_status', status='DONE') }}?rating=unrated"
-               class="btn btn-sm btn-warning">
-                <i class="bi bi-star"></i> Xem tất cả {{ tasks_need_rating|length }} task cần đánh giá
-            </a>
-        </div>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-<!-- ===== BIỂU ĐỒ PHÂN TÍCH ===== -->
-<div class="row mb-4">
-    <!-- PIE CHART - Phân bổ trạng thái -->
-    <div class="col-lg-4 col-md-12 mb-4">
-        <div class="card h-100 chart-card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-pie-chart-fill"></i> Phân Bổ Trạng Thái
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container pie-chart">
-                    <canvas id="pieChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- LINE CHART - Xu hướng theo thời gian -->
-    <div class="col-lg-8 col-md-12 mb-4">
-        <div class="card h-100 chart-card">
-            <div class="card-header bg-info text-white">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Xu Hướng Theo Thời Gian
-                    </h5>
-                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#chartFilterModal">
-                        <i class="bi bi-calendar-range"></i>
-                        <span class="chart-filter-text"> Chọn khoảng thời gian</span>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Hiển thị khoảng thời gian hiện tại -->
-                <div class="mb-2 text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-calendar-check"></i>
-                        {% if chart_date_from and chart_date_to %}
-                            Từ {{ chart_date_from }} đến {{ chart_date_to }}
-                        {% else %}
-                            30 ngày gần đây
-                        {% endif %}
-                    </small>
-                </div>
-                <div class="chart-container line-chart">
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- BAR CHART - Hiệu suất nhân viên -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card chart-card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-bar-chart-fill"></i> Hiệu Suất Theo Nhân Viên
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container bar-chart">
-                    <canvas id="barChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5>
-                    <i class="bi bi-calendar-event"></i>
-                    <span>Tất cả nhiệm vụ sắp đến hạn</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if upcoming %}
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Nhiệm Vụ</th>
-                                <th>Tạo Bởi</th>
-                                <th>Hạn Chót</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for task in upcoming %}
-                            <tr>
-                                <td data-label="Nhiệm Vụ">
-                                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
-                                        {{ task.title }}
-                                    </a>
-                                    {% if task.is_urgent %}
-                                    <span class="badge bg-danger ms-1"><i class="bi bi-exclamation-triangle-fill"></i></span>
-                                    {% endif %}
-                                    {% if task.is_important %}
-                                    <span class="badge bg-warning text-dark ms-1"><i class="bi bi-star-fill"></i></span>
-                                    {% endif %}
-                                    {% if task.is_recurring %}
-                                    <span class="badge bg-info ms-1"><i class="bi bi-arrow-repeat"></i></span>
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-muted">
-                                        <i class="bi bi-people-fill"></i> Người làm:
-                                        {% if task.assignments.count() > 0 %}
-                                            {% set accepted_list = [] %}
-                                            {% set pending_list = [] %}
-                                            {% for assignment in task.assignments %}
-                                                {% if assignment.accepted %}
-                                                    {% set _ = accepted_list.append(assignment.user.full_name) %}
-                                                {% else %}
-                                                    {% set _ = pending_list.append(assignment.user.full_name + ' (chưa xác nhận)') %}
-                                                {% endif %}
-                                            {% endfor %}
-                                            {{ (accepted_list + pending_list)|join(', ') }}
-                                        {% else %}
-                                            <span class="text-warning">Chưa gán</span>
-                                        {% endif %}
-                                    </small>
-                                </td>
-                                <td data-label="Tạo Bởi">
-                                    <small>{{ task.creator.full_name }}</small>
-                                </td>
-                                <td data-label="Hạn Chót">
-                                    <span class="badge bg-warning">
-                                        {{ task.due_date | vn_datetime('%d/%m %H:%M') }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">Không có task nào sắp đến hạn.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5>
-                    <i class="bi bi-clock-history"></i>
-                    <span>Hoạt động gần đây</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_tasks %}
-                <div class="list-group list-group-flush">
-                    {% for task in recent_tasks %}
-                    <div class="list-group-item px-0">
-                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                            <div class="flex-grow-1">
-                               Nhiệm vụ:
-                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="fw-bold">
-                                   {{ task.title }}
-                                </a>
-                                {% if task | is_overdue %}
-                                <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                                {% endif %}
-                                {% if task.status == 'DONE' and task.completed_overdue %}
-                                <span class="badge bg-danger text-dark ms-2">
-                                    <i class="bi bi-clock-history"></i> QUÁ HẠN
-                                </span>
-                                {% endif %}
-                                {% if task.status == 'DONE' and task.performance_rating %}
-                                {% if task.performance_rating == 'good' %}
-                                <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt"></i>
-                                {% else %}
-                                <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện"></i>
-                                {% endif %}
-                            {% endif %}
-                                {% if task.is_urgent %}
-                                <span class="badge bg-danger ms-1"><i class="bi bi-exclamation-triangle-fill"></i></span>
-                                {% endif %}
-                                {% if task.is_important %}
-                                <span class="badge bg-warning text-dark ms-1"><i class="bi bi-star-fill"></i></span>
-                                {% endif %}
-                                {% if task.is_recurring %}
-                                <span class="badge bg-info ms-1"><i class="bi bi-arrow-repeat"></i></span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted">
-                                    <i class="bi bi-person"></i> Tạo bởi: {{ task.creator.full_name }}
-                                    {% if task.assignments.count() > 0 %}
-                                    <br>
-                                    <i class="bi bi-people-fill"></i> Giao cho:
-                                    {% set assigned_names = [] %}
-                                    {% set pending_names = [] %}
-
-                                    {% for assignment in task.assignments %}
-                                        {% if assignment.accepted %}
-                                            {% set _ = assigned_names.append(assignment.user.full_name) %}
-                                        {% else %}
-                                            {% set _ = pending_names.append(assignment.user.full_name) %}
-                                        {% endif %}
-                                    {% endfor %}
-
-                                    {% if assigned_names %}
-                                        {{ assigned_names|join(', ') }}
-                                    {% elif pending_names %}
-                                        <span class="text-danger">
-                                            Đang chờ xác nhận của {{ pending_names|join(', ') }}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-muted">Chưa có người được giao</span>
-                                    {% endif %}
-
-                                    {% endif %}
-                                </small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-{{ task.status | status_badge }}">
-                                    {{ task.status | status_vn }}
-                                </span>
-                                <br>
-                                <small class="text-muted">
-                                    {{ task.updated_at | vn_datetime('%d/%m vào lúc %H:%M') }}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">Chưa có hoạt động nào.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-{% else %}
-<!-- Accountant/HR Dashboard -->
-<!-- THÊM: Stat Cards cho HR/Accountant -->
-<div class="row mb-4 stats-row">
-    <!-- Chờ xử lý -->
-    <div class="col-md-4 col-12 mb-3 stat-card-pending">
-        <a href="{{ url_for('tasks.list_tasks', status='PENDING') }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Chờ xử lý</h5>
-                    <h2>{{ pending }}</h2>
-                    <div class="badge-group">
-                        {% if pending_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ pending_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if pending_important > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-star-fill"></i> {{ pending_important }}
-                        </span>
-                        {% endif %}
-                        {% if pending_recurring > 0 %}
-                        <span class="badge bg-info">
-                            <i class="bi bi-arrow-repeat"></i> {{ pending_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Đang thực hiện -->
-    <div class="col-md-4 col-12 mb-3 stat-card-progress">
-        <a href="{{ url_for('tasks.list_tasks', status='IN_PROGRESS') }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Đang thực hiện</h5>
-                    <h2>{{ in_progress }}</h2>
-                    <div class="badge-group">
-                        {% if in_progress_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ in_progress_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if in_progress_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ in_progress_important }}
-                        </span>
-                        {% endif %}
-                        {% if in_progress_recurring > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-arrow-repeat"></i> {{ in_progress_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Hoàn thành -->
-    <div class="col-md-4 col-12 mb-3 stat-card-done">
-        <a href="{{ url_for('tasks.list_tasks', status='DONE') }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Hoàn thành</h5>
-                    <h2>{{ done }}</h2>
-                    <div class="badge-group">
-                        {% if done_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ done_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if done_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ done_important }}
-                        </span>
-                        {% endif %}
-                        {% if done_recurring > 0 %}
-                        <span class="badge bg-light text-dark">
-                            <i class="bi bi-arrow-repeat"></i> {{ done_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Tổng Nhiệm Vụ - Hàng thứ 2 -->
-    <div class="col-12 mb-3 stat-card-total">
-        <a href="{{ url_for('tasks.list_tasks') }}"
-           class="stat-card-clickable">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Tổng Nhiệm Vụ</h5>
-                    <h2>{{ total_tasks }}</h2>
-                    <div class="badge-group">
-                        {% if total_urgent > 0 %}
-                        <span class="badge bg-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ total_urgent }}
-                        </span>
-                        {% endif %}
-                        {% if total_important > 0 %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-star-fill"></i> {{ total_important }}
-                        </span>
-                        {% endif %}
-                        {% if total_recurring > 0 %}
-                        <span class="badge bg-info">
-                            <i class="bi bi-arrow-repeat"></i> {{ total_recurring }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- PERFORMANCE NOTIFICATION CARD - CHUYÊN NGHIỆP -->
-{% if notification %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-white shadow-sm performance-card">
-            <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <!-- Icon Section -->
-                    <div class="col-auto">
-                        <div class="performance-icon bg-{{ notification.type }} text-white">
-                            <i class="bi {{ notification.icon }}"></i>
-                        </div>
-                    </div>
-
-                    <!-- Content Section -->
-                    <div class="col">
-                        <h5 class="mb-1 text-{{ notification.type }}">
-                            <strong>{{ notification.title }}</strong>
-                        </h5>
-                        <p class="mb-2 text-muted">{{ notification.message }}</p>
-
-                        <!-- Stats Bar -->
-                        <div class="performance-stats">
-                            <div class="row g-2">
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Hoàn thành</small>
-                                        <strong class="text-success">{{ notification.stats.completion|round(1) }}%</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Quá hạn</small>
-                                        <strong class="text-danger">{{ notification.stats.overdue }}</strong>
-                                    </div>
-                                </div>
-                                {% if 'active' in notification.stats %}
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Đang xử lý</small>
-                                        <strong class="text-info">{{ notification.stats.active }}</strong>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% if 'done_overdue' in notification.stats %}
-                                <div class="col-6 col-md-3">
-                                    <div class="stat-item">
-                                        <small class="text-muted d-block">Nhiệm vụ quá hạn</small>
-                                        <strong class="text-warning">{{ notification.stats.done_overdue }}</strong>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Progress Bar -->
-                        <div class="progress mt-3" style="height: 8px;">
-                            <div class="progress-bar bg-{{ notification.type }}"
-                                 role="progressbar"
-                                 style="width: {{ notification.stats.completion }}%"
-                                 aria-valuenow="{{ notification.stats.completion }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Action Button -->
-                    {% if notification.action %}
-                    <div class="col-auto">
-                        <a href="{{ notification.action.url }}" class="btn btn-{{ notification.type }}">
-                            {{ notification.action.text }}
-                            <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<div class="row mb-4">
-    <div class="col-md-6 mb-3 mb-md-0">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5><i class="bi bi-list-check"></i> Nhiệm vụ của tôi</h5>
-            </div>
-            <div class="card-body">
-                {% if my_tasks %}
-                <ul class="list-group">
-                    {% for task in my_tasks %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">{{ task.title }}</a>
-                            {% if task | is_overdue %}
-                            <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                            {% endif %}
-                            {% if task.status == 'DONE' and task.completed_overdue %}
-                            <span class="badge bg-danger text-dark ms-2">
-                                <i class="bi bi-clock-history"></i> QUÁ HẠN
-                            </span>
-                            {% endif %}
-                            {% if task.status == 'DONE' and task.performance_rating %}
-                                {% if task.performance_rating == 'good' %}
-                                <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt"></i>
-                                {% else %}
-                                <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện"></i>
-                                {% endif %}
-                            {% endif %}
-                            <br>
-                            <small class="text-muted">
-                                {% if task.due_date %}
-                                <i class="bi bi-calendar-event"></i> Hạn: {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
-                                {% endif %}
-                            </small>
-                        </div>
-                        <span class="badge bg-{{ task.status | status_badge }}">
-                            {{ task.status | status_vn }}
-                        </span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted mb-0">Bạn chưa có nhiệm vụ nào.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5><i class="bi bi-inbox"></i> Nhiệm vụ chờ chấp nhận</h5>
-            </div>
-            <div class="card-body">
-                {% if pending_assignments %}
-                <ul class="list-group">
-                    {% for assignment in pending_assignments %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('tasks.task_detail', task_id=assignment.task_id) }}">
-                            {{ assignment.task.title }}
-                        </a>
-                        <br>
-                        <small class="text-muted">Gán bởi: {{ assignment.assigner.full_name }}</small>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted mb-0">Không có nhiệm vụ nào chờ chấp nhận.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- NHIỆM VỤ QUÁ HẠN cho HR/Accountant -->
-{% if overdue_tasks %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-white">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Nhiệm vụ của bạn đã quá hạn
-                    <span class="badge bg-light text-danger ms-2">{{ overdue_tasks|length }}</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Người giao nhiệm vụ</th>
-                                <th>Hạn</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for task in overdue_tasks %}
-                            <tr class="table-danger">
-                                <td data-label="NVụ">
-                                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="text-danger fw-bold">
-                                        {{ task.title }}
-                                    </a>
-                                    <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                                </td>
-                                <td data-label="Người giao">
-                                    <small>{{ task.creator.full_name }}</small>
-                                </td>
-                                <td data-label="Hạn">
-                                    <span class="badge bg-danger">
-                                        {{ task.due_date | vn_datetime('%d/%m %H:%M') }}
-                                    </span>
-                                </td>
-                                <td data-label="Trạng thái">
-                                    <span class="badge bg-{{ task.status | status_badge }}">
-                                        {{ task.status | status_vn }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Tasks sắp đến hạn cho HR/Accountant -->
-{% if upcoming %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-white">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="bi bi-calendar-event"></i> Nhiệm vụ của bạn sắp đến hạn
-                    <span class="badge bg-dark ms-2">{{ upcoming|length }}</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Nhiệm vụ</th>
-                                <th>Người giao</th>
-                                <th>Hạn</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for task in upcoming %}
-                            <tr>
-                                <td data-label="Nhiệm vụ">
-                                    <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
-                                        <strong>{{ task.title }}</strong>
-                                    </a>
-                                </td>
-                                <td data-label="Người giao">
-                                    <small>{{ task.creator.full_name }}</small>
-                                </td>
-                                <td data-label="Hạn">
-                                    <span class="badge bg-warning">
-                                        {{ task.due_date | vn_datetime('%d/%m %H:%M') }}
-                                    </span>
-                                </td>
-                                <td data-label="Trạng thái">
-                                    <span class="badge bg-{{ task.status | status_badge }}">
-                                        {{ task.status | status_vn }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="bi bi-journal-text"></i> Ghi chú gần đây</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_notes %}
-                <ul class="list-group">
-                    {% for note in recent_notes %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('notes.edit_note', note_id=note.id) }}">{{ note.title }}</a>
-                        <br>
-                        <small class="text-muted">{{ note.updated_at | vn_datetime }}</small>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted mb-0">Bạn chưa có ghi chú nào.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-<script>
-// Chỉ chạy nếu có dữ liệu biểu đồ (tức là Director/Manager)
+// Charts
 {% if pie_chart_data %}
 (function() {
     'use strict';
 
-    // 1. PIE CHART - Phân bổ trạng thái
+    // Pie Chart
     const pieCtx = document.getElementById('pieChart');
     if (pieCtx) {
         new Chart(pieCtx, {
@@ -1889,17 +1215,11 @@ function setChartDateRange(days) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,  // THAY ĐỔI: false để dùng container height
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: window.innerWidth < 768 ? 'bottom' : 'right',  // Mobile: bottom, Desktop: right
-                        labels: {
-                            padding: window.innerWidth < 768 ? 10 : 15,
-                            font: {
-                                size: window.innerWidth < 768 ? 11 : 12
-                            },
-                            boxWidth: window.innerWidth < 768 ? 12 : 15
-                        }
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
                     },
                     tooltip: {
                         callbacks: {
@@ -1917,85 +1237,7 @@ function setChartDateRange(days) {
         });
     }
 
-    // 2. BAR CHART - Hiệu suất nhân viên
-    const barCtx = document.getElementById('barChart');
-    if (barCtx) {
-        new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ bar_chart_data.labels | tojson }},
-                datasets: [
-                    {
-                        label: 'Hoàn thành đúng hạn',
-                        data: {{ bar_chart_data.done_on_time | tojson }},
-                        backgroundColor: '#198754',
-                        borderColor: '#146c43',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Hoàn thành quá hạn',
-                        data: {{ bar_chart_data.done_overdue | tojson }},
-                        backgroundColor: '#ffc107',
-                        borderColor: '#cc9a06',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Quá hạn chưa xong',
-                        data: {{ bar_chart_data.overdue | tojson }},
-                        backgroundColor: '#dc3545',
-                        borderColor: '#b02a37',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,  // THAY ĐỔI
-                indexAxis: window.innerWidth < 768 ? 'y' : 'x',  // Mobile: ngang, Desktop: dọc
-                scales: {
-                    x: {
-                        stacked: false,
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 12
-                            }
-                        }
-                    },
-                    y: {
-                        stacked: false,
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0,
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 12
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            padding: window.innerWidth < 768 ? 10 : 15,
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 12
-                            },
-                            boxWidth: window.innerWidth < 768 ? 12 : 15
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                }
-            }
-        });
-    }
-
-    // 3. LINE CHART - Xu hướng theo thời gian
+    // Line Chart
     const lineCtx = document.getElementById('lineChart');
     if (lineCtx) {
         new Chart(lineCtx, {
@@ -2006,8 +1248,8 @@ function setChartDateRange(days) {
                     {
                         label: 'Hoàn thành đúng hạn',
                         data: {{ line_chart_data.completed_on_time | tojson }},
-                        borderColor: '#198754',
-                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderColor: '#43e97b',
+                        backgroundColor: 'rgba(67, 233, 123, 0.1)',
                         tension: 0.4,
                         fill: true,
                         borderWidth: 2
@@ -2029,73 +1271,55 @@ function setChartDateRange(days) {
                         tension: 0.4,
                         fill: true,
                         borderWidth: 2
-                    },
-                    {
-                        label: 'Tạo mới',
-                        data: {{ line_chart_data.created | tojson }},
-                        borderColor: '#6c757d',
-                        backgroundColor: 'rgba(108, 117, 125, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 2,
-                        borderDash: [5, 5]
                     }
                 ]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,  // THAY ĐỔI
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
+                maintainAspectRatio: false,
                 scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            maxRotation: window.innerWidth < 768 ? 45 : 0,  // Mobile: xoay label
-                            font: {
-                                size: window.innerWidth < 768 ? 9 : 11
-                            }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0,
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 12
-                            }
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
                 },
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            padding: window.innerWidth < 768 ? 8 : 15,
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 12
-                            },
-                            usePointStyle: true,
-                            boxWidth: window.innerWidth < 768 ? 6 : 8
-                        }
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    // Bar Chart
+    const barCtx = document.getElementById('barChart');
+    if (barCtx) {
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ bar_chart_data.labels | tojson }},
+                datasets: [
+                    {
+                        label: 'Hoàn thành đúng hạn',
+                        data: {{ bar_chart_data.done_on_time | tojson }},
+                        backgroundColor: '#43e97b'
                     },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            footer: function(tooltipItems) {
-                                let total = 0;
-                                tooltipItems.forEach(function(tooltipItem) {
-                                    total += tooltipItem.parsed.y;
-                                });
-                                return 'Tổng: ' + total;
-                            }
-                        }
+                    {
+                        label: 'Hoàn thành quá hạn',
+                        data: {{ bar_chart_data.done_overdue | tojson }},
+                        backgroundColor: '#ffc107'
+                    },
+                    {
+                        label: 'Quá hạn chưa xong',
+                        data: {{ bar_chart_data.overdue | tojson }},
+                        backgroundColor: '#dc3545'
                     }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: {
+                    legend: { position: 'top' }
                 }
             }
         });
