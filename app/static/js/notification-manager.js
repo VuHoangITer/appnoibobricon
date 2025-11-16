@@ -212,10 +212,10 @@ class NotificationManager {
                         <!-- Test button -->
                         <div class="d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary" id="testNotification">
-                                <i class="bi bi-play-circle-fill"></i> Thử nghiệm
+                                <i class="bi bi-play-circle-fill"></i> Nghe thử
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="clearHistory">
-                                <i class="bi bi-trash"></i> Xóa lịch sử thông báo đã nghe
+                                <i class="bi bi-trash"></i> Nghe lại
                             </button>
                         </div>
                     </div>
@@ -279,11 +279,11 @@ class NotificationManager {
 
         // Clear history button
         document.getElementById('clearHistory').addEventListener('click', () => {
-            if (confirm('Xóa lịch sử thông báo đã nghe? Thông báo cũ sẽ phát lại lần nữa.')) {
+            if (confirm('Bạn muốn nghe lại? Thông báo cũ sẽ phát lại lần nữa.')) {
                 this.seenNotificationIds.clear();
                 this.saveSeenIds();
                 this.updateSeenCount();
-                this.showToast('Đã xóa lịch sử thông báo', 'success');
+                this.showToast('Đã xóa lịch sử thông báo cũ', 'success');
             }
         });
 
@@ -315,8 +315,8 @@ class NotificationManager {
      * Test notification
      */
     testNotification() {
-        const testTitle = 'Bạn có công việc mới từ Nguyễn Văn A';
-        const testBody = 'Công việc cần hoàn thành trước ngày 20 tháng 12 năm 2024';
+        const testTitle = 'Bạn có công việc mới từ Vũ Văn Hoàng';
+        const testBody = 'Vũ Văn Hoàng đã giao cho bạn nhiệm vụ mát-xa cho Hoàng';
 
         if (this.settings.soundEnabled) {
             this.sound.playTing();

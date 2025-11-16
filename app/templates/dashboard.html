@@ -60,86 +60,172 @@
 }
 
 /* ============================================
-   STAT CARDS - LAYOUT GIỐNG ẢNH
+   STAT CARDS - MINIMAL DESIGN
    ============================================ */
 .stat-card-clickable .card {
     height: 100%;
     border: none;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     overflow: hidden;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
 }
 
 .stat-card-clickable .card-body {
-    padding: 30px 25px !important;
+    padding: 32px 28px !important;
     display: flex;
     flex-direction: column;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
 }
 
-/* HEADER: Title bên trái + Badges bên phải */
+/* HEADER: Title */
 .stat-card-clickable .card-body h5 {
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     margin-bottom: 20px !important;
-    opacity: 0.95;
+    opacity: 0.85;
 }
 
-/* SỐ LỚNG Ở GIỮA/DƯỚI */
+/* SỐ LỚNG */
 .stat-card-clickable .card-body h2 {
-    font-size: 3.8rem !important;
-    font-weight: 700 !important;
+    font-size: 3.2rem !important;
+    font-weight: 300 !important;
     margin-bottom: 0 !important;
     line-height: 1;
-    margin-top: auto; /* ĐẨY XUỐNG DƯỚI */
+    margin-top: auto;
 }
 
-/* BADGE GROUP - Ở GÓC PHẢI TRÊN, ICON TRÊN + SỐ DƯỚI */
+/* BADGE GROUP - Minimal style */
 .badge-group {
     position: absolute;
-    top: 25px;
-    right: 25px;
+    top: 24px;
+    right: 24px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-start;
 }
 
 .badge-group .badge {
     display: flex !important;
-    flex-direction: column !important; /* ICON TRÊN, SỐ DƯỚI */
+    flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 4px !important;
-    font-size: 1.1rem !important; /* SỐ TO HƠN */
-    font-weight: 700 !important;
-    padding: 10px 12px !important;
-    border-radius: 10px !important;
-    min-width: 50px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    gap: 3px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    min-width: 48px !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
 }
 
 .badge-group .badge i {
-    font-size: 1.3rem !important; /* ICON TO */
+    font-size: 1.1rem !important;
+    opacity: 0.9;
     margin: 0 !important;
 }
 
-/* Hover effect */
+/* Card Colors - Softer, Pastel Tones */
+.stat-card-pending .card {
+    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+    border: 1px solid #fff3d6;
+}
+
+.stat-card-pending .card-body h5,
+.stat-card-pending .card-body h2 {
+    color: #b8860b;
+}
+
+.stat-card-progress .card {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+    border: 1px solid #d1e7ff;
+}
+
+.stat-card-progress .card-body h5,
+.stat-card-progress .card-body h2 {
+    color: #1976d2;
+}
+
+.stat-card-done .card {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+    border: 1px solid #d4edda;
+}
+
+.stat-card-done .card-body h5,
+.stat-card-done .card-body h2 {
+    color: #388e3c;
+}
+
+.stat-card-total .card {
+    background: linear-gradient(135deg, #e8eaf6 0%, #f3f4f9 100%);
+    border: 1px solid #d1d5e8;
+}
+
+.stat-card-total .card-body h5,
+.stat-card-total .card-body h2 {
+    color: #3f51b5;
+}
+
+/* Hover effect - Minimal */
 .stat-card-clickable {
     cursor: pointer;
-    transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
     display: block;
 }
 
 .stat-card-clickable:hover {
-    transform: translateY(-5px) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
-    color: inherit;
+    transform: translateY(-4px) !important;
     text-decoration: none;
+    color: inherit;
 }
 
 .stat-card-clickable:hover .card {
-    box-shadow: 0 12px 32px rgba(0,0,0,0.25) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+}
+
+/* Badge colors - subtle */
+.stat-card-pending .badge.bg-danger,
+.stat-card-progress .badge.bg-danger,
+.stat-card-done .badge.bg-danger,
+.stat-card-total .badge.bg-danger {
+    background: rgba(239, 154, 154, 0.9) !important;
+    color: #c62828 !important;
+    border-color: rgba(239, 154, 154, 0.5) !important;
+}
+
+.stat-card-pending .badge.bg-warning,
+.stat-card-progress .badge.bg-warning,
+.stat-card-done .badge.bg-warning,
+.stat-card-total .badge.bg-warning {
+    background: rgba(255, 245, 157, 0.9) !important;
+    color: #f57f17 !important;
+    border-color: rgba(255, 245, 157, 0.5) !important;
+}
+
+.stat-card-pending .badge.bg-info,
+.stat-card-progress .badge.bg-info,
+.stat-card-done .badge.bg-info,
+.stat-card-total .badge.bg-info {
+    background: rgba(144, 202, 249, 0.9) !important;
+    color: #1976d2 !important;
+    border-color: rgba(144, 202, 249, 0.5) !important;
+}
+
+.stat-card-pending .badge.bg-light,
+.stat-card-progress .badge.bg-light,
+.stat-card-done .badge.bg-light,
+.stat-card-total .badge.bg-light {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #424242 !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 /* ============================================
@@ -174,63 +260,63 @@
         order: 4;
         flex: 0 0 100% !important;
         max-width: 100% !important;
-        margin-top: 10px !important; /* KHOẢNG CÁCH GIỮA 2 HÀNG */
+        margin-top: 16px !important;
     }
 
-    /* Card Tổng Nhiệm Vụ - TO HƠN */
+    /* Card Tổng Nhiệm Vụ - Larger */
     .stat-card-total .card-body {
-        padding: 40px 30px !important;
+        padding: 40px 32px !important;
     }
 
     .stat-card-total .card-body h5 {
-        font-size: 1.3rem !important;
+        font-size: 0.95rem !important;
     }
 
     .stat-card-total .card-body h2 {
-        font-size: 5rem !important; /* TO HƠN NHIỀU */
+        font-size: 4.5rem !important;
     }
 
     .stat-card-total .badge-group .badge {
-        min-width: 65px !important;
-        padding: 14px 16px !important;
-        font-size: 1.3rem !important;
+        min-width: 58px !important;
+        padding: 10px 12px !important;
+        font-size: 1rem !important;
     }
 
     .stat-card-total .badge-group .badge i {
-        font-size: 1.5rem !important;
+        font-size: 1.3rem !important;
     }
 }
 
 /* MOBILE: Giữ nguyên order cũ */
 @media (max-width: 767px) {
     .stat-card-clickable .card-body {
-        padding: 25px 20px !important;
+        padding: 24px 20px !important;
     }
 
     .stat-card-clickable .card-body h5 {
-        font-size: 1rem !important;
-        margin-bottom: 15px !important;
-        padding-right: 140px; /* DỂ TRÁNH BADGE */
+        font-size: 0.75rem !important;
+        margin-bottom: 16px !important;
+        padding-right: 110px;
     }
 
     .stat-card-clickable .card-body h2 {
-        font-size: 3rem !important;
+        font-size: 2.8rem !important;
     }
 
     .badge-group {
-        top: 20px;
-        right: 20px;
-        gap: 8px;
+        top: 18px;
+        right: 18px;
+        gap: 6px;
     }
 
     .badge-group .badge {
-        font-size: 0.95rem !important;
-        padding: 8px 10px !important;
-        min-width: 45px !important;
+        font-size: 0.8rem !important;
+        padding: 6px 8px !important;
+        min-width: 42px !important;
     }
 
     .badge-group .badge i {
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
     }
 
     /* Mobile order */
@@ -241,76 +327,135 @@
 }
 
 /* ============================================
-   PERFORMANCE NOTIFICATION CARD - RESPONSIVE
+   PERFORMANCE NOTIFICATION CARD - MINIMAL
    ============================================ */
 .performance-card {
-    border-left: 5px solid;
+    border: 1px solid #e0e0e0;
     transition: all 0.3s ease;
     animation: slideInDown 0.5s ease-out;
+    background: #ffffff;
 }
 
 .performance-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
 }
 
 .performance-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    flex-shrink: 0; /* Không co lại */
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+/* Icon colors - subtle */
+.performance-card.border-success .performance-icon {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    color: #388e3c;
+}
+
+.performance-card.border-info .performance-icon {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+}
+
+.performance-card.border-warning .performance-icon {
+    background: linear-gradient(135deg, #fff9e6 0%, #fff59d 100%);
+    color: #f57f17;
+}
+
+.performance-card.border-danger .performance-icon {
+    background: linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%);
+    color: #c62828;
+}
+
+.performance-card.border-secondary .performance-icon {
+    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+    color: #616161;
+}
+
+/* Border colors - very subtle */
+.card.border-success {
+    border-color: #c8e6c9 !important;
+}
+
+.card.border-info {
+    border-color: #bbdefb !important;
+}
+
+.card.border-warning {
+    border-color: #fff59d !important;
+}
+
+.card.border-danger {
+    border-color: #ef9a9a !important;
+}
+
+.card.border-secondary {
+    border-color: #e0e0e0 !important;
 }
 
 .performance-stats .stat-item {
-    padding: 10px 8px;
+    padding: 12px 10px;
     background: #f8f9fa;
+    border: 1px solid #e9ecef;
     border-radius: 8px;
     text-align: center;
-    min-width: 80px;
+    min-width: 85px;
 }
 
 .performance-stats .stat-item small {
     display: block;
-    font-size: 0.75rem;
-    margin-bottom: 4px;
+    font-size: 0.72rem;
+    margin-bottom: 5px;
+    color: #757575;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .performance-stats .stat-item strong {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    font-weight: 600;
     display: block;
 }
 
-/* Border colors theo type */
-.card.border-success {
-    border-left-color: #198754 !important;
+/* Progress bar - minimal */
+.progress {
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
 }
 
-.card.border-info {
-    border-left-color: #0dcaf0 !important;
+.progress-bar {
+    border-radius: 3px;
 }
 
-.card.border-warning {
-    border-left-color: #ffc107 !important;
+.progress-bar.bg-success {
+    background: linear-gradient(90deg, #66bb6a 0%, #81c784 100%) !important;
 }
 
-.card.border-danger {
-    border-left-color: #dc3545 !important;
+.progress-bar.bg-info {
+    background: linear-gradient(90deg, #42a5f5 0%, #64b5f6 100%) !important;
 }
 
-.card.border-secondary {
-    border-left-color: #6c757d !important;
+.progress-bar.bg-warning {
+    background: linear-gradient(90deg, #ffca28 0%, #ffd54f 100%) !important;
+}
+
+.progress-bar.bg-danger {
+    background: linear-gradient(90deg, #ef5350 0%, #e57373 100%) !important;
 }
 
 /* Animation */
 @keyframes slideInDown {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(-15px);
     }
     to {
         opacity: 1;
@@ -318,36 +463,18 @@
     }
 }
 
-/* Progress bar gradient */
-.progress-bar.bg-success {
-    background: linear-gradient(90deg, #28a745 0%, #20c997 100%) !important;
-}
-
-.progress-bar.bg-info {
-    background: linear-gradient(90deg, #17a2b8 0%, #5bc0de 100%) !important;
-}
-
-.progress-bar.bg-warning {
-    background: linear-gradient(90deg, #ffc107 0%, #ffca2c 100%) !important;
-}
-
-.progress-bar.bg-danger {
-    background: linear-gradient(90deg, #dc3545 0%, #e4606d 100%) !important;
-}
-
 /* ============================================
    MOBILE RESPONSIVE (QUAN TRỌNG)
    ============================================ */
 @media (max-width: 767px) {
-    /* Icon nhỏ hơn */
+    /* Performance Card - Mobile */
     .performance-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-        margin-bottom: 15px; /* Khoảng cách với content */
+        width: 52px;
+        height: 52px;
+        font-size: 1.4rem;
+        margin-bottom: 16px;
     }
 
-    /* Layout thay đổi: Icon ở trên, content ở dưới */
     .performance-card .card-body > .row {
         flex-direction: column !important;
         text-align: center;
@@ -357,14 +484,13 @@
         width: 100% !important;
         display: flex;
         justify-content: center;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
     }
 
     .performance-card .card-body .col {
         width: 100% !important;
     }
 
-    /* Title và message */
     .performance-card h5 {
         font-size: 1rem !important;
         text-align: center;
@@ -375,35 +501,28 @@
         text-align: center;
     }
 
-    /* Stats grid - 2 cột trên mobile */
-    .performance-stats .row {
-        justify-content: center;
-    }
-
     .performance-stats .stat-item {
         padding: 8px 6px;
-        min-width: 70px;
+        min-width: 72px;
         font-size: 0.85rem;
     }
 
     .performance-stats .stat-item small {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
     }
 
     .performance-stats .stat-item strong {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
-    /* Progress bar nhỏ hơn */
     .performance-card .progress {
-        height: 6px !important;
+        height: 5px !important;
         margin-top: 12px !important;
     }
 
-    /* Action button full width */
     .performance-card .col-auto:last-child {
         width: 100% !important;
-        margin-top: 15px;
+        margin-top: 16px;
     }
 
     .performance-card .btn {
@@ -411,27 +530,26 @@
         font-size: 0.9rem;
     }
 
-    /* Card padding nhỏ hơn */
     .performance-card .card-body {
-        padding: 15px !important;
+        padding: 16px !important;
     }
 }
 
 /* Tablet (768px - 991px) */
 @media (min-width: 768px) and (max-width: 991px) {
     .performance-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.75rem;
+        width: 58px;
+        height: 58px;
+        font-size: 1.6rem;
     }
 
     .performance-stats .stat-item {
-        min-width: 75px;
-        padding: 9px 7px;
+        min-width: 78px;
+        padding: 10px 8px;
     }
 
     .performance-stats .stat-item strong {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
 
     .performance-card h5 {
@@ -458,6 +576,7 @@
         font-size: 0.95rem !important;
     }
 }
+
 /* ============================================
    CHART RESPONSIVE OPTIMIZATION
    ============================================ */
@@ -566,7 +685,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- THÊM: Nút mở filter trên mobile -->
 <div class="mobile-filter-btn mb-3" style="display: none;">
     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
         <i class="bi bi-funnel-fill"></i> Bộ lọc
@@ -627,7 +745,6 @@
     </div>
 </div>
 
-<!-- THÊM: Modal Filter cho Mobile -->
 <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -985,16 +1102,6 @@ function setChartDateRange(days) {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Action Button -->
-                    {% if notification.action %}
-                    <div class="col-auto">
-                        <a href="{{ notification.action.url }}" class="btn btn-{{ notification.type }}">
-                            {{ notification.action.text }}
-                            <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1152,13 +1259,14 @@ function setChartDateRange(days) {
     </div>
 </div>
 {% endif %}
-<!-- THÊM MỚI: Card Tasks Cần Đánh Giá -->
+
+<!-- Card Tasks Cần Đánh Giá -->
 {% if current_user.role in ['director', 'manager'] and tasks_need_rating %}
-<div class="card border-warning mb-4 shadow-sm">
-    <div class="card-header bg-warning text-dark">
+<div class="card border-white mb-4 shadow-sm">
+    <div class="card-header bg-warning text-white">
         <h5 class="mb-0">
-            <i class="bi bi-star-fill"></i> Cần Đánh Giá Hiệu Suất
-            <span class="badge bg-dark">{{ tasks_need_rating|length }}</span>
+            Đánh Giá Hiệu Suất
+            <span class="badge bg-white text-warning">{{ tasks_need_rating|length }}</span>
         </h5>
     </div>
     <div class="card-body">
@@ -1352,7 +1460,7 @@ function setChartDateRange(days) {
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted text-center mb-0">Không có task nào sắp đến hạn.</p>
+                <p class="text-muted text-center mb-0">Không có nhiệm vụ nào sắp đến hạn.</p>
                 {% endif %}
             </div>
         </div>
