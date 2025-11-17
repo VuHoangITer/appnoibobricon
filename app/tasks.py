@@ -229,8 +229,7 @@ def dashboard():
                     'type': 'danger',
                     'icon': 'bi-exclamation-triangle-fill',
                     'title': 'KHẨN CẤP - Cần Can Thiệp Ngay!',
-                    'message': f'Hệ thống có {overdue_count} quá hạn ({overdue_rate:.0f}%), {bad_rating_count} đánh giá kém. Chất lượng công việc đang sụt giảm nghiêm trọng!',
-                    'action': {'text': 'Họp khẩn', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'message': f'Có {overdue_count} quá hạn ({overdue_rate:.0f}%), {bad_rating_count} đánh giá kém. Chất lượng công việc đang sụt giảm nghiêm trọng!',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -247,7 +246,6 @@ def dashboard():
                     'icon': 'bi-exclamation-circle-fill',
                     'title': 'Cảnh Báo - Cần Giám Sát',
                     'message': f'Có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá, {bad_rating_count} đánh giá kém. Đội Ngũ đang gặp khó khăn!',
-                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -261,9 +259,8 @@ def dashboard():
                 notification = {
                     'type': 'success',
                     'icon': 'bi-trophy-fill',
-                    'title': 'Hệ Thống Hoạt Động Xuất Sắc!',
+                    'title': 'Hoạt Động Xuất Sắc!',
                     'message': f'Tuyệt vời! {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. Đội Ngũ đang làm việc hiệu quả!',
-                    'action': {'text': 'Xem báo cáo', 'url': url_for('tasks.dashboard')},
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -277,9 +274,8 @@ def dashboard():
                 notification = {
                     'type': 'info',
                     'icon': 'bi-graph-up-arrow',
-                    'title': 'Hệ Thống Hoạt Động Tốt',
+                    'title': 'Hoạt Động Tốt',
                     'message': f'{done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. Có {unrated_tasks} cần đánh giá.',
-                    'action': {'text': 'Đánh giá ngay', 'url': url_for('tasks.tasks_by_status', status='DONE')},
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -294,7 +290,6 @@ def dashboard():
                     'icon': 'bi-clipboard-data',
                     'title': 'Giám Sát Tiến Độ',
                     'message': f'{done}/{total_tasks} hoàn thành ({completion_rate:.0f}%). Có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá.',
-                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -310,9 +305,8 @@ def dashboard():
                 notification = {
                     'type': 'danger',
                     'icon': 'bi-exclamation-triangle-fill',
-                    'title': 'Khẩn Cấp - Đội Ngũ Cần Hỗ Trợ Ngay!',
-                    'message': f'Đội Ngũ có {overdue_count} quá hạn, {bad_rating_count} đánh giá kém. Chất lượng: {on_time_rate:.0f}%. Cần can thiệp!',
-                    'action': {'text': 'Họp Đội Ngũ', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'title': 'Khẩn Cấp - Cần Hỗ Trợ Ngay!',
+                    'message': f'Có {overdue_count} quá hạn, {bad_rating_count} đánh giá kém. Chất lượng: {on_time_rate:.0f}%. Cần can thiệp!',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -328,8 +322,7 @@ def dashboard():
                     'type': 'warning',
                     'icon': 'bi-exclamation-circle-fill',
                     'title': 'Cảnh Báo - Cần Theo Dõi Sát',
-                    'message': f'Đội Ngũ có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá, {bad_rating_count} đánh giá kém. Hãy hỗ trợ nhân viên!',
-                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'message': f'Có {overdue_count} quá hạn, {unrated_tasks} chưa đánh giá, {bad_rating_count} đánh giá kém. Hãy hỗ trợ nhân viên!',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -343,9 +336,8 @@ def dashboard():
                 notification = {
                     'type': 'success',
                     'icon': 'bi-emoji-smile-fill',
-                    'title': 'Đội Ngũ Hoạt Động Xuất Sắc!',
-                    'message': f'Tuyệt vời! Đội Ngũ có {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn!',
-                    'action': {'text': 'Xem báo cáo', 'url': url_for('tasks.dashboard')},
+                    'title': 'Hoạt Động Xuất Sắc!',
+                    'message': f'Tuyệt vời! Có {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn!',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -360,9 +352,8 @@ def dashboard():
                 notification = {
                     'type': 'info',
                     'icon': 'bi-clipboard-check',
-                    'title': 'Đội Ngũ Hoạt Động Tốt',
-                    'message': f'Đội Ngũ: {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. {unrated_tasks} cần đánh giá.',
-                    'action': {'text': 'Đánh giá ngay', 'url': url_for('tasks.tasks_by_status', status='DONE')},
+                    'title': 'Hoạt Động Tốt',
+                    'message': f'Có {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%), {on_time_rate:.0f}% đúng hạn. {unrated_tasks} cần đánh giá.',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -376,9 +367,8 @@ def dashboard():
                 notification = {
                     'type': 'info',
                     'icon': 'bi-clipboard-data',
-                    'title': 'Quản Lý Đội Ngũ',
-                    'message': f'Đội Ngũ: {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%). {unrated_tasks} cần đánh giá, {overdue_count} quá hạn.',
-                    'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.tasks_by_status', status='ALL')},
+                    'title': 'Quản Lý',
+                    'message': f'Có {done}/{total_tasks} hoàn thành ({completion_rate:.0f}%). {unrated_tasks} cần đánh giá, {overdue_count} quá hạn.',
                     'stats': {
                         'completion': completion_rate,
                         'overdue': overdue_count,
@@ -696,7 +686,6 @@ def dashboard():
                 'icon': 'bi-inbox',
                 'title': 'Chưa Có Nhiệm Vụ',
                 'message': 'Bạn chưa có nhiệm vụ nào. Hãy liên hệ Giám đốc/Trưởng phòng để nhận công việc.',
-                'action': None,
                 'stats': {
                     'completion': 0,
                     'overdue': 0,
@@ -710,7 +699,6 @@ def dashboard():
                 'icon': 'bi-exclamation-triangle-fill',
                 'title': 'Báo Động - Hiệu Suất Kém!',
                 'message': f'Bạn có {overdue_count} quá hạn, {bad_rating_count} bị đánh giá kém. Cần cải thiện ngay!',
-                'action': {'text': 'Xem chi tiết', 'url': url_for('tasks.list_tasks')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -726,7 +714,6 @@ def dashboard():
                 'icon': 'bi-exclamation-circle-fill',
                 'title': 'Cần Cải Thiện Chất Lượng',
                 'message': f'Bạn hoàn thành {done}/{total_tasks} nhiệm vụ nhưng có {done_overdue_count} quá hạn và {bad_rating_count} đánh giá kém. Hãy chú ý thời hạn!',
-                'action': {'text': 'Xem đánh giá', 'url': url_for('tasks.list_tasks', status='DONE')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -743,7 +730,6 @@ def dashboard():
                 'icon': 'bi-clock-fill',
                 'title': 'Cần Cố Gắng Hơn',
                 'message': f'Bạn có {overdue_count} quá hạn, {pending} chờ xử lý và {in_progress} đang làm. Hãy tập trung!',
-                'action': {'text': 'Xem công việc', 'url': url_for('tasks.list_tasks')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -758,7 +744,6 @@ def dashboard():
                 'icon': 'bi-trophy-fill',
                 'title': 'Xuất Sắc!',
                 'message': f'Tuyệt vời! Bạn đã hoàn thành {done}/{total_tasks} nhiệm vụ ({completion_rate:.0f}%) với chất lượng cao ({quality_rate:.0f}% đúng hạn)! Tiếp tục phát huy!',
-                'action': {'text': 'Xem thành tích', 'url': url_for('tasks.list_tasks', status='DONE')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -775,7 +760,6 @@ def dashboard():
                 'icon': 'bi-hand-thumbs-up-fill',
                 'title': 'Làm Tốt Lắm!',
                 'message': f'Bạn đã hoàn thành {done}/{total_tasks} nhiệm vụ ({completion_rate:.0f}%). Còn {active_tasks} đang chờ.',
-                'action': {'text': 'Tiếp tục', 'url': url_for('tasks.list_tasks')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -791,7 +775,6 @@ def dashboard():
                 'icon': 'bi-clipboard-data',
                 'title': 'Theo Dõi Tiến Độ',
                 'message': f'Bạn có {active_tasks} nhiệm vụ đang xử lý. Hãy hoàn thành đúng hạn để đạt hiệu suất cao!',
-                'action': {'text': 'Xem công việc', 'url': url_for('tasks.list_tasks')},
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -1574,7 +1557,7 @@ def rate_task(task_id):
         notif = Notification(
             user_id=assignment.user_id,
             type='task_rated',
-            title=f'Đánh giá nhiệm vụ: {rating_text}',
+            title=f'Đánh giá nhiệm vụ của bạn',
             body=f'{current_user.full_name} đã đánh giá nhiệm vụ "{task.title}" là {rating_text}',
             link=f'/tasks/{task.id}'
         )
