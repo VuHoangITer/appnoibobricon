@@ -71,8 +71,8 @@ def create_app(config_class=Config):
     def status_vn_filter(status):
         """Convert status to Vietnamese"""
         status_map = {
-            'PENDING': 'Chờ xác nhận',
-            'IN_PROGRESS': 'Đang thực hiện',
+            'PENDING': 'Chưa Làm',
+            'IN_PROGRESS': 'Đang Làm',
             'DONE': 'Hoàn thành',
             'CANCELLED': 'Đã hủy'
         }

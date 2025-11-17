@@ -108,7 +108,8 @@
             {% for notif in notifications %}
             <div class="list-group-item {% if not notif.read %}list-group-item-primary{% endif %}"
                  data-notif-id="{{ notif.id }}"
-                 data-read="{{ notif.read|lower }}">
+                 data-read="{{ notif.read|lower }}"
+                 {% if notif.link %}data-link="{{ notif.link }}"{% endif %}>
                 <div class="d-flex w-100 justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="mb-1">
@@ -132,13 +133,6 @@
                                 title="Đánh dấu đã đọc">
                             <i class="bi bi-check"></i>
                         </button>
-                        {% endif %}
-
-                        <!-- Nút xem chi tiết -->
-                        {% if notif.link %}
-                        <a href="{{ notif.link }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-eye"></i> Xem
-                        </a>
                         {% endif %}
 
                         <!-- Nút xóa -->
@@ -471,5 +465,18 @@
     updateCounts(unreadCount);
 
 })();
+    // Click vào cả item để mở link
+document.addEventListener("click", function (e) {
+    const item = e.target.closest(".list-group-item");
+    if (!item) return;
+
+    // Nếu click trúng nút (đọc, xóa) thì không mở link
+    if (e.target.closest("button")) return;
+
+    const link = item.getAttribute("data-link");
+    if (link) {
+        window.location.href = link;
+    }
+});
 </script>
 {% endblock %}

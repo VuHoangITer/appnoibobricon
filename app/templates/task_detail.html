@@ -228,8 +228,8 @@
                         <div class="mb-3">
                             <label for="status" class="form-label"><strong>Cập nhật trạng thái:</strong></label>
                             <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
-                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
-                                <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
+                                <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
                                 <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
                                 <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
                             </select>

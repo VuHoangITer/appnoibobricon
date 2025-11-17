@@ -302,7 +302,7 @@
         <div class="col-md-3 mb-3">
             <div class="stat-card">
                 <h3 style="color: #ffc107;">{{ tasks | selectattr('status', 'equalto', 'PENDING') | list | length }}</h3>
-                <small>Chờ xử lý</small>
+                <small>Chưa Làm</small>
             </div>
         </div>
     {% else %}
@@ -326,7 +326,7 @@
         <div class="col-md-4 mb-3">
             <div class="stat-card">
                 <h3 style="color: #ffc107;">{{ tasks | selectattr('status', 'equalto', 'PENDING') | list | length }}</h3>
-                <small>Chờ xử lý</small>
+                <small>Chưa Làm</small>
             </div>
         </div>
     {% endif %}
@@ -374,13 +374,6 @@
                         </span>
                         {% endif %}
                     </div>
-
-                    <!-- Description -->
-                    {% if task.description %}
-                    <div class="task-description">
-                        {{ task.description[:120] }}{% if task.description|length > 120 %}...{% endif %}
-                    </div>
-                    {% endif %}
 
                     <!-- Meta info -->
                     <div class="task-meta">

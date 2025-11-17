@@ -161,38 +161,6 @@ def dashboard():
             upcoming_query = upcoming_query.filter(Task.id.in_(task_ids))
 
         upcoming = upcoming_query.order_by(Task.due_date).limit(10).all()
-        # ===== END =====
-
-        # Recent activities - Tất cả tasks
-        recent_query = Task.query
-
-        # Apply filters for recent tasks
-        if date_from or date_to:
-            if date_from:
-                try:
-                    date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                    date_from_utc = vn_to_utc(date_from_dt)
-                    recent_query = recent_query.filter(Task.created_at >= date_from_utc)
-                except:
-                    pass
-
-            if date_to:
-                try:
-                    date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                    date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-                    date_to_utc = vn_to_utc(date_to_dt)
-                    recent_query = recent_query.filter(Task.created_at <= date_to_utc)
-                except:
-                    pass
-
-        if assigned_user:
-            task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
-                user_id=int(assigned_user),
-                accepted=True
-            ).all()]
-            recent_query = recent_query.filter(Task.id.in_(task_ids))
-
-        recent_tasks = recent_query.order_by(Task.updated_at.desc()).limit(10).all()
 
         # Get all users for filter dropdown
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
@@ -522,7 +490,6 @@ def dashboard():
                                tasks_need_rating=tasks_need_rating,
                                overdue_tasks=overdue_tasks,
                                upcoming=upcoming,
-                               recent_tasks=recent_tasks,
                                all_users=all_users,
                                date_from=date_from,
                                date_to=date_to,

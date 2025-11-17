@@ -245,7 +245,7 @@
                 <tbody>
                     {% for task in tasks %}
                     <tr {% if task | is_overdue %}class="table-danger"{% endif %}>
-                        <td data-label="Tiêu đề">
+                        <td data-label="">
                             <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="fw-bold">
                                 {{ task.title }}
                             </a>

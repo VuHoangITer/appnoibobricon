@@ -57,8 +57,8 @@
                 <label class="form-label"><i class="bi bi-flag"></i> Trạng thái:</label>
                 <select class="form-select" name="status">
                     <option value="">Tất cả</option>
-                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
-                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
+                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang Làm</option>
                     <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
                     <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
                 </select>
@@ -95,7 +95,7 @@
 
             {% if current_user.role in ['director', 'manager'] %}
             <div class="col-md-12">
-                <label class="form-label"><i class="bi bi-person"></i> Người được giao nv:</label>
+                <label class="form-label"><i class="bi bi-person"></i> Người làm nhiệm vụ</label>
                 <select class="form-select" name="assigned_user">
                     <option value="">-- Tất cả --</option>
                     {% for user in all_users %}
@@ -214,7 +214,7 @@
                     {% if current_user.role in ['director', 'manager'] %}
                     <div class="mb-3">
                         <label class="form-label">
-                            <i class="bi bi-person"></i> Người được giao nhiệm vụ:
+                            <i class="bi bi-person"></i> Người làm nhiệm vụ:
                         </label>
                         <select class="form-select" name="assigned_user">
                             <option value="">-- Tất cả --</option>
@@ -285,7 +285,7 @@
         {% if current_user.role in ['director', 'manager'] and tasks %}
         <div>
             <button type="button" class="btn btn-danger" id="bulkDeleteBtn" disabled onclick="confirmBulkDelete()">
-                <i class="bi bi-trash"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
+                <i class="bi bi-trash"></i><span id="selectedCount">0</span>
             </button>
         </div>
         {% endif %}
@@ -305,12 +305,12 @@
                             </th>
                             {% endif %}
                             <th>Tiêu đề</th>
-                            <th>Người tạo</th>
-                            <th>Người được giao nv</th>
-                            <th>Hạn</th>
+                            <th>Phân Loại</th>
+                            <th>Người làm</th>
+                            <th>Hạn Hoàn Thành</th>
                             <th>Trạng thái</th>
                             <th>Ngày tạo</th>
-                            <th>Thao tác</th>
+                            <th>Đ.Giá</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -325,6 +325,8 @@
                                 <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
                                     {{ task.title }}
                                 </a>
+                            </td>
+                            <td data-label="Phân Loại">
                                 {% if task | is_overdue %}
                                 <span class="badge bg-danger ms-2">QUÁ HẠN</span>
                                 {% endif %}
@@ -334,33 +336,23 @@
                                     <i class="bi bi-clock-history"></i> QUÁ HẠN
                                 </span>
                                 {% endif %}
-                                <!--  Icon đánh giá -->
-                                {% if task.status == 'DONE' and task.performance_rating %}
-                                    {% if task.performance_rating == 'good' %}
-                                    <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt" style="font-size: 1.2rem;"></i>
-                                    {% else %}
-                                    <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện" style="font-size: 1.2rem;"></i>
-                                    {% endif %}
-                                {% endif %}
                                 <!--  Hiển thị các thẻ tags -->
-                                <br>
                                 {% if task.is_urgent %}
                                 <span class="badge bg-danger mt-1">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
+                                    Khẩn Cấp
                                 </span>
                                 {% endif %}
                                 {% if task.is_important %}
                                 <span class="badge bg-warning text-dark mt-1">
-                                    <i class="bi bi-star-fill"></i> QUAN TRỌNG
+                                    Quan Trọng
                                 </span>
                                 {% endif %}
                                 {% if task.is_recurring %}
                                 <span class="badge bg-info text-dark mt-1">
-                                    <i class="bi bi-arrow-repeat"></i> LẶP LẠI
+                                    Lặp Lại
                                 </span>
                                 {% endif %}
                             </td>
-                            <td data-label="Người tạo">{{ task.creator.full_name }}</td>
                             <td data-label="Người được giao">
                                 <small>
                                     {% if task.assignments.count() > 0 %}
@@ -380,7 +372,7 @@
                                     {% endif %}
                                 </small>
                             </td>
-                            <td data-label="Hạn">
+                            <td data-label="Hạn Hoàn Thành">
                                 {% if task.due_date %}
                                 <span class="badge bg-{{ 'danger' if (task | is_overdue) else 'secondary' }}">
                                     {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
@@ -397,10 +389,14 @@
                             <td data-label="Ngày tạo">
                                 <small>{{ task.created_at | vn_date }}</small>
                             </td>
-                            <td data-label="Thao tác">
-                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i> Xem
-                                </a>
+                            <td data-label="Đ.Giá">
+                                {% if task.status == 'DONE' and task.performance_rating %}
+                                    {% if task.performance_rating == 'good' %}
+                                    <i class="bi bi-hand-thumbs-up-fill text-success ms-2" title="Đánh giá: Tốt" style="font-size: 1.2rem;"></i>
+                                    {% else %}
+                                    <i class="bi bi-hand-thumbs-down-fill text-danger ms-2" title="Đánh giá: Cần cải thiện" style="font-size: 1.2rem;"></i>
+                                    {% endif %}
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

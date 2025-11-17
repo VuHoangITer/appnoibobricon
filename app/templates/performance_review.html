@@ -361,8 +361,8 @@
                 <select class="form-select" name="status">
                     <option value="">Tất cả</option>
                     <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
-                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
-                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
+                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chưa làm</option>
                 </select>
             </div>
             
