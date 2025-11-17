@@ -28,27 +28,27 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('salaries.create_share_link', salary_id=salary.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="days" class="form-label">
                                 <i class="bi bi-calendar-check"></i> Thời hạn (số ngày) *
                             </label>
-                            <input type="number" class="form-control" id="days" name="days" 
+                            <input type="number" class="form-control" id="days" name="days"
                                    value="3" min="1" max="30" required>
                             <small class="text-muted">Link sẽ tự động hết hạn sau số ngày này</small>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="max_views" class="form-label">
                                 <i class="bi bi-eye"></i> Giới hạn lượt xem
                             </label>
-                            <input type="number" class="form-control" id="max_views" name="max_views" 
+                            <input type="number" class="form-control" id="max_views" name="max_views"
                                    min="1" placeholder="Không giới hạn">
                             <small class="text-muted">Để trống nếu không muốn giới hạn</small>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-link-45deg"></i> Tạo Link
                     </button>
@@ -79,95 +79,98 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for link in share_links %}
-                            {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
-                            <tr>
-                                <td>
-                                    {% if link.is_valid() %}
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" class="form-control"
-                                               value="{{ request.url_root }}salaries/shared/{{ link.token }}"
-                                               id="link-{{ link.id }}" readonly>
-                                        <button class="btn btn-outline-primary" type="button"
-                                                onclick="copyLink('link-{{ link.id }}')">
-                                            <i class="bi bi-clipboard"></i> Copy
-                                        </button>
-                                    </div>
-                                    {% else %}
-                                    <span class="text-muted">Link không còn hiệu lực</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ link.creator.full_name }}</td>
-                                <td>
-                                    <small>{{ link.created_at|vn_datetime }}</small>
-                                </td>
-                                <td>
-                                    <small>
-                                        {{ link.expires_at|vn_datetime }}
-                                        {% if link.is_active %}
-                                        <br>
-                                        <!-- THÊM data-expires-at để JavaScript đếm ngược -->
-                                        <!-- Thêm 'Z' để chỉ định UTC time -->
-                                        <span class="text-warning"
-                                              data-expires-at="{{ link.expires_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">
-                                            {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
-                                            {% if time_left > 0 %}
-                                            (Còn {{ time_left|int }} giờ)
-                                            {% else %}
-                                            (Đã hết hạn)
-                                            {% endif %}
-                                        </span>
-                                        {% endif %}
-                                    </small>
-                                </td>
-                                <td>
-                                    {{ link.view_count }}
-                                    {% if link.max_views %}
-                                    / {{ link.max_views }}
-                                    {% else %}
-                                    / ∞
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if link.is_valid() %}
-                                    <span class="badge bg-success">Đang hoạt động</span>
-                                    {% elif not link.is_active %}
-                                    <span class="badge bg-secondary">Đã vô hiệu hóa</span>
-                                    {% elif now > link.expires_at %}
-                                    <span class="badge bg-danger">Hết hạn</span>
-                                    {% elif link.max_views and link.view_count >= link.max_views %}
-                                    <span class="badge bg-warning">Hết lượt xem</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if link.is_valid() %}
-                                    <form method="POST"
-                                          action="{{ url_for('salaries.revoke_share_link', link_id=link.id) }}"
-                                          style="display: inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-warning"
-                                                title="Vô hiệu hóa"
-                                                onclick="return confirm('Bạn có chắc muốn vô hiệu hóa link này?');">
-                                            <i class="bi bi-pause-circle"></i>
-                                        </button>
-                                    </form>
-                                    {% endif %}
+ <tbody>
+    {% for link in share_links %}
+    {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
+    <tr>
+        <td>
+            {% if link.is_valid() %}
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control"
+                       value="{{ request.host_url }}salaries/shared/{{ link.token }}"
+                       id="link-{{ link.id }}" readonly>
+                <button class="btn btn-outline-primary" type="button"
+                        onclick="copyLink('link-{{ link.id }}')">
+                    <i class="bi bi-clipboard"></i> Copy
+                </button>
+            </div>
+            {% else %}
+            <span class="text-muted">Link không còn hiệu lực</span>
+            {% endif %}
+        </td>
+        <td>{{ link.creator.full_name }}</td>
+        <td>
+            <small>{{ link.created_at|vn_datetime }}</small>
+        </td>
+        <td>
+            <small>
+                {{ link.expires_at|vn_datetime }}
+                {% if link.is_active %}
+                <br>
+                <span class="text-warning"
+                      data-expires-at="{{ link.expires_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">
+                    {% set time_left = (link.expires_at - now).total_seconds() / 3600 %}
+                    {% if time_left > 0 %}
+                    (Còn {{ time_left|int }} giờ)
+                    {% else %}
+                    (Đã hết hạn)
+                    {% endif %}
+                </span>
+                {% endif %}
+            </small>
+        </td>
+        <td>
+            <!-- THÊM LINK ĐẾN TRANG ACCESS LOGS -->
+            <a href="{{ url_for('salaries.view_access_logs', link_id=link.id) }}"
+               class="text-decoration-none">
+                <strong>{{ link.view_count }}</strong>
+                {% if link.max_views %}
+                / {{ link.max_views }}
+                {% else %}
+                / ∞
+                {% endif %}
+                <i class="bi bi-box-arrow-up-right ms-1"></i>
+            </a>
+        </td>
+        <td>
+            {% if link.is_valid() %}
+            <span class="badge bg-success">Đang hoạt động</span>
+            {% elif not link.is_active %}
+            <span class="badge bg-secondary">Đã vô hiệu hóa</span>
+            {% elif now > link.expires_at %}
+            <span class="badge bg-danger">Hết hạn</span>
+            {% elif link.max_views and link.view_count >= link.max_views %}
+            <span class="badge bg-warning">Hết lượt xem</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if link.is_valid() %}
+            <form method="POST"
+                  action="{{ url_for('salaries.revoke_share_link', link_id=link.id) }}"
+                  style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-sm btn-warning"
+                        title="Vô hiệu hóa"
+                        onclick="return confirm('Bạn có chắc muốn vô hiệu hóa link này?');">
+                    <i class="bi bi-pause-circle"></i>
+                </button>
+            </form>
+            {% endif %}
 
-                                    <form method="POST"
-                                          action="{{ url_for('salaries.delete_share_link', link_id=link.id) }}"
-                                          style="display: inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-danger"
-                                                title="Xóa"
-                                                onclick="return confirm('Bạn có chắc muốn xóa link này?');">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
+            <form method="POST"
+                  action="{{ url_for('salaries.delete_share_link', link_id=link.id) }}"
+                  style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-sm btn-danger"
+                        title="Xóa"
+                        onclick="return confirm('Bạn có chắc muốn xóa link này?');">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
                     </table>
                 </div>
                 {% else %}
@@ -193,7 +196,7 @@ function copyLink(elementId) {
         button.innerHTML = '<i class="bi bi-check"></i> Đã copy!';
         button.classList.remove('btn-outline-primary');
         button.classList.add('btn-success');
-        
+
         setTimeout(function() {
             button.innerHTML = originalHTML;
             button.classList.remove('btn-success');

@@ -347,6 +347,15 @@ class SalaryShareLink(db.Model):
 
     creator = db.relationship('User', foreign_keys=[created_by])
 
+    # THÊM MỚI: Relationship với access logs
+    access_logs = db.relationship(
+        'SalaryShareLinkAccess',
+        back_populates='share_link',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='SalaryShareLinkAccess.accessed_at.desc()'
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.token:
@@ -367,6 +376,68 @@ class SalaryShareLink(db.Model):
 
     def __repr__(self):
         return f'<SalaryShareLink {self.token[:8]}...>'
+
+
+# ============================================================
+# THÊM MỚI: Model tracking truy cập link chia sẻ lương
+# ============================================================
+class SalaryShareLinkAccess(db.Model):
+    """Lưu lịch sử truy cập link chia sẻ lương"""
+    __tablename__ = 'salary_share_link_accesses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    share_link_id = db.Column(db.Integer, db.ForeignKey('salary_share_links.id'), nullable=False)
+
+    # Thông tin IP và thiết bị
+    ip_address = db.Column(db.String(45), nullable=False)  # IPv6 max length = 45
+    user_agent = db.Column(db.String(500))  # Full user agent string
+
+    # Parse từ user agent
+    browser = db.Column(db.String(50))  # Chrome, Firefox, Safari, etc.
+    browser_version = db.Column(db.String(20))
+    os = db.Column(db.String(50))  # Windows, MacOS, Android, iOS, etc.
+    device_type = db.Column(db.String(20))  # desktop, mobile, tablet
+    device_brand = db.Column(db.String(50))  # Apple, Samsung, etc.
+
+    # Thông tin bổ sung
+    referer = db.Column(db.String(500))  # URL nguồn (nếu có)
+    accessed_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    # Geolocation (optional - cần API bên ngoài)
+    country = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+
+    # Relationship
+    share_link = db.relationship(
+        'SalaryShareLink',
+        back_populates='access_logs'
+    )
+
+    def __repr__(self):
+        return f'<SalaryShareLinkAccess {self.ip_address} at {self.accessed_at}>'
+
+    def get_device_icon(self):
+        """Trả về icon phù hợp với loại thiết bị"""
+        if self.device_type == 'mobile':
+            return 'bi-phone'
+        elif self.device_type == 'tablet':
+            return 'bi-tablet'
+        else:
+            return 'bi-laptop'
+
+    def get_os_icon(self):
+        """Trả về icon phù hợp với hệ điều hành"""
+        if self.os:
+            os_lower = self.os.lower()
+            if 'windows' in os_lower:
+                return 'bi-windows'
+            elif 'mac' in os_lower or 'ios' in os_lower:
+                return 'bi-apple'
+            elif 'android' in os_lower:
+                return 'bi-android2'
+            elif 'linux' in os_lower:
+                return 'bi-ubuntu'
+        return 'bi-question-circle'
 
 
 class News(db.Model):
@@ -467,6 +538,7 @@ class TaskCompletionReport(db.Model):
 
     def __repr__(self):
         return f'<TaskCompletionReport task={self.task_id}>'
+
 
 @login_manager.user_loader
 def load_user(user_id):

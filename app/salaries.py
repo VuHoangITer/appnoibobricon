@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import login_required, current_user
 from app import db
-from app.models import Salary, User, SalaryShareLink
+from app.models import Salary, User, SalaryShareLink, SalaryShareLinkAccess
 from app.decorators import role_required
 from datetime import datetime, timedelta
 import json
@@ -9,6 +9,105 @@ import json
 bp = Blueprint('salaries', __name__)
 
 
+# ========== HELPER FUNCTIONS ==========
+def get_client_ip(request):
+    """Lấy địa chỉ IP thực của client"""
+    if request.headers.get('X-Forwarded-For'):
+        ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    elif request.headers.get('X-Real-IP'):
+        ip = request.headers.get('X-Real-IP')
+    elif request.headers.get('CF-Connecting-IP'):
+        ip = request.headers.get('CF-Connecting-IP')
+    else:
+        ip = request.remote_addr
+    return ip or 'Unknown'
+
+
+def parse_user_agent(user_agent_string):
+    """Parse user agent để lấy thông tin thiết bị"""
+    if not user_agent_string:
+        return {
+            'browser': 'Unknown',
+            'browser_version': '',
+            'os': 'Unknown',
+            'device_type': 'desktop',
+            'device_brand': ''
+        }
+
+    try:
+        from user_agents import parse as ua_parse
+        ua = ua_parse(user_agent_string)
+
+        if ua.is_mobile:
+            device_type = 'mobile'
+        elif ua.is_tablet:
+            device_type = 'tablet'
+        else:
+            device_type = 'desktop'
+
+        browser = ua.browser.family if ua.browser.family else 'Unknown'
+        browser_version = ua.browser.version_string if ua.browser.version_string else ''
+        os = ua.os.family if ua.os.family else 'Unknown'
+
+        device_brand = ''
+        if ua.device.brand:
+            device_brand = ua.device.brand
+        elif ua.device.family and ua.device.family != 'Other':
+            device_brand = ua.device.family
+
+        return {
+            'browser': browser,
+            'browser_version': browser_version,
+            'os': os,
+            'device_type': device_type,
+            'device_brand': device_brand
+        }
+    except:
+        return {
+            'browser': 'Unknown',
+            'browser_version': '',
+            'os': 'Unknown',
+            'device_type': 'desktop',
+            'device_brand': ''
+        }
+
+
+def log_share_link_access(share_link, request):
+    """Ghi log truy cập link chia sẻ"""
+    try:
+        # Lấy IP
+        ip_address = get_client_ip(request)
+
+        # Lấy user agent
+        user_agent = request.headers.get('User-Agent', '')
+
+        # Parse user agent
+        device_info = parse_user_agent(user_agent)
+
+        # Tạo log
+        access_log = SalaryShareLinkAccess(
+            share_link_id=share_link.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            browser=device_info['browser'],
+            browser_version=device_info['browser_version'],
+            os=device_info['os'],
+            device_type=device_info['device_type'],
+            device_brand=device_info['device_brand'],
+            referer=request.headers.get('Referer')
+        )
+
+        db.session.add(access_log)
+        db.session.commit()
+
+        return access_log
+    except Exception as e:
+        # Không crash app nếu logging fail
+        print(f"Error logging access: {str(e)}")
+        return None
+
+
+# ========== ROUTES ==========
 @bp.route('/')
 @login_required
 @role_required(['director', 'accountant'])
@@ -317,6 +416,29 @@ def delete_share_link(link_id):
     return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
 
 
+# ========== MỚI: XEM LỊCH SỬ TRUY CẬP ==========
+@bp.route('/share-link/<int:link_id>/access-logs')
+@login_required
+@role_required(['director', 'accountant'])
+def view_access_logs(link_id):
+    """Xem lịch sử truy cập link chia sẻ"""
+    share_link = SalaryShareLink.query.get_or_404(link_id)
+
+    # Kiểm tra quyền
+    if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
+        flash('Bạn không có quyền xem lịch sử này.', 'danger')
+        return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
+
+    # Lấy tất cả access logs
+    access_logs = share_link.access_logs.all()
+
+    return render_template('salaries/access_logs.html',
+                           share_link=share_link,
+                           access_logs=access_logs,
+                           salary=share_link.salary,
+                           now=datetime.utcnow())
+
+
 @bp.route('/shared/<token>')
 def view_shared_salary(token):
     """Xem bảng lương qua link chia sẻ (không cần đăng nhập)"""
@@ -345,6 +467,9 @@ def view_shared_salary(token):
             reason = 'Link đã hết lượt xem và đã bị xóa tự động.'
 
         return render_template('salaries/share_error.html', error=reason)
+
+    # ===== THÊM MỚI: GHI LOG TRUY CẬP =====
+    log_share_link_access(share_link, request)
 
     # Tăng số lượt xem
     share_link.increment_view()
