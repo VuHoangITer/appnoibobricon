@@ -89,7 +89,7 @@ def dashboard():
             Task.status == 'DONE',
             Task.performance_rating == None,
             Task.creator_id == current_user.id
-        ).order_by(Task.updated_at.desc()).limit(10).all()
+        ).order_by(Task.updated_at.desc()).all()
 
 
         # ===== NHIỆM VỤ QUÁ HẠN (cho toàn bộ hệ thống) =====
@@ -160,7 +160,7 @@ def dashboard():
             ).all()]
             upcoming_query = upcoming_query.filter(Task.id.in_(task_ids))
 
-        upcoming = upcoming_query.order_by(Task.due_date).limit(10).all()
+        upcoming = upcoming_query.order_by(Task.due_date).all()
 
         # Get all users for filter dropdown
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
@@ -619,12 +619,12 @@ def dashboard():
             except:
                 pass
 
-        upcoming = upcoming_query.order_by(Task.due_date).limit(10).all()
+        upcoming = upcoming_query.order_by(Task.due_date).all()
 
         from app.models import Note
         recent_notes = Note.query.filter_by(user_id=current_user.id).order_by(
             Note.updated_at.desc()
-        ).limit(5).all()
+        ).all()
 
         # ===== THÔNG BÁO THÔNG MINH CHO HR/ACCOUNTANT =====
         completion_rate = (done / total_tasks * 100) if total_tasks > 0 else 0

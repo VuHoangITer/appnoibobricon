@@ -131,8 +131,8 @@
 
                 <!-- BÁO CÁO HOÀN THÀNH -->
                     {% if task.status == 'DONE' %}
-                    <div class="card mb-3 border-{% if task.completed_overdue %}warning{% else %}success{% endif %}">
-                        <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
+                    <div class="card mb-3 border-white">
+                        <div class="card-header bg-white text-light">
                             <h5 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h5>
                         </div>
                         <div class="card-body">
@@ -155,16 +155,18 @@
 
                                 {% if completion_report.completion_time %}
                                 <p class="mb-2">
-                                    <strong><i class="bi bi-clock-history"></i> Thời gian làm việc:</strong>
-                                    {% set hours = (completion_report.completion_time // 60) %}
-                                    {% set minutes = (completion_report.completion_time % 60) %}
-                                    {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
+                                    <strong> Thời gian làm việc:</strong>
+                                        {% set days = (completion_report.completion_time // 1440) %}
+                                        {% set hours = ((completion_report.completion_time % 1440) // 60) %}
+                                        {% set minutes = (completion_report.completion_time % 60) %}
+                                        {% if days > 0 %}{{ days }} ngày {% endif %}
+                                        {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
                                 </p>
                                 {% endif %}
 
                                 {% if completion_report.completion_note %}
-                                <div class="alert alert-info mb-0">
-                                    <p class="mb-1"><strong><i class="bi bi-chat-left-text-fill"></i> Nội dung Báo cáo:</strong></p>
+                                <div class="mb-0">
+                                    <p class="mb-1"><strong> Nội dung Báo cáo:</strong></p>
                                     <p class="mb-0" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
                                 </div>
                                 {% endif %}
@@ -339,7 +341,7 @@
 
         <!-- Card: Trạng thái nhiệm vụ (nếu DONE) -->
         {% if task.status == 'DONE' %}
-        <div class="card mt-3 border-{% if task.completed_overdue %}warning{% else %}success{% endif %}">
+        <div class="card mt-3 ">
             <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
                 <h6 class="mb-0">
                     <i class="bi bi-{% if current_user.role in ['director', 'manager'] %}unlock{% else %}lock{% endif %}-fill"></i>

@@ -4,7 +4,6 @@ from app import db
 from app.models import User, Task, TaskAssignment
 from app.decorators import role_required
 from datetime import datetime
-from sqlalchemy import func
 
 bp = Blueprint('performance', __name__)
 
@@ -159,3 +158,81 @@ def performance_review():
                            date_from=date_from,
                            date_to=date_to,
                            status_filter=status_filter)
+
+
+# ===== ROUTE MỚI: XEM TẤT CẢ NHIỆM VỤ CHƯA ĐÁNH GIÁ =====
+@bp.route('/unrated-tasks')
+@login_required
+@role_required(['director', 'manager'])
+def unrated_tasks():
+    """Xem tất cả nhiệm vụ chưa đánh giá - chỉ Director/Manager"""
+
+    # Get filters
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    assigned_user = request.args.get('assigned_user', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    # Base query: Tất cả tasks DONE nhưng chưa được đánh giá
+    query = Task.query.filter_by(
+        status='DONE',
+        performance_rating=None
+    )
+
+    # Apply date filters (theo ngày hoàn thành - updated_at)
+    if date_from:
+        try:
+            from app.utils import vn_to_utc
+            date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            date_from_utc = vn_to_utc(date_from_dt)
+            query = query.filter(Task.updated_at >= date_from_utc)
+        except:
+            pass
+
+    if date_to:
+        try:
+            from app.utils import vn_to_utc
+            date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
+            date_to_utc = vn_to_utc(date_to_dt)
+            query = query.filter(Task.updated_at <= date_to_utc)
+        except:
+            pass
+
+    # Apply assigned user filter
+    if assigned_user:
+        task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
+            user_id=int(assigned_user),
+            accepted=True
+        ).all()]
+        query = query.filter(Task.id.in_(task_ids))
+
+    # Order: Ưu tiên quá hạn lên đầu, sau đó theo thời gian hoàn thành
+    query = query.order_by(
+        Task.completed_overdue.desc(),  # Quá hạn lên đầu
+        Task.updated_at.desc()  # Mới nhất lên đầu
+    )
+
+    # Pagination
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    tasks = pagination.items
+
+    # Statistics
+    total_unrated = query.count()
+    unrated_overdue = query.filter_by(completed_overdue=True).count()
+    unrated_on_time = query.filter_by(completed_overdue=False).count()
+
+    # Get all users for filter
+    all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
+
+    return render_template('unrated_tasks.html',
+                           tasks=tasks,
+                           pagination=pagination,
+                           total_unrated=total_unrated,
+                           unrated_overdue=unrated_overdue,
+                           unrated_on_time=unrated_on_time,
+                           all_users=all_users,
+                           date_from=date_from,
+                           date_to=date_to,
+                           assigned_user=assigned_user)
