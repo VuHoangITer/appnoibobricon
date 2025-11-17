@@ -35,6 +35,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/notification-settings.css') }}">
 
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
         /* ============================================
            LOGO PRELOAD & FIXED HEIGHT
            ============================================ */
@@ -104,6 +107,7 @@
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 20px 0 !important;
+            scroll-behavior: smooth;
         }
 
         .sidebar-footer {
@@ -440,8 +444,106 @@
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });
-        }, 3000);
-    </script>
+        }, 4000);
+
+// ============================================
+// LƯU VÀ KHÔI PHỤC VỊ TRÍ SCROLL
+// ============================================
+
+{% if current_user.is_authenticated %}
+(function() {
+    const SCROLL_KEY = 'sidebar_scroll_position';
+    const CONTENT_SCROLL_KEY = 'main_content_scroll_position';
+
+    // 1. Lưu vị trí scroll của sidebar
+    const sidebar = document.querySelector('.sidebar-nav');
+    if (sidebar) {
+        // Khôi phục vị trí scroll sidebar khi trang load
+        const savedSidebarScroll = sessionStorage.getItem(SCROLL_KEY);
+        if (savedSidebarScroll) {
+            sidebar.scrollTop = parseInt(savedSidebarScroll);
+        }
+
+        // Lưu vị trí scroll sidebar khi scroll
+        let sidebarScrollTimeout;
+        sidebar.addEventListener('scroll', function() {
+            clearTimeout(sidebarScrollTimeout);
+            sidebarScrollTimeout = setTimeout(function() {
+                sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
+            }, 100);
+        });
+    }
+
+    // 2. Lưu vị trí scroll của main content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        // Khôi phục vị trí scroll main content khi trang load
+        const savedContentScroll = sessionStorage.getItem(CONTENT_SCROLL_KEY);
+        if (savedContentScroll) {
+            setTimeout(function() {
+                window.scrollTo(0, parseInt(savedContentScroll));
+            }, 50);
+        }
+
+        // Lưu vị trí scroll main content khi scroll
+        let contentScrollTimeout;
+        window.addEventListener('scroll', function() {
+            clearTimeout(contentScrollTimeout);
+            contentScrollTimeout = setTimeout(function() {
+                sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
+            }, 100);
+        });
+    }
+
+    // 3. Lưu vị trí trước khi chuyển trang
+    document.addEventListener('click', function(e) {
+        // Kiểm tra nếu click vào link sidebar hoặc bất kỳ link nào
+        const link = e.target.closest('a[href]');
+        if (link && !link.getAttribute('href').startsWith('#')) {
+            sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
+            if (sidebar) {
+                sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
+            }
+        }
+    });
+
+    // 4. QUAN TRỌNG: Xóa scroll position khi logout
+    const logoutBtn = document.querySelector('.logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            sessionStorage.removeItem(SCROLL_KEY);
+            sessionStorage.removeItem(CONTENT_SCROLL_KEY);
+        });
+    }
+
+    // 5. BONUS: Smooth scroll về đầu trang khi click logo
+    const logoLink = document.querySelector('.sidebar-brand');
+    if (logoLink) {
+        logoLink.addEventListener('click', function(e) {
+            if (window.location.pathname === this.getAttribute('href')) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                sessionStorage.setItem(CONTENT_SCROLL_KEY, 0);
+            }
+        });
+    }
+
+    // 6. MOBILE: Đóng sidebar sau khi click nhưng giữ scroll position
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebarElement = document.getElementById('sidebar');
+
+    document.querySelectorAll('.sidebar-nav .nav-link').forEach(function(navLink) {
+        navLink.addEventListener('click', function() {
+            // Trên mobile, đóng sidebar
+            if (window.innerWidth <= 768) {
+                if (sidebarElement) sidebarElement.classList.remove('active');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+            }
+        });
+    });
+})();
+{% endif %}
+</script>
 
     {% block scripts %}{% endblock %}
 </body>
