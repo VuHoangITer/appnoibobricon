@@ -688,9 +688,9 @@
 <div class="mobile-filter-btn mb-3" style="display: none;">
     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
         <i class="bi bi-funnel-fill"></i> Bộ lọc
-        {% if date_from or date_to or assigned_user or rating_filter %}
+        {% if date_from or date_to or assigned_user %}
         <span class="badge bg-danger ms-2">
-            {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if rating_filter else 0) }}
+            {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) }}
         </span>
         {% endif %}
     </button>
@@ -700,11 +700,11 @@
 <div class="card mb-4 desktop-filter-form">
     <div class="card-body">
         <form method="GET" class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
                 <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
                 <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
             </div>
@@ -721,18 +721,6 @@
                 </select>
             </div>
             {% endif %}
-
-            <!-- THÊM MỚI: Filter đánh giá -->
-            <div class="col-md-2">
-                <label class="form-label"><i class="bi bi-star-fill"></i> Đánh giá:</label>
-                <select class="form-select" name="rating">
-                    <option value="">-- Tất cả --</option>
-                    <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                    <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                    <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                </select>
-            </div>
-
              <div class="col-12 d-flex align-items-end gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-funnel"></i> Lọc
@@ -786,21 +774,8 @@
                     </div>
                     {% endif %}
 
-                    <!-- THÊM MỚI: Filter đánh giá cho mobile -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-star-fill"></i> Đánh giá:
-                        </label>
-                        <select class="form-select" name="rating">
-                            <option value="">-- Tất cả --</option>
-                            <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                            <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                            <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                        </select>
-                    </div>
-
                     <!-- Hiển thị filter đang áp dụng -->
-                    {% if date_from or date_to or assigned_user or rating_filter %}
+                    {% if date_from or date_to or assigned_user %}
                     <div class="alert alert-info">
                         <small>
                             <i class="bi bi-info-circle"></i> Đang lọc:
@@ -816,13 +791,6 @@
                                     <br>• Người: {{ user.full_name }}
                                     {% endif %}
                                 {% endfor %}
-                            {% endif %}
-                            {% if rating_filter %}
-                            <br>• Đánh giá:
-                                {% if rating_filter == 'good' %}👍 Tốt
-                                {% elif rating_filter == 'bad' %}👎 Kém
-                                {% elif rating_filter == 'unrated' %}⏳ Chưa đánh giá
-                                {% endif %}
                             {% endif %}
                         </small>
                     </div>
@@ -854,7 +822,6 @@
                     <input type="hidden" name="date_from" value="{{ date_from }}">
                     <input type="hidden" name="date_to" value="{{ date_to }}">
                     <input type="hidden" name="assigned_user" value="{{ assigned_user }}">
-                    <input type="hidden" name="rating" value="{{ rating_filter }}">
 
                     <div class="mb-3">
                         <label class="form-label">
@@ -883,7 +850,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="{{ url_for('tasks.dashboard', date_from=date_from, date_to=date_to, assigned_user=assigned_user, rating=rating_filter) }}" class="btn btn-secondary">
+                    <a href="{{ url_for('tasks.dashboard', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-clockwise"></i> Đặt lại (30 ngày)
                     </a>
                     <button type="submit" class="btn btn-info">
@@ -2192,6 +2159,8 @@ function setChartDateRange(days) {
                         }
                     },
                     tooltip: {
+
+
                         mode: 'index',
                         intersect: false,
                         callbacks: {

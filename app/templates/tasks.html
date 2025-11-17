@@ -38,11 +38,11 @@
 <div class="mobile-filter-btn mb-3" style="display: none;">
     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
         <i class="bi bi-funnel-fill"></i> Bộ lọc
-        {% if status_filter or date_from or date_to or assigned_user or tag_filter or rating_filter %}
-        <span class="badge bg-danger ms-2">
-            {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) + (1 if rating_filter else 0) }}
-        </span>
-        {% endif %}
+            {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
+            <span class="badge bg-danger ms-2">
+                {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) }}
+            </span>
+            {% endif %}
     </button>
 </div>
 
@@ -93,15 +93,6 @@
                 <small class="text-muted">Lọc theo hạn hoàn thành</small>
             </div>
 
-            <div class="col-md-3 col-6">
-                <label class="form-label"><i class="bi bi-star-fill"></i> Đánh giá:</label>
-                <select class="form-select" name="rating">
-                    <option value="">-- Tất cả --</option>
-                    <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                    <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                    <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                </select>
-            </div>
             {% if current_user.role in ['director', 'manager'] %}
             <div class="col-md-12">
                 <label class="form-label"><i class="bi bi-person"></i> Người được giao nv:</label>
@@ -125,7 +116,7 @@
                 </a>
 
                 <!-- Show filter info -->
-                {% if status_filter or date_from or date_to or assigned_user or tag_filter or rating_filter %}
+                {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
                 <span class="ms-3 text-muted">
                     <i class="bi bi-info-circle"></i>
                     Đang lọc:
@@ -153,15 +144,6 @@
                                 <span class="badge bg-secondary">Người: {{ user.full_name }}</span>
                             {% endif %}
                         {% endfor %}
-                    {% endif %}
-                    {% if rating_filter %}
-                        <span class="badge bg-secondary">
-                            Đánh giá:
-                            {% if rating_filter == 'good' %}Tốt
-                            {% elif rating_filter == 'bad' %}Kém
-                            {% elif rating_filter == 'unrated' %}Chưa đánh giá
-                            {% endif %}
-                        </span>
                     {% endif %}
                 </span>
                 {% endif %}
@@ -244,17 +226,6 @@
                         </select>
                     </div>
                     {% endif %}
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-star-fill"></i> Đánh giá:
-                        </label>
-                        <select class="form-select" name="rating">
-                            <option value="">-- Tất cả --</option>
-                            <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                            <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                            <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                        </select>
-                    </div>
                     <!-- Hiển thị filter đang áp dụng -->
                     {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
                     <div class="alert alert-info">
@@ -282,13 +253,6 @@
                                     <br>• Người: {{ user.full_name }}
                                     {% endif %}
                                 {% endfor %}
-                            {% endif %}
-                            {% if rating_filter %}
-                            <br>• Đánh giá:
-                                {% if rating_filter == 'good' %}👍 Tốt
-                                {% elif rating_filter == 'bad' %}👎 Kém
-                                {% elif rating_filter == 'unrated' %}⏳ Chưa đánh giá
-                                {% endif %}
                             {% endif %}
                         </small>
                     </div>
@@ -451,7 +415,7 @@
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                     {% if pagination.has_prev %}
-                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) }}">
+                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                         <i class="bi bi-chevron-left"></i> Trước
                     </a>
                     {% else %}
@@ -467,7 +431,7 @@
                         </li>
                         {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) }}">
+                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                                 {{ page_num }}
                             </a>
                         </li>
@@ -481,7 +445,7 @@
 
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                     {% if pagination.has_next %}
-                        <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) }}">
+                        <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                             Sau <i class="bi bi-chevron-right"></i>
                         </a>
                     {% else %}

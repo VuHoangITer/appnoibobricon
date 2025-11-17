@@ -197,6 +197,14 @@
                     <span>Thông báo nội bộ</span>
                 </a>
             </div>
+            {% if current_user.role in ['director', 'manager'] %}
+            <div class="nav-item">
+                <a href="{{ url_for('performance.performance_review') }}" class="nav-link {% if 'performance' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-star-fill"></i>
+                    <span>Đánh Giá Hiệu Suất</span>
+                </a>
+            </div>
+            {% endif %}
             <div class="nav-item">
                 <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>

@@ -129,6 +129,9 @@ def create_app(config_class=Config):
     app.register_blueprint(tts_bp, url_prefix='/tts')
     csrf.exempt(tts_bp)
 
+    from app.performance import bp as performance_bp
+    app.register_blueprint(performance_bp, url_prefix='/performance')
+
     # Dashboard route
     @app.route('/')
     def index():

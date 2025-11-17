@@ -19,7 +19,6 @@ def dashboard():
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     assigned_user = request.args.get('assigned_user', '')
-    rating_filter = request.args.get('rating', '')
     chart_date_from = request.args.get('chart_date_from', '')
     chart_date_to = request.args.get('chart_date_to', '')
 
@@ -54,14 +53,6 @@ def dashboard():
             ).all()]
             stats_query = stats_query.filter(Task.id.in_(task_ids))
 
-        # Apply rating filter
-        if rating_filter:
-            if rating_filter == 'good':
-                stats_query = stats_query.filter_by(status='DONE', performance_rating='good')
-            elif rating_filter == 'bad':
-                stats_query = stats_query.filter_by(status='DONE', performance_rating='bad')
-            elif rating_filter == 'unrated':
-                stats_query = stats_query.filter_by(status='DONE', performance_rating=None)
 
         # Calculate statistics with filters
         total_tasks = stats_query.count()
@@ -547,7 +538,6 @@ def dashboard():
                                date_to=date_to,
                                assigned_user=assigned_user,
                                notification=notification,
-                               rating_filter=rating_filter,
                                pie_chart_data=pie_chart_data,
                                bar_chart_data=bar_chart_data,
                                line_chart_data=line_chart_data,
@@ -582,14 +572,6 @@ def dashboard():
                 my_tasks_query = my_tasks_query.filter(Task.created_at <= date_to_utc)
             except:
                 pass
-
-        if rating_filter:
-            if rating_filter == 'good':
-                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating='good')
-            elif rating_filter == 'bad':
-                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating='bad')
-            elif rating_filter == 'unrated':
-                my_tasks_query = my_tasks_query.filter_by(status='DONE', performance_rating=None)
 
         # Statistics
         total_tasks = my_tasks_query.count()
@@ -845,11 +827,10 @@ def dashboard():
                                recent_notes=recent_notes,
                                date_from=date_from,
                                date_to=date_to,
-                               notification=notification,
-                               rating_filter=rating_filter)
+                               notification=notification)
 
 
-# THÊM MỚI: Route để xem chi tiết tasks theo status
+# Route để xem chi tiết tasks theo status
 @bp.route('/by-status/<status>')
 @login_required
 def tasks_by_status(status):

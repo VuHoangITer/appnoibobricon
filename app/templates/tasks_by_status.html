@@ -54,11 +54,11 @@
 <div class="mobile-filter-btn mb-3" style="display: none;">
     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
         <i class="bi bi-funnel-fill"></i> Bộ lọc
-        {% if date_from or date_to or assigned_user or tag_filter or rating_filter %}
-        <span class="badge bg-danger ms-2">
-            {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) + (1 if rating_filter else 0) }}
-        </span>
-        {% endif %}
+            {% if date_from or date_to or assigned_user or tag_filter %}
+            <span class="badge bg-danger ms-2">
+                {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) }}
+            </span>
+            {% endif %}
     </button>
 </div>
 
@@ -100,16 +100,6 @@
                     <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>
                         <i class="bi bi-arrow-repeat"></i> Lặp lại
                     </option>
-                </select>
-            </div>
-            <!-- THÊM MỚI: Filter đánh giá -->
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-star-fill"></i> Đánh giá:</label>
-                <select class="form-select" name="rating">
-                    <option value="">-- Tất cả --</option>
-                    <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                    <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                    <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
                 </select>
             </div>
             <div class="col-12">
@@ -183,20 +173,8 @@
                             </option>
                         </select>
                     </div>
-                    <!-- THÊM MỚI: Filter đánh giá -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-star-fill"></i> Đánh giá:
-                        </label>
-                        <select class="form-select" name="rating">
-                            <option value="">-- Tất cả --</option>
-                            <option value="good" {% if rating_filter == 'good' %}selected{% endif %}>👍 Tốt</option>
-                            <option value="bad" {% if rating_filter == 'bad' %}selected{% endif %}>👎 Kém</option>
-                            <option value="unrated" {% if rating_filter == 'unrated' %}selected{% endif %}>⏳ Chưa đánh giá</option>
-                        </select>
-                    </div>
                     <!-- Hiển thị filter đang áp dụng -->
-                    {% if date_from or date_to or assigned_user or tag_filter or rating_filter %}
+                    {% if date_from or date_to or assigned_user or tag_filter %}
                     <div class="alert alert-info">
                         <small>
                             <i class="bi bi-info-circle"></i> Đang lọc:
@@ -218,13 +196,6 @@
                                 {% if tag_filter == 'urgent' %}Khẩn cấp
                                 {% elif tag_filter == 'important' %}Quan trọng
                                 {% elif tag_filter == 'recurring' %}Lặp lại
-                                {% endif %}
-                            {% endif %}
-                            {% if rating_filter %}
-                            <br>• Đánh giá:
-                                {% if rating_filter == 'good' %}👍 Tốt
-                                {% elif rating_filter == 'bad' %}👎 Kém
-                                {% elif rating_filter == 'unrated' %}⏳ Chưa đánh giá
                                 {% endif %}
                             {% endif %}
                         </small>
@@ -370,7 +341,7 @@
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                     <a class="page-link" 
                        href="{{ url_for('tasks.tasks_by_status', status=status, page=pagination.prev_num, 
-                                date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) if pagination.has_prev else '#' }}">
+                                date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) if pagination.has_prev else '#' }}">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
@@ -381,7 +352,7 @@
                         <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
                             <a class="page-link" 
                                href="{{ url_for('tasks.tasks_by_status', status=status, page=page_num,
-                                        date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) }}">
+                                        date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                                 {{ page_num }}
                             </a>
                         </li>
@@ -396,7 +367,7 @@
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                     <a class="page-link" 
                        href="{{ url_for('tasks.tasks_by_status', status=status, page=pagination.next_num,
-                                date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter, rating=rating_filter) if pagination.has_next else '#' }}">
+                                date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) if pagination.has_next else '#' }}">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

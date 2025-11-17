@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Đánh Giá Hiệu Suất{% endblock %}
+{% block page_title %}Đánh Giá Hiệu Suất{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stats Cards */
+.perf-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.perf-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.perf-stat-card .stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.perf-stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.perf-stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.perf-stat-card .stat-sublabel {
+    font-size: 0.75rem;
+    color: #adb5bd;
+    margin-top: 5px;
+}
+
+/* Progress bars */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 4px;
+}
+
+/* User selector */
+.user-selector-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.user-selector-card h3 {
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.user-selector-card .form-select {
+    font-size: 1.1rem;
+    padding: 12px 16px;
+}
+
+/* Rating badges */
+.rating-badge-good {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rating-badge-bad {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rating-badge-unrated {
+    background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .perf-stat-card {
+        margin-bottom: 15px;
+    }
+    
+    .perf-stat-card .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .user-selector-card {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- User Selector -->
+<div class="user-selector-card">
+    <h3><i class="bi bi-person-check-fill"></i> Chọn Nhân Viên Để Xem Hiệu Suất</h3>
+    <form method="GET" class="row g-3">
+        <div class="col-md-8">
+            <select class="form-select" name="user_id" id="userSelect" onchange="this.form.submit()">
+                <option value="">-- Chọn nhân viên --</option>
+                {% for user in all_users %}
+                <option value="{{ user.id }}" {% if selected_user and selected_user.id == user.id %}selected{% endif %}>
+                    {{ user.full_name }} - {{ user.role | role_vn }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        {% if selected_user %}
+        <div class="col-md-4">
+            <a href="{{ url_for('performance.performance_review') }}" class="btn btn-light w-100">
+                <i class="bi bi-arrow-clockwise"></i> Đặt lại
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+{% if selected_user %}
+<!-- Statistics Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="bi bi-graph-up-arrow"></i> 
+            Tổng Quan Hiệu Suất: {{ selected_user.full_name }}
+        </h4>
+    </div>
+    
+    <!-- Total Tasks -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-primary">
+                <i class="bi bi-list-task"></i>
+            </div>
+            <div class="stat-value text-primary">{{ stats.total_tasks }}</div>
+            <div class="stat-label">Tổng Nhiệm Vụ</div>
+        </div>
+    </div>
+    
+    <!-- Completion Rate -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-success">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-value text-success">{{ stats.completion_rate }}%</div>
+            <div class="stat-label">Hoàn Thành</div>
+            <div class="stat-sublabel">{{ stats.done_tasks }}/{{ stats.total_tasks }}</div>
+        </div>
+    </div>
+    
+    <!-- On-Time Rate -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-info">
+                <i class="bi bi-clock-fill"></i>
+            </div>
+            <div class="stat-value text-info">{{ stats.on_time_rate }}%</div>
+            <div class="stat-label">Đúng Hạn</div>
+            <div class="stat-sublabel">{{ stats.done_on_time }}/{{ stats.done_tasks }}</div>
+        </div>
+    </div>
+    
+    <!-- Good Rating -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-success">
+                <i class="bi bi-hand-thumbs-up-fill"></i>
+            </div>
+            <div class="stat-value text-success">{{ stats.good_rating }}</div>
+            <div class="stat-label">Đánh Giá Tốt</div>
+            <div class="stat-sublabel">{{ stats.good_rating_rate }}%</div>
+        </div>
+    </div>
+    
+    <!-- Bad Rating -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-danger">
+                <i class="bi bi-hand-thumbs-down-fill"></i>
+            </div>
+            <div class="stat-value text-danger">{{ stats.bad_rating }}</div>
+            <div class="stat-label">Cần Cải Thiện</div>
+        </div>
+    </div>
+    
+    <!-- Unrated -->
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="perf-stat-card">
+            <div class="stat-icon text-warning">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-value text-warning">{{ stats.unrated }}</div>
+            <div class="stat-label">Chưa Đánh Giá</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> Bộ Lọc</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <input type="hidden" name="user_id" value="{{ selected_user.id }}">
+            
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-flag-fill"></i> Trạng thái:</label>
+                <select class="form-select" name="status">
+                    <option value="">Tất cả</option>
+                    <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chờ xử lý</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tasks Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Chi Tiết Nhiệm Vụ
+            <span class="badge bg-light text-dark ms-2">{{ pagination.total }} nhiệm vụ</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nhiệm Vụ</th>
+                        <th>Người Giao</th>
+                        <th>Hạn Chót</th>
+                        <th>Trạng Thái</th>
+                        <th>Đánh Giá</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td data-label="Nhiệm Vụ">
+                            <strong>{{ task.title }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-plus"></i> Tạo: {{ task.created_at | vn_datetime('%d/%m/%Y') }}
+                            </small>
+                            {% if task.status == 'DONE' %}
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-check"></i> Hoàn thành: {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td data-label="Người Giao">
+                            {{ task.creator.full_name }}
+                            <br>
+                            <small class="text-muted">{{ task.creator.role | role_vn }}</small>
+                        </td>
+                        <td data-label="Hạn Chót">
+                            {% if task.due_date %}
+                            <span class="badge bg-secondary">
+                                {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">Không có</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Trạng Thái">
+                            <span class="badge bg-{{ task.status | status_badge }}">
+                                {{ task.status | status_vn }}
+                            </span>
+                            {% if task.status == 'DONE' %}
+                                {% if task.completed_overdue %}
+                                <br>
+                                <span class="badge bg-danger mt-1">
+                                    <i class="bi bi-clock-history"></i> Quá hạn
+                                </span>
+                                {% else %}
+                                <br>
+                                <span class="badge bg-success mt-1">
+                                    <i class="bi bi-check-circle"></i> Đúng hạn
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td data-label="Đánh Giá">
+                            {% if task.status == 'DONE' %}
+                                {% if task.performance_rating == 'good' %}
+                                <span class="rating-badge-good">
+                                    <i class="bi bi-hand-thumbs-up-fill"></i> Tốt
+                                </span>
+                                {% elif task.performance_rating == 'bad' %}
+                                <span class="rating-badge-bad">
+                                    <i class="bi bi-hand-thumbs-down-fill"></i> Kém
+                                </span>
+                                {% else %}
+                                <span class="rating-badge-unrated">
+                                    <i class="bi bi-hourglass-split"></i> Chưa đánh giá
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Hành Động">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Task pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" 
+                       href="{{ url_for('performance.performance_review', user_id=selected_user.id, page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to) if pagination.has_prev else '#' }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" 
+                               href="{{ url_for('performance.performance_review', user_id=selected_user.id, page=page_num, status=status_filter, date_from=date_from, date_to=date_to) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" 
+                       href="{{ url_for('performance.performance_review', user_id=selected_user.id, page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to) if pagination.has_next else '#' }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Không có nhiệm vụ nào.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
