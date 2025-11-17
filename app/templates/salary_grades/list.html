@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Cấp Bậc Lương{% endblock %}
+{% block page_title %}Quản Lý Cấp Bậc Lương{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-award-fill"></i> Cấp Bậc Lương</h2>
+    <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Tạo Cấp Bậc Mới
+    </a>
+</div>
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Danh Sách Cấp Bậc
+            <span class="badge bg-primary ms-2">{{ grades|length }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if grades %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Tên Cấp Bậc</th>
+                        <th class="text-end">Lương Cơ Bản</th>
+                        <th class="text-end">Lương Trách Nhiệm</th>
+                        <th class="text-center">Số Nhân Viên</th>
+                        <th class="text-center">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>
+                            <strong>{{ grade.name }}</strong>
+                            {% if grade.description %}
+                            <br><small class="text-muted">{{ grade.description }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</td>
+                        <td class="text-end">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ grade.employees.count() }}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
+                                   class="btn btn-sm btn-info" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
+                                   class="btn btn-sm btn-primary" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if grade.employees.count() == 0 %}
+                                <form method="POST"
+                                      action="{{ url_for('salary_grades.delete_grade', grade_id=grade.id) }}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa cấp bậc này?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Chưa có cấp bậc lương nào.</p>
+            <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Tạo Cấp Bậc Đầu Tiên
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

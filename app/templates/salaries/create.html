@@ -13,13 +13,44 @@
             <div class="card-body">
                 <form method="POST" id="salaryForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    
+                    <input type="hidden" id="employee_id" name="employee_id">
+
                     <!-- Thông tin nhân viên -->
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="employee_name" class="form-label">Tên nhân viên *</label>
+                            <label class="form-label">Nhân Viên *</label>
+                            <select class="form-select" id="employee_select">
+                                <option value="">-- Chọn nhân viên hoặc nhập tên mới --</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}"
+                                        data-name="{{ emp.full_name }}"
+                                        data-grade-id="{{ emp.salary_grade_id or '' }}">
+                                    {{ emp.full_name }}
+                                    {% if emp.salary_grade %}({{ emp.salary_grade.name }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Chọn nhân viên có sẵn để tự động điền lương</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="employee_name" class="form-label">Hoặc Nhập Tên Mới</label>
                             <input type="text" class="form-control" id="employee_name" name="employee_name"
-                                   placeholder="Nhập họ và tên nhân viên" required>
+                                   placeholder="Nhập họ và tên nhân viên mới">
+                        </div>
+                    </div>
+
+                    <!-- Cấp bậc lương -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Cấp Bậc Lương (Tự động điền)</label>
+                            <select class="form-select" id="salary_grade_select">
+                                <option value="">-- Không chọn --</option>
+                                {% for grade in salary_grades %}
+                                <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Chọn để tự động điền lương cơ bản + năng lực</small>
                         </div>
 
                         <div class="col-md-6">
@@ -28,18 +59,9 @@
                                 <div class="col-6">
                                     <select class="form-select" id="month_select" name="month_select" required>
                                         <option value="">Chọn tháng</option>
-                                        <option value="1">Tháng 1</option>
-                                        <option value="2">Tháng 2</option>
-                                        <option value="3">Tháng 3</option>
-                                        <option value="4">Tháng 4</option>
-                                        <option value="5">Tháng 5</option>
-                                        <option value="6">Tháng 6</option>
-                                        <option value="7">Tháng 7</option>
-                                        <option value="8">Tháng 8</option>
-                                        <option value="9">Tháng 9</option>
-                                        <option value="10">Tháng 10</option>
-                                        <option value="11">Tháng 11</option>
-                                        <option value="12">Tháng 12</option>
+                                        {% for m in range(1, 13) %}
+                                        <option value="{{ m }}">Tháng {{ m }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-6">
@@ -54,9 +76,13 @@
 
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="work_days_in_month" class="form-label"> Quy định số Công/ tháng của tháng *</label>
+                            <label for="work_days_in_month" class="form-label">
+                                Quy định số Công/tháng *
+                                <i class="bi bi-info-circle" title="Tự động điền theo tháng"></i>
+                            </label>
                             <input type="number" class="form-control calc-input" id="work_days_in_month"
-                                   name="work_days_in_month" step="0.5" required>
+                                   name="work_days_in_month" step="0.5" required readonly>
+                            <small class="text-muted">Tự động điền khi chọn tháng/năm</small>
                         </div>
                         <div class="col-md-6">
                             <label for="actual_work_days" class="form-label">Số công của tháng *</label>
@@ -66,7 +92,7 @@
                         </div>
                     </div>
 
-                    <!-- Lương cơ bản và trách nhiệm -->
+                    <!-- Lương cơ bản -->
                     <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương cơ bản</h5>
                     <div class="row mb-4">
                         <div class="col-md-6">
@@ -214,38 +240,124 @@ for (let year = currentYear - 5; year <= currentYear + 5; year++) {
     yearSelect.appendChild(option);
 }
 
-// Set current month as default
+// Set current month
 const currentMonth = new Date().getMonth() + 1;
 document.getElementById('month_select').value = currentMonth;
 
-// Update hidden month field when month or year changes
+// Update month hidden field
 function updateMonthField() {
     const month = document.getElementById('month_select').value;
     const year = document.getElementById('year_select').value;
     if (month && year) {
         const monthStr = month.padStart(2, '0');
         document.getElementById('month').value = `${monthStr}-${year}`;
+
+        // Auto-fetch work days
+        fetchWorkDays(parseInt(month), parseInt(year));
     }
 }
 
 document.getElementById('month_select').addEventListener('change', updateMonthField);
 document.getElementById('year_select').addEventListener('change', updateMonthField);
-
-// Initialize on load
 updateMonthField();
 
-// Add capacity bonus row
-document.getElementById('add-capacity').addEventListener('click', function() {
-    const container = document.getElementById('capacity-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'capacity-item row mb-2';
-    newRow.innerHTML = `
+// Fetch work days from server
+async function fetchWorkDays(month, year) {
+    try {
+        const response = await fetch(`/work-days/api/work-days?month=${month}&year=${year}`);
+        const data = await response.json();
+        document.getElementById('work_days_in_month').value = data.work_days;
+        calculate();
+    } catch (error) {
+        console.error('Error fetching work days:', error);
+    }
+}
+
+// Employee select handler
+document.getElementById('employee_select').addEventListener('change', async function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const employeeId = this.value;
+
+    if (!employeeId) {
+        document.getElementById('employee_id').value = '';
+        document.getElementById('employee_name').value = '';
+        document.getElementById('salary_grade_select').value = '';
+        return;
+    }
+
+    const employeeName = selectedOption.dataset.name;
+    const gradeId = selectedOption.dataset.gradeId;
+
+    document.getElementById('employee_id').value = employeeId;
+    document.getElementById('employee_name').value = employeeName;
+    document.getElementById('employee_name').readOnly = true;
+
+    if (gradeId) {
+        document.getElementById('salary_grade_select').value = gradeId;
+        // Trigger auto-fill
+        await loadSalaryGrade(gradeId);
+    }
+});
+
+// When typing manual name, clear employee_id
+document.getElementById('employee_name').addEventListener('input', function() {
+    if (document.getElementById('employee_select').value) {
+        document.getElementById('employee_select').value = '';
+        document.getElementById('employee_id').value = '';
+        this.readOnly = false;
+    }
+});
+
+// Salary grade auto-fill
+document.getElementById('salary_grade_select').addEventListener('change', async function() {
+    const gradeId = this.value;
+    if (gradeId) {
+        await loadSalaryGrade(gradeId);
+    }
+});
+
+async function loadSalaryGrade(gradeId) {
+    try {
+        const response = await fetch(`/salary-grades/api/grade/${gradeId}`);
+        const data = await response.json();
+
+        // Fill basic salaries
+        document.getElementById('basic_salary').value = data.basic_salary;
+        document.getElementById('responsibility_salary').value = data.responsibility_salary;
+
+        // Fill capacity bonuses
+        const container = document.getElementById('capacity-container');
+        container.innerHTML = '';
+
+        const bonuses = data.capacity_bonuses || [];
+        if (bonuses.length === 0) {
+            bonuses.push({content: '', amount: 0});
+        }
+
+        bonuses.forEach(bonus => {
+            const row = createCapacityRow(bonus.content, bonus.amount);
+            container.appendChild(row);
+        });
+
+        attachCalculateEvent();
+        calculate();
+
+    } catch (error) {
+        console.error('Error loading salary grade:', error);
+    }
+}
+
+function createCapacityRow(content = '', amount = 0) {
+    const div = document.createElement('div');
+    div.className = 'capacity-item row mb-2';
+    div.innerHTML = `
         <div class="col-md-7">
-            <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
+            <input type="text" class="form-control" name="capacity_content[]"
+                   value="${content}" placeholder="Nội dung">
         </div>
         <div class="col-md-4">
             <input type="number" class="form-control calc-input capacity-amount"
-                   name="capacity_amount[]" placeholder="Số tiền" step="1" value="0">
+                   name="capacity_amount[]" value="${amount}" placeholder="Số tiền" step="1">
         </div>
         <div class="col-md-1">
             <button type="button" class="btn btn-danger btn-sm remove-capacity">
@@ -253,11 +365,16 @@ document.getElementById('add-capacity').addEventListener('click', function() {
             </button>
         </div>
     `;
-    container.appendChild(newRow);
+    return div;
+}
+
+// Add/remove capacity rows
+document.getElementById('add-capacity').addEventListener('click', function() {
+    const container = document.getElementById('capacity-container');
+    container.appendChild(createCapacityRow());
     attachCalculateEvent();
 });
 
-// Remove capacity bonus row
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-capacity')) {
         const item = e.target.closest('.capacity-item');
@@ -268,7 +385,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Add deduction row
+// Add/remove deduction rows
 document.getElementById('add-deduction').addEventListener('click', function() {
     const container = document.getElementById('deduction-container');
     const newRow = document.createElement('div');
@@ -291,7 +408,6 @@ document.getElementById('add-deduction').addEventListener('click', function() {
     attachCalculateEvent();
 });
 
-// Remove deduction row
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-deduction')) {
         const item = e.target.closest('.deduction-item');
@@ -308,38 +424,31 @@ function calculate() {
     const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
     const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
     const respSalary = parseFloat(document.getElementById('responsibility_salary').value) || 0;
-    
-    // Lương cơ bản/ngày
+
     const basicPerDay = workDays > 0 ? basicSalary / workDays : 0;
     document.getElementById('display_basic_per_day').textContent = formatMoney(basicPerDay);
-    
-    // Lương trách nhiệm/ngày
+
     const respPerDay = workDays > 0 ? respSalary / workDays : 0;
     document.getElementById('display_resp_per_day').textContent = formatMoney(respPerDay);
-    
-    // Lương chính
+
     const mainSalary = (basicPerDay + respPerDay) * actualDays;
     document.getElementById('display_main_salary').textContent = formatMoney(mainSalary);
-    
-    // Tổng lương năng lực
+
     let totalCapacity = 0;
     document.querySelectorAll('.capacity-amount').forEach(input => {
         totalCapacity += parseFloat(input.value) || 0;
     });
     document.getElementById('display_capacity_bonus').textContent = formatMoney(totalCapacity);
-    
-    // Tổng thu nhập
+
     const totalIncome = mainSalary + totalCapacity;
     document.getElementById('display_total_income').textContent = formatMoney(totalIncome);
-    
-    // Tổng khấu trừ
+
     let totalDeduction = 0;
     document.querySelectorAll('.deduction-amount').forEach(input => {
         totalDeduction += parseFloat(input.value) || 0;
     });
     document.getElementById('display_total_deduction').textContent = formatMoney(totalDeduction);
-    
-    // Lương thực lĩnh
+
     const netSalary = totalIncome - totalDeduction;
     document.getElementById('display_net_salary').textContent = formatMoney(netSalary);
 }
@@ -355,7 +464,6 @@ function attachCalculateEvent() {
     });
 }
 
-// Initial setup
 attachCalculateEvent();
 calculate();
 </script>

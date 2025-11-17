@@ -236,12 +236,40 @@
             </div>
             {% if current_user.role in ['director', 'accountant'] %}
                 <div class="nav-section-title">Lương</div>
+
+                <!-- Quản lý Lương - Director + Accountant -->
                 <div class="nav-item">
                     <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">
                         <i class="bi bi-cash-coin"></i>
                         <span>Quản lý Lương</span>
                     </a>
                 </div>
+
+                <!-- Quản Lý Nhân Viên - Director + Accountant -->
+                <div class="nav-item">
+                    <a href="{{ url_for('employees.list_employees') }}" class="nav-link {% if 'employees' in request.endpoint %}active{% endif %}">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Quản Lý Nhân Viên</span>
+                    </a>
+                </div>
+
+                <!-- Số Công/Tháng - Director + Accountant -->
+                <div class="nav-item">
+                    <a href="{{ url_for('work_days.list_configs') }}" class="nav-link {% if 'work_days' in request.endpoint %}active{% endif %}">
+                        <i class="bi bi-calendar-week"></i>
+                        <span>Số Công/Tháng</span>
+                    </a>
+                </div>
+
+                <!-- Cấp Bậc Lương - CHỈ Director -->
+                {% if current_user.role == 'director' %}
+                <div class="nav-item">
+                    <a href="{{ url_for('salary_grades.list_grades') }}" class="nav-link {% if 'salary_grades' in request.endpoint %}active{% endif %}">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Cấp Bậc Lương</span>
+                    </a>
+                </div>
+                {% endif %}
             {% endif %}
             {% if current_user.role == 'director' %}
             <div class="nav-item">

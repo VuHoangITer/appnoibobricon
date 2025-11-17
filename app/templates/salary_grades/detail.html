@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Chi Tiết Cấp Bậc Lương{% endblock %}
+{% block page_title %}Chi Tiết Cấp Bậc Lương{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-award-fill"></i> {{ grade.name }}</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Chỉnh Sửa
+        </a>
+        {% if grade.employees.count() == 0 %}
+        <form method="POST" action="{{ url_for('salary_grades.delete_grade', grade_id=grade.id) }}"
+              style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa cấp bậc này?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Vô Hiệu Hóa
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('salary_grades.list_grades') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+</div>
+
+{% if grade.description %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> {{ grade.description }}
+</div>
+{% endif %}
+
+<!-- Thông tin lương cơ bản -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-wallet2"></i> Lương Cơ Bản</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td><strong>Lương cơ bản/tháng:</strong></td>
+                        <td class="text-end text-primary fw-bold">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lương trách nhiệm/tháng:</strong></td>
+                        <td class="text-end text-info fw-bold">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</td>
+                    </tr>
+                    <tr class="table-primary">
+                        <td><strong>Tổng lương cơ bản:</strong></td>
+                        <td class="text-end fw-bold">{{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary) }} ₫</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-award"></i> Lương Năng Lực</h5>
+            </div>
+            <div class="card-body">
+                {% set bonuses = grade.get_capacity_bonuses() %}
+                {% if bonuses %}
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nội dung</th>
+                            <th class="text-end">Số tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bonus in bonuses %}
+                        <tr>
+                            <td>{{ bonus.content }}</td>
+                            <td class="text-end">{{ "{:,.0f}".format(bonus.amount) }} ₫</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-success fw-bold">
+                            <td>Tổng cộng:</td>
+                            <td class="text-end">{{ "{:,.0f}".format(bonuses|sum(attribute='amount')) }} ₫</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center my-3">Chưa có lương năng lực mặc định</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tổng thu nhập dự kiến -->
+<div class="card bg-light mb-4">
+    <div class="card-body">
+        <h4 class="text-center mb-0">
+            <i class="bi bi-cash-coin"></i> Tổng Thu Nhập Dự Kiến/Tháng (full công): 
+            <span class="text-success">
+                {{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary + (grade.get_capacity_bonuses()|sum(attribute='amount'))) }} ₫
+            </span>
+        </h4>
+    </div>
+</div>
+
+<!-- Danh sách nhân viên đang dùng cấp bậc này -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-people-fill"></i> Nhân Viên Đang Sử Dụng Cấp Bậc Này
+            <span class="badge bg-info ms-2">{{ grade.employees.count() }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if grade.employees.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã NV</th>
+                        <th>Họ và Tên</th>
+                        <th>Phòng Ban</th>
+                        <th>Chức Vụ</th>
+                        <th>Ngày Vào</th>
+                        <th class="text-center">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in grade.employees %}
+                    <tr>
+                        <td>
+                            {% if emp.employee_code %}
+                            <span class="badge bg-secondary">{{ emp.employee_code }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ emp.full_name }}</strong></td>
+                        <td>{{ emp.department or '-' }}</td>
+                        <td>{{ emp.position or '-' }}</td>
+                        <td>
+                            {% if emp.hire_date %}
+                            {{ emp.hire_date|vn_date }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('employees.employee_detail', employee_id=emp.id) }}"
+                               class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-person-x" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-2">Chưa có nhân viên nào sử dụng cấp bậc này</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Thông tin hệ thống -->
+<div class="card mt-4">
+    <div class="card-body">
+        <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            Tạo lúc: {{ grade.created_at|vn_datetime }} | 
+            Cập nhật: {{ grade.updated_at|vn_datetime if grade.updated_at else 'Chưa cập nhật' }}
+        </small>
+    </div>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@ from app import db
 from app.models import Salary, User, SalaryShareLink, SalaryShareLinkAccess
 from app.decorators import role_required
 from datetime import datetime, timedelta
+from app.models import Employee, SalaryGrade, WorkDaysConfig
 import json
 
 bp = Blueprint('salaries', __name__)
@@ -151,7 +152,15 @@ def create_salary():
     """Tạo bảng lương mới"""
     if request.method == 'POST':
         try:
+            # Lấy thông tin nhân viên
+            employee_id = request.form.get('employee_id')
             employee_name = request.form.get('employee_name', '').strip()
+
+            # Nếu chọn từ danh sách nhân viên có sẵn
+            if employee_id:
+                employee = Employee.query.get(int(employee_id))
+                if employee:
+                    employee_name = employee.full_name
 
             # Validate employee name
             if not employee_name:
@@ -218,7 +227,87 @@ def create_salary():
             return redirect(url_for('salaries.create_salary'))
 
     # GET request
-    return render_template('salaries/create.html')
+    # Lấy danh sách nhân viên và cấp bậc lương
+    employees = Employee.query.filter_by(is_active=True).order_by(Employee.full_name).all()
+    salary_grades = SalaryGrade.query.filter_by(is_active=True).order_by(SalaryGrade.name).all()
+
+    return render_template('salaries/create.html',
+                           employees=employees,
+                           salary_grades=salary_grades)
+
+
+# THÊM MỚI: Route tạo lương nhanh cho nhân viên có sẵn
+@bp.route('/quick-create/<int:employee_id>', methods=['GET', 'POST'])
+@login_required
+@role_required(['director', 'accountant'])
+def quick_create_salary(employee_id):
+    """Tạo lương nhanh cho nhân viên đã có trong hệ thống"""
+    employee = Employee.query.get_or_404(employee_id)
+
+    if not employee.salary_grade:
+        flash('Nhân viên chưa được gán cấp bậc lương.', 'danger')
+        return redirect(url_for('employees.employee_detail', employee_id=employee_id))
+
+    if request.method == 'POST':
+        try:
+            month = request.form.get('month')
+            actual_work_days = float(request.form.get('actual_work_days'))
+
+            # Parse deductions (if any)
+            deduction_contents = request.form.getlist('deduction_content[]')
+            deduction_amounts = request.form.getlist('deduction_amount[]')
+            deductions = []
+            for i in range(len(deduction_contents)):
+                if deduction_contents[i].strip():
+                    deductions.append({
+                        'content': deduction_contents[i],
+                        'amount': float(deduction_amounts[i]) if deduction_amounts[i] else 0
+                    })
+
+            # Check existing
+            existing = Salary.query.filter_by(
+                employee_name=employee.full_name,
+                month=month
+            ).first()
+            if existing:
+                flash(f'Bảng lương tháng {month} đã tồn tại.', 'danger')
+                return redirect(url_for('salaries.quick_create_salary', employee_id=employee_id))
+
+            # Get work days config
+            month_int, year_int = map(int, month.split('-'))
+            work_days_in_month = WorkDaysConfig.get_work_days(month_int, year_int)
+
+            # Get salary from grade
+            grade = employee.salary_grade
+
+            # Create salary
+            salary = Salary(
+                employee_name=employee.full_name,
+                month=month,
+                work_days_in_month=work_days_in_month,
+                actual_work_days=actual_work_days,
+                basic_salary=grade.basic_salary,
+                responsibility_salary=grade.responsibility_salary,
+                created_by=current_user.id
+            )
+
+            # Set capacity bonuses from grade
+            salary.set_capacity_bonuses(grade.get_capacity_bonuses())
+            salary.set_deductions(deductions)
+            salary.calculate()
+
+            db.session.add(salary)
+            db.session.commit()
+
+            flash('Tạo bảng lương thành công.', 'success')
+            return redirect(url_for('salaries.salary_detail', salary_id=salary.id))
+
+        except Exception as e:
+            flash(f'Có lỗi xảy ra: {str(e)}', 'danger')
+            return redirect(url_for('salaries.quick_create_salary', employee_id=employee_id))
+
+    # GET request
+    return render_template('salaries/quick_create.html', employee=employee)
 
 
 @bp.route('/<int:salary_id>')

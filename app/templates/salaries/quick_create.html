@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Lương Nhanh: {{ employee.full_name }}{% endblock %}
+{% block page_title %}Tạo Lương Nhanh{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <!-- Employee Info Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle"></i> {{ employee.full_name }}
+                    {% if employee.employee_code %}
+                    <span class="badge bg-light text-dark">{{ employee.employee_code }}</span>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Cấp bậc lương:</strong> {{ employee.salary_grade.name }}</p>
+                        <p class="mb-1"><strong>Phòng ban:</strong> {{ employee.department or '-' }}</p>
+                        <p class="mb-0"><strong>Chức vụ:</strong> {{ employee.position or '-' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Lương cơ bản:</strong> {{ "{:,.0f}".format(employee.salary_grade.basic_salary) }} ₫</p>
+                        <p class="mb-1"><strong>Lương trách nhiệm:</strong> {{ "{:,.0f}".format(employee.salary_grade.responsibility_salary) }} ₫</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Create Form -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-lightning"></i> Tạo Bảng Lương Nhanh</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="quickSalaryForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Tháng/Năm *</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <select class="form-select" id="month_select" name="month_select" required>
+                                        <option value="">Chọn tháng</option>
+                                        {% for m in range(1, 13) %}
+                                        <option value="{{ m }}">Tháng {{ m }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <select class="form-select" id="year_select" name="year_select" required>
+                                        <option value="">Chọn năm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="month" name="month">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="actual_work_days" class="form-label">Số Công Thực Tế *</label>
+                            <input type="number" class="form-control" id="actual_work_days"
+                                   name="actual_work_days" step="0.5" required>
+                            <small class="text-muted">Số ngày thực tế đi làm trong tháng</small>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3"><i class="bi bi-award"></i> Lương Năng Lực</h6>
+                    <div id="capacity-container" class="mb-4">
+                        {% set bonuses = employee.salary_grade.get_capacity_bonuses() %}
+                        {% if bonuses %}
+                            {% for bonus in bonuses %}
+                            <div class="capacity-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="capacity_content[]"
+                                           value="{{ bonus.content }}" placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control capacity-amount"
+                                           name="capacity_amount[]" value="{{ bonus.amount }}" step="1000">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-capacity" title="Xóa khoản này">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="capacity-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="capacity_content[]"
+                                           placeholder="Nội dung (nếu có)">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control capacity-amount"
+                                           name="capacity_amount[]" placeholder="Số tiền" step="1000" value="0">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-capacity">
+                        <i class="bi bi-plus-circle"></i> Thêm Khoản Lương Năng Lực
+                    </button>
+
+                    <h6 class="mb-3"><i class="bi bi-dash-circle"></i> Các Khoản Khấu Trừ (Nếu Có)</h6>
+                    <div id="deduction-container" class="mb-4">
+                        <div class="deduction-item row mb-2">
+                            <div class="col-md-7">
+                                <input type="text" class="form-control" name="deduction_content[]"
+                                       placeholder="Nội dung khấu trừ (nếu có)">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control deduction-amount"
+                                       name="deduction_amount[]" placeholder="Số tiền" step="1000" value="0">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm remove-deduction">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm mb-4" id="add-deduction">
+                        <i class="bi bi-plus-circle"></i> Thêm Khoản Khấu Trừ
+                    </button>
+
+                    <hr>
+
+                    <!-- Auto Calculation Preview -->
+                    <div class="card bg-light" id="preview">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-calculator"></i> Dự Tính Lương</h5>
+
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Số công quy định:</strong></div>
+                                <div class="col-6 text-end" id="display_work_days">-</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Số công thực tế:</strong></div>
+                                <div class="col-6 text-end" id="display_actual">-</div>
+                            </div>
+                            <hr>
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Lương chính:</strong></div>
+                                <div class="col-6 text-end text-primary fw-bold" id="display_main">-</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Lương năng lực:</strong></div>
+                                <div class="col-6 text-end" id="display_capacity">0 ₫</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Tổng khấu trừ:</strong></div>
+                                <div class="col-6 text-end text-danger fw-bold" id="display_deduction">0 ₫</div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6"><strong style="font-size: 1.2rem;">Thực lĩnh dự kiến:</strong></div>
+                                <div class="col-6 text-end text-success fw-bold" style="font-size: 1.2rem;" id="display_net">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-lightning"></i> Tạo Lương Nhanh
+                        </button>
+                        <a href="{{ url_for('employees.employee_detail', employee_id=employee.id) }}"
+                           class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Employee salary data from backend
+const basicSalary = {{ employee.salary_grade.basic_salary }};
+const respSalary = {{ employee.salary_grade.responsibility_salary }};
+
+// Populate year dropdown
+const yearSelect = document.getElementById('year_select');
+const currentYear = new Date().getFullYear();
+for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = 'Năm ' + year;
+    if (year === currentYear) {
+        option.selected = true;
+    }
+    yearSelect.appendChild(option);
+}
+
+// Set current month
+const currentMonth = new Date().getMonth() + 1;
+document.getElementById('month_select').value = currentMonth;
+
+// Update month hidden field
+function updateMonthField() {
+    const month = document.getElementById('month_select').value;
+    const year = document.getElementById('year_select').value;
+    if (month && year) {
+        const monthStr = month.padStart(2, '0');
+        document.getElementById('month').value = `${monthStr}-${year}`;
+        fetchWorkDays(parseInt(month), parseInt(year));
+    }
+}
+
+document.getElementById('month_select').addEventListener('change', updateMonthField);
+document.getElementById('year_select').addEventListener('change', updateMonthField);
+updateMonthField();
+
+// Fetch work days
+async function fetchWorkDays(month, year) {
+    try {
+        const response = await fetch(`/work-days/api/work-days?month=${month}&year=${year}`);
+        const data = await response.json();
+        document.getElementById('display_work_days').textContent = data.work_days + ' ngày';
+        window.workDaysInMonth = data.work_days;
+        calculate();
+    } catch (error) {
+        console.error('Error fetching work days:', error);
+    }
+}
+
+// Add/remove capacity bonuses
+document.getElementById('add-capacity').addEventListener('click', function() {
+    const container = document.getElementById('capacity-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'capacity-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control capacity-amount"
+                   name="capacity_amount[]" placeholder="Số tiền" step="1000" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+
+    // Attach event listener
+    newRow.querySelector('.capacity-amount').addEventListener('input', calculate);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-capacity')) {
+        const item = e.target.closest('.capacity-item');
+        item.remove();
+        calculate();
+    }
+});
+
+// Calculate
+function calculate() {
+    const workDays = window.workDaysInMonth || 0;
+    const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
+
+    document.getElementById('display_actual').textContent = actualDays + ' ngày';
+
+    if (workDays > 0 && actualDays > 0) {
+        const perDay = (basicSalary + respSalary) / workDays;
+        const mainSalary = perDay * actualDays;
+        document.getElementById('display_main').textContent = formatMoney(mainSalary);
+
+        let totalCapacity = 0;
+        document.querySelectorAll('.capacity-amount').forEach(input => {
+            totalCapacity += parseFloat(input.value) || 0;
+        });
+        document.getElementById('display_capacity').textContent = formatMoney(totalCapacity);
+
+        let totalDeduction = 0;
+        document.querySelectorAll('.deduction-amount').forEach(input => {
+            totalDeduction += parseFloat(input.value) || 0;
+        });
+        document.getElementById('display_deduction').textContent = formatMoney(totalDeduction);
+
+        const netSalary = mainSalary + totalCapacity - totalDeduction;
+        document.getElementById('display_net').textContent = formatMoney(netSalary);
+    }
+}
+
+document.getElementById('actual_work_days').addEventListener('input', calculate);
+
+// Add/remove deductions
+document.getElementById('add-deduction').addEventListener('click', function() {
+    const container = document.getElementById('deduction-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'deduction-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="deduction_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control deduction-amount"
+                   name="deduction_amount[]" placeholder="Số tiền" step="1000" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-deduction">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+
+    newRow.querySelector('.deduction-amount').addEventListener('input', calculate);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-deduction')) {
+        const item = e.target.closest('.deduction-item');
+        item.remove();
+        calculate();
+    }
+});
+
+// Attach calculate event to existing inputs
+document.querySelectorAll('.capacity-amount, .deduction-amount').forEach(input => {
+    input.addEventListener('input', calculate);
+});
+
+function formatMoney(amount) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
+}
+
+// Initial calculation
+calculate();
+</script>
+{% endblock %}

@@ -132,6 +132,15 @@ def create_app(config_class=Config):
     from app.performance import bp as performance_bp
     app.register_blueprint(performance_bp, url_prefix='/performance')
 
+    from app.salary_grades import bp as salary_grades_bp
+    app.register_blueprint(salary_grades_bp, url_prefix='/salary-grades')
+
+    from app.employees import bp as employees_bp
+    app.register_blueprint(employees_bp, url_prefix='/employees')
+
+    from app.work_days import bp as work_days_bp
+    app.register_blueprint(work_days_bp, url_prefix='/work-days')
+
     # Dashboard route
     @app.route('/')
     def index():

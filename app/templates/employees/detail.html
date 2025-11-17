@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.full_name }}{% endblock %}
+{% block page_title %}Chi Tiết Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="bi bi-person-circle"></i> {{ employee.full_name }}
+        {% if employee.employee_code %}
+        <span class="badge bg-secondary">{{ employee.employee_code }}</span>
+        {% endif %}
+    </h2>
+    <div class="btn-group">
+        {% if employee.is_active and employee.salary_grade %}
+        <a href="{{ url_for('salaries.quick_create_salary', employee_id=employee.id) }}"
+           class="btn btn-success">
+            <i class="bi bi-currency-dollar"></i> Tạo Lương Nhanh
+        </a>
+        {% endif %}
+        <a href="{{ url_for('employees.edit_employee', employee_id=employee.id) }}"
+           class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Chỉnh Sửa
+        </a>
+        {% if current_user.role == 'director' %}
+            {% if employee.is_active %}
+            <form method="POST" action="{{ url_for('employees.deactivate_employee', employee_id=employee.id) }}"
+                  style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa nhân viên này?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-person-x"></i> Vô Hiệu Hóa
+                </button>
+            </form>
+            {% else %}
+            <form method="POST" action="{{ url_for('employees.activate_employee', employee_id=employee.id) }}"
+                  style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-person-check"></i> Kích Hoạt Lại
+                </button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('employees.delete_employee', employee_id=employee.id) }}"
+                  style="display: inline;"
+                  onsubmit="return confirm('⚠️ CẢNH BÁO: Xóa nhân viên sẽ XÓA VĨNH VIỄN tất cả dữ liệu bao gồm cả bảng lương!\n\nBạn có CHẮC CHẮN muốn xóa nhân viên này?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Xóa Vĩnh Viễn
+                </button>
+            </form>
+        {% endif %}
+        <a href="{{ url_for('employees.list_employees') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+</div>
+
+<!-- Status badge -->
+{% if not employee.is_active %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Nhân viên này đã nghỉ việc</strong>
+</div>
+{% endif %}
+
+<!-- Thông tin cơ bản -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Thông Tin Cơ Bản</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td width="40%"><strong>Họ và tên:</strong></td>
+                        <td>{{ employee.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mã nhân viên:</strong></td>
+                        <td>
+                            {% if employee.employee_code %}
+                            <span class="badge bg-secondary">{{ employee.employee_code }}</span>
+                            {% else %}
+                            <span class="text-muted">Chưa có</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td>
+                            {% if employee.email %}
+                            <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
+                            {% else %}
+                            <span class="text-muted">Chưa có</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số điện thoại:</strong></td>
+                        <td>
+                            {% if employee.phone %}
+                            <a href="tel:{{ employee.phone }}">{{ employee.phone }}</a>
+                            {% else %}
+                            <span class="text-muted">Chưa có</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngày vào làm:</strong></td>
+                        <td>
+                            {% if employee.hire_date %}
+                            {{ employee.hire_date|vn_date }}
+                            {% else %}
+                            <span class="text-muted">Chưa cập nhật</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng thái:</strong></td>
+                        <td>
+                            {% if employee.is_active %}
+                            <span class="badge bg-success">Đang làm việc</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Đã nghỉ việc</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-briefcase"></i> Thông Tin Công Việc</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td width="40%"><strong>Phòng ban:</strong></td>
+                        <td>{{ employee.department or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chức vụ:</strong></td>
+                        <td>{{ employee.position or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cấp bậc lương:</strong></td>
+                        <td>
+                            {% if employee.salary_grade %}
+                            <a href="{{ url_for('salary_grades.grade_detail', grade_id=employee.salary_grade_id) }}"
+                               class="badge bg-info text-decoration-none">
+                                {{ employee.salary_grade.name }}
+                            </a>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Chưa gán cấp bậc</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if employee.salary_grade %}
+                    <tr>
+                        <td><strong>Lương cơ bản:</strong></td>
+                        <td class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.basic_salary) }} ₫</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lương trách nhiệm:</strong></td>
+                        <td class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.responsibility_salary) }} ₫</td>
+                    </tr>
+                    {% endif %}
+                </table>
+
+                {% if employee.notes %}
+                <hr>
+                <div>
+                    <strong>Ghi chú:</strong>
+                    <p class="mt-2 text-muted">{{ employee.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lịch sử lương -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-clock-history"></i> Lịch Sử Lương (12 tháng gần nhất)
+            <span class="badge bg-primary ms-2">{{ salaries|length }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if salaries %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Tháng</th>
+                        <th class="text-end">Số công</th>
+                        <th class="text-end">Lương chính</th>
+                        <th class="text-end">Năng lực</th>
+                        <th class="text-end">Khấu trừ</th>
+                        <th class="text-end">Thực lĩnh</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for salary in salaries %}
+                    <tr>
+                        <td><strong>{{ salary.month }}</strong></td>
+                        <td class="text-end">
+                            {{ salary.actual_work_days }}/{{ salary.work_days_in_month }}
+                        </td>
+                        <td class="text-end">{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
+                        <td class="text-end">
+                            {% if salary.capacity_bonus_total %}
+                                {{ "{:,.0f}".format(salary.capacity_bonus_total) }} ₫
+                            {% else %}
+                                0 ₫
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-danger">-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
+                        <td class="text-end fw-bold text-success">
+                            {{ "{:,.0f}".format(salary.net_salary) }} ₫
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}"
+                               class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Chưa có bảng lương nào cho nhân viên này</p>
+            {% if employee.is_active and employee.salary_grade %}
+            <a href="{{ url_for('salaries.quick_create_salary', employee_id=employee.id) }}"
+               class="btn btn-success">
+                <i class="bi bi-currency-dollar"></i> Tạo Bảng Lương Đầu Tiên
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Thông tin hệ thống -->
+<div class="card mt-4">
+    <div class="card-body">
+        <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            Tạo lúc: {{ employee.created_at|vn_datetime }} | 
+            Cập nhật: {{ employee.updated_at|vn_datetime if employee.updated_at else 'Chưa cập nhật' }}
+        </small>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa Cấp Bậc Lương{% endblock %}
+{% block page_title %}Chỉnh Sửa Cấp Bậc Lương{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Chỉnh Sửa: {{ grade.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="gradeForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <label for="name" class="form-label">Tên Cấp Bậc *</label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ grade.name }}" required>
+                            <small class="text-muted">Tên dễ nhớ, mô tả rõ ràng</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label for="description" class="form-label">Mô Tả</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ grade.description or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương Cơ Bản</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="basic_salary" class="form-label">Lương Cơ Bản/Tháng (₫) *</label>
+                            <input type="number" class="form-control" id="basic_salary"
+                                   name="basic_salary" step="1000" required value="{{ grade.basic_salary }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="responsibility_salary" class="form-label">Lương Trách Nhiệm/Tháng (₫)</label>
+                            <input type="number" class="form-control" id="responsibility_salary"
+                                   name="responsibility_salary" step="1000" value="{{ grade.responsibility_salary }}">
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3"><i class="bi bi-award"></i> Lương Năng Lực Mặc Định</h5>
+                    <p class="text-muted">Các khoản lương năng lực này sẽ tự động được điền khi tạo bảng lương.</p>
+                    
+                    <div id="capacity-container" class="mb-4">
+                        {% set bonuses = grade.get_capacity_bonuses() %}
+                        {% if bonuses %}
+                            {% for bonus in bonuses %}
+                            <div class="capacity-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="capacity_content[]" 
+                                           value="{{ bonus.content }}" placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control capacity-amount"
+                                           name="capacity_amount[]" value="{{ bonus.amount }}" step="1000">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="capacity-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="capacity_content[]" 
+                                           placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control capacity-amount"
+                                           name="capacity_amount[]" placeholder="Số tiền" step="1000" value="0">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-capacity">
+                        <i class="bi bi-plus-circle"></i> Thêm Lương Năng Lực
+                    </button>
+
+                    <hr>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Cập Nhật
+                        </button>
+                        <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}" class="btn btn-secondary btn-lg">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cảnh báo nếu có nhân viên đang dùng -->
+        {% if grade.employees.count() > 0 %}
+        <div class="alert alert-warning mt-4">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Lưu ý:</strong> Có {{ grade.employees.count() }} nhân viên đang sử dụng cấp bậc này.
+            Việc thay đổi sẽ ảnh hưởng đến các bảng lương tạo mới sau này.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add capacity bonus row
+document.getElementById('add-capacity').addEventListener('click', function() {
+    const container = document.getElementById('capacity-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'capacity-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control capacity-amount"
+                   name="capacity_amount[]" placeholder="Số tiền" step="1000" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+});
+
+// Remove capacity bonus row
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-capacity')) {
+        const item = e.target.closest('.capacity-item');
+        if (document.querySelectorAll('.capacity-item').length > 1) {
+            item.remove();
+        } else {
+            alert('Phải có ít nhất 1 dòng lương năng lực!');
+        }
+    }
+});
+</script>
+{% endblock %}

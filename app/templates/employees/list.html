@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Nhân Viên{% endblock %}
+{% block page_title %}Quản Lý Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people-fill"></i> Quản Lý Nhân Viên</h2>
+    <a href="{{ url_for('employees.create_employee') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Thêm Nhân Viên
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('employees.list_employees') }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="name" class="form-label">Tên Nhân Viên</label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           value="{{ name_filter }}" placeholder="Nhập tên để tìm kiếm">
+                </div>
+                <div class="col-md-3">
+                    <label for="grade" class="form-label">Cấp Bậc Lương</label>
+                    <select class="form-select" id="grade" name="grade">
+                        <option value="">-- Tất cả --</option>
+                        {% for g in grades %}
+                        <option value="{{ g.id }}" {% if grade_filter == g.id|string %}selected{% endif %}>
+                            {{ g.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Trạng Thái</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="" {% if not status_filter %}selected{% endif %}>Tất cả</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Đang làm việc</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Đã nghỉ</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Danh Sách Nhân Viên
+            <span class="badge bg-primary ms-2">{{ employees|length }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã NV</th>
+                        <th>Họ và Tên</th>
+                        <th>Cấp Bậc</th>
+                        <th>Phòng Ban</th>
+                        <th>Chức Vụ</th>
+                        <th>Trạng Thái</th>
+                        <th class="text-center">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="{% if not emp.is_active %}table-secondary{% endif %}">
+                        <td>
+                            {% if emp.employee_code %}
+                            <span class="badge bg-secondary">{{ emp.employee_code }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ emp.full_name }}</strong>
+                            {% if emp.email %}
+                            <br><small class="text-muted"><i class="bi bi-envelope"></i> {{ emp.email }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.salary_grade %}
+                            <span class="badge bg-info">{{ emp.salary_grade.name }}</span>
+                            {% else %}
+                            <span class="text-muted">Chưa gán</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.department or '-' }}</td>
+                        <td>{{ emp.position or '-' }}</td>
+                        <td>
+                            {% if emp.is_active %}
+                            <span class="badge bg-success">Đang làm</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Đã nghỉ</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('employees.employee_detail', employee_id=emp.id) }}"
+                                   class="btn btn-info" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('employees.edit_employee', employee_id=emp.id) }}"
+                                   class="btn btn-primary" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if emp.is_active and emp.salary_grade %}
+                                <a href="{{ url_for('salaries.quick_create_salary', employee_id=emp.id) }}"
+                                   class="btn btn-success" title="Tạo lương nhanh">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">
+                {% if name_filter or grade_filter or status_filter %}
+                Không tìm thấy nhân viên nào phù hợp.
+                {% else %}
+                Chưa có nhân viên nào trong hệ thống.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('employees.create_employee') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm Nhân Viên Đầu Tiên
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats -->
+{% if employees %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-person-check"></i> Đang làm việc</h5>
+                <h2>{{ employees|selectattr('is_active')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> Chưa gán cấp bậc</h5>
+                <h2>{{ employees|rejectattr('salary_grade')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-person-x"></i> Đã nghỉ việc</h5>
+                <h2>{{ employees|rejectattr('is_active')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

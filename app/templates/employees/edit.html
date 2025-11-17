@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa: {{ employee.full_name }}{% endblock %}
+{% block page_title %}Chỉnh Sửa Nhân Viên{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Chỉnh Sửa: {{ employee.full_name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <h5 class="mb-3"><i class="bi bi-person-badge"></i> Thông Tin Cơ Bản</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label">Họ và Tên *</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name"
+                                   value="{{ employee.full_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employee_code" class="form-label">Mã Nhân Viên</label>
+                            <input type="text" class="form-control" id="employee_code" name="employee_code"
+                                   value="{{ employee.employee_code or '' }}" maxlength="20">
+                            <small class="text-muted">Mã nhân viên duy nhất</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ employee.email or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Số Điện Thoại</label>
+                            <input type="text" class="form-control" id="phone" name="phone"
+                                   value="{{ employee.phone or '' }}" maxlength="15">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3"><i class="bi bi-briefcase"></i> Thông Tin Công Việc</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="department" class="form-label">Phòng Ban</label>
+                            <input type="text" class="form-control" id="department" name="department"
+                                   value="{{ employee.department or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">Chức Vụ</label>
+                            <input type="text" class="form-control" id="position" name="position"
+                                   value="{{ employee.position or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="hire_date" class="form-label">Ngày Vào Làm</label>
+                            <input type="date" class="form-control" id="hire_date" name="hire_date"
+                                   value="{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="salary_grade_id" class="form-label">Cấp Bậc Lương</label>
+                            <select class="form-select" id="salary_grade_id" name="salary_grade_id">
+                                <option value="">-- Không chọn --</option>
+                                {% for grade in grades %}
+                                <option value="{{ grade.id }}" 
+                                        {% if employee.salary_grade_id == grade.id %}selected{% endif %}>
+                                    {{ grade.name }} 
+                                    ({{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary) }} ₫)
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">
+                                Thay đổi cấp bậc sẽ ảnh hưởng đến các bảng lương tạo mới sau này
+                            </small>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ employee.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Cập Nhật
+                        </button>
+                        <a href="{{ url_for('employees.employee_detail', employee_id=employee.id) }}"
+                           class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Warning nếu có lịch sử lương -->
+        {% if employee.salary_grade %}
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-info-circle"></i>
+            <strong>Lưu ý về Cấp Bậc Lương:</strong>
+            <ul class="mb-0 mt-2">
+                <li>Cấp bậc hiện tại: <strong>{{ employee.salary_grade.name }}</strong></li>
+                <li>Nếu thay đổi cấp bậc, chỉ ảnh hưởng đến các bảng lương <strong>tạo mới</strong> sau này</li>
+                <li>Các bảng lương đã tạo sẽ <strong>không bị thay đổi</strong></li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

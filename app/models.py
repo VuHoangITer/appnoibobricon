@@ -540,6 +540,132 @@ class TaskCompletionReport(db.Model):
         return f'<TaskCompletionReport task={self.task_id}>'
 
 
+class SalaryGrade(db.Model):
+    """Cấp bậc lương - chỉ giám đốc quản lý"""
+    __tablename__ = 'salary_grades'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    basic_salary = db.Column(db.Float, nullable=False)
+    responsibility_salary = db.Column(db.Float, default=0)
+    capacity_bonuses = db.Column(db.Text)  # JSON
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+    employees = db.relationship(
+        'Employee',
+        back_populates='salary_grade',
+        lazy='dynamic'
+    )
+
+    def get_capacity_bonuses(self):
+        if self.capacity_bonuses:
+            try:
+                return json.loads(self.capacity_bonuses)
+            except:
+                return []
+        return []
+
+    def set_capacity_bonuses(self, bonuses_list):
+        self.capacity_bonuses = json.dumps(bonuses_list)
+
+    def __repr__(self):
+        return f'<SalaryGrade {self.name}>'
+
+
+class Employee(db.Model):
+    """Nhân viên"""
+    __tablename__ = 'employees'
+
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(200), nullable=False, index=True)
+    employee_code = db.Column(db.String(50), unique=True, index=True)
+    salary_grade_id = db.Column(db.Integer, db.ForeignKey('salary_grades.id'))
+
+    # Thông tin liên hệ
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+
+    # Thông tin công việc
+    department = db.Column(db.String(100))
+    position = db.Column(db.String(100))
+    hire_date = db.Column(db.Date)
+
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    notes = db.Column(db.Text)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+    salary_grade = db.relationship('SalaryGrade', back_populates='employees')
+
+    def __repr__(self):
+        return f'<Employee {self.full_name}>'
+
+    def get_current_salary_info(self):
+        """Lấy thông tin lương hiện tại từ cấp bậc"""
+        if self.salary_grade:
+            return {
+                'grade_name': self.salary_grade.name,
+                'basic_salary': self.salary_grade.basic_salary,
+                'responsibility_salary': self.salary_grade.responsibility_salary,
+                'capacity_bonuses': self.salary_grade.get_capacity_bonuses()
+            }
+        return None
+
+
+class WorkDaysConfig(db.Model):
+    """Cấu hình số công theo tháng"""
+    __tablename__ = 'work_days_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    month = db.Column(db.Integer, nullable=False)  # 1-12
+    year = db.Column(db.Integer, nullable=False)
+    work_days = db.Column(db.Float, nullable=False)
+    notes = db.Column(db.String(200))
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+    __table_args__ = (
+        db.UniqueConstraint('month', 'year', name='unique_month_year'),
+    )
+
+    def __repr__(self):
+        return f'<WorkDaysConfig {self.month}/{self.year}: {self.work_days} days>'
+
+    @staticmethod
+    def get_work_days(month, year):
+        """Lấy số công của tháng, nếu chưa có thì tính mặc định"""
+        config = WorkDaysConfig.query.filter_by(month=month, year=year).first()
+        if config:
+            return config.work_days
+
+        # Tính số ngày làm việc mặc định (trừ chủ nhật)
+        import calendar
+        from datetime import date, timedelta
+
+        num_days = calendar.monthrange(year, month)[1]
+        work_days = 0
+
+        for day in range(1, num_days + 1):
+            current_date = date(year, month, day)
+            # Trừ chủ nhật (weekday() == 6)
+            if current_date.weekday() != 6:
+                work_days += 1
+
+        return float(work_days)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

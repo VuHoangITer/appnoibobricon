@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Cấu Hình Số Công{% endblock %}
+{% block page_title %}Tạo Cấu Hình Số Công{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Tạo Cấu Hình Số Công Mới</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Hướng dẫn:</strong> Chọn tháng/năm và nhập số ngày công quy định trong tháng đó.
+                        Số này sẽ được dùng để tính lương/ngày khi tạo bảng lương.
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="month" class="form-label">Tháng *</label>
+                            <select class="form-select" id="month" name="month" required>
+                                <option value="">-- Chọn tháng --</option>
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}">Tháng {{ m }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="year" class="form-label">Năm *</label>
+                            <select class="form-select" id="year" name="year" required>
+                                <option value="">-- Chọn năm --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="work_days" class="form-label">Số Công Quy Định *</label>
+                        <input type="number" class="form-control" id="work_days" name="work_days"
+                               step="0.5" min="1" max="31" required placeholder="VD: 26">
+                        <small class="text-muted">
+                            Số ngày công quy định trong tháng (có thể là số lẻ, VD: 26.5)
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                                  placeholder="VD: Tháng có nhiều ngày lễ"></textarea>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="card bg-light mb-4" id="preview" style="display: none;">
+                        <div class="card-body">
+                            <h6><i class="bi bi-eye"></i> Xem Trước:</h6>
+                            <p class="mb-0">
+                                <strong>Cấu hình:</strong> Tháng <span id="preview_month"></span>/<span id="preview_year"></span>
+                                có <strong><span id="preview_days"></span> ngày công</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Tạo Cấu Hình
+                        </button>
+                        <a href="{{ url_for('work_days.list_configs') }}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-calendar3"></i> Gợi Ý Số Công Thông Thường</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>26 ngày:</strong> Tháng thông thường (30-31 ngày, trừ 4-5 ngày cuối tuần)</li>
+                    <li><strong>24-25 ngày:</strong> Tháng có nhiều ngày lễ</li>
+                    <li><strong>22 ngày:</strong> Tháng 2 (hoặc có nghỉ Tết)</li>
+                    <li><strong>20-21 ngày:</strong> Tháng có Tết dài ngày</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Populate year dropdown
+const yearSelect = document.getElementById('year');
+const currentYear = new Date().getFullYear();
+for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = 'Năm ' + year;
+    if (year === currentYear) {
+        option.selected = true;
+    }
+    yearSelect.appendChild(option);
+}
+
+// Set current month
+const currentMonth = new Date().getMonth() + 1;
+document.getElementById('month').value = currentMonth;
+
+// Preview
+function updatePreview() {
+    const month = document.getElementById('month').value;
+    const year = document.getElementById('year').value;
+    const workDays = document.getElementById('work_days').value;
+
+    if (month && year && workDays) {
+        document.getElementById('preview_month').textContent = month;
+        document.getElementById('preview_year').textContent = year;
+        document.getElementById('preview_days').textContent = workDays;
+        document.getElementById('preview').style.display = 'block';
+    } else {
+        document.getElementById('preview').style.display = 'none';
+    }
+}
+
+document.getElementById('month').addEventListener('change', updatePreview);
+document.getElementById('year').addEventListener('change', updatePreview);
+document.getElementById('work_days').addEventListener('input', updatePreview);
+
+// Initial preview
+updatePreview();
+</script>
+{% endblock %}
