@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa Biên Bản Phạt{% endblock %}
+{% block page_title %}Chỉnh Sửa Biên Bản Phạt{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Chỉnh Sửa Biên Bản Phạt</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-person-fill"></i>
+                    <strong>Nhân viên:</strong> {{ penalty.employee_name }}
+                    <span class="text-muted">(Không thể thay đổi)</span>
+                </div>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="penalty_date" class="form-label">Ngày Phạt *</label>
+                            <input type="date" class="form-control" id="penalty_date" name="penalty_date"
+                                   value="{{ penalty.penalty_date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Số Tiền Phạt (₫) *</label>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   step="1000" min="0" value="{{ penalty.amount }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="reason" class="form-label">Lý Do Phạt *</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required>{{ penalty.reason }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Ghi Chú Thêm</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2">{{ penalty.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Cập Nhật
+                        </button>
+                        <a href="{{ url_for('penalties.penalty_detail', penalty_id=penalty.id) }}" 
+                           class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

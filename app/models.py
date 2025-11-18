@@ -666,6 +666,78 @@ class WorkDaysConfig(db.Model):
 
         return float(work_days)
 
+
+class Penalty(db.Model):
+    """Biên bản phạt nhân viên"""
+    __tablename__ = 'penalties'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=True)
+    employee_name = db.Column(db.String(200), nullable=False, index=True)
+
+    penalty_date = db.Column(db.Date, nullable=False, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    notes = db.Column(db.Text)
+
+    # Trạng thái đã trừ lương chưa
+    is_deducted = db.Column(db.Boolean, default=False, index=True)
+    deducted_in_salary_id = db.Column(db.Integer, db.ForeignKey('salaries.id'), nullable=True)
+    deducted_at = db.Column(db.DateTime)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+    employee = db.relationship('Employee', foreign_keys=[employee_id])
+    deducted_salary = db.relationship('Salary', foreign_keys=[deducted_in_salary_id])
+
+    def __repr__(self):
+        return f'<Penalty {self.employee_name} - {self.amount}>'
+
+    def mark_as_deducted(self, salary_id):
+        """Đánh dấu đã trừ lương"""
+        self.is_deducted = True
+        self.deducted_in_salary_id = salary_id
+        self.deducted_at = datetime.utcnow()
+
+
+class Advance(db.Model):
+    """Tạm ứng lương nhân viên"""
+    __tablename__ = 'advances'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=True)
+    employee_name = db.Column(db.String(200), nullable=False, index=True)
+
+    advance_date = db.Column(db.Date, nullable=False, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    notes = db.Column(db.Text)
+
+    # Trạng thái đã trừ lương chưa
+    is_deducted = db.Column(db.Boolean, default=False, index=True)
+    deducted_in_salary_id = db.Column(db.Integer, db.ForeignKey('salaries.id'), nullable=True)
+    deducted_at = db.Column(db.DateTime)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+    employee = db.relationship('Employee', foreign_keys=[employee_id])
+    deducted_salary = db.relationship('Salary', foreign_keys=[deducted_in_salary_id])
+
+    def __repr__(self):
+        return f'<Advance {self.employee_name} - {self.amount}>'
+
+    def mark_as_deducted(self, salary_id):
+        """Đánh dấu đã trừ lương"""
+        self.is_deducted = True
+        self.deducted_in_salary_id = salary_id
+        self.deducted_at = datetime.utcnow()
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

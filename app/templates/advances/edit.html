@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa Tạm Ứng{% endblock %}
+{% block page_title %}Chỉnh Sửa Tạm Ứng{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Chỉnh Sửa Tạm Ứng</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-person-fill"></i>
+                    <strong>Nhân viên:</strong> {{ advance.employee_name }}
+                    <span class="text-muted">(Không thể thay đổi)</span>
+                </div>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="advance_date" class="form-label">Ngày Tạm Ứng *</label>
+                            <input type="date" class="form-control" id="advance_date" name="advance_date"
+                                   value="{{ advance.advance_date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Số Tiền Tạm Ứng (₫) *</label>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   step="1000" min="0" value="{{ advance.amount }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="reason" class="form-label">Lý Do Tạm Ứng *</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required>{{ advance.reason }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Ghi Chú Thêm</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2">{{ advance.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Cập Nhật
+                        </button>
+                        <a href="{{ url_for('advances.advance_detail', advance_id=advance.id) }}" 
+                           class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

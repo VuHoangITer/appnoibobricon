@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Chi Tiết Tạm Ứng{% endblock %}
+{% block page_title %}Chi Tiết Tạm Ứng{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <div class="btn-group w-100 w-md-auto">
+        {% if not advance.is_deducted %}
+        <a href="{{ url_for('advances.edit_advance', advance_id=advance.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline">Chỉnh Sửa</span>
+        </a>
+        <form method="POST" action="{{ url_for('advances.delete_advance', advance_id=advance.id) }}"
+              style="display:inline;" onsubmit="return confirm('Xóa tạm ứng này?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">Xóa</span>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status Badge -->
+{% if advance.is_deducted %}
+<div class="card border-success mb-3">
+    <div class="card-body bg-success bg-opacity-10">
+        <h6 class="card-title text-success mb-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <strong>Đã trừ lương</strong>
+        </h6>
+        <p class="card-text mb-0 small">
+            Tạm ứng này đã được trừ vào bảng lương tháng
+            <a href="{{ url_for('salaries.salary_detail', salary_id=advance.deducted_in_salary_id) }}" class="text-decoration-none">
+                <strong>{{ advance.deducted_salary.month }}</strong>
+            </a>
+            lúc {{ advance.deducted_at|vn_datetime }}
+        </p>
+    </div>
+</div>
+{% else %}
+<div class="card border-warning mb-3">
+    <div class="card-body bg-warning bg-opacity-10">
+        <h6 class="card-title text-warning mb-2">
+            <i class="bi bi-clock-history"></i>
+            <strong>Chưa trừ lương</strong>
+        </h6>
+        <p class="card-text mb-0 small">
+            Khoản tạm ứng này sẽ tự động được trừ khi tạo bảng lương cho nhân viên.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Thông tin chi tiết -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-file-text"></i> Thông Tin Tạm Ứng</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong>Nhân viên:</strong>
+                        <div class="text-end">
+                            <strong>{{ advance.employee_name }}</strong>
+                            {% if advance.employee %}
+                            <a href="{{ url_for('employees.employee_detail', employee_id=advance.employee_id) }}"
+                               class="badge bg-info text-decoration-none mt-1">
+                                <i class="bi bi-person"></i> Xem hồ sơ
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>Ngày tạm ứng:</strong>
+                        <span>{{ advance.advance_date|vn_date }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>Người tạo:</strong>
+                        <span>{{ advance.creator.full_name }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>Tạo lúc:</strong>
+                        <span class="small">{{ advance.created_at|vn_datetime }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card bg-light h-100">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <h6 class="text-muted mb-2">Số Tiền Tạm Ứng</h6>
+                        <h2 class="text-primary mb-0">{{ "{:,.0f}".format(advance.amount) }} ₫</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="mb-3">
+            <h6><i class="bi bi-info-circle"></i> Lý Do Tạm Ứng:</h6>
+            <div class="card border-light">
+                <div class="card-body bg-light">
+                    {{ advance.reason }}
+                </div>
+            </div>
+        </div>
+
+        {% if advance.notes %}
+        <div class="mb-3">
+            <h6><i class="bi bi-sticky"></i> Ghi Chú:</h6>
+            <div class="card border-light">
+                <div class="card-body bg-light">
+                    {{ advance.notes }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Thông tin hệ thống -->
+<div class="card mt-3">
+    <div class="card-body">
+        <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            Cập nhật lần cuối: {{ advance.updated_at|vn_datetime if advance.updated_at else 'Chưa cập nhật' }}
+        </small>
+    </div>
+</div>
+{% endblock %}

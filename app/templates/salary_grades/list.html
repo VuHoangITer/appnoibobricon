@@ -4,12 +4,12 @@
 {% block page_title %}Quản Lý Cấp Bậc Lương{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-award-fill"></i> Cấp Bậc Lương</h2>
-    <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary w-100 w-md-auto">
         <i class="bi bi-plus-circle"></i> Tạo Cấp Bậc Mới
     </a>
 </div>
+
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
@@ -19,58 +19,113 @@
     </div>
     <div class="card-body">
         {% if grades %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Tên Cấp Bậc</th>
-                        <th class="text-end">Lương Cơ Bản</th>
-                        <th class="text-end">Lương Trách Nhiệm</th>
-                        <th class="text-center">Số Nhân Viên</th>
-                        <th class="text-center">Thao Tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for grade in grades %}
-                    <tr>
-                        <td>
-                            <strong>{{ grade.name }}</strong>
-                            {% if grade.description %}
-                            <br><small class="text-muted">{{ grade.description }}</small>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</td>
-                        <td class="text-end">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</td>
-                        <td class="text-center">
-                            <span class="badge bg-info">{{ grade.employees.count() }}</span>
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
-                                   class="btn btn-sm btn-info" title="Xem chi tiết">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
-                                   class="btn btn-sm btn-primary" title="Chỉnh sửa">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                {% if grade.employees.count() == 0 %}
-                                <form method="POST"
-                                      action="{{ url_for('salary_grades.delete_grade', grade_id=grade.id) }}"
-                                      style="display: inline;"
-                                      onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa cấp bậc này?');">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+        <!-- Desktop Table View -->
+        <div class="d-none d-lg-block">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tên Cấp Bậc</th>
+                            <th class="text-end">Lương Cơ Bản</th>
+                            <th class="text-end">Lương Trách Nhiệm</th>
+                            <th class="text-center">Số Nhân Viên</th>
+                            <th class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grade in grades %}
+                        <tr>
+                            <td>
+                                <strong>{{ grade.name }}</strong>
+                                {% if grade.description %}
+                                <br><small class="text-muted">{{ grade.description }}</small>
                                 {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="text-end">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</td>
+                            <td class="text-end">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ grade.employees.count() }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
+                                       class="btn btn-sm btn-info" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
+                                       class="btn btn-sm btn-primary" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if grade.employees.count() == 0 %}
+                                    <form method="POST"
+                                          action="{{ url_for('salary_grades.delete_grade', grade_id=grade.id) }}"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa cấp bậc này?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="d-lg-none">
+            {% for grade in grades %}
+            <div class="card mb-3 border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-1"><strong>{{ grade.name }}</strong></h6>
+                            {% if grade.description %}
+                            <small class="text-muted">{{ grade.description }}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-info">{{ grade.employees.count() }} NV</span>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Lương cơ bản:</small>
+                            <strong class="text-success">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Lương trách nhiệm:</small>
+                            <strong class="text-info">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-1">
+                        <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
+                           class="btn btn-info btn-sm">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
+                           class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if grade.employees.count() == 0 %}
+                        <form method="POST"
+                              action="{{ url_for('salary_grades.delete_grade', grade_id=grade.id) }}"
+                              style="display: inline;"
+                              onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa cấp bậc này?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
         <div class="text-center py-5">

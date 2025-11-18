@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-people"></i></h2>
+    <h2><i class="bi bi-people"></i> Quản Lý Users</h2>
     <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
         <i class="bi bi-person-plus"></i> Tạo user mới
     </a>
@@ -22,7 +22,7 @@
                         <th>Role</th>
                         <th>Trạng thái</th>
                         <th>Ngày tạo</th>
-                        <th>Thao tác</th>
+                        <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,32 +41,46 @@
                             {% endif %}
                         </td>
                         <td data-label="Ngày tạo">{{ user.created_at | vn_date }}</td>
-                        <td data-label="Thao tác">
-                            {% if user.id != current_user.id %}
-                            <div class="btn-group-vertical btn-group-sm" role="group">
-                                <a href="{{ url_for('auth.edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary mb-1">
-                                    <i class="bi bi-pencil"></i> Sửa
+                        <td data-label="Thao tác" class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('auth.edit_user', user_id=user.id) }}"
+                                   class="btn btn-primary action-btn">
+                                    <i class="bi bi-pencil"></i>
+                                    <span class="btn-text">Sửa</span>
                                 </a>
-                                <form method="POST" action="{{ url_for('auth.toggle_user_active', user_id=user.id) }}" class="mb-1">
+                                {% if user.id != current_user.id %}
+                                <form method="POST"
+                                      action="{{ url_for('auth.toggle_user_active', user_id=user.id) }}"
+                                      style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-warning w-100">
+                                    <button type="submit"
+                                            class="btn {% if user.is_active %}btn-warning{% else %}btn-success{% endif %} action-btn">
                                         {% if user.is_active %}
-                                        <i class="bi bi-pause"></i> Vô hiệu hóa
+                                        <i class="bi bi-pause"></i>
+                                        <span class="btn-text">Vô hiệu hóa</span>
                                         {% else %}
-                                        <i class="bi bi-play"></i> Kích hoạt
+                                        <i class="bi bi-play"></i>
+                                        <span class="btn-text">Kích hoạt</span>
                                         {% endif %}
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ url_for('auth.delete_user', user_id=user.id) }}" onsubmit="return confirm('Bạn có chắc muốn xóa user này?');">
+                                <form method="POST"
+                                      action="{{ url_for('auth.delete_user', user_id=user.id) }}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa user này?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="btn btn-sm btn-danger w-100">
-                                        <i class="bi bi-trash"></i> Xóa
+                                    <button type="submit"
+                                            class="btn btn-danger action-btn">
+                                        <i class="bi bi-trash"></i>
+                                        <span class="btn-text">Xóa</span>
                                     </button>
                                 </form>
+                                {% else %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person-check"></i>
+                                </span>
+                                {% endif %}
                             </div>
-                            {% else %}
-                            <span class="text-muted">Tài khoản của bạn</span>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -75,4 +89,92 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Desktop - nút tròn */
+.action-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
+    margin-right: 0.25rem;
+}
+
+.action-btn:last-child {
+    margin-right: 0;
+}
+
+.action-btn i {
+    font-size: 0.75rem;
+}
+
+.action-btn .btn-text {
+    display: none;
+}
+
+/* Mobile - nút vuông có chữ */
+@media (max-width: 768px) {
+    .action-btn {
+        width: auto;
+        height: auto;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .action-btn i {
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .action-btn .btn-text {
+        display: inline;
+        font-size: 0.875rem;
+    }
+
+    .table-responsive table thead {
+        display: none;
+    }
+
+    .table-responsive table,
+    .table-responsive table tbody,
+    .table-responsive table tr,
+    .table-responsive table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table-responsive table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+
+    .table-responsive table td {
+        text-align: right !important;
+        padding: 0.5rem 0.75rem;
+        border: none;
+        position: relative;
+        padding-left: 40%;
+    }
+
+    .table-responsive table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.75rem;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .table-responsive table td .btn-group {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+}
+</style>
 {% endblock %}

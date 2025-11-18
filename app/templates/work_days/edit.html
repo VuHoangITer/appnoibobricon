@@ -15,13 +15,6 @@
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        <strong>Lưu ý:</strong> Chỉ có thể sửa số công và ghi chú. 
-                        Không thể thay đổi tháng/năm (tạo cấu hình mới nếu cần).
-                    </div>
-
                     <!-- Display month/year (readonly) -->
                     <div class="card bg-light mb-4">
                         <div class="card-body">
@@ -51,9 +44,6 @@
                             <h6><i class="bi bi-clock-history"></i> Thông Tin Hiện Tại:</h6>
                             <ul class="mb-0">
                                 <li><strong>Số công cũ:</strong> {{ config.work_days }} ngày</li>
-                                <li><strong>Người tạo:</strong> 
-                                    {% if config.creator %}{{ config.creator.username }}{% else %}-{% endif %}
-                                </li>
                                 <li><strong>Ngày tạo:</strong> {{ config.created_at|vn_datetime }}</li>
                                 {% if config.updated_at %}
                                 <li><strong>Cập nhật lần cuối:</strong> {{ config.updated_at|vn_datetime }}</li>
@@ -72,16 +62,6 @@
                     </div>
                 </form>
             </div>
-        </div>
-
-        <!-- Warning -->
-        <div class="alert alert-warning mt-4">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>Chú ý:</strong> Việc thay đổi số công sẽ ảnh hưởng đến:
-            <ul class="mb-0 mt-2">
-                <li>Các bảng lương <strong>tạo mới</strong> cho tháng này (tự động điền số công mới)</li>
-                <li>Các bảng lương <strong>đã tạo</strong> sẽ <strong>KHÔNG bị ảnh hưởng</strong></li>
-            </ul>
         </div>
     </div>
 </div>

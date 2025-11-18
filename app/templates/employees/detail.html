@@ -15,12 +15,12 @@
         {% if employee.is_active and employee.salary_grade %}
         <a href="{{ url_for('salaries.quick_create_salary', employee_id=employee.id) }}"
            class="btn btn-success">
-            <i class="bi bi-currency-dollar"></i> Tạo Lương Nhanh
+            <i class="bi bi-currency-dollar"></i>
         </a>
         {% endif %}
         <a href="{{ url_for('employees.edit_employee', employee_id=employee.id) }}"
            class="btn btn-primary">
-            <i class="bi bi-pencil"></i> Chỉnh Sửa
+            <i class="bi bi-pencil"></i>
         </a>
         {% if current_user.role == 'director' %}
             {% if employee.is_active %}
@@ -28,7 +28,7 @@
                   style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa nhân viên này?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-warning">
-                    <i class="bi bi-person-x"></i> Vô Hiệu Hóa
+                    <i class="bi bi-person-x"></i>
                 </button>
             </form>
             {% else %}
@@ -36,7 +36,7 @@
                   style="display: inline;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-success">
-                    <i class="bi bi-person-check"></i> Kích Hoạt Lại
+                    <i class="bi bi-person-check"></i>
                 </button>
             </form>
             {% endif %}
@@ -45,13 +45,10 @@
                   onsubmit="return confirm('⚠️ CẢNH BÁO: Xóa nhân viên sẽ XÓA VĨNH VIỄN tất cả dữ liệu bao gồm cả bảng lương!\n\nBạn có CHẮC CHẮN muốn xóa nhân viên này?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> Xóa Vĩnh Viễn
+                    <i class="bi bi-trash"></i>
                 </button>
             </form>
         {% endif %}
-        <a href="{{ url_for('employees.list_employees') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Quay Lại
-        </a>
     </div>
 </div>
 
@@ -71,62 +68,62 @@
                 <h5 class="mb-0"><i class="bi bi-person-badge"></i> Thông Tin Cơ Bản</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tr>
-                        <td width="40%"><strong>Họ và tên:</strong></td>
-                        <td>{{ employee.full_name }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Mã nhân viên:</strong></td>
-                        <td>
+                <div class="info-list">
+                    <div class="info-item">
+                        <strong>Họ và tên:</strong>
+                        <span>{{ employee.full_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Mã nhân viên:</strong>
+                        <span>
                             {% if employee.employee_code %}
-                            <span class="badge bg-secondary">{{ employee.employee_code }}</span>
+                            <span>{{ employee.employee_code }}</span>
                             {% else %}
                             <span class="text-muted">Chưa có</span>
                             {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Email:</strong></td>
-                        <td>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Email:</strong>
+                        <span>
                             {% if employee.email %}
                             <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
                             {% else %}
                             <span class="text-muted">Chưa có</span>
                             {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Số điện thoại:</strong></td>
-                        <td>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Số điện thoại:</strong>
+                        <span>
                             {% if employee.phone %}
                             <a href="tel:{{ employee.phone }}">{{ employee.phone }}</a>
                             {% else %}
                             <span class="text-muted">Chưa có</span>
                             {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Ngày vào làm:</strong></td>
-                        <td>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Ngày vào làm:</strong>
+                        <span>
                             {% if employee.hire_date %}
                             {{ employee.hire_date|vn_date }}
                             {% else %}
                             <span class="text-muted">Chưa cập nhật</span>
                             {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Trạng thái:</strong></td>
-                        <td>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Trạng thái:</strong>
+                        <span>
                             {% if employee.is_active %}
-                            <span class="badge bg-success">Đang làm việc</span>
+                            <span class="badge bg-success w-auto" style="width: fit-content;">Đang làm việc</span>
                             {% else %}
-                            <span class="badge bg-secondary">Đã nghỉ việc</span>
+                            <span class="badge bg-secondary w-auto" style="width: fit-content;">Đã nghỉ việc</span>
                             {% endif %}
-                        </td>
-                    </tr>
-                </table>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -137,18 +134,18 @@
                 <h5 class="mb-0"><i class="bi bi-briefcase"></i> Thông Tin Công Việc</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tr>
-                        <td width="40%"><strong>Phòng ban:</strong></td>
-                        <td>{{ employee.department or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Chức vụ:</strong></td>
-                        <td>{{ employee.position or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Cấp bậc lương:</strong></td>
-                        <td>
+                <div class="info-list">
+                    <div class="info-item">
+                        <strong>Phòng ban:</strong>
+                        <span>{{ employee.department or '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Chức vụ:</strong>
+                        <span>{{ employee.position or '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Cấp bậc lương:</strong>
+                        <span>
                             {% if employee.salary_grade %}
                             <a href="{{ url_for('salary_grades.grade_detail', grade_id=employee.salary_grade_id) }}"
                                class="badge bg-info text-decoration-none">
@@ -157,19 +154,19 @@
                             {% else %}
                             <span class="badge bg-warning text-dark">Chưa gán cấp bậc</span>
                             {% endif %}
-                        </td>
-                    </tr>
+                        </span>
+                    </div>
                     {% if employee.salary_grade %}
-                    <tr>
-                        <td><strong>Lương cơ bản:</strong></td>
-                        <td class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.basic_salary) }} ₫</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Lương trách nhiệm:</strong></td>
-                        <td class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.responsibility_salary) }} ₫</td>
-                    </tr>
+                    <div class="info-item">
+                        <strong>Lương cơ bản:</strong>
+                        <span class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.basic_salary) }} ₫</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Lương trách nhiệm:</strong>
+                        <span class="fw-bold">{{ "{:,.0f}".format(employee.salary_grade.responsibility_salary) }} ₫</span>
+                    </div>
                     {% endif %}
-                </table>
+                </div>
 
                 {% if employee.notes %}
                 <hr>
@@ -209,26 +206,26 @@
                 <tbody>
                     {% for salary in salaries %}
                     <tr>
-                        <td><strong>{{ salary.month }}</strong></td>
-                        <td class="text-end">
+                        <td data-label="Tháng"><strong>{{ salary.month }}</strong></td>
+                        <td data-label="Số công" class="text-end">
                             {{ salary.actual_work_days }}/{{ salary.work_days_in_month }}
                         </td>
-                        <td class="text-end">{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
-                        <td class="text-end">
+                        <td data-label="Lương chính" class="text-end">{{ "{:,.0f}".format(salary.main_salary) }} ₫</td>
+                        <td data-label="Năng lực" class="text-end">
                             {% if salary.capacity_bonus_total %}
                                 {{ "{:,.0f}".format(salary.capacity_bonus_total) }} ₫
                             {% else %}
                                 0 ₫
                             {% endif %}
                         </td>
-                        <td class="text-end text-danger">-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
-                        <td class="text-end fw-bold text-success">
+                        <td data-label="Khấu trừ" class="text-end text-danger">-{{ "{:,.0f}".format(salary.total_deduction) }} ₫</td>
+                        <td data-label="Thực lĩnh" class="text-end fw-bold text-success">
                             {{ "{:,.0f}".format(salary.net_salary) }} ₫
                         </td>
-                        <td class="text-center">
+                        <td data-label="Thao tác" class="text-center">
                             <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}"
                                class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i> Xem
+                                 Xem
                             </a>
                         </td>
                     </tr>
@@ -256,9 +253,95 @@
     <div class="card-body">
         <small class="text-muted">
             <i class="bi bi-info-circle"></i>
-            Tạo lúc: {{ employee.created_at|vn_datetime }} | 
+            Tạo lúc: {{ employee.created_at|vn_datetime }} |
             Cập nhật: {{ employee.updated_at|vn_datetime if employee.updated_at else 'Chưa cập nhật' }}
         </small>
     </div>
 </div>
+
+<style>
+/* Desktop view - 2 cột */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    flex: 0 0 40%;
+    padding-right: 1rem;
+}
+
+.info-item span {
+    flex: 1;
+    text-align: left;
+}
+
+/* Mobile view - căn trái, layout dọc */
+@media (max-width: 768px) {
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .info-item strong {
+        flex: none;
+        width: 100%;
+        padding-right: 0;
+    }
+
+    .info-item span {
+        width: 100%;
+    }
+
+    /* Styling cho bảng lịch sử lương trên mobile */
+    .table-responsive table thead {
+        display: none;
+    }
+
+    .table-responsive table,
+    .table-responsive table tbody,
+    .table-responsive table tr,
+    .table-responsive table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table-responsive table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+
+    .table-responsive table td {
+        text-align: right !important;
+        padding: 0.5rem 0.75rem;
+        border: none;
+        position: relative;
+        padding-left: 40%;
+    }
+
+    .table-responsive table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.75rem;
+        font-weight: 600;
+        text-align: left;
+    }
+}
+</style>
 {% endblock %}

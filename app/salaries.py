@@ -4,7 +4,7 @@ from app import db
 from app.models import Salary, User, SalaryShareLink, SalaryShareLinkAccess
 from app.decorators import role_required
 from datetime import datetime, timedelta
-from app.models import Employee, SalaryGrade, WorkDaysConfig
+from app.models import Employee, SalaryGrade, WorkDaysConfig, Penalty, Advance
 import json
 
 bp = Blueprint('salaries', __name__)
@@ -107,6 +107,77 @@ def log_share_link_access(share_link, request):
         print(f"Error logging access: {str(e)}")
         return None
 
+
+def mark_deductions_as_deducted(salary, deductions):
+    """
+    Đánh dấu các khoản phạt và tạm ứng đã được trừ lương
+
+    Args:
+        salary: Salary object vừa được tạo
+        deductions: List các deduction từ form
+    """
+    try:
+        for deduction in deductions:
+            content = deduction.get('content', '')
+
+            # Check if it's a penalty (format: "Phạt: ... (penalty_ID)")
+            if content.startswith('Phạt:') and 'penalty_' in content:
+                # Extract penalty ID from data attribute (will be handled in form)
+                # This is just a backup check
+                pass
+
+            # Check if it's an advance (format: "Tạm ứng: ... (advance_ID)")
+            elif content.startswith('Tạm ứng:') and 'advance_' in content:
+                # Extract advance ID from data attribute (will be handled in form)
+                pass
+
+        # Better approach: Get IDs from form data directly
+        # We'll handle this in the create routes
+
+    except Exception as e:
+        print(f"Error marking deductions: {str(e)}")
+
+
+def process_and_mark_deductions(employee_name, deductions, salary_id):
+    """
+    Xử lý và đánh dấu penalties/advances đã trừ lương
+
+    Args:
+        employee_name: Tên nhân viên
+        deductions: List deductions từ form (có thể chứa penalty_id, advance_id)
+        salary_id: ID của bảng lương vừa tạo
+    """
+    try:
+        # Lấy tất cả penalties chưa trừ của nhân viên
+        pending_penalties = Penalty.query.filter_by(
+            employee_name=employee_name,
+            is_deducted=False
+        ).all()
+
+        # Lấy tất cả advances chưa trừ của nhân viên
+        pending_advances = Advance.query.filter_by(
+            employee_name=employee_name,
+            is_deducted=False
+        ).all()
+
+        # Đánh dấu tất cả penalties chưa trừ
+        for penalty in pending_penalties:
+            penalty.mark_as_deducted(salary_id)
+
+        # Đánh dấu tất cả advances chưa trừ
+        for advance in pending_advances:
+            advance.mark_as_deducted(salary_id)
+
+        db.session.commit()
+
+        total_marked = len(pending_penalties) + len(pending_advances)
+        if total_marked > 0:
+            print(
+                f"Marked {len(pending_penalties)} penalties and {len(pending_advances)} advances as deducted for {employee_name}")
+
+    except Exception as e:
+        print(f"Error processing deductions: {str(e)}")
+        db.session.rollback()
 
 # ========== ROUTES ==========
 @bp.route('/')
@@ -219,6 +290,8 @@ def create_salary():
             db.session.add(salary)
             db.session.commit()
 
+            process_and_mark_deductions(employee_name, deductions, salary.id)
+
             flash('Tạo bảng lương thành công.', 'success')
             return redirect(url_for('salaries.salary_detail', salary_id=salary.id))
 
@@ -236,7 +309,7 @@ def create_salary():
                            salary_grades=salary_grades)
 
 
-# THÊM MỚI: Route tạo lương nhanh cho nhân viên có sẵn
+# Route tạo lương nhanh cho nhân viên có sẵn
 @bp.route('/quick-create/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
 @role_required(['director', 'accountant'])
@@ -298,6 +371,8 @@ def quick_create_salary(employee_id):
 
             db.session.add(salary)
             db.session.commit()
+
+            process_and_mark_deductions(employee.full_name, deductions, salary.id)
 
             flash('Tạo bảng lương thành công.', 'success')
             return redirect(url_for('salaries.salary_detail', salary_id=salary.id))

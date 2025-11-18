@@ -303,32 +303,19 @@ document.getElementById('actual_work_days').addEventListener('input', calculate)
 // Add/remove deductions
 document.getElementById('add-deduction').addEventListener('click', function() {
     const container = document.getElementById('deduction-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'deduction-item row mb-2';
-    newRow.innerHTML = `
-        <div class="col-md-7">
-            <input type="text" class="form-control" name="deduction_content[]" placeholder="Nội dung">
-        </div>
-        <div class="col-md-4">
-            <input type="number" class="form-control deduction-amount"
-                   name="deduction_amount[]" placeholder="Số tiền" step="1000" value="0">
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-danger btn-sm remove-deduction">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
+    const newRow = createDeductionRow();
     container.appendChild(newRow);
-
     newRow.querySelector('.deduction-amount').addEventListener('input', calculate);
 });
 
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-deduction')) {
         const item = e.target.closest('.deduction-item');
-        item.remove();
-        calculate();
+        // Don't allow removing if it's auto-filled (has data-deduction-id)
+        if (!item.getAttribute('data-deduction-id')) {
+            item.remove();
+            calculate();
+        }
     }
 });
 
@@ -340,6 +327,104 @@ document.querySelectorAll('.capacity-amount, .deduction-amount').forEach(input =
 function formatMoney(amount) {
     return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
 }
+
+// ========== AUTO-LOAD PENALTIES & ADVANCES ==========
+function createDeductionRow(content = '', amount = 0, dataId = '') {
+    const div = document.createElement('div');
+    div.className = 'deduction-item row mb-2';
+    if (dataId) {
+        div.setAttribute('data-deduction-id', dataId);
+    }
+    div.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="deduction_content[]"
+                   value="${content}" placeholder="Nội dung" ${dataId ? 'readonly' : ''}>
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control deduction-amount"
+                   name="deduction_amount[]" value="${amount}" placeholder="Số tiền" step="1000" ${dataId ? 'readonly' : ''}>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-deduction" ${dataId ? 'disabled' : ''}>
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    return div;
+}
+
+async function loadPendingDeductions() {
+    const employeeName = "{{ employee.full_name }}";
+
+    try {
+        // Load penalties
+        const penaltiesResp = await fetch(`/penalties/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
+        const penalties = await penaltiesResp.json();
+
+        // Load advances
+        const advancesResp = await fetch(`/advances/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
+        const advances = await advancesResp.json();
+
+        // Clear existing deductions
+        const container = document.getElementById('deduction-container');
+        container.innerHTML = '';
+
+        // Add penalties
+        penalties.forEach(p => {
+            const row = createDeductionRow(
+                `Phạt: ${p.reason} (${p.penalty_date})`,
+                p.amount,
+                `penalty_${p.id}`
+            );
+            container.appendChild(row);
+        });
+
+        // Add advances
+        advances.forEach(a => {
+            const row = createDeductionRow(
+                `Tạm ứng: ${a.reason} (${a.advance_date})`,
+                a.amount,
+                `advance_${a.id}`
+            );
+            container.appendChild(row);
+        });
+
+        // Add empty row if no deductions
+        if (penalties.length === 0 && advances.length === 0) {
+            container.appendChild(createDeductionRow());
+        } else {
+            // Show notification
+            const totalDeductions = penalties.length + advances.length;
+            const msg = document.createElement('div');
+            msg.className = 'alert alert-info mb-3';
+            msg.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <strong>Tự động tải:</strong> ${penalties.length} khoản phạt + ${advances.length} khoản tạm ứng chưa trừ lương.
+            `;
+            container.insertAdjacentElement('beforebegin', msg);
+        }
+
+        // Attach events
+        document.querySelectorAll('.deduction-amount').forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
+        calculate();
+
+    } catch (error) {
+        console.error('Error loading deductions:', error);
+        // Add empty row on error
+        const container = document.getElementById('deduction-container');
+        if (container.children.length === 0) {
+            container.appendChild(createDeductionRow());
+        }
+    }
+}
+
+// Auto-load when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadPendingDeductions();
+});
 
 // Initial calculation
 calculate();

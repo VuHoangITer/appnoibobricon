@@ -245,7 +245,7 @@
                 <div class="nav-item">
                     <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">
                         <i class="bi bi-cash-coin"></i>
-                        <span>Quản lý Lương</span>
+                        <span>Lương</span>
                     </a>
                 </div>
 
@@ -274,6 +274,18 @@
                     </a>
                 </div>
                 {% endif %}
+            <div class="nav-item">
+                <a href="{{ url_for('penalties.list_penalties') }}" class="nav-link {% if 'penalties' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Biên Bản Phạt</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="{{ url_for('advances.list_advances') }}" class="nav-link {% if 'advances' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Tạm Ứng</span>
+                </a>
+            </div>
             {% endif %}
             {% if current_user.role == 'director' %}
             <div class="nav-item">

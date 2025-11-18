@@ -273,6 +273,96 @@ async function fetchWorkDays(month, year) {
     }
 }
 
+// ========== AUTO-FILL PENALTIES & ADVANCES ==========
+function createDeductionRow(content = '', amount = 0, dataId = '') {
+    const div = document.createElement('div');
+    div.className = 'deduction-item row mb-2';
+    if (dataId) {
+        div.setAttribute('data-deduction-id', dataId);
+    }
+    div.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="deduction_content[]"
+                   value="${content}" placeholder="Nội dung" ${dataId ? 'readonly' : ''}>
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input deduction-amount"
+                   name="deduction_amount[]" value="${amount}" placeholder="Số tiền" step="1" ${dataId ? 'readonly' : ''}>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-deduction" ${dataId ? 'disabled' : ''}>
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    return div;
+}
+
+async function loadPendingDeductions(employeeName) {
+    if (!employeeName) return;
+
+    try {
+        // Load penalties
+        const penaltiesResp = await fetch(`/penalties/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
+        const penalties = await penaltiesResp.json();
+
+        // Load advances
+        const advancesResp = await fetch(`/advances/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
+        const advances = await advancesResp.json();
+
+        // Clear existing deductions
+        const container = document.getElementById('deduction-container');
+        container.innerHTML = '';
+
+        // Add penalties
+        penalties.forEach(p => {
+            const row = createDeductionRow(
+                `Phạt: ${p.reason} (${p.penalty_date})`,
+                p.amount,
+                `penalty_${p.id}`
+            );
+            container.appendChild(row);
+        });
+
+        // Add advances
+        advances.forEach(a => {
+            const row = createDeductionRow(
+                `Tạm ứng: ${a.reason} (${a.advance_date})`,
+                a.amount,
+                `advance_${a.id}`
+            );
+            container.appendChild(row);
+        });
+
+        // Add empty row if no deductions
+        if (penalties.length === 0 && advances.length === 0) {
+            container.appendChild(createDeductionRow());
+        } else {
+            // Show notification
+            const totalDeductions = penalties.length + advances.length;
+            const msg = document.createElement('div');
+            msg.className = 'alert alert-info mb-3';
+            msg.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <strong>Tự động tải:</strong> ${penalties.length} khoản phạt + ${advances.length} khoản tạm ứng chưa trừ lương.
+            `;
+            container.insertAdjacentElement('beforebegin', msg);
+        }
+
+        attachCalculateEvent();
+        calculate();
+
+    } catch (error) {
+        console.error('Error loading deductions:', error);
+        // Add empty row on error
+        const container = document.getElementById('deduction-container');
+        if (container.children.length === 0) {
+            container.appendChild(createDeductionRow());
+            attachCalculateEvent();
+        }
+    }
+}
+
 // Employee select handler
 document.getElementById('employee_select').addEventListener('change', async function() {
     const selectedOption = this.options[this.selectedIndex];
@@ -282,6 +372,13 @@ document.getElementById('employee_select').addEventListener('change', async func
         document.getElementById('employee_id').value = '';
         document.getElementById('employee_name').value = '';
         document.getElementById('salary_grade_select').value = '';
+
+        // Clear deductions
+        const container = document.getElementById('deduction-container');
+        container.innerHTML = '';
+        container.appendChild(createDeductionRow());
+        attachCalculateEvent();
+
         return;
     }
 
@@ -294,18 +391,30 @@ document.getElementById('employee_select').addEventListener('change', async func
 
     if (gradeId) {
         document.getElementById('salary_grade_select').value = gradeId;
-        // Trigger auto-fill
         await loadSalaryGrade(gradeId);
     }
+
+    // Load pending deductions
+    await loadPendingDeductions(employeeName);
 });
 
-// When typing manual name, clear employee_id
+// When typing manual name, also load deductions
+let nameTimeout;
 document.getElementById('employee_name').addEventListener('input', function() {
     if (document.getElementById('employee_select').value) {
         document.getElementById('employee_select').value = '';
         document.getElementById('employee_id').value = '';
         this.readOnly = false;
     }
+
+    // Debounce to avoid calling API continuously
+    clearTimeout(nameTimeout);
+    nameTimeout = setTimeout(() => {
+        const name = this.value.trim();
+        if (name.length >= 3) {
+            loadPendingDeductions(name);
+        }
+    }, 500);
 });
 
 // Salary grade auto-fill
@@ -388,22 +497,7 @@ document.addEventListener('click', function(e) {
 // Add/remove deduction rows
 document.getElementById('add-deduction').addEventListener('click', function() {
     const container = document.getElementById('deduction-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'deduction-item row mb-2';
-    newRow.innerHTML = `
-        <div class="col-md-7">
-            <input type="text" class="form-control" name="deduction_content[]" placeholder="Nội dung">
-        </div>
-        <div class="col-md-4">
-            <input type="number" class="form-control calc-input deduction-amount"
-                   name="deduction_amount[]" placeholder="Số tiền" step="1" value="0">
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-danger btn-sm remove-deduction">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
+    const newRow = createDeductionRow();
     container.appendChild(newRow);
     attachCalculateEvent();
 });
@@ -411,9 +505,12 @@ document.getElementById('add-deduction').addEventListener('click', function() {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-deduction')) {
         const item = e.target.closest('.deduction-item');
-        if (document.querySelectorAll('.deduction-item').length > 1) {
-            item.remove();
-            calculate();
+        // Don't allow removing if it's auto-filled
+        if (!item.getAttribute('data-deduction-id')) {
+            if (document.querySelectorAll('.deduction-item').length > 1) {
+                item.remove();
+                calculate();
+            }
         }
     }
 });

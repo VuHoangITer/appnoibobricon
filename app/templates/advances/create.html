@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Tạm Ứng{% endblock %}
+{% block page_title %}Tạo Tạm Ứng{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-cash-stack"></i> Tạo Tạm Ứng Mới</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" id="employee_id" name="employee_id">
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Lưu ý:</strong> Khoản tạm ứng này sẽ tự động được trừ vào lương khi tạo bảng lương cho nhân viên.
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Nhân Viên *</label>
+                            <select class="form-select" id="employee_select">
+                                <option value="">-- Chọn nhân viên hoặc nhập tên mới --</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}" data-name="{{ emp.full_name }}">
+                                    {{ emp.full_name }}
+                                    {% if emp.employee_code %}({{ emp.employee_code }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employee_name" class="form-label">Hoặc Nhập Tên Mới</label>
+                            <input type="text" class="form-control" id="employee_name" name="employee_name"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="advance_date" class="form-label">Ngày Tạm Ứng *</label>
+                            <input type="date" class="form-control" id="advance_date" name="advance_date"
+                                   value="{{ today }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Số Tiền Tạm Ứng (₫) *</label>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   step="1000" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="reason" class="form-label">Lý Do Tạm Ứng *</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required
+                        ></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Ghi Chú Thêm</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                                  placeholder="Ghi chú bổ sung (không bắt buộc)"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Tạo Tạm Ứng
+                        </button>
+                        <a href="{{ url_for('advances.list_advances') }}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set today as default
+document.getElementById('advance_date').value = new Date().toISOString().split('T')[0];
+
+// Employee select handler
+document.getElementById('employee_select').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const employeeId = this.value;
+
+    if (!employeeId) {
+        document.getElementById('employee_id').value = '';
+        document.getElementById('employee_name').value = '';
+        return;
+    }
+
+    const employeeName = selectedOption.dataset.name;
+    document.getElementById('employee_id').value = employeeId;
+    document.getElementById('employee_name').value = employeeName;
+    document.getElementById('employee_name').readOnly = true;
+});
+
+// When typing manual name, clear employee_id
+document.getElementById('employee_name').addEventListener('input', function() {
+    if (document.getElementById('employee_select').value) {
+        document.getElementById('employee_select').value = '';
+        document.getElementById('employee_id').value = '';
+        this.readOnly = false;
+    }
+});
+</script>
+{% endblock %}

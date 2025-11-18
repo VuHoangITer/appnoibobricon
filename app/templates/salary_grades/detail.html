@@ -39,20 +39,20 @@
                 <h5 class="mb-0"><i class="bi bi-wallet2"></i> Lương Cơ Bản</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tr>
-                        <td><strong>Lương cơ bản/tháng:</strong></td>
-                        <td class="text-end text-primary fw-bold">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Lương trách nhiệm/tháng:</strong></td>
-                        <td class="text-end text-info fw-bold">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</td>
-                    </tr>
-                    <tr class="table-primary">
-                        <td><strong>Tổng lương cơ bản:</strong></td>
-                        <td class="text-end fw-bold">{{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary) }} ₫</td>
-                    </tr>
-                </table>
+                <div class="info-list">
+                    <div class="info-item">
+                        <strong>Lương cơ bản/tháng:</strong>
+                        <span class="text-primary fw-bold">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Lương trách nhiệm/tháng:</strong>
+                        <span class="text-info fw-bold">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</span>
+                    </div>
+                    <div class="info-item" style="border-top: 2px solid #0d6efd; padding-top: 0.75rem; margin-top: 0.25rem;">
+                        <strong>Tổng lương cơ bản:</strong>
+                        <span class="fw-bold">{{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary) }} ₫</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -65,26 +65,18 @@
             <div class="card-body">
                 {% set bonuses = grade.get_capacity_bonuses() %}
                 {% if bonuses %}
-                <table class="table table-sm mb-0">
-                    <thead>
-                        <tr>
-                            <th>Nội dung</th>
-                            <th class="text-end">Số tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bonus in bonuses %}
-                        <tr>
-                            <td>{{ bonus.content }}</td>
-                            <td class="text-end">{{ "{:,.0f}".format(bonus.amount) }} ₫</td>
-                        </tr>
-                        {% endfor %}
-                        <tr class="table-success fw-bold">
-                            <td>Tổng cộng:</td>
-                            <td class="text-end">{{ "{:,.0f}".format(bonuses|sum(attribute='amount')) }} ₫</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="info-list">
+                    {% for bonus in bonuses %}
+                    <div class="info-item">
+                        <strong>{{ bonus.content }}:</strong>
+                        <span>{{ "{:,.0f}".format(bonus.amount) }} ₫</span>
+                    </div>
+                    {% endfor %}
+                    <div class="info-item" style="border-top: 2px solid #198754; padding-top: 0.75rem; margin-top: 0.25rem;">
+                        <strong>Tổng cộng:</strong>
+                        <span class="fw-bold">{{ "{:,.0f}".format(bonuses|sum(attribute='amount')) }} ₫</span>
+                    </div>
+                </div>
                 {% else %}
                 <p class="text-muted text-center my-3">Chưa có lương năng lực mặc định</p>
                 {% endif %}
@@ -97,7 +89,7 @@
 <div class="card bg-light mb-4">
     <div class="card-body">
         <h4 class="text-center mb-0">
-            <i class="bi bi-cash-coin"></i> Tổng Thu Nhập Dự Kiến/Tháng (full công): 
+            <i class="bi bi-cash-coin"></i> Tổng Thu Nhập Dự Kiến/Tháng (full công):
             <span class="text-success">
                 {{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary + (grade.get_capacity_bonuses()|sum(attribute='amount'))) }} ₫
             </span>
@@ -130,27 +122,27 @@
                 <tbody>
                     {% for emp in grade.employees %}
                     <tr>
-                        <td>
+                        <td data-label="Mã NV">
                             {% if emp.employee_code %}
                             <span class="badge bg-secondary">{{ emp.employee_code }}</span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td><strong>{{ emp.full_name }}</strong></td>
-                        <td>{{ emp.department or '-' }}</td>
-                        <td>{{ emp.position or '-' }}</td>
-                        <td>
+                        <td data-label="Họ và Tên"><strong>{{ emp.full_name }}</strong></td>
+                        <td data-label="Phòng Ban">{{ emp.department or '-' }}</td>
+                        <td data-label="Chức Vụ">{{ emp.position or '-' }}</td>
+                        <td data-label="Ngày Vào">
                             {% if emp.hire_date %}
                             {{ emp.hire_date|vn_date }}
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td class="text-center">
+                        <td data-label="Thao Tác" class="text-center">
                             <a href="{{ url_for('employees.employee_detail', employee_id=emp.id) }}"
                                class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i> Xem
+                                Xem
                             </a>
                         </td>
                     </tr>
@@ -172,9 +164,82 @@
     <div class="card-body">
         <small class="text-muted">
             <i class="bi bi-info-circle"></i>
-            Tạo lúc: {{ grade.created_at|vn_datetime }} | 
+            Tạo lúc: {{ grade.created_at|vn_datetime }} |
             Cập nhật: {{ grade.updated_at|vn_datetime if grade.updated_at else 'Chưa cập nhật' }}
         </small>
     </div>
 </div>
+
+<style>
+/* Desktop view - 2 cột */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    flex: 0 0 40%;
+    padding-right: 1rem;
+    text-align: left;
+}
+
+.info-item span {
+    flex: 1;
+    text-align: right;
+}
+
+/* Mobile view - giữ nguyên layout ngang */
+@media (max-width: 768px) {
+    /* Không cần thay đổi gì, giữ nguyên layout desktop */
+
+    /* Styling cho bảng nhân viên trên mobile */
+    .table-responsive table thead {
+        display: none;
+    }
+
+    .table-responsive table,
+    .table-responsive table tbody,
+    .table-responsive table tr,
+    .table-responsive table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table-responsive table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+
+    .table-responsive table td {
+        text-align: right !important;
+        padding: 0.5rem 0.75rem;
+        border: none;
+        position: relative;
+        padding-left: 40%;
+    }
+
+    .table-responsive table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.75rem;
+        font-weight: 600;
+        text-align: left;
+    }
+}
+</style>
 {% endblock %}
