@@ -3,70 +3,130 @@
 {% block title %}Quản lý Lương{% endblock %}
 {% block page_title %}Quản lý Lương{% endblock %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-cash-coin"></i> Bảng lương</h2>
-    <a href="{{ url_for('salaries.create_salary') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Tạo bảng lương mới
-    </a>
-</div>
+{% block extra_css %}
+<style>
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-<!-- Filter Section -->
-<div class="card mb-3">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-funnel"></i> Bộ lọc</h5>
-    </div>
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-2">
-                <label class="form-label"><i class="bi bi-calendar"></i> Tháng:</label>
-                <select class="form-select" name="month_select" id="month_select">
-                    <option value="">Tất cả</option>
-                    <option value="1">Tháng 1</option>
-                    <option value="2">Tháng 2</option>
-                    <option value="3">Tháng 3</option>
-                    <option value="4">Tháng 4</option>
-                    <option value="5">Tháng 5</option>
-                    <option value="6">Tháng 6</option>
-                    <option value="7">Tháng 7</option>
-                    <option value="8">Tháng 8</option>
-                    <option value="9">Tháng 9</option>
-                    <option value="10">Tháng 10</option>
-                    <option value="11">Tháng 11</option>
-                    <option value="12">Tháng 12</option>
-                </select>
+.clickable-row:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.clickable-row .btn-group {
+    position: relative;
+    z-index: 10;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="col-md-2">
-                <label class="form-label"><i class="bi bi-calendar"></i> Năm:</label>
-                <select class="form-select" name="year_select" id="year_select">
-                    <option value="">Tất cả</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label"><i class="bi bi-person"></i> Tên nhân viên:</label>
-                <input type="text" class="form-control" name="employee_name"
-                       value="{{ name_filter }}" placeholder="Nhập tên để tìm kiếm">
-            </div>
-            <div class="col-md-4 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel"></i> Lọc
-                </button>
-                <a href="{{ url_for('salaries.list_salaries') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Xóa
-                </a>
-            </div>
-            <input type="hidden" name="month" id="month_hidden">
-        </form>
+            <form method="GET" action="{{ url_for('salaries.list_salaries') }}">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar"></i> Tháng:
+                        </label>
+                        <select class="form-select" name="month_select" id="month_select">
+                            <option value="">Tất cả</option>
+                            <option value="1">Tháng 1</option>
+                            <option value="2">Tháng 2</option>
+                            <option value="3">Tháng 3</option>
+                            <option value="4">Tháng 4</option>
+                            <option value="5">Tháng 5</option>
+                            <option value="6">Tháng 6</option>
+                            <option value="7">Tháng 7</option>
+                            <option value="8">Tháng 8</option>
+                            <option value="9">Tháng 9</option>
+                            <option value="10">Tháng 10</option>
+                            <option value="11">Tháng 11</option>
+                            <option value="12">Tháng 12</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar"></i> Năm:
+                        </label>
+                        <select class="form-select" name="year_select" id="year_select">
+                            <option value="">Tất cả</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i> Tên nhân viên:
+                        </label>
+                        <input type="text" class="form-control" name="employee_name"
+                               value="{{ name_filter }}" placeholder="Nhập tên để tìm kiếm">
+                    </div>
+
+                    <!-- Hiển thị filter đang áp dụng -->
+                    {% if month_filter or name_filter %}
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <i class="bi bi-info-circle"></i> Đang lọc:
+                            {% if month_filter %}
+                            <br>• Tháng: {{ month_filter }}
+                            {% endif %}
+                            {% if name_filter %}
+                            <br>• Tên: {{ name_filter }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <input type="hidden" name="month" id="month_hidden">
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('salaries.list_salaries') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- Salary Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Danh sách bảng lương
-            <span class="badge bg-primary ms-2">{{ salaries|length }}</span>
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-cash-coin"></i> Bảng lương
+            </h5>
+
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút bộ lọc -->
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel-fill"></i>
+                    {% if month_filter or name_filter %}
+                    <span class="badge bg-danger">
+                        {{ (1 if month_filter else 0) + (1 if name_filter else 0) }}
+                    </span>
+                    {% endif %}
+                </button>
+
+                <!-- Nút tạo bảng lương -->
+                <a href="{{ url_for('salaries.create_salary') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         {% if salaries %}
@@ -87,7 +147,7 @@
                 </thead>
                 <tbody>
                     {% for salary in salaries %}
-                    <tr>
+                    <tr class="clickable-row" data-href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}">
                         <td data-label="Tháng">
                             <strong>{{ salary.month }}</strong>
                         </td>
@@ -108,11 +168,6 @@
                         </td>
                         <td data-label="Thao tác">
                             <div class="btn-group" role="group">
-                                <a href="{{ url_for('salaries.salary_detail', salary_id=salary.id) }}"
-                                   class="btn btn-sm btn-info"
-                                   title="Xem chi tiết">
-                                    <i class="bi bi-eye"></i>
-                                </a>
                                 <a href="{{ url_for('salaries.edit_salary', salary_id=salary.id) }}"
                                    class="btn btn-sm btn-primary"
                                    title="Chỉnh sửa">
@@ -145,7 +200,9 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 // Populate year dropdown
 const yearSelect = document.getElementById('year_select');
@@ -168,7 +225,7 @@ if (existingFilter) {
 }
 
 // Update hidden field before form submit
-document.querySelector('form').addEventListener('submit', function(e) {
+document.querySelector('#filterModal form').addEventListener('submit', function(e) {
     const month = document.getElementById('month_select').value;
     const year = document.getElementById('year_select').value;
 
@@ -178,6 +235,23 @@ document.querySelector('form').addEventListener('submit', function(e) {
     } else {
         document.getElementById('month_hidden').value = '';
     }
+});
+
+// Xử lý click vào row để chuyển trang
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào button hoặc form
+        if (e.target.closest('.btn-group') || e.target.closest('form')) {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
 });
 </script>
 {% endblock %}

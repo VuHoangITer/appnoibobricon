@@ -12,7 +12,7 @@ bp = Blueprint('auth', __name__)
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('tasks.dashboard'))
+        return redirect(url_for('hub.workflow_hub'))
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -32,7 +32,7 @@ def login():
         login_user(user, remember=remember)
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':
-            next_page = url_for('tasks.dashboard')
+            next_page = url_for('hub.workflow_hub')
         return redirect(next_page)
 
     return render_template('login.html')

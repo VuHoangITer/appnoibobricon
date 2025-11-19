@@ -53,7 +53,6 @@ def dashboard():
             ).all()]
             stats_query = stats_query.filter(Task.id.in_(task_ids))
 
-
         # Calculate statistics with filters
         total_tasks = stats_query.count()
         pending = stats_query.filter_by(status='PENDING').count()
@@ -77,22 +76,7 @@ def dashboard():
         total_important = stats_query.filter_by(is_important=True).count()
         total_recurring = stats_query.filter_by(is_recurring=True).count()
 
-        # ===== Tasks được gán cho Director/Manager (tasks cá nhân) =====
-        my_assignments = TaskAssignment.query.filter_by(
-            user_id=current_user.id,
-            accepted=True
-        ).all()
-        my_personal_tasks = [a.task for a in my_assignments if a.task.status != 'DONE']
-        # ===== END =====
-
-        tasks_need_rating = Task.query.filter(
-            Task.status == 'DONE',
-            Task.performance_rating == None,
-            Task.creator_id == current_user.id
-        ).order_by(Task.updated_at.desc()).all()
-
-
-        # ===== NHIỆM VỤ QUÁ HẠN (cho toàn bộ hệ thống) =====
+        # ===== ĐẾM NHIỆM VỤ QUÁ HẠN (chỉ count, không query all) =====
         overdue_query = Task.query.filter(
             Task.due_date < now,
             Task.status.in_(['PENDING', 'IN_PROGRESS'])
@@ -123,44 +107,8 @@ def dashboard():
             ).all()]
             overdue_query = overdue_query.filter(Task.id.in_(task_ids))
 
-        overdue_tasks = overdue_query.order_by(Task.due_date).all()
+        overdue_count = overdue_query.count()  # CHỈ COUNT, KHÔNG QUERY ALL
         # ===== END =====
-
-        # ===== TẤT CẢ tasks sắp đến hạn (KHÔNG BAO GỒM quá hạn) =====
-        thirty_days = now + timedelta(days=30)
-
-        upcoming_query = Task.query.filter(
-            Task.due_date <= thirty_days,
-            Task.due_date >= now,
-            Task.status.in_(['PENDING', 'IN_PROGRESS'])
-        )
-
-        # Apply filters
-        if date_from:
-            try:
-                date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                date_from_utc = vn_to_utc(date_from_dt)
-                upcoming_query = upcoming_query.filter(Task.due_date >= date_from_utc)
-            except:
-                pass
-
-        if date_to:
-            try:
-                date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-                date_to_utc = vn_to_utc(date_to_dt)
-                upcoming_query = upcoming_query.filter(Task.due_date <= date_to_utc)
-            except:
-                pass
-
-        if assigned_user:
-            task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
-                user_id=int(assigned_user),
-                accepted=True
-            ).all()]
-            upcoming_query = upcoming_query.filter(Task.id.in_(task_ids))
-
-        upcoming = upcoming_query.order_by(Task.due_date).all()
 
         # Get all users for filter dropdown
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
@@ -168,7 +116,6 @@ def dashboard():
         # ===== THÔNG BÁO THÔNG MINH =====
         # Tính toán hiệu suất
         completion_rate = (done / total_tasks * 100) if total_tasks > 0 else 0
-        overdue_count = len(overdue_tasks)
         overdue_rate = (overdue_count / total_tasks * 100) if total_tasks > 0 else 0
 
         # Đếm nhiệm vụ chưa đánh giá (DONE nhưng chưa rate)
@@ -279,7 +226,7 @@ def dashboard():
                         'completion': completion_rate,
                         'overdue': overdue_count,
                         'unrated': unrated_tasks,
-                        'Đội Ngũ_done': done,
+                        'team_done': done,
                         'on_time_rate': on_time_rate,
                         'bad_rating': bad_rating_count
                     }
@@ -295,7 +242,7 @@ def dashboard():
                         'completion': completion_rate,
                         'overdue': overdue_count,
                         'unrated': unrated_tasks,
-                        'Đội Ngũ_done': done,
+                        'team_done': done,
                         'bad_rating': bad_rating_count
                     }
                 }
@@ -310,7 +257,7 @@ def dashboard():
                         'completion': completion_rate,
                         'overdue': overdue_count,
                         'unrated': unrated_tasks,
-                        'Đội Ngũ_done': done,
+                        'team_done': done,
                         'on_time_rate': on_time_rate,
                         'good_rating': good_rating_count
                     }
@@ -326,7 +273,7 @@ def dashboard():
                         'completion': completion_rate,
                         'overdue': overdue_count,
                         'unrated': unrated_tasks,
-                        'Đội Ngũ_done': done,
+                        'team_done': done,
                         'on_time_rate': on_time_rate
                     }
                 }
@@ -341,7 +288,7 @@ def dashboard():
                         'completion': completion_rate,
                         'overdue': overdue_count,
                         'unrated': unrated_tasks,
-                        'Đội Ngũ_done': done
+                        'team_done': done
                     }
                 }
 
@@ -349,7 +296,7 @@ def dashboard():
 
         # 1. PIE CHART DATA - Phân bổ trạng thái
         pie_chart_data = {
-            'labels': ['Chờ xử lý', 'Đang thực hiện', 'Hoàn thành'],
+            'labels': ['Chưa làm', 'Đang làm', 'Hoàn thành'],
             'data': [pending, in_progress, done],
             'colors': ['#ffc107', '#0dcaf0', '#198754']
         }
@@ -387,7 +334,6 @@ def dashboard():
                 completed_overdue=True
             ).count()
 
-            now = datetime.utcnow()
             overdue = user_tasks_query.filter(
                 Task.due_date < now,
                 Task.status.in_(['PENDING', 'IN_PROGRESS'])
@@ -403,8 +349,8 @@ def dashboard():
         # 3. LINE CHART DATA - Xu hướng theo khoảng thời gian tùy chọn
         line_chart_data = {
             'labels': [],
-            'completed_on_time': [],  # THÊM: Hoàn thành đúng hạn
-            'completed_overdue': [],  # THÊM: Hoàn thành quá hạn
+            'completed_on_time': [],
+            'completed_overdue': [],
             'overdue': [],
             'created': []
         }
@@ -435,7 +381,6 @@ def dashboard():
 
             line_chart_data['labels'].append(day.strftime('%d/%m'))
 
-            # THAY ĐỔI: Tách hoàn thành thành 2 loại
             # Hoàn thành ĐÚNG HẠN trong ngày
             completed_on_time = stats_query.filter(
                 Task.status == 'DONE',
@@ -455,11 +400,11 @@ def dashboard():
             line_chart_data['completed_overdue'].append(completed_late)
 
             # Nhiệm vụ quá hạn tính đến cuối ngày (chưa hoàn thành)
-            overdue_count = stats_query.filter(
+            overdue_count_day = stats_query.filter(
                 Task.due_date < day_end,
                 Task.status.in_(['PENDING', 'IN_PROGRESS'])
             ).count()
-            line_chart_data['overdue'].append(overdue_count)
+            line_chart_data['overdue'].append(overdue_count_day)
 
             # Nhiệm vụ tạo mới trong ngày
             created_count = stats_query.filter(
@@ -486,10 +431,6 @@ def dashboard():
                                done_urgent=done_urgent,
                                done_important=done_important,
                                done_recurring=done_recurring,
-                               my_personal_tasks=my_personal_tasks,
-                               tasks_need_rating=tasks_need_rating,
-                               overdue_tasks=overdue_tasks,
-                               upcoming=upcoming,
                                all_users=all_users,
                                date_from=date_from,
                                date_to=date_to,
@@ -509,7 +450,7 @@ def dashboard():
         ).all()
         my_task_ids = [a.task_id for a in my_assignments]
 
-        # THÊM MỚI: Tính toán statistics cho HR/Accountant
+        # Tính toán statistics cho HR/Accountant
         my_tasks_query = Task.query.filter(Task.id.in_(my_task_ids))
 
         # Apply date filters
@@ -553,18 +494,7 @@ def dashboard():
         total_important = my_tasks_query.filter_by(is_important=True).count()
         total_recurring = my_tasks_query.filter_by(is_recurring=True).count()
 
-        my_tasks = [a.task for a in my_assignments if a.task.status != 'DONE']
-
-        # Tasks created by user
-        created_tasks = Task.query.filter_by(creator_id=current_user.id).all()
-
-        # Pending group assignments
-        pending_assignments = TaskAssignment.query.filter_by(
-            user_id=current_user.id,
-            accepted=False
-        ).all()
-
-        # ===== NHIỆM VỤ QUÁ HẠN của user này =====
+        # ===== ĐẾM NHIỆM VỤ QUÁ HẠN của user này (chỉ count) =====
         overdue_query = Task.query.filter(
             Task.id.in_(my_task_ids),
             Task.due_date < now,
@@ -589,46 +519,10 @@ def dashboard():
             except:
                 pass
 
-        overdue_tasks = overdue_query.order_by(Task.due_date).all()
-
-        # ===== Tasks sắp đến hạn của chính họ (KHÔNG BAO GỒM quá hạn) =====
-        seven_days = now + timedelta(days=7)
-
-        upcoming_query = Task.query.filter(
-            Task.id.in_(my_task_ids),
-            Task.due_date <= seven_days,
-            Task.due_date >= now,
-            Task.status.in_(['PENDING', 'IN_PROGRESS'])
-        )
-
-        # Apply date filters
-        if date_from:
-            try:
-                date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                date_from_utc = vn_to_utc(date_from_dt)
-                upcoming_query = upcoming_query.filter(Task.due_date >= date_from_utc)
-            except:
-                pass
-
-        if date_to:
-            try:
-                date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-                date_to_utc = vn_to_utc(date_to_dt)
-                upcoming_query = upcoming_query.filter(Task.due_date <= date_to_utc)
-            except:
-                pass
-
-        upcoming = upcoming_query.order_by(Task.due_date).all()
-
-        from app.models import Note
-        recent_notes = Note.query.filter_by(user_id=current_user.id).order_by(
-            Note.updated_at.desc()
-        ).all()
+        overdue_count = overdue_query.count()  # CHỈ COUNT, KHÔNG QUERY ALL
 
         # ===== THÔNG BÁO THÔNG MINH CHO HR/ACCOUNTANT =====
         completion_rate = (done / total_tasks * 100) if total_tasks > 0 else 0
-        overdue_count = len(overdue_tasks)
         active_tasks = pending + in_progress
 
         # Tính nhiệm vụ hoàn thành quá hạn
@@ -638,7 +532,6 @@ def dashboard():
         bad_rating_count = my_tasks_query.filter_by(status='DONE', performance_rating='bad').count()
 
         # Tính điểm chất lượng (Quality Score)
-        # Công thức: done đúng hạn + đánh giá tốt = chất lượng cao
         good_rating_count = my_tasks_query.filter_by(status='DONE', performance_rating='good').count()
         on_time_done = done - done_overdue_count
 
@@ -680,7 +573,7 @@ def dashboard():
                 'type': 'warning',
                 'icon': 'bi-exclamation-circle-fill',
                 'title': 'Cần Cải Thiện Chất Lượng',
-                'message': f'Bạn hoàn thành {done}/{total_tasks} nhiệm vụ nhưng có {done_overdue_count} quá hạn và {bad_rating_count} đánh giá kém. Hãy chú ý thời hạn!',
+                'message': f'Bạn hoàn thành {done}/{total_tasks} nhiệm vụ nhưng có {done_overdue_count} quá hạn và {bad_rating_count} đánh giá kém. Hãy chú ý!',
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -690,13 +583,14 @@ def dashboard():
                     'quality': quality_rate
                 }
             }
+
         # ĐIỀU KIỆN 3: Có task quá hạn đang chờ
         elif overdue_count >= 3 or (overdue_count >= 1 and completion_rate < 50):
             notification = {
                 'type': 'warning',
                 'icon': 'bi-clock-fill',
                 'title': 'Cần Cố Gắng Hơn',
-                'message': f'Bạn có {overdue_count} quá hạn, {pending} chờ xử lý và {in_progress} đang làm. Hãy tập trung!',
+                'message': f'Bạn có {overdue_count} quá hạn, {pending} chưa làm và {in_progress} đang làm. Hãy tập trung!',
                 'stats': {
                     'completion': completion_rate,
                     'overdue': overdue_count,
@@ -751,7 +645,7 @@ def dashboard():
             }
 
         return render_template('dashboard.html',
-                               # THÊM stats cho HR/Accountant
+                               # Stats cho HR/Accountant
                                total_tasks=total_tasks,
                                pending=pending,
                                in_progress=in_progress,
@@ -768,13 +662,6 @@ def dashboard():
                                done_urgent=done_urgent,
                                done_important=done_important,
                                done_recurring=done_recurring,
-                               # Existing data
-                               my_tasks=my_tasks,
-                               created_tasks=created_tasks,
-                               pending_assignments=pending_assignments,
-                               overdue_tasks=overdue_tasks,
-                               upcoming=upcoming,
-                               recent_notes=recent_notes,
                                date_from=date_from,
                                date_to=date_to,
                                notification=notification)
@@ -868,8 +755,8 @@ def tasks_by_status(status):
     # Status name for display
     status_names = {
         'ALL': 'Tất cả nhiệm vụ',
-        'PENDING': 'Chờ xử lý',
-        'IN_PROGRESS': 'Đang thực hiện',
+        'PENDING': 'Chưa Làm',
+        'IN_PROGRESS': 'Đang Làm',
         'DONE': 'Hoàn thành'
     }
 
@@ -1085,9 +972,9 @@ def create_task():
             creator_id=current_user.id,
             due_date=due_date,
             status='PENDING',
-            is_urgent=is_urgent,  # THÊM MỚI
-            is_important=is_important,  # THÊM MỚI
-            is_recurring=is_recurring  # THÊM MỚI
+            is_urgent=is_urgent,
+            is_important=is_important,
+            is_recurring=is_recurring
         )
         db.session.add(task)
         db.session.flush()
@@ -1138,7 +1025,7 @@ def create_task():
                         user_id=user.id,
                         assigned_by=current_user.id,
                         assigned_group=assign_to_group,
-                        accepted=False,
+                        accepted=True,
                         seen=False
                     )
                     db.session.add(assignment)
@@ -1147,7 +1034,7 @@ def create_task():
                         user_id=user.id,
                         type='task_assigned',
                         title='Nhiệm vụ mới cho nhóm',
-                        body=f'{current_user.full_name} đã giao nhiệm vụ {title} cho nhóm. Vui lòng chấp nhận.',
+                        body=f'{current_user.full_name} đã giao nhiệm vụ {title} cho nhóm. Vui lòng liên hệ các thành viên trong nhóm để thảo luận và làm việc.',
                         link=f'/tasks/{task.id}'
                     )
                     db.session.add(notif)

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block title %}Kanban Board{% endblock %}
-{% block page_title %}Kanban Board - Quản Lý Trực Quan{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -98,7 +97,7 @@
     padding: 16px;
     margin-bottom: 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    cursor: pointer;  /* Changed from 'move' to 'pointer' */
+    cursor: pointer;
     transition: all 0.2s ease;
     border-left: 3px solid white;
 }
@@ -108,30 +107,26 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-/* Remove dragging state - not needed anymore */
-
-/* Priority background colors - MINIMAL */
+/* Priority background colors */
 .task-card.overdue {
-    background: #fee2e2;  /* Đỏ sáng cho QUÁ HẠN */
+    background: #fee2e2;
     border-left-color: white;
 }
 
 .task-card.urgent {
-    background: #fef2f2;  /* Đỏ nhạt cho KHẨN CẤP */
+    background: #fef2f2;
     border-left-color: white;
 }
 
 .task-card.important {
-    background: #fefce8;  /* Vàng nhạt cho QUAN TRỌNG */
+    background: #fefce8;
     border-left-color: white;
 }
 
 .task-card.recurring {
-    background: #eff6ff;  /* Xanh dương nhạt cho LẶP LẠI */
+    background: #eff6ff;
     border-left-color: white;
 }
-
-/* Không có tag = nền trắng (default) */
 
 .task-title {
     font-weight: 600;
@@ -262,38 +257,27 @@
     opacity: 0.5;
 }
 
-/* Filter Section */
-.kanban-filters {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+/* Filter Collapse Styles */
+.filter-collapse-card {
+    transition: all 0.3s ease;
 }
 
-.filter-row {
+.filter-form-row {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
-    align-items: end;
 }
 
-.filter-group {
+.filter-form-group {
     flex: 1;
     min-width: 200px;
 }
 
-.filter-group label {
+.filter-form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
     font-size: 0.9rem;
-    color: #495057;
-}
-
-.filter-group input,
-.filter-group select {
-    width: 100%;
 }
 
 /* Responsive */
@@ -310,16 +294,13 @@
 }
 
 @media (max-width: 768px) {
-    .kanban-filters {
-        padding: 15px;
-    }
-
-    .filter-row {
+    .filter-form-row {
         flex-direction: column;
     }
 
-    .filter-group {
+    .filter-form-group {
         width: 100%;
+        min-width: 100%;
     }
 
     .task-card {
@@ -331,148 +312,62 @@
         font-size: 1rem;
     }
 }
-
-/* Loading State - Not used but kept for future */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.loading-overlay.active {
-    display: flex;
-}
-
-.loading-spinner {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.loading-spinner i {
-    font-size: 3rem;
-    color: #0d6efd;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
 </style>
 
-<!-- SortableJS CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<!-- Mobile Filter Button -->
-<div class="mobile-filter-btn d-md-none mb-3">
-    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
-        <i class="bi bi-funnel-fill"></i> Bộ lọc
-        {% if search or assigned_user or tag_filter or date_from or date_to %}
-        <span class="badge bg-danger ms-2">●</span>
-        {% endif %}
-    </button>
-</div>
+<!-- Header Card -->
+<div class="card mb-3">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-columns-gap"></i> Kanban Board
+                <span class="badge bg-primary ms-2">
+                    {{ (pending_tasks|length) + (in_progress_tasks|length) }} nhiệm vụ chưa hoàn thành
+                </span>
+            </h5>
 
-<!-- Desktop Filters -->
-<div class="kanban-filters d-none d-md-block">
-    <form method="GET" id="filterForm">
-        <div class="filter-row">
-            <div class="filter-group">
-                <label><i class="bi bi-calendar-range"></i> Từ ngày:</label>
-                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-            </div>
-
-            <div class="filter-group">
-                <label><i class="bi bi-calendar-range"></i> Đến ngày:</label>
-                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-            </div>
-
-            <div class="filter-group">
-                <label><i class="bi bi-search"></i> Tìm kiếm:</label>
-                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Tên công việc...">
-            </div>
-
-            {% if current_user.role in ['director', 'manager'] %}
-            <div class="filter-group">
-                <label><i class="bi bi-person"></i> Người làm:</label>
-                <select class="form-select" name="assigned_user">
-                    <option value="">-- Tất cả --</option>
-                    {% for user in all_users %}
-                    <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
-                        {{ user.full_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
-            <div class="filter-group">
-                <label><i class="bi bi-tags"></i> Tag:</label>
-                <select class="form-select" name="tag">
-                    <option value="">-- Tất cả --</option>
-                    <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>🔴 Khẩn cấp</option>
-                    <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>🟡 Quan trọng</option>
-                    <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>🔵 Lặp lại</option>
-                </select>
-            </div>
-
-            <div class="filter-group" style="flex: 0;">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel"></i> Lọc
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút Toggle Filter -->
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                    {% if search or assigned_user or tag_filter or date_from or date_to %}
+                    <span class="badge bg-danger ms-1">
+                        {{ (1 if search else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) }}
+                    </span>
+                    {% endif %}
                 </button>
             </div>
-
-            <div class="filter-group" style="flex: 0;">
-                <label>&nbsp;</label>
-                <a href="{{ url_for('tasks.kanban') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Xóa
-                </a>
-            </div>
         </div>
-    </form>
+    </div>
 </div>
 
-<!-- Mobile Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">
-                    <i class="bi bi-funnel-fill"></i> Bộ lọc
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="GET" id="mobileFilterForm">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
-                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
-                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-search"></i> Tìm kiếm:</label>
+<!-- Filter Collapse Section -->
+<div class="collapse mb-3" id="filterCollapse">
+    <div class="card filter-collapse-card">
+        <div class="card-body">
+            <form method="GET" id="filterForm">
+                <div class="filter-form-row">
+                    <div class="filter-form-group">
+                        <label><i class="bi bi-search"></i> Tìm kiếm:</label>
                         <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Tên công việc...">
                     </div>
 
+                    <div class="filter-form-group">
+                        <label><i class="bi bi-calendar-range"></i> Từ ngày:</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    </div>
+
+                    <div class="filter-form-group">
+                        <label><i class="bi bi-calendar-range"></i> Đến ngày:</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    </div>
+
                     {% if current_user.role in ['director', 'manager'] %}
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-person"></i> Người làm:</label>
+                    <div class="filter-form-group">
+                        <label><i class="bi bi-person"></i> Người làm:</label>
                         <select class="form-select" name="assigned_user">
                             <option value="">-- Tất cả --</option>
                             {% for user in all_users %}
@@ -484,30 +379,58 @@
                     </div>
                     {% endif %}
 
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-tags"></i> Tag:</label>
+                    <div class="filter-form-group">
+                        <label><i class="bi bi-tags"></i> Loại thẻ:</label>
                         <select class="form-select" name="tag">
                             <option value="">-- Tất cả --</option>
                             <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>🔴 Khẩn cấp</option>
-                            <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>🟡 Quan trọng</option>
-                            <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>🔵 Lặp lại</option>
+                            <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>⭐ Quan trọng</option>
+                            <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>🔄 Lặp lại</option>
                         </select>
                     </div>
-
-                    {% if search or assigned_user or tag_filter or date_from or date_to %}
-                    <div class="alert alert-info mb-0">
-                        <small><i class="bi bi-info-circle"></i> Đang áp dụng bộ lọc</small>
-                    </div>
-                    {% endif %}
                 </div>
-                <div class="modal-footer">
-                    <a href="{{ url_for('tasks.kanban') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
-                    </a>
+
+                <!-- Filter Actions -->
+                <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle"></i> Áp dụng
                     </button>
+                    <a href="{{ url_for('tasks.kanban') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
                 </div>
+
+                <!-- Active Filters Info -->
+                {% if search or date_from or date_to or assigned_user or tag_filter %}
+                <div class="alert alert-info mt-3 mb-0">
+                    <small>
+                        <i class="bi bi-info-circle"></i> <strong>Đang lọc:</strong>
+                        {% if search %}
+                        <br>• Từ khóa: "{{ search }}"
+                        {% endif %}
+                        {% if date_from %}
+                        <br>• Từ: {{ date_from }}
+                        {% endif %}
+                        {% if date_to %}
+                        <br>• Đến: {{ date_to }}
+                        {% endif %}
+                        {% if assigned_user and all_users %}
+                            {% for user in all_users %}
+                                {% if user.id == assigned_user|int %}
+                                <br>• Người: {{ user.full_name }}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if tag_filter %}
+                        <br>• Thẻ:
+                            {% if tag_filter == 'urgent' %}Khẩn cấp
+                            {% elif tag_filter == 'important' %}Quan trọng
+                            {% elif tag_filter == 'recurring' %}Lặp lại
+                            {% endif %}
+                        {% endif %}
+                    </small>
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
@@ -528,10 +451,8 @@
                      data-task-id="{{ task.id }}"
                      onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
 
-                    <!-- Title -->
                     <div class="task-title">{{ task.title }}</div>
 
-                    <!-- Badges -->
                     <div class="task-meta">
                         {% if task.due_date and task.due_date < now %}
                         <span class="task-badge overdue">
@@ -555,7 +476,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Footer -->
                     <div class="task-footer">
                         <div class="task-assignees">
                             {% for assignment in task.assignments %}
@@ -740,10 +660,10 @@
                             </div>
                             {% endif %}
                         </div>
-                    <div class="task-due-date" style="color: #10b981; font-weight: 600;">
-                        <i class="bi bi-check-circle-fill"></i>
-                        {{ task.updated_at | vn_datetime('%d/%m %H:%M') }}
-                    </div>
+                        <div class="task-due-date" style="color: #10b981; font-weight: 600;">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ task.updated_at | vn_datetime('%d/%m %H:%M') }}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -760,32 +680,13 @@
 
 {% block scripts %}
 <script>
-// Kanban is VIEW-ONLY - No drag and drop
-// Cards can only be clicked to view details
-
-// Auto submit filter form
-document.querySelector('select[name="assigned_user"]')?.addEventListener('change', function() {
-    document.getElementById('filterForm').submit();
+// Auto-expand filter if there are active filters
+{% if search or date_from or date_to or assigned_user or tag_filter %}
+document.addEventListener('DOMContentLoaded', function() {
+    const filterCollapse = new bootstrap.Collapse(document.getElementById('filterCollapse'), {
+        toggle: true
+    });
 });
-
-document.querySelector('select[name="tag"]')?.addEventListener('change', function() {
-    document.getElementById('filterForm').submit();
-});
-
-// Toast notification function (for future use)
-function showToast(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 10000; min-width: 300px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 3000);
-}
+{% endif %}
 </script>
 {% endblock %}

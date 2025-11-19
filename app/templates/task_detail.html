@@ -8,7 +8,7 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>
+                <h4 class="mb-0">
                     <i class="bi bi-card-text"></i> {{ task.title }}
                     {% if task | is_overdue and task.status != 'DONE' %}
                     <span class="badge bg-danger ms-2">QUÁ HẠN</span>
@@ -23,10 +23,24 @@
                         {% endif %}
                     {% endif %}
                 </h4>
-                <div>
-                    <span class="badge bg-{{ task.status | status_badge }}">
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-{{ task.status | status_badge }}" style="font-size: 0.9rem;">
                         {{ task.status | status_vn }}
                     </span>
+
+                    <!-- Nút xóa nhỏ, bo tròn, chỉ có icon -->
+                    {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+                    <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');"
+                          class="mb-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-danger btn-sm rounded-circle"
+                                style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"
+                                title="Xóa nhiệm vụ">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-body">
@@ -284,16 +298,6 @@
                     </script>
                 </div>
                 {% endif %}
-
-                <!-- Delete button -->
-                {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
-                <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}" onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Xóa
-                    </button>
-                </form>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -457,11 +461,5 @@
         </div>
         {% endif %}
     </div>
-</div>
-
-<div class="mt-3">
-    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại danh sách
-    </a>
 </div>
 {% endblock %}

@@ -5,154 +5,28 @@
 
 {% block extra_css %}
 <style>
-/* Ẩn filter form trên mobile, hiện nút */
-@media (max-width: 767px) {
-    .desktop-filter-form {
-        display: none !important;
-    }
-    .mobile-filter-btn {
-        display: block !important;
-    }
+/* CSS cho clickable row */
+
+/* Thêm style cho row clickable */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-@media (min-width: 768px) {
-    .desktop-filter-form {
-        display: block !important;
-    }
-    .mobile-filter-btn {
-        display: none !important;
-    }
+.clickable-row:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Ngăn click vào checkbox trigger row click */
+.clickable-row input[type="checkbox"] {
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-list-task"></i></h2>
-    <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Tạo nhiệm vụ
-    </a>
-</div>
-
-<!-- THÊM: Nút mở filter trên mobile -->
-<div class="mobile-filter-btn mb-3" style="display: none;">
-    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
-        <i class="bi bi-funnel-fill"></i> Bộ lọc
-            {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
-            <span class="badge bg-danger ms-2">
-                {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) }}
-            </span>
-            {% endif %}
-    </button>
-</div>
-
-<!-- Advanced Filter - Desktop -->
-<div class="card mb-3 desktop-filter-form">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-funnel"></i> Bộ lọc</h5>
-    </div>
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3 col-6">
-                <label class="form-label"><i class="bi bi-flag"></i> Trạng thái:</label>
-                <select class="form-select" name="status">
-                    <option value="">Tất cả</option>
-                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
-                    <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang Làm</option>
-                    <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
-                    <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
-                </select>
-            </div>
-
-            <!-- THÊM MỚI: Filter theo thẻ -->
-            <div class="col-md-3 col-6">
-                <label class="form-label"><i class="bi bi-tags"></i> Loại thẻ:</label>
-                <select class="form-select" name="tag">
-                    <option value="">Tất cả</option>
-                    <option value="urgent" {% if tag_filter == 'urgent' %}selected{% endif %}>
-                        🔴 Khẩn cấp
-                    </option>
-                    <option value="important" {% if tag_filter == 'important' %}selected{% endif %}>
-                        ⭐ Quan trọng
-                    </option>
-                    <option value="recurring" {% if tag_filter == 'recurring' %}selected{% endif %}>
-                        🔄 Lặp lại
-                    </option>
-                </select>
-            </div>
-
-            <div class="col-md-3 col-6">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
-                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-                <small class="text-muted">Lọc theo hạn hoàn thành</small>
-            </div>
-
-            <div class="col-md-3 col-6">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
-                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-                <small class="text-muted">Lọc theo hạn hoàn thành</small>
-            </div>
-
-            {% if current_user.role in ['director', 'manager'] %}
-            <div class="col-md-12">
-                <label class="form-label"><i class="bi bi-person"></i> Người làm nhiệm vụ</label>
-                <select class="form-select" name="assigned_user">
-                    <option value="">-- Tất cả --</option>
-                    {% for user in all_users %}
-                    <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
-                        {{ user.full_name }} ({{ user.role | role_vn }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel-fill"></i> Áp dụng bộ lọc
-                </button>
-                <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Xóa bộ lọc
-                </a>
-
-                <!-- Show filter info -->
-                {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
-                <span class="ms-3 text-muted">
-                    <i class="bi bi-info-circle"></i>
-                    Đang lọc:
-                    {% if status_filter %}
-                        <span class="badge bg-secondary">{{ status_filter | status_vn }}</span>
-                    {% endif %}
-                    {% if tag_filter %}
-                        {% if tag_filter == 'urgent' %}
-                        <span class="badge bg-danger">Khẩn cấp</span>
-                        {% elif tag_filter == 'important' %}
-                        <span class="badge bg-warning">Quan trọng</span>
-                        {% elif tag_filter == 'recurring' %}
-                        <span class="badge bg-info">Lặp lại</span>
-                        {% endif %}
-                    {% endif %}
-                    {% if date_from %}
-                        <span class="badge bg-secondary">Từ: {{ date_from }}</span>
-                    {% endif %}
-                    {% if date_to %}
-                        <span class="badge bg-secondary">Đến: {{ date_to }}</span>
-                    {% endif %}
-                    {% if assigned_user and all_users %}
-                        {% for user in all_users %}
-                            {% if user.id == assigned_user|int %}
-                                <span class="badge bg-secondary">Người: {{ user.full_name }}</span>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                </span>
-                {% endif %}
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- THÊM: Modal Filter cho Mobile -->
 <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -163,7 +37,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="GET" action="{{ url_for('tasks.list_tasks') }}">
-                <div class="modal-body">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
                     <div class="mb-3">
                         <label class="form-label">
                             <i class="bi bi-flag"></i> Trạng thái:
@@ -226,9 +100,10 @@
                         </select>
                     </div>
                     {% endif %}
+
                     <!-- Hiển thị filter đang áp dụng -->
                     {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-0">
                         <small>
                             <i class="bi bi-info-circle"></i> Đang lọc:
                             {% if status_filter %}
@@ -260,10 +135,10 @@
                 </div>
                 <div class="modal-footer">
                     <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                        <i class="bi bi-x-circle"></i>
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Áp dụng
+                        <i class="bi bi-check-circle"></i>
                     </button>
                 </div>
             </form>
@@ -271,24 +146,42 @@
     </div>
 </div>
 
+
 <!-- Tasks table -->
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Danh sách nhiệm vụ
-            <span class="badge bg-primary ms-2">{{ pagination.total }} nhiệm vụ</span>
-            {% if pagination.pages > 1 %}
-            <span class="badge bg-secondary ms-1">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
-            {% endif %}
-        </h5>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i>
+                <span class="badge bg-primary ms-2">{{ pagination.total }} nhiệm vụ</span>
+                {% if pagination.pages > 1 %}
+                <span class="badge bg-secondary ms-1">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+                {% endif %}
+            </h5>
 
-        {% if current_user.role in ['director', 'manager'] and tasks %}
-        <div>
-            <button type="button" class="btn btn-danger" id="bulkDeleteBtn" disabled onclick="confirmBulkDelete()">
-                <i class="bi bi-trash"></i><span id="selectedCount">0</span>
-            </button>
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút bộ lọc -->
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel-fill"></i>
+                    {% if status_filter or date_from or date_to or assigned_user or tag_filter %}
+                    <span class="badge bg-danger">
+                        {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) }}
+                    </span>
+                    {% endif %}
+                </button>
+
+                {% if current_user.role in ['director', 'manager'] and tasks %}
+                <button type="button" class="btn btn-danger" id="bulkDeleteBtn" disabled onclick="confirmBulkDelete()">
+                    <i class="bi bi-trash"></i>
+                </button>
+                {% endif %}
+
+                <!-- Nút tạo nhiệm vụ -->
+                <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
         </div>
-        {% endif %}
     </div>
     <div class="card-body">
         {% if tasks %}
@@ -315,16 +208,14 @@
                     </thead>
                     <tbody>
                         {% for task in tasks %}
-                        <tr {% if task | is_overdue %}class="table-danger"{% endif %}>
+                        <tr class="clickable-row {% if task | is_overdue %}table-danger{% endif %}" data-href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
                             {% if current_user.role in ['director', 'manager'] %}
                             <td data-label="">
                                 <input type="checkbox" class="form-check-input task-checkbox" name="task_ids[]" value="{{ task.id }}">
                             </td>
                             {% endif %}
                             <td data-label="Tiêu đề">
-                                <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
-                                    {{ task.title }}
-                                </a>
+                                {{ task.title }}
                             </td>
                             <td data-label="Phân Loại">
                                 {% if task | is_overdue %}
@@ -467,7 +358,7 @@
             <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
             <p class="text-muted mt-3">Không tìm thấy nhiệm vụ nào phù hợp với bộ lọc.</p>
             <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-clockwise"></i> Xóa bộ lọc
+                <i class="bi bi-arrow-clockwise"></i>
             </a>
         </div>
         {% endif %}
@@ -476,8 +367,25 @@
 {% endblock %}
 
 {% block scripts %}
-{% if current_user.role in ['director', 'manager'] %}
 <script>
+// Xử lý click vào row để chuyển trang
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào checkbox
+        if (e.target.type === 'checkbox') {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+
+{% if current_user.role in ['director', 'manager'] %}
 document.getElementById('selectAll')?.addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.task-checkbox');
     checkboxes.forEach(checkbox => {
@@ -519,6 +427,6 @@ function confirmBulkDelete() {
         document.getElementById('bulkDeleteForm').submit();
     }
 }
-</script>
 {% endif %}
+</script>
 {% endblock %}

@@ -3,19 +3,58 @@
 {% block title %}Quản Lý Cấp Bậc Lương{% endblock %}
 {% block page_title %}Quản Lý Cấp Bậc Lương{% endblock %}
 
-{% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-    <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary w-100 w-md-auto">
-        <i class="bi bi-plus-circle"></i> Tạo Cấp Bậc Mới
-    </a>
-</div>
+{% block extra_css %}
+<style>
+/* CSS cho clickable row */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
+.clickable-row:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* CSS cho clickable card */
+.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clickable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Ngăn click vào button trigger card/row click */
+.clickable-card .btn,
+.clickable-card .btn-group,
+.clickable-card form,
+.clickable-row .btn,
+.clickable-row .btn-group,
+.clickable-row form {
+    position: relative;
+    z-index: 10;
+}
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Danh Sách Cấp Bậc
-            <span class="badge bg-primary ms-2">{{ grades|length }}</span>
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i> Level
+                <span class="badge bg-primary ms-2">{{ grades|length }} cấp bậc</span>
+            </h5>
+
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút tạo cấp bậc -->
+                <a href="{{ url_for('salary_grades.create_grade') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         {% if grades %}
@@ -34,7 +73,7 @@
                     </thead>
                     <tbody>
                         {% for grade in grades %}
-                        <tr>
+                        <tr class="clickable-row" data-href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}">
                             <td>
                                 <strong>{{ grade.name }}</strong>
                                 {% if grade.description %}
@@ -48,10 +87,6 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group" role="group">
-                                    <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
-                                       class="btn btn-sm btn-info" title="Xem chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
                                     <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
                                        class="btn btn-sm btn-primary" title="Chỉnh sửa">
                                         <i class="bi bi-pencil"></i>
@@ -79,7 +114,8 @@
         <!-- Mobile Card View -->
         <div class="d-lg-none">
             {% for grade in grades %}
-            <div class="card mb-3 border-success">
+            <div class="card mb-3 border-success clickable-card"
+                 data-href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
@@ -103,10 +139,6 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-1">
-                        <a href="{{ url_for('salary_grades.grade_detail', grade_id=grade.id) }}"
-                           class="btn btn-info btn-sm">
-                            <i class="bi bi-eye"></i>
-                        </a>
                         <a href="{{ url_for('salary_grades.edit_grade', grade_id=grade.id) }}"
                            class="btn btn-primary btn-sm">
                             <i class="bi bi-pencil"></i>
@@ -138,4 +170,42 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Xử lý click vào row để chuyển trang (Desktop table)
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào button, link hoặc form
+        if (e.target.closest('.btn') || e.target.closest('a') || e.target.closest('form')) {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+
+// Xử lý click vào card để chuyển trang (Mobile card)
+document.querySelectorAll('.clickable-card').forEach(card => {
+    card.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào button, link hoặc form
+        if (e.target.closest('.btn') || e.target.closest('a') || e.target.closest('form')) {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+</script>
 {% endblock %}

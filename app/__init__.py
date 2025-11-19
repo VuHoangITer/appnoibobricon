@@ -147,16 +147,19 @@ def create_app(config_class=Config):
     from app.advances import bp as advances_bp
     app.register_blueprint(advances_bp, url_prefix='/advances')
 
+    from app.hub import bp as hub_bp
+    app.register_blueprint(hub_bp)
+
     # Dashboard route
     @app.route('/')
     def index():
         from flask import redirect, url_for
         from flask_login import current_user
         if current_user.is_authenticated:
-            return redirect(url_for('tasks.dashboard'))
+            return redirect(url_for('hub.workflow_hub'))
         return redirect(url_for('auth.login'))
 
-    # THÊM: Khởi động scheduler (chỉ chạy khi không phải debug mode hoặc reloader)
+    # Khởi động scheduler (chỉ chạy khi không phải debug mode hoặc reloader)
     if os.environ.get('ENABLE_SCHEDULER') == 'true':
         global scheduler
         if scheduler is None:

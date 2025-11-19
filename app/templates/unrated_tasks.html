@@ -49,18 +49,33 @@
     background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, transparent 100%) !important;
 }
 
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
 @media (max-width: 768px) {
     .stat-card {
-        margin-bottom: 15px;
-        padding: 20px;
+        padding: 12px 8px;
     }
-    
+
     .stat-card .stat-icon {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        margin-bottom: 6px;
     }
-    
+
     .stat-card .stat-value {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.3px;
     }
 }
 </style>
@@ -69,7 +84,7 @@
 {% block content %}
 <!-- Statistics Overview -->
 <div class="row mb-4">
-    <div class="col-md-4 mb-3 mb-md-0">
+    <div class="col-4 mb-3 mb-md-0">
         <div class="stat-card">
             <div class="stat-icon text-warning">
                 <i class="bi bi-hourglass-split"></i>
@@ -78,8 +93,8 @@
             <div class="stat-label">Tổng Chưa Đánh Giá</div>
         </div>
     </div>
-    
-    <div class="col-md-4 mb-3 mb-md-0">
+
+    <div class="col-4 mb-3 mb-md-0">
         <div class="stat-card">
             <div class="stat-icon text-danger">
                 <i class="bi bi-exclamation-triangle-fill"></i>
@@ -88,8 +103,8 @@
             <div class="stat-label">Hoàn Thành Quá Hạn</div>
         </div>
     </div>
-    
-    <div class="col-md-4">
+
+    <div class="col-4">
         <div class="stat-card">
             <div class="stat-icon text-success">
                 <i class="bi bi-check-circle-fill"></i>
@@ -100,54 +115,107 @@
     </div>
 </div>
 
-<!-- Filter Section -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> Bộ Lọc</h5>
-    </div>
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Từ ngày:</label>
-                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-calendar-range"></i> Đến ngày:</label>
-                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-            </div>
-            
-            <div class="col-md-3">
-                <label class="form-label"><i class="bi bi-person"></i> Nhân viên:</label>
-                <select class="form-select" name="assigned_user">
-                    <option value="">-- Tất cả --</option>
-                    {% for user in all_users %}
-                    <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
-                        {{ user.full_name }} ({{ user.role | role_vn }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="col-md-3 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1">
-                    <i class="bi bi-search"></i> Lọc
-                </button>
-                <a href="{{ url_for('performance.unrated_tasks') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i>
-                </a>
-            </div>
-        </form>
+            <form method="GET" action="{{ url_for('performance.unrated_tasks') }}">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-range"></i> Từ ngày:
+                        </label>
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                        <small class="text-muted">Lọc theo ngày hoàn thành</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-range"></i> Đến ngày:
+                        </label>
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                        <small class="text-muted">Lọc theo ngày hoàn thành</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i> Nhân viên:
+                        </label>
+                        <select class="form-select" name="assigned_user">
+                            <option value="">-- Tất cả --</option>
+                            {% for user in all_users %}
+                            <option value="{{ user.id }}" {% if assigned_user == user.id|string %}selected{% endif %}>
+                                {{ user.full_name }} ({{ user.role | role_vn }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Hiển thị filter đang áp dụng -->
+                    {% if date_from or date_to or assigned_user %}
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <i class="bi bi-info-circle"></i> Đang lọc:
+                            {% if date_from %}
+                            <br>• Từ: {{ date_from }}
+                            {% endif %}
+                            {% if date_to %}
+                            <br>• Đến: {{ date_to }}
+                            {% endif %}
+                            {% if assigned_user and all_users %}
+                                {% for user in all_users %}
+                                    {% if user.id == assigned_user|int %}
+                                    <br>• Nhân viên: {{ user.full_name }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('performance.unrated_tasks') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- Tasks Table -->
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Danh Sách Nhiệm Vụ
-            <span class="badge bg-warning text-dark ms-2">{{ pagination.total }} nhiệm vụ</span>
-        </h5>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i>
+                <span class="badge bg-warning text-dark ms-2">{{ pagination.total }} nhiệm vụ</span>
+                {% if pagination.pages > 1 %}
+                <span class="badge bg-secondary ms-1">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+                {% endif %}
+            </h5>
+
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút bộ lọc -->
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel-fill"></i>
+                    {% if date_from or date_to or assigned_user %}
+                    <span class="badge bg-danger">
+                        {{ (1 if date_from else 0) + (1 if date_to else 0) + (1 if assigned_user else 0) }}
+                    </span>
+                    {% endif %}
+                </button>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         {% if tasks %}
@@ -160,12 +228,12 @@
                         <th>Người Giao</th>
                         <th>Ngày Hoàn Thành</th>
                         <th>Trạng Thái</th>
-                        <th>Hành Động</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for task in tasks %}
-                    <tr {% if task.completed_overdue %}class="task-row-overdue"{% endif %}>
+                    <tr class="clickable-row {% if task.completed_overdue %}task-row-overdue{% endif %}"
+                        data-href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
                         <td data-label="Nhiệm Vụ">
                             <strong>{{ task.title }}</strong>
                             <br>
@@ -179,27 +247,23 @@
                             </small>
                             {% endif %}
                         </td>
-                        
+
                         <td data-label="Người Làm">
                             {% set assignees = task.assignments.filter_by(accepted=True).all() %}
                             {% if assignees %}
                                 {% for assignment in assignees %}
                                     {{ assignment.user.full_name }}
-                                    <br>
-                                    <small class="text-muted">{{ assignment.user.role | role_vn }}</small>
                                     {% if not loop.last %}<br>{% endif %}
                                 {% endfor %}
                             {% else %}
                                 <span class="text-muted">Chưa gán</span>
                             {% endif %}
                         </td>
-                        
+
                         <td data-label="Người Giao">
                             {{ task.creator.full_name }}
-                            <br>
-                            <small class="text-muted">{{ task.creator.role | role_vn }}</small>
                         </td>
-                        
+
                         <td data-label="Ngày Hoàn Thành">
                             <span class="badge bg-success">
                                 {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
@@ -209,7 +273,7 @@
                                 {{ task.updated_at | vn_datetime('%H:%M') }}
                             </small>
                         </td>
-                        
+
                         <td data-label="Trạng Thái">
                             {% if task.completed_overdue %}
                             <span class="badge bg-danger">
@@ -221,55 +285,72 @@
                             </span>
                             {% endif %}
                         </td>
-                        
-                        <td data-label="Hành Động">
-                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="bi bi-eye"></i> Xem & Đánh Giá
-                            </a>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         {% if pagination.pages > 1 %}
         <nav aria-label="Task pagination" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ url_for('performance.unrated_tasks', page=pagination.prev_num, date_from=date_from, date_to=date_to, assigned_user=assigned_user) if pagination.has_prev else '#' }}">
-                        <i class="bi bi-chevron-left"></i>
+                    {% if pagination.has_prev %}
+                    <a class="page-link"
+                       href="{{ url_for('performance.unrated_tasks', page=pagination.prev_num, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                        <i class="bi bi-chevron-left"></i> Trước
                     </a>
+                    {% else %}
+                    <span class="page-link"><i class="bi bi-chevron-left"></i> Trước</span>
+                    {% endif %}
                 </li>
-                
-                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+
+                {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                     {% if page_num %}
-                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                            <a class="page-link" 
+                        {% if page_num == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link"
                                href="{{ url_for('performance.unrated_tasks', page=page_num, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
                                 {{ page_num }}
                             </a>
                         </li>
+                        {% endif %}
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
                     {% endif %}
                 {% endfor %}
-                
+
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ url_for('performance.unrated_tasks', page=pagination.next_num, date_from=date_from, date_to=date_to, assigned_user=assigned_user) if pagination.has_next else '#' }}">
-                        <i class="bi bi-chevron-right"></i>
+                    {% if pagination.has_next %}
+                    <a class="page-link"
+                       href="{{ url_for('performance.unrated_tasks', page=pagination.next_num, date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}">
+                        Sau <i class="bi bi-chevron-right"></i>
                     </a>
+                    {% else %}
+                    <span class="page-link">Sau <i class="bi bi-chevron-right"></i></span>
+                    {% endif %}
                 </li>
             </ul>
         </nav>
+
+        <div class="text-center text-muted">
+            <small>
+                Hiển thị {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
+                -
+                {{ min(pagination.page * pagination.per_page, pagination.total) }}
+                /
+                {{ pagination.total }} nhiệm vụ
+            </small>
+        </div>
         {% endif %}
-        
+
         {% else %}
         <div class="text-center py-5">
             <i class="bi bi-check-circle" style="font-size: 3rem; color: #28a745;"></i>
@@ -278,11 +359,20 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
-<!-- Back Button -->
-<div class="mt-3">
-    <a href="{{ url_for('tasks.dashboard') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại Dashboard
-    </a>
-</div>
+{% block scripts %}
+<script>
+// Xử lý click vào row để chuyển trang
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+</script>
 {% endblock %}

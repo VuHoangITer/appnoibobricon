@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ thống quản lý công việc{% endblock %}</title>
 
+    <!-- CRITICAL: INLINE SCRIPT - CHẠY TRƯỚC HẾT -->
+    <script>
+    // Chạy ĐỒNG BỘ ngay lập tức - TRƯỚC KHI parse CSS
+    (function() {
+        const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+        if (sidebarHidden) {
+            // Thêm class vào <html> ngay lập tức
+            document.documentElement.className = 'sidebar-hidden';
+        }
+    })();
+    </script>
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
@@ -14,7 +26,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
 
-    <!-- Preload Logo Image - ƯU TIÊN LOAD TRƯỚC -->
+    <!-- Preload Logo Image -->
     <link rel="preload" href="{{ url_for('static', filename='images/logo.png') }}" as="image">
 
     <!-- PWA Meta Tags -->
@@ -38,87 +50,26 @@
         html {
             scroll-behavior: smooth;
         }
-        /* ============================================
-           LOGO PRELOAD & FIXED HEIGHT
-           ============================================ */
-        .sidebar-header {
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0; /* CRITICAL: Không co lại */
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 16px;
-            min-height: 80px;
-        }
-
-        .sidebar-brand img {
-            max-width: 160px;
-            height: auto;
-            min-height: 48px;
-            opacity: 0;
-            transition: opacity 0.2s ease-in;
-        }
-
-        .sidebar-brand img.loaded {
-            opacity: 1;
-        }
-
-        .sidebar-brand::before {
-            content: '';
-            display: block;
-            width: 160px;
-            height: 48px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 4px;
-            position: absolute;
-        }
-
-        .sidebar-brand img.loaded ~ .sidebar-brand::before,
-        .sidebar-brand:has(img.loaded)::before {
-            display: none;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* ============================================
-           CRITICAL: SIDEBAR FLEXBOX LAYOUT FIX
-           ============================================ */
         .sidebar {
             display: flex !important;
             flex-direction: column !important;
             height: 100vh !important;
             overflow: hidden !important;
+            transition: none !important;
+        }
+
+        .sidebar.transition-enabled {
+            transition: transform 0.3s ease-in-out !important;
         }
 
         .sidebar-nav {
-            flex: 1 1 auto !important; /* Chiếm hết không gian còn lại */
+            flex: 1 1 auto !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 20px 0 !important;
             scroll-behavior: smooth;
         }
 
-        .sidebar-footer {
-            position: relative !important; /* CRITICAL: BỎ absolute */
-            flex-shrink: 0 !important; /* Không co lại */
-            margin-top: 0 !important; /* Không cần margin */
-        }
-
-        /* ============================================
-           SPACING & BORDERS
-           ============================================ */
         .nav-section-title {
             margin-top: 20px !important;
             margin-bottom: 8px !important;
@@ -130,51 +81,196 @@
             margin-top: 5px !important;
         }
 
+        html.sidebar-hidden .sidebar {
+            transform: translateX(-100%) !important;
+        }
+
+        html.sidebar-hidden .main-wrapper {
+            margin-left: 0 !important;
+        }
+
+        html.sidebar-hidden .sidebar-overlay {
+            display: none !important;
+        }
+
+        .main-wrapper {
+            transition: none !important;
+        }
+
+        .main-wrapper.transition-enabled {
+            transition: margin-left 0.3s ease-in-out !important;
+        }
+
+        /* TOP NAVBAR LOGO */
+        .navbar-logo {
+            height: 45px;
+            width: auto;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .navbar-logo:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar-logo-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            padding: 0;
+            margin-right: 8px;
+        }
+
+        /* USER AVATAR DROPDOWN */
+        .user-avatar-btn {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0dcaf0;
+            color: white;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-left: 12px;
+        }
+
+        .user-avatar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            min-width: 240px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .user-avatar-btn.active + .user-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-header {
+            padding: 20px;
+            background: #0dcaf0;
+            color: white;
+            text-align: center;
+        }
+
+        .user-dropdown-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 auto 12px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-dropdown-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-dropdown-role {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .user-dropdown-body {
+            padding: 8px 0;
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .user-dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .user-dropdown-item i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .user-dropdown-item.logout {
+            color: #dc3545;
+            border-top: 1px solid #e9ecef;
+            margin-top: 4px;
+        }
+
+        .user-dropdown-item.logout i {
+            color: #dc3545;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
-            .sidebar-header {
-                min-height: 70px;
-            }
-            .sidebar-brand {
-                min-height: 70px;
-                padding: 12px;
-            }
-            .sidebar-brand img {
-                max-width: 140px;
-                min-height: 42px;
-            }
-            .sidebar-brand::before {
-                width: 140px;
-                height: 42px;
+            .navbar-logo {
+                height: 38px;
             }
 
-            /* Mobile: Footer vẫn phải relative */
-            .sidebar-footer {
-                position: relative !important;
+            html.sidebar-hidden .sidebar.active {
+                transform: translateX(0) !important;
+            }
+
+            .user-dropdown {
+                right: -10px;
+            }
+        }
+        @media (max-width: 480px) {
+            .navbar-logo {
+                height: 32px;
             }
         }
     </style>
-
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% if current_user.is_authenticated %}
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="{{ url_for('tasks.dashboard') }}" class="sidebar-brand">
-                <img src="{{ url_for('static', filename='images/logo.png') }}"
-                     alt="BRICON Logo"
-                     id="sidebar-logo"
-                     onload="this.classList.add('loaded')">
-            </a>
-        </div>
-
         <nav class="sidebar-nav">
             <div class="nav-item">
                 <a href="{{ url_for('tasks.dashboard') }}" class="nav-link {% if request.endpoint == 'tasks.dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2"></i>
-                    <span>Dashboard</span>
+                    <span>Tổng quan</span>
                 </a>
             </div>
             <div class="nav-item">
@@ -184,7 +280,8 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a href="{{ url_for('workflow.workflow_diagram') }}" class="nav-link {% if 'workflow' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('workflow.workflow_diagram') }}"
+                   class="nav-link {% if request.endpoint == 'workflow.workflow_diagram' %}active{% endif %}">
                     <i class="bi bi-diagram-3-fill"></i>
                     <span>Luồng Giao Việc</span>
                 </a>
@@ -192,7 +289,7 @@
             <div class="nav-item">
                 <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-list-task"></i>
-                    <span>Tạo Công việc</span>
+                    <span>Công việc</span>
                 </a>
             </div>
             <div class="nav-item">
@@ -223,14 +320,12 @@
                     <span>Thư viện File</span>
                 </a>
             </div>
-
             <div class="nav-item">
                 <a href="{{ url_for('notes.list_notes') }}" class="nav-link {% if 'notes' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-journal-text"></i>
                     <span>Ghi chú</span>
                 </a>
             </div>
-
             <div class="nav-item">
                 <a href="{{ url_for('notifications.list_notifications') }}" class="nav-link {% if 'notifications' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-bell"></i>
@@ -240,32 +335,24 @@
             </div>
             {% if current_user.role in ['director', 'accountant'] %}
                 <div class="nav-section-title">Lương</div>
-
-                <!-- Quản lý Lương - Director + Accountant -->
                 <div class="nav-item">
                     <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">
                         <i class="bi bi-cash-coin"></i>
                         <span>Lương</span>
                     </a>
                 </div>
-
-                <!-- Quản Lý Nhân Viên - Director + Accountant -->
                 <div class="nav-item">
                     <a href="{{ url_for('employees.list_employees') }}" class="nav-link {% if 'employees' in request.endpoint %}active{% endif %}">
                         <i class="bi bi-people-fill"></i>
                         <span>Quản Lý Nhân Viên</span>
                     </a>
                 </div>
-
-                <!-- Số Công/Tháng - Director + Accountant -->
                 <div class="nav-item">
                     <a href="{{ url_for('work_days.list_configs') }}" class="nav-link {% if 'work_days' in request.endpoint %}active{% endif %}">
                         <i class="bi bi-calendar-week"></i>
                         <span>Số Công/Tháng</span>
                     </a>
                 </div>
-
-                <!-- Cấp Bậc Lương - CHỈ Director -->
                 {% if current_user.role == 'director' %}
                 <div class="nav-item">
                     <a href="{{ url_for('salary_grades.list_grades') }}" class="nav-link {% if 'salary_grades' in request.endpoint %}active{% endif %}">
@@ -297,50 +384,55 @@
             </div>
             {% endif %}
         </nav>
-
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">
-                    {{ current_user.full_name[0].upper() }}
-                </div>
-                <div class="user-details">
-                    <div class="user-name">{{ current_user.full_name }}</div>
-                    <div class="user-role">{{ current_user.role | role_vn }}</div>
-                </div>
-                <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Đăng xuất">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-            </div>
-        </div>
     </aside>
 
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Main Content Wrapper -->
-    <div class="main-wrapper">
-        <!-- Top Navbar -->
+    <div class="main-wrapper" id="mainWrapper">
         <nav class="top-navbar">
             <div class="navbar-left">
                 <button class="menu-toggle" id="menuToggle">
                     <i class="bi bi-list"></i>
                 </button>
-                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <a href="{{ url_for('hub.workflow_hub') }}" class="navbar-logo-link" title="Về Trang Chủ">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                         alt="BRICON Logo"
+                         class="navbar-logo">
+                </a>
             </div>
-
             <div class="navbar-right">
-                <!-- Nút Settings Notification sẽ được thêm tự động bởi JavaScript -->
-
+                <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebarMode()">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
                 <button class="notification-btn" onclick="window.location.href='{{ url_for('notifications.list_notifications') }}'">
                     <i class="bi bi-bell-fill"></i>
                     <span class="notification-badge" id="notif-count" style="display: none;"></span>
                 </button>
+
+                <div style="position: relative;">
+                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()">
+                        {{ current_user.full_name[0].upper() }}
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <div class="user-dropdown-avatar">
+                                {{ current_user.full_name[0].upper() }}
+                            </div>
+                            <div class="user-dropdown-name">{{ current_user.full_name }}</div>
+                            <div class="user-dropdown-role">{{ current_user.role | role_vn }}</div>
+                        </div>
+                        <div class="user-dropdown-body">
+                            <a href="{{ url_for('auth.logout') }}" class="user-dropdown-item logout">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Đăng xuất</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -353,19 +445,15 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- Page Content -->
             {% block content %}{% endblock %}
         </main>
     </div>
     {% else %}
-    <!-- Login Page (No Sidebar) -->
     {% block login_content %}{% endblock %}
     {% endif %}
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -379,27 +467,35 @@
             });
         }
     </script>
-
-    <!-- Preload Logo Script - Đảm bảo logo load ngay -->
-    <script>
-        // Force load logo immediately
-        (function() {
-            const logo = document.getElementById('sidebar-logo');
-            if (logo && logo.complete) {
-                logo.classList.add('loaded');
-            }
-        })();
-    </script>
-
-    <!-- Notification Sound & Manager -->
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notification-sound.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notification-manager.js') }}"></script>
     {% endif %}
 
-    <!-- Custom JS -->
     <script>
-        // Mobile Menu Toggle
+        function toggleUserDropdown() {
+            const btn = document.getElementById('userAvatarBtn');
+            btn.classList.toggle('active');
+
+            if (btn.classList.contains('active')) {
+                setTimeout(() => {
+                    document.addEventListener('click', closeUserDropdownOutside);
+                }, 0);
+            } else {
+                document.removeEventListener('click', closeUserDropdownOutside);
+            }
+        }
+
+        function closeUserDropdownOutside(e) {
+            const btn = document.getElementById('userAvatarBtn');
+            const dropdown = document.getElementById('userDropdown');
+
+            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                btn.classList.remove('active');
+                document.removeEventListener('click', closeUserDropdownOutside);
+            }
+        }
+
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -418,7 +514,6 @@
             });
         }
 
-        // Update notification count (legacy support - manager sẽ xử lý)
         {% if current_user.is_authenticated %}
         function updateNotifCount() {
             fetch('{{ url_for("notifications.unread_count") }}')
@@ -444,118 +539,124 @@
                 .catch(err => console.error('Error fetching notifications:', err));
         }
 
-        // Update every 30 seconds (backup)
         updateNotifCount();
         setInterval(updateNotifCount, 30000);
         {% endif %}
 
-        // Auto-hide alerts
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });
-        }, 4000);
+        }, 12000);
 
-// ============================================
-// LƯU VÀ KHÔI PHỤC VỊ TRÍ SCROLL
-// ============================================
+        {% if current_user.is_authenticated %}
+        (function() {
+            const SCROLL_KEY = 'sidebar_scroll_position';
+            const CONTENT_SCROLL_KEY = 'main_content_scroll_position';
 
-{% if current_user.is_authenticated %}
-(function() {
-    const SCROLL_KEY = 'sidebar_scroll_position';
-    const CONTENT_SCROLL_KEY = 'main_content_scroll_position';
-
-    // 1. Lưu vị trí scroll của sidebar
-    const sidebar = document.querySelector('.sidebar-nav');
-    if (sidebar) {
-        // Khôi phục vị trí scroll sidebar khi trang load
-        const savedSidebarScroll = sessionStorage.getItem(SCROLL_KEY);
-        if (savedSidebarScroll) {
-            sidebar.scrollTop = parseInt(savedSidebarScroll);
-        }
-
-        // Lưu vị trí scroll sidebar khi scroll
-        let sidebarScrollTimeout;
-        sidebar.addEventListener('scroll', function() {
-            clearTimeout(sidebarScrollTimeout);
-            sidebarScrollTimeout = setTimeout(function() {
-                sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
-            }, 100);
-        });
-    }
-
-    // 2. Lưu vị trí scroll của main content
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        // Khôi phục vị trí scroll main content khi trang load
-        const savedContentScroll = sessionStorage.getItem(CONTENT_SCROLL_KEY);
-        if (savedContentScroll) {
-            setTimeout(function() {
-                window.scrollTo(0, parseInt(savedContentScroll));
-            }, 50);
-        }
-
-        // Lưu vị trí scroll main content khi scroll
-        let contentScrollTimeout;
-        window.addEventListener('scroll', function() {
-            clearTimeout(contentScrollTimeout);
-            contentScrollTimeout = setTimeout(function() {
-                sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
-            }, 100);
-        });
-    }
-
-    // 3. Lưu vị trí trước khi chuyển trang
-    document.addEventListener('click', function(e) {
-        // Kiểm tra nếu click vào link sidebar hoặc bất kỳ link nào
-        const link = e.target.closest('a[href]');
-        if (link && !link.getAttribute('href').startsWith('#')) {
-            sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
+            const sidebar = document.querySelector('.sidebar-nav');
             if (sidebar) {
-                sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
+                const savedSidebarScroll = sessionStorage.getItem(SCROLL_KEY);
+                if (savedSidebarScroll) {
+                    sidebar.scrollTop = parseInt(savedSidebarScroll);
+                }
+
+                let sidebarScrollTimeout;
+                sidebar.addEventListener('scroll', function() {
+                    clearTimeout(sidebarScrollTimeout);
+                    sidebarScrollTimeout = setTimeout(function() {
+                        sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
+                    }, 100);
+                });
+            }
+
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                const savedContentScroll = sessionStorage.getItem(CONTENT_SCROLL_KEY);
+                if (savedContentScroll) {
+                    setTimeout(function() {
+                        window.scrollTo(0, parseInt(savedContentScroll));
+                    }, 50);
+                }
+
+                let contentScrollTimeout;
+                window.addEventListener('scroll', function() {
+                    clearTimeout(contentScrollTimeout);
+                    contentScrollTimeout = setTimeout(function() {
+                        sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
+                    }, 100);
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[href]');
+                if (link && !link.getAttribute('href').startsWith('#')) {
+                    sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
+                    if (sidebar) {
+                        sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
+                    }
+                }
+            });
+            document.querySelectorAll('.sidebar-nav .nav-link').forEach(function(navLink) {
+                navLink.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        if (sidebar) sidebar.classList.remove('active');
+                        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                    }
+                });
+            });
+        })();
+        {% endif %}
+    </script>
+
+    <script>
+    window.toggleSidebarMode = function() {
+        const html = document.documentElement;
+        html.classList.toggle('sidebar-hidden');
+
+        const isHidden = html.classList.contains('sidebar-hidden');
+        localStorage.setItem('sidebarHidden', isHidden);
+
+        const btn = document.getElementById('sidebarToggleBtn');
+        if (btn) {
+            const icon = btn.querySelector('i');
+            if (isHidden) {
+                icon.className = 'bi bi-layout-sidebar';
+            } else {
+                icon.className = 'bi bi-layout-sidebar-inset';
+            }
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+        const btn = document.getElementById('sidebarToggleBtn');
+        const sidebar = document.getElementById('sidebar');
+        const mainWrapper = document.getElementById('mainWrapper');
+
+        setTimeout(function() {
+            if (sidebar) sidebar.classList.add('transition-enabled');
+            if (mainWrapper) mainWrapper.classList.add('transition-enabled');
+        }, 100);
+
+        if (btn && sidebarHidden) {
+            const icon = btn.querySelector('i');
+            icon.className = 'bi bi-layout-sidebar';
+        }
+
+        if (localStorage.getItem('sidebarHidden') === null) {
+            document.documentElement.classList.add('sidebar-hidden');
+            localStorage.setItem('sidebarHidden', 'true');
+
+            const btn = document.getElementById('sidebarToggleBtn');
+            if (btn) {
+                btn.querySelector('i').className = 'bi bi-layout-sidebar';
             }
         }
     });
-
-    // 4. QUAN TRỌNG: Xóa scroll position khi logout
-    const logoutBtn = document.querySelector('.logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            sessionStorage.removeItem(SCROLL_KEY);
-            sessionStorage.removeItem(CONTENT_SCROLL_KEY);
-        });
-    }
-
-    // 5. BONUS: Smooth scroll về đầu trang khi click logo
-    const logoLink = document.querySelector('.sidebar-brand');
-    if (logoLink) {
-        logoLink.addEventListener('click', function(e) {
-            if (window.location.pathname === this.getAttribute('href')) {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                sessionStorage.setItem(CONTENT_SCROLL_KEY, 0);
-            }
-        });
-    }
-
-    // 6. MOBILE: Đóng sidebar sau khi click nhưng giữ scroll position
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const sidebarElement = document.getElementById('sidebar');
-
-    document.querySelectorAll('.sidebar-nav .nav-link').forEach(function(navLink) {
-        navLink.addEventListener('click', function() {
-            // Trên mobile, đóng sidebar
-            if (window.innerWidth <= 768) {
-                if (sidebarElement) sidebarElement.classList.remove('active');
-                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-            }
-        });
-    });
-})();
-{% endif %}
-</script>
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

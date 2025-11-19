@@ -632,3 +632,60 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 a:not(.btn):not(.nav-link):not(.sidebar-brand):hover {
     color: #0a58ca;
 }
+/* Nút Toggle Sidebar - Siêu nhỏ, chỉ là icon tròn */
+.sidebar-toggle-container {
+    position: fixed;
+    top: 75px;
+    right: 15px;
+    z-index: 999;
+}
+
+.sidebar-toggle-btn {
+    width: 44px;           /* cố định kích thước nhỏ */
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px solid #0d6efd;
+    border-radius: 50%;    /* tròn hoàn toàn */
+    color: #0d6efd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(13,110,253,0.3);
+}
+
+.sidebar-toggle-btn:hover {
+    background: #0d6efd;
+    color: #fff;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 18px rgba(13,110,253,0.4);
+}
+
+/* Chỉ để lại icon, ẩn hết chữ */
+.sidebar-toggle-btn i {
+    font-size: 1.3rem;
+}
+.sidebar-toggle-btn span {
+    display: none !important;
+}
+
+/* Ẩn sidebar */
+body.sidebar-hidden .sidebar { transform: translateX(-100%)!important; }
+body.sidebar-hidden .main-wrapper { margin-left: 0!important; }
+body.sidebar-hidden .sidebar-overlay { display: none!important; }
+.sidebar, .main-wrapper { transition: all 0.3s ease-in-out!important; }
+
+/* Mobile: càng nhỏ càng đẹp */
+@media (max-width: 768px) {
+    .sidebar-toggle-container { top: 68px; right: 12px; }
+    .sidebar-toggle-btn { width: 42px; height: 42px; }
+    .sidebar-toggle-btn i { font-size: 1.25rem; }
+    body.sidebar-hidden .sidebar.active { transform: translateX(0)!important; }
+}
+
+@media (max-width: 480px) {
+    .sidebar-toggle-container { top: 65px; right: 10px; }
+    .sidebar-toggle-btn { width: 40px; height: 40px; }
+    .sidebar-toggle-btn i { font-size: 1.2rem; }
+}

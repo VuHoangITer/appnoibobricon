@@ -3,58 +3,141 @@
 {% block title %}Quản Lý Tạm Ứng{% endblock %}
 {% block page_title %}Quản Lý Tạm Ứng{% endblock %}
 
-{% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-    <a href="{{ url_for('advances.create_advance') }}" class="btn btn-primary w-100 w-md-auto">
-        <i class="bi bi-plus-circle"></i> Tạo Tạm Ứng
-    </a>
-</div>
+{% block extra_css %}
+<style>
+/* CSS cho clickable row */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-<!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET">
-            <div class="row g-3">
-                <div class="col-12 col-md-3">
-                    <label class="form-label">Tên Nhân Viên</label>
-                    <input type="text" class="form-control" name="employee" value="{{ employee_filter }}" placeholder="Nhập tên...">
+.clickable-row:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* CSS cho clickable card */
+.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clickable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Ngăn click vào button trigger card/row click */
+.clickable-card .btn,
+.clickable-card .btn-group,
+.clickable-card form,
+.clickable-row .btn,
+.clickable-row .btn-group,
+.clickable-row form {
+    position: relative;
+    z-index: 10;
+}
+
+/* Stats card responsive cho mobile */
+@media (max-width: 767.98px) {
+    .stats-card .card-body {
+        padding: 0.75rem;
+    }
+
+    .stats-card .card-body h6 {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-card .card-body h3 {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" action="{{ url_for('advances.list_advances') }}">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-person"></i> Tên Nhân Viên:
+                        </label>
+                        <input type="text" class="form-control" name="employee" value="{{ employee_filter }}" placeholder="Nhập tên...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-flag"></i> Trạng Thái:
+                        </label>
+                        <select class="form-select" name="status">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Chưa trừ lương</option>
+                            <option value="deducted" {% if status_filter == 'deducted' %}selected{% endif %}>Đã trừ lương</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar"></i> Tháng:
+                        </label>
+                        <input type="month" class="form-control" name="month" value="{{ month_filter }}">
+                    </div>
+
+                    <!-- Hiển thị filter đang áp dụng -->
+                    {% if employee_filter or status_filter != 'all' or month_filter %}
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <i class="bi bi-info-circle"></i> Đang lọc:
+                            {% if employee_filter %}
+                            <br>• Nhân viên: {{ employee_filter }}
+                            {% endif %}
+                            {% if status_filter != 'all' %}
+                            <br>• Trạng thái: {{ 'Chưa trừ lương' if status_filter == 'pending' else 'Đã trừ lương' }}
+                            {% endif %}
+                            {% if month_filter %}
+                            <br>• Tháng: {{ month_filter }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="col-12 col-md-3">
-                    <label class="form-label">Trạng Thái</label>
-                    <select class="form-select" name="status">
-                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả</option>
-                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Chưa trừ lương</option>
-                        <option value="deducted" {% if status_filter == 'deducted' %}selected{% endif %}>Đã trừ lương</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-3">
-                    <label class="form-label">Tháng</label>
-                    <input type="month" class="form-control" name="month" value="{{ month_filter }}">
-                </div>
-                <div class="col-12 col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Tìm
+                <div class="modal-footer">
+                    <a href="{{ url_for('advances.list_advances') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
                     </button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- Stats -->
 <div class="row mb-4">
-    <div class="col-12 col-md-6 mb-3 mb-md-0">
-        <div class="card text-white bg-primary">
+    <div class="col-6 mb-2 mb-md-0">
+        <div class="card text-white bg-primary stats-card">
             <div class="card-body">
                 <h6><i class="bi bi-wallet2"></i> Tổng Tạm Ứng</h6>
                 <h3 class="mb-0">{{ "{:,.0f}".format(total_amount) }} ₫</h3>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-6">
-        <div class="card text-white bg-warning">
+    <div class="col-6">
+        <div class="card text-white bg-warning stats-card">
             <div class="card-body">
-                <h6><i class="bi bi-clock-history"></i> Chưa Trừ Lương</h6>
+                <h6><i class="bi bi-clock-history"></i> Chưa Trừ</h6>
                 <h3 class="mb-0">{{ "{:,.0f}".format(pending_amount) }} ₫</h3>
             </div>
         </div>
@@ -64,10 +147,29 @@
 <!-- List -->
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Danh Sách Tạm Ứng
-            <span class="badge bg-primary ms-2">{{ advances|length }}</span>
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i>
+                <span class="badge bg-primary ms-2">{{ advances|length }} tạm ứng</span>
+            </h5>
+
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Nút bộ lọc -->
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel-fill"></i>
+                    {% if employee_filter or status_filter != 'all' or month_filter %}
+                    <span class="badge bg-danger">
+                        {{ (1 if employee_filter else 0) + (1 if status_filter != 'all' else 0) + (1 if month_filter else 0) }}
+                    </span>
+                    {% endif %}
+                </button>
+
+                <!-- Nút tạo tạm ứng -->
+                <a href="{{ url_for('advances.create_advance') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         {% if advances %}
@@ -87,7 +189,8 @@
                     </thead>
                     <tbody>
                         {% for a in advances %}
-                        <tr class="{% if a.is_deducted %}table-secondary{% endif %}">
+                        <tr class="clickable-row {% if a.is_deducted %}table-secondary{% endif %}"
+                            data-href="{{ url_for('advances.advance_detail', advance_id=a.id) }}">
                             <td>{{ a.advance_date|vn_date }}</td>
                             <td>
                                 <strong>{{ a.employee_name }}</strong>
@@ -109,9 +212,6 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ url_for('advances.advance_detail', advance_id=a.id) }}" class="btn btn-info">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
                                     {% if not a.is_deducted %}
                                     <a href="{{ url_for('advances.edit_advance', advance_id=a.id) }}" class="btn btn-primary">
                                         <i class="bi bi-pencil"></i>
@@ -135,7 +235,8 @@
         <!-- Mobile Card View -->
         <div class="d-lg-none">
             {% for a in advances %}
-            <div class="card mb-3 {% if a.is_deducted %}border-secondary{% else %}border-primary{% endif %}">
+            <div class="card mb-3 clickable-card {% if a.is_deducted %}border-secondary{% else %}border-primary{% endif %}"
+                 data-href="{{ url_for('advances.advance_detail', advance_id=a.id) }}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
@@ -163,11 +264,8 @@
                             <small class="text-muted d-block">Số tiền:</small>
                             <h5 class="mb-0 text-primary">{{ "{:,.0f}".format(a.amount) }} ₫</h5>
                         </div>
+                        {% if not a.is_deducted %}
                         <div class="btn-group btn-group-sm">
-                            <a href="{{ url_for('advances.advance_detail', advance_id=a.id) }}" class="btn btn-info">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            {% if not a.is_deducted %}
                             <a href="{{ url_for('advances.edit_advance', advance_id=a.id) }}" class="btn btn-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -177,8 +275,8 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
-                            {% endif %}
                         </div>
+                        {% endif %}
                     </div>
 
                     {% if a.is_deducted %}
@@ -203,4 +301,42 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Xử lý click vào row để chuyển trang (Desktop table)
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào button, link hoặc form
+        if (e.target.closest('.btn') || e.target.closest('a') || e.target.closest('form')) {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+
+// Xử lý click vào card để chuyển trang (Mobile card)
+document.querySelectorAll('.clickable-card').forEach(card => {
+    card.addEventListener('click', function(e) {
+        // Không chuyển trang nếu click vào button, link hoặc form
+        if (e.target.closest('.btn') || e.target.closest('a') || e.target.closest('form')) {
+            return;
+        }
+
+        // Không chuyển trang nếu đang select text
+        if (window.getSelection().toString()) {
+            return;
+        }
+
+        window.location.href = this.dataset.href;
+    });
+});
+</script>
 {% endblock %}
