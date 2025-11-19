@@ -109,15 +109,9 @@ body.sidebar-hidden .sidebar-overlay {
     color: #2c3e50;
     border-radius: 12px;
     transition: all 0.3s ease;
-    background: #f8f9fa;
+    background: transparent;
     width: 100%;
     max-width: 140px;
-}
-
-.icon-card:hover {
-    background: white;
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .icon-wrapper {
@@ -145,7 +139,7 @@ body.sidebar-hidden .sidebar-overlay {
     font-size: 0.9rem;
     font-weight: 600;
     text-align: center;
-    color: #495057;
+    color: #ffffff;
     line-height: 1.3;
 }
 
