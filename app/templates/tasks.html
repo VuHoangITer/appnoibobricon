@@ -409,10 +409,16 @@ document.querySelectorAll('.task-checkbox').forEach(checkbox => {
 function updateBulkDeleteButton() {
     const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-    const selectedCount = document.getElementById('selectedCount');
-    if (bulkDeleteBtn && selectedCount) {
-        selectedCount.textContent = checkedBoxes.length;
+
+    if (bulkDeleteBtn) {
         bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+
+        // Hiện số lượng đã chọn trên button
+        if (checkedBoxes.length > 0) {
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash"></i> Xóa (${checkedBoxes.length})`;
+        } else {
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash"></i>`;
+        }
     }
 }
 

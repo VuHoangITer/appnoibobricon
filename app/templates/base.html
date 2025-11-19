@@ -50,6 +50,26 @@
         html {
             scroll-behavior: smooth;
         }
+
+        /* ==========================================
+           MODAL MODE: ẨN SIDEBAR VÀ TOP NAVBAR
+           ========================================== */
+        {% if request.args.get('modal') %}
+        .sidebar,
+        .sidebar-overlay,
+        .top-navbar {
+            display: none !important;
+        }
+
+        .main-wrapper {
+            margin-left: 0 !important;
+        }
+
+        .main-content {
+            padding: 20px !important;
+        }
+        {% endif %}
+
         .sidebar {
             display: flex !important;
             flex-direction: column !important;
@@ -265,6 +285,11 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
+
+    <!-- ========================================
+         CHỈ HIỂN THỊ SIDEBAR NẾU KHÔNG PHẢI MODAL
+         ======================================== -->
+    {% if not request.args.get('modal') %}
     <aside class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <div class="nav-item">
@@ -387,8 +412,15 @@
     </aside>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    {% endif %}
+    <!-- END SIDEBAR -->
 
     <div class="main-wrapper" id="mainWrapper">
+
+        <!-- ========================================
+             CHỈ HIỂN THỊ TOP NAVBAR NẾU KHÔNG PHẢI MODAL
+             ======================================== -->
+        {% if not request.args.get('modal') %}
         <nav class="top-navbar">
             <div class="navbar-left">
                 <button class="menu-toggle" id="menuToggle">
@@ -431,6 +463,8 @@
                 </div>
             </div>
         </nav>
+        {% endif %}
+        <!-- END TOP NAVBAR -->
 
         <main class="main-content">
             {% with messages = get_flashed_messages(with_categories=true) %}

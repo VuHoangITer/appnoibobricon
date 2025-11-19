@@ -689,3 +689,71 @@ body.sidebar-hidden .sidebar-overlay { display: none!important; }
     .sidebar-toggle-btn { width: 40px; height: 40px; }
     .sidebar-toggle-btn i { font-size: 1.2rem; }
 }
+/* FIX TOP NAVBAR MOBILE */
+@media (max-width: 768px) {
+    .top-navbar {
+        padding: 0 10px;
+    }
+
+    .navbar-left {
+        gap: 8px;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .navbar-logo {
+        height: 32px;
+    }
+
+    .page-title {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+
+    .navbar-right {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toggle-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.1rem;
+    }
+
+    .notification-btn {
+        font-size: 1.1rem;
+        padding: 6px;
+    }
+
+    .user-avatar-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-logo {
+        height: 28px;
+    }
+
+    .page-title {
+        max-width: 80px;
+        font-size: 0.9rem;
+    }
+
+    .sidebar-toggle-btn,
+    .user-avatar-btn {
+        width: 32px;
+        height: 32px;
+    }
+}

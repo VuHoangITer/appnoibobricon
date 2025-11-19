@@ -167,12 +167,38 @@
 @media (max-width: 768px) {
     .hub-tabs-nav {
         flex-wrap: nowrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 8px;
+        padding: 12px;
+        overflow-x: visible;
+        background: #f8f9fa;
     }
 
     .hub-tab-btn {
-        min-width: 120px;
-        padding: 15px 18px;
-        font-size: 0.9rem;
+        min-width: auto;
+        padding: 12px 8px;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.75rem;
+    }
+
+    .hub-tab-btn span {
+        display: none; /* Ẩn text */
+    }
+
+    .hub-tab-btn i {
+        font-size: 1.4rem;
+        margin: 0;
+    }
+
+    .hub-tab-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 0.65rem;
+        padding: 2px 5px;
+        margin: 0;
     }
 
     .hub-tab-content {
@@ -181,6 +207,21 @@
 
     .stats-grid {
         grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 480px) {
+    .hub-tabs-nav {
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .hub-tab-btn {
+        padding: 10px 6px;
+    }
+
+    .hub-tab-btn i {
+        font-size: 1.3rem;
     }
 }
 .icon-card {
@@ -633,7 +674,7 @@
 
 <!-- Modal: Công Việc CHƯA LÀM -->
 <div class="modal fade" id="myPendingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
                 <h5 class="modal-title text-white">
@@ -660,7 +701,7 @@
 
 <!-- Modal: Công Việc ĐANG LÀM -->
 <div class="modal fade" id="myInProgressModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);">
                 <h5 class="modal-title text-white">
@@ -687,7 +728,7 @@
 
 <!-- Modal: Công Việc Sắp Đến Hạn -->
 <div class="modal fade" id="myDueSoonModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title">
@@ -709,7 +750,7 @@
 
 <!-- Modal: Công Việc Quá Hạn Của Tôi -->
 <div class="modal fade" id="myOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">
@@ -732,7 +773,7 @@
 {% if current_user.role in ['director', 'manager'] %}
 <!-- Modal: Công Việc CHƯA LÀM TEAM -->
 <div class="modal fade" id="teamPendingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
                 <h5 class="modal-title text-white">
@@ -758,7 +799,7 @@
 </div>
 <!-- Modal: Quá Hạn Team -->
 <div class="modal fade" id="teamOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">
@@ -780,7 +821,7 @@
 
 <!-- Modal: Cần Đánh Giá -->
 <div class="modal fade" id="needRatingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
@@ -807,7 +848,7 @@
 {% endif %}
 <!-- Modal Universal Iframe -->
 <div class="modal fade" id="iframeModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="iframeModalTitle">
@@ -827,7 +868,7 @@
 </div>
 <!-- Modal: Hiển thị trang trong iframe (cho stat-card) -->
 <div class="modal fade" id="pageModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl ">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="pageModalTitle">
@@ -1449,9 +1490,13 @@ function openInModal(url, title) {
     const iframe = document.getElementById('contentIframe');
     const titleText = document.getElementById('iframeModalTitleText');
 
+    // Thêm tham số modal=1 vào URL
+    const separator = url.includes('?') ? '&' : '?';
+    const modalUrl = url + separator + 'modal=1';
+
     // Set title và URL
     titleText.textContent = title;
-    iframe.src = url;
+    iframe.src = modalUrl;
 
     // Show modal
     modal.show();
@@ -1466,8 +1511,12 @@ function openInModal(url, title) {
 // ========================================
 document.getElementById('pageModal')?.addEventListener('show.bs.modal', function (event) {
     const button = event.relatedTarget;
-    const url = button.getAttribute('data-url');
+    let url = button.getAttribute('data-url');
     const title = button.getAttribute('data-title');
+
+    // Thêm tham số modal=1 vào URL
+    const separator = url.includes('?') ? '&' : '?';
+    url = url + separator + 'modal=1';
 
     document.getElementById('pageModalTitle').innerHTML = `<i class="bi bi-window"></i> ${title}`;
     document.getElementById('pageModalFrame').src = url;
