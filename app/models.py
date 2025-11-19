@@ -103,6 +103,8 @@ class Task(db.Model):
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
+
+    # ===== Thông tin chính =====
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -113,17 +115,32 @@ class Task(db.Model):
     is_important = db.Column(db.Boolean, default=False)
     is_recurring = db.Column(db.Boolean, default=False)
 
-    # Performance rating
+    # ===== Hiệu suất =====
     performance_rating = db.Column(db.String(10), nullable=True)
     rated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     rated_at = db.Column(db.DateTime, nullable=True)
 
-    # THÊM MỚI: Hoàn thành quá hạn
+    # ===== Hoàn thành quá hạn =====
     completed_overdue = db.Column(db.Boolean, default=False)
 
+    # ===== Recurring Task (lặp lại) =====
+    recurrence_enabled = db.Column(db.Boolean, default=False)
+    recurrence_interval_days = db.Column(db.Integer, default=7)
+    last_recurrence_date = db.Column(db.DateTime, nullable=True)
+    parent_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
+
+    # Quan hệ đệ quy (task cha – task con)
+    child_tasks = db.relationship(
+        'Task',
+        backref=db.backref('parent_task', remote_side=[id]),
+        lazy='dynamic'
+    )
+
+    # ===== Thời gian =====
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # ===== Relation =====
     creator = db.relationship(
         'User',
         foreign_keys=[creator_id],
@@ -152,6 +169,7 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.title}>'
+
 
 
 class TaskAssignment(db.Model):

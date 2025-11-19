@@ -34,11 +34,11 @@ def create_app(config_class=Config):
     os.makedirs(news_images_path, exist_ok=True)
 
     # THÊM: Register built-in Python functions to Jinja2
-    app.jinja_env.globals.update(min=min, max=max)
+    from datetime import datetime, timedelta  # ← SỬA: Thêm timedelta
+    app.jinja_env.globals.update(min=min, max=max, timedelta=timedelta)  # ← SỬA: Thêm timedelta
 
     # Register template filters for timezone
     from app.utils import utc_to_vn
-    from datetime import datetime
 
     @app.template_filter('vn_datetime')
     def vn_datetime_filter(dt, format='%d/%m/%Y %H:%M'):
@@ -99,6 +99,14 @@ def create_app(config_class=Config):
             'hr': 'Nhân viên'
         }
         return role_map.get(role, role)
+
+    # THÊM MỚI: Filter để cộng ngày
+    @app.template_filter('add_days')
+    def add_days_filter(date, days):
+        """Add days to a date"""
+        if date and days:
+            return date + timedelta(days=days)
+        return date
 
     # Register blueprints
     from app.auth import bp as auth_bp

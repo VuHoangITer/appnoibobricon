@@ -940,11 +940,11 @@ def create_task():
         assign_type = request.form.get('assign_type')
         assign_to_user_id = request.form.get('assign_to_user')
         assign_to_group = request.form.get('assign_to_group')
-
-        # THÊM MỚI: Lấy giá trị của 3 thẻ tags
         is_urgent = request.form.get('is_urgent') == 'on'
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
+        recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
+        recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
 
         # Validate
         if not title:
@@ -974,12 +974,15 @@ def create_task():
             status='PENDING',
             is_urgent=is_urgent,
             is_important=is_important,
-            is_recurring=is_recurring
+            is_recurring=is_recurring,
+            recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
+            recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+            last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
         )
         db.session.add(task)
         db.session.flush()
 
-        # Handle assignments (giữ nguyên code cũ)
+        # Handle assignments
         if assign_type == 'self':
             assignment = TaskAssignment(
                 task_id=task.id,

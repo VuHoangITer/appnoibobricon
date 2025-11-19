@@ -69,7 +69,44 @@
                         </div>
                     </div>
                     {% endif %}
+                    <!--  Enable Recurring -->
+                    {% if current_user.can_assign_tasks() %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-arrow-clockwise"></i> Tự động lặp lại
+                        </label>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="recurrence_enabled" id="recurrence_enabled">
+                                <label class="form-check-label" for="recurrence_enabled">
+                                    <strong>Bật tự động giao lại nhiệm vụ</strong>
+                                </label>
+                            </div>
 
+                            <div id="recurrence_options" style="display: none;">
+                                <div class="mb-2">
+                                    <label class="form-label small">Chu kỳ lặp lại:</label>
+                                    <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
+                                        <option value="7" selected>Hàng tuần (7 ngày)</option>
+                                        <option value="14">2 tuần (14 ngày)</option>
+                                        <option value="30">Hàng tháng (30 ngày)</option>
+                                    </select>
+                                </div>
+                                <div class="alert alert-info small mb-0">
+                                    <i class="bi bi-info-circle"></i>
+                                    Khi bật, hệ thống sẽ tự động tạo nhiệm vụ mới theo chu kỳ đã chọn.
+                                    Hạn hoàn thành sẽ tự động cộng thêm số ngày tương ứng.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                    document.getElementById('recurrence_enabled').addEventListener('change', function() {
+                        document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
+                    });
+                    </script>
+                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label">Gán cho</label>
                         <div class="form-check">

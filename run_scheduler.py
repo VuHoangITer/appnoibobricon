@@ -69,3 +69,20 @@ except (KeyboardInterrupt, SystemExit):
     scheduler.shutdown(wait=True)
     print("Scheduler stopped gracefully.")
     sys.exit(0)
+
+# Thêm vào cuối file
+from app.scheduler import create_recurring_tasks
+
+# Thêm job mới
+scheduler.add_job(
+    func=lambda: create_recurring_tasks(app),
+    trigger="cron",
+    hour=6,
+    minute=0,
+    id='create_recurring_tasks',
+    name='Create recurring tasks daily at 6 AM',
+    replace_existing=True,
+    max_instances=1
+)
+
+print(f"Recurring Tasks job: Every day at 6:00 AM")
