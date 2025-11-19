@@ -561,61 +561,8 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- ========================================
-                     Ô 2: LƯƠNG & NHÂN SỰ (CHỈ DIRECTOR/ACCOUNTANT)
-                     ======================================== -->
-                {% if current_user.role in ['director', 'accountant'] %}
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-cash-coin"></i>
-                        <h4>Lương & Nhân Sự</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.create_salary') }}', 'Tạo Bảng Lương')">
-                            <i class="bi bi-wallet-fill" style="color: #f093fb;"></i>
-                            <span>Tạo Bảng Lương</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.create_employee') }}', 'Thêm Nhân Viên')">
-                            <i class="bi bi-person-plus-fill" style="color: #4facfe;"></i>
-                            <span>Thêm Nhân Viên</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.create_config') }}', 'Tạo Số Công/Tháng')">
-                            <i class="bi bi-calendar-plus-fill" style="color: #43e97b;"></i>
-                            <span>Số Công/Tháng</span>
-                        </div>
-                        {% if current_user.role == 'director' %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.create_grade') }}', 'Tạo Cấp Bậc Lương')">
-                            <i class="bi bi-award-fill" style="color: #fa709a;"></i>
-                            <span>Cấp Bậc Lương</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- ========================================
-                     Ô 3: TÀI CHÍNH (CHỈ DIRECTOR/ACCOUNTANT)
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-currency-dollar"></i>
-                        <h4>Tài Chính</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.create_penalty') }}', 'Tạo Biên Bản Phạt')">
-                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
-                            <span>Biên Bản Phạt</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.create_advance') }}', 'Tạo Tạm Ứng')">
-                            <i class="bi bi-cash-stack" style="color: #30cfd0;"></i>
-                            <span>Tạm Ứng</span>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- ========================================
-                     Ô 4: THÔNG TIN & TÀI LIỆU
+                     Ô 2: THÔNG TIN & TÀI LIỆU
                      ======================================== -->
                 <div class="quick-action-box">
                     <div class="quick-action-header">
@@ -646,6 +593,57 @@
                         {% endif %}
                     </div>
                 </div>
+                <!-- ========================================
+                     Ô 3: LƯƠNG & NHÂN SỰ (CHỈ DIRECTOR/ACCOUNTANT)
+                     ======================================== -->
+                {% if current_user.role in ['director', 'accountant'] %}
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-cash-coin"></i>
+                        <h4>Lương & Nhân Sự</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.create_salary') }}', 'Tạo Bảng Lương')">
+                            <i class="bi bi-wallet-fill" style="color: #f093fb;"></i>
+                            <span>Tạo Bảng Lương</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.create_employee') }}', 'Thêm Nhân Viên')">
+                            <i class="bi bi-person-plus-fill" style="color: #4facfe;"></i>
+                            <span>Thêm Nhân Viên</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.create_config') }}', 'Tạo Số Công/Tháng')">
+                            <i class="bi bi-calendar-plus-fill" style="color: #43e97b;"></i>
+                            <span>Số Công/Tháng</span>
+                        </div>
+                        {% if current_user.role == 'director' %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.create_grade') }}', 'Tạo Cấp Bậc Lương')">
+                            <i class="bi bi-award-fill" style="color: #fa709a;"></i>
+                            <span>Cấp Bậc Lương</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ========================================
+                     Ô 4: TÀI CHÍNH (CHỈ DIRECTOR/ACCOUNTANT)
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-currency-dollar"></i>
+                        <h4>Tài Chính</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.create_penalty') }}', 'Tạo Biên Bản Phạt')">
+                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
+                            <span>Biên Bản Phạt</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.create_advance') }}', 'Tạo Tạm Ứng')">
+                            <i class="bi bi-cash-stack" style="color: #30cfd0;"></i>
+                            <span>Tạm Ứng</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
