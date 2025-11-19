@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app.models import Task, TaskAssignment, Salary, Employee, News, Notification, User
 from datetime import datetime, timedelta
 from sqlalchemy import and_, or_
-from app.utils import utc_to_vn, vn_now  # ✅ IMPORT UTILS
+from app.utils import utc_to_vn, vn_now
 
 bp = Blueprint('hub', __name__, url_prefix='/hub')
 
@@ -13,7 +13,7 @@ bp = Blueprint('hub', __name__, url_prefix='/hub')
 def workflow_hub():
     """Trang Hub - Quy trình công việc tổng quan"""
 
-    now = datetime.utcnow()  # ✅ SỬ DỤNG UTC ĐỂ SO SÁNH VỚI DATABASE
+    now = datetime.utcnow()  #  SỬ DỤNG UTC ĐỂ SO SÁNH VỚI DATABASE
     # ========================================
     #  CÔNG VIỆC HÀNG NGÀY (Cho tất cả roles)
     # ========================================
@@ -142,6 +142,17 @@ def workflow_hub():
         total_users = User.query.count()
         active_users = User.query.filter_by(is_active=True).count()
 
+    #  TÍNH BADGE CHO TAB CÁ NHÂN
+    my_work_badge =  my_due_soon + my_overdue
+
+    #  TÍNH BADGE CHO TAB CÔNG VIỆC
+    # Đếm số công việc do mình giao cần đánh giá
+    tasks_badge = Task.query.filter(
+        Task.creator_id == current_user.id,
+        Task.status == 'DONE',
+        Task.performance_rating == None
+    ).count()
+
     return render_template('hub.html',
                            # Công việc cá nhân
                            my_pending_tasks=my_pending_tasks,
@@ -149,6 +160,8 @@ def workflow_hub():
                            my_due_soon=my_due_soon,
                            my_overdue=my_overdue,
                            my_completed_recent=my_completed_recent,
+                           my_work_badge=my_work_badge,
+                           tasks_badge=tasks_badge,
                            # Quản lý công việc
                            total_tasks=total_tasks,
                            tasks_need_rating=tasks_need_rating,

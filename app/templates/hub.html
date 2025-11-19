@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Quy Trình Công Việc - BRICON{% endblock %}
+{% block title %}Quy Trình Công Việc - NO THING{% endblock %}
 
 {% block page_title %}Quy Trình Công Việc{% endblock %}
 
@@ -194,10 +194,13 @@
     <!-- Tab Navigation -->
     <div class="hub-tabs">
         <div class="hub-tabs-nav">
-            <button class="hub-tab-btn active" onclick="switchTab('my-work')">
-                <i class="bi bi-person-circle"></i>
-                <span>Công Việc Của Tôi</span>
-            </button>
+        <button class="hub-tab-btn active" onclick="switchTab('my-work')">
+            <i class="bi bi-person-circle"></i>
+            <span>Cá nhân</span>
+            {% if my_work_badge > 0 %}
+            <span class="hub-tab-badge">{{ my_work_badge }}</span>
+            {% endif %}
+        </button>
 
             {% if current_user.role in ['director', 'manager'] %}
             <button class="hub-tab-btn" onclick="switchTab('management')">
@@ -212,6 +215,9 @@
             <button class="hub-tab-btn" onclick="switchTab('tasks')">
                 <i class="bi bi-briefcase-fill"></i>
                 <span>Công Việc</span>
+                {% if tasks_badge > 0 %}
+                <span class="hub-tab-badge">{{ tasks_badge }}</span>
+                {% endif %}
             </button>
 
             {% if current_user.role in ['director', 'accountant'] %}
@@ -231,6 +237,10 @@
                 <span class="hub-tab-badge">{{ unconfirmed_news + unread_notifications }}</span>
                 {% endif %}
             </button>
+            <button class="hub-tab-btn" onclick="switchTab('quick-actions')">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>Thao Tác Nhanh</span>
+            </button>
 
             {% if current_user.role == 'director' %}
             <button class="hub-tab-btn" onclick="switchTab('admin')">
@@ -240,7 +250,7 @@
             {% endif %}
         </div>
 
-        <!-- Tab: Công Việc Của Tôi -->
+        <!-- Tab: Cá nhân -->
         <div id="tab-my-work" class="hub-tab-content active">
             <div class="stats-grid">
                 <div class="stat-card stat-pending" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myPendingModal">
@@ -324,116 +334,127 @@
         {% endif %}
 
         <!-- Tab: Công Việc -->
+        <!-- Tab: Công Việc -->
         <div id="tab-tasks" class="hub-tab-content">
-            <div class="icon-grid">
-                <div class="icon-card" onclick="openInModal('{{ url_for('tasks.dashboard') }}', 'Dashboard')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <!-- Grid Container 2x2 -->
+            <div class="quick-actions-grid">
+
+                <!-- ========================================
+                     Ô 1: TỔNG QUAN & THEO DÕI
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
                         <i class="bi bi-speedometer2"></i>
+                        <h4>Tổng Quan & Theo Dõi</h4>
                     </div>
-                    <span class="icon-label">Tổng Quan</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('tasks.kanban') }}', 'Tóm Tắt Công Việc')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <i class="bi bi-kanban"></i>
-                    </div>
-                    <span class="icon-label">Tóm Tắt CV</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('workflow.workflow_diagram') }}', 'Luồng Giao Việc')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <i class="bi bi-diagram-3-fill"></i>
-                    </div>
-                    <span class="icon-label">Luồng Giao Việc</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('tasks.list_tasks') }}', 'Danh Sách Công Việc')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                        <i class="bi bi-list-task"></i>
-                    </div>
-                    <span class="icon-label">CViệc</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('tasks.create_task') }}', 'Tạo Công Việc')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                        <i class="bi bi-plus-circle"></i>
-                    </div>
-                    <span class="icon-label">Tạo Công Việc</span>
-                </div>
-
-                {% if current_user.role in ['director', 'manager'] %}
-                    <div class="icon-card" onclick="openInModal('{{ url_for('performance.performance_review') }}', 'Hiệu Suất Nhân Viên')">
-                        <div class="icon-wrapper" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
-                            <i class="bi bi-graph-up-arrow"></i>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.dashboard') }}', 'Dashboard')">
+                            <i class="bi bi-speedometer2" style="color: #667eea;"></i>
+                            <span>Dashboard</span>
                         </div>
-                        <span class="icon-label">Hiệu Suất NV</span>
-                    </div>
-
-                    <div class="icon-card" onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'Công Việc Chưa Đánh Giá')">
-                        <div class="icon-wrapper" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
-                            <i class="bi bi-hourglass-split"></i>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.kanban') }}', 'Tóm Tắt Công Việc')">
+                            <i class="bi bi-kanban" style="color: #f093fb;"></i>
+                            <span>Tóm Tắt CV</span>
                         </div>
-                        <span class="icon-label">NV Chưa Đ.Giá</span>
-                        {% if my_tasks_need_rating > 0 %}
-                        <div class="icon-badge">{{ my_tasks_need_rating }}</div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('workflow.workflow_diagram') }}', 'Luồng Giao Việc')">
+                            <i class="bi bi-diagram-3-fill" style="color: #4facfe;"></i>
+                            <span>Luồng Giao Việc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================
+                     Ô 2: QUẢN LÝ & ĐÁNH GIÁ
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-list-check"></i>
+                        <h4>Quản Lý & Đánh Giá</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.list_tasks') }}', 'Danh Sách Công Việc')">
+                            <i class="bi bi-list-task" style="color: #43e97b;"></i>
+                            <span>Danh Sách CV</span>
+                        </div>
+                        {% if current_user.role in ['director', 'manager'] %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('performance.performance_review') }}', 'Hiệu Suất Nhân Viên')">
+                            <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
+                            <span>Hiệu Suất NV</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'Công Việc Chưa Đánh Giá')">
+                            <i class="bi bi-star-fill" style="color: #ffd700;"></i>
+                            <span>CV Chưa Đánh Giá</span>
+                            {% if my_tasks_need_rating > 0 %}
+                            <span class="badge bg-white ms-1">{{ my_tasks_need_rating }}</span>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </div>
-                {% endif %}
+                </div>
             </div>
         </div>
 
         <!-- Tab: Lương -->
         {% if current_user.role in ['director', 'accountant'] %}
         <div id="tab-salary" class="hub-tab-content">
-            <div class="icon-grid">
-                <div class="icon-card" onclick="openInModal('{{ url_for('salaries.list_salaries') }}', 'Quản Lý Lương')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+
+            <!-- Grid Container 2x2 -->
+            <div class="quick-actions-grid">
+
+                <!-- ========================================
+                     Ô 1: QUẢN LÝ LƯƠNG & NHÂN VIÊN
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
                         <i class="bi bi-wallet2"></i>
+                        <h4>Quản Lý Lương & NV</h4>
                     </div>
-                    <span class="icon-label">Quản Lý Lương</span>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.list_salaries') }}', 'Quản Lý Lương')">
+                            <i class="bi bi-wallet2" style="color: #a8edea;"></i>
+                            <span>Quản Lý Lương</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.list_employees') }}', 'Nhân Viên')">
+                            <i class="bi bi-people-fill" style="color: #ffecd2;"></i>
+                            <span>Nhân Viên</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.list_configs') }}', 'Số Công/Tháng')">
+                            <i class="bi bi-calendar-week" style="color: #ff9a9e;"></i>
+                            <span>Số Công/Tháng</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="icon-card" onclick="openInModal('{{ url_for('employees.list_employees') }}', 'Nhân Viên')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
-                        <i class="bi bi-people-fill"></i>
+                <!-- ========================================
+                     Ô 2: TÀI CHÍNH & CHÍNH SÁCH
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-cash-coin"></i>
+                        <h4>Tài Chính & Chính Sách</h4>
                     </div>
-                    <span class="icon-label">Nhân Viên</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('work_days.list_configs') }}', 'Số Công/Tháng')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
-                        <i class="bi bi-calendar-week"></i>
+                    <div class="quick-action-items">
+                        {% if current_user.role == 'director' %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.list_grades') }}', 'Cấp Bậc Lương')">
+                            <i class="bi bi-award-fill" style="color: #ffd89b;"></i>
+                            <span>Cấp Bậc Lương</span>
+                        </div>
+                        {% endif %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
+                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
+                            <span>Biên Bản Phạt</span>
+                            {% if pending_penalties > 0 %}
+                            <span class="badge bg-white ms-1">{{ pending_penalties }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
+                            <i class="bi bi-cash-stack" style="color: #ffc3a0;"></i>
+                            <span>Tạm Ứng</span>
+                            {% if pending_advances > 0 %}
+                            <span class="badge bg-white ms-1">{{ pending_advances }}</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <span class="icon-label">Số Công/Tháng</span>
-                </div>
-
-                {% if current_user.role == 'director' %}
-                <div class="icon-card" onclick="openInModal('{{ url_for('salary_grades.list_grades') }}', 'Cấp Bậc Lương')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);">
-                        <i class="bi bi-award-fill"></i>
-                    </div>
-                    <span class="icon-label">Cấp Bậc Lương</span>
-                </div>
-                {% endif %}
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #f43b47 0%, #453a94 100%);">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                    </div>
-                    <span class="icon-label">Biên Bản Phạt</span>
-                    {% if pending_penalties > 0 %}
-                    <div class="icon-badge">{{ pending_penalties }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ffc3a0 0%, #ffafbd 100%);">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
-                    <span class="icon-label">Tạm Ứng</span>
-                    {% if pending_advances > 0 %}
-                    <div class="icon-badge">{{ pending_advances }}</div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -474,6 +495,115 @@
                     {% if unread_notifications > 0 %}
                     <div class="icon-badge">{{ unread_notifications }}</div>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- THAO TÁC NHANH -->
+        <div id="tab-quick-actions" class="hub-tab-content">
+
+            <!-- Grid Container 2x2 -->
+            <div class="quick-actions-grid">
+
+                <!-- ========================================
+                     Ô 1: CÔNG VIỆC (TẤT CẢ ROLES)
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-briefcase-fill"></i>
+                        <h4>Công Việc</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.create_task') }}', 'Tạo Công Việc Mới')">
+                            <i class="bi bi-plus-circle-fill" style="color: #667eea;"></i>
+                            <span>Tạo Công Việc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================
+                     Ô 2: LƯƠNG & NHÂN SỰ (CHỈ DIRECTOR/ACCOUNTANT)
+                     ======================================== -->
+                {% if current_user.role in ['director', 'accountant'] %}
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-cash-coin"></i>
+                        <h4>Lương & Nhân Sự</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.create_salary') }}', 'Tạo Bảng Lương')">
+                            <i class="bi bi-wallet-fill" style="color: #f093fb;"></i>
+                            <span>Tạo Bảng Lương</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.create_employee') }}', 'Thêm Nhân Viên')">
+                            <i class="bi bi-person-plus-fill" style="color: #4facfe;"></i>
+                            <span>Thêm Nhân Viên</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.create_config') }}', 'Tạo Số Công/Tháng')">
+                            <i class="bi bi-calendar-plus-fill" style="color: #43e97b;"></i>
+                            <span>Số Công/Tháng</span>
+                        </div>
+                        {% if current_user.role == 'director' %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.create_grade') }}', 'Tạo Cấp Bậc Lương')">
+                            <i class="bi bi-award-fill" style="color: #fa709a;"></i>
+                            <span>Cấp Bậc Lương</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ========================================
+                     Ô 3: TÀI CHÍNH (CHỈ DIRECTOR/ACCOUNTANT)
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-currency-dollar"></i>
+                        <h4>Tài Chính</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.create_penalty') }}', 'Tạo Biên Bản Phạt')">
+                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
+                            <span>Biên Bản Phạt</span>
+                        </div>
+                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.create_advance') }}', 'Tạo Tạm Ứng')">
+                            <i class="bi bi-cash-stack" style="color: #30cfd0;"></i>
+                            <span>Tạm Ứng</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ========================================
+                     Ô 4: THÔNG TIN & TÀI LIỆU
+                     ======================================== -->
+                <div class="quick-action-box">
+                    <div class="quick-action-header">
+                        <i class="bi bi-folder2-open"></i>
+                        <h4>Thông Tin & Tài Liệu</h4>
+                    </div>
+                    <div class="quick-action-items">
+                        <!-- Tạo Bài Đăng: CHỈ DIRECTOR/MANAGER -->
+                        {% if current_user.role in ['director', 'manager'] %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('news.create_news') }}', 'Tạo Bài Đăng')">
+                            <i class="bi bi-newspaper" style="color: #a8edea;"></i>
+                            <span>Tạo Bài Đăng</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Tạo Ghi Chú: TẤT CẢ ROLES -->
+                        <div class="quick-item" onclick="openInModal('{{ url_for('notes.create_note') }}', 'Tạo Ghi Chú')">
+                            <i class="bi bi-journal-plus" style="color: #ffecd2;"></i>
+                            <span>Tạo Ghi Chú</span>
+                        </div>
+
+                        <!-- Upload File: CHỈ DIRECTOR/MANAGER -->
+                        {% if current_user.role in ['director', 'manager'] %}
+                        <div class="quick-item" onclick="openInModal('{{ url_for('files.upload_file') }}', 'Upload File')">
+                            <i class="bi bi-cloud-upload-fill" style="color: #ff9a9e;"></i>
+                            <span>Upload File</span>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
