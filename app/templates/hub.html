@@ -5,311 +5,656 @@
 {% block page_title %}Quy Trình Công Việc{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}">
-        <style>
-        body {
-            background-image: url('{{ url_for('static', filename='images/hinh-nen.webp') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            min-height: 100vh;
-            padding: 30px 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<style>
+body {
+    background-image: url('{{ url_for('static', filename='images/hinh-nen.webp') }}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-        nav.top-navbar {
-            background: transparent !important;
-        }
+nav.top-navbar {
+    background: transparent !important;
+}
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+/* ============================================
+   MAIN HUB LAYOUT
+   ============================================ */
+.hub-main-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
 
-        /* ============================================
-           TAB NAVIGATION - PILL STYLE (GIỐNG ẢNH)
-           ============================================ */
-        .hub-tabs {
-            background: transparent;
-            border-radius: 0;
-            padding: 0;
-            margin-bottom: 30px;
-            box-shadow: none;
-        }
+/* ============================================
+   4 ICON GRID - CENTER
+   ============================================ */
+.hub-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 0;
+}
 
-        .hub-tabs-nav {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-            padding: 20px 0;
-            background: transparent;
-            border: none;
-        }
+.hub-icon-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 30px 20px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
 
-        .hub-tab-btn {
-            position: relative;
-            flex: 0 0 auto;
-            min-width: auto;
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
+.hub-icon-card:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+}
 
-        .hub-tab-btn:hover {
-            background: rgba(255, 255, 255, 0.35);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
+.hub-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
 
-        .hub-tab-btn.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
+.hub-icon-card:hover .hub-icon-wrapper {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
 
-        .hub-tab-btn i {
-            font-size: 1.1rem;
-        }
+.hub-icon-wrapper i {
+    font-size: 2.5rem;
+    color: white;
+}
 
-        .hub-tab-badge {
-            background: #dc3545;
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 3px 7px;
-            border-radius: 12px;
-            margin-left: 2px;
-            min-width: 20px;
-            text-align: center;
-        }
+.hub-icon-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+}
 
-        .hub-tab-btn.active .hub-tab-badge {
-            background: #dc3545;
-            color: white;
-        }
+.hub-icon-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #dc3545;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 15px;
+    min-width: 28px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
 
-        /* Tab Content */
-        .hub-tab-content {
-            display: none;
-            padding: 30px;
-            background: transparent;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.3s ease;
-        }
+/* ============================================
+   MODULE PAGE - SIDEBAR + CONTENT
+   ============================================ */
+.module-container {
+    display: none; /* Hidden by default */
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
 
-        .hub-tab-content.active {
-            display: block;
-        }
+.module-container.active {
+    display: flex;
+}
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+.module-sidebar {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
 
-        /* Sample Content */
-        .sample-content {
-            text-align: center;
-            padding: 60px 20px;
-        }
+/* Sidebar Overlay - Mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    backdrop-filter: blur(4px);
+}
 
-        .sample-content i {
-            font-size: 4rem;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
+.sidebar-overlay.active {
+    display: block;
+}
 
-        .sample-content h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
+/* Mobile Sidebar Drawer */
+@media (max-width: 992px) {
+    .module-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        margin: 0;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        max-height: 100vh;
+        border-radius: 0 16px 16px 0;
+    }
 
-        .sample-content p {
-            color: #6c757d;
-        }
+    .module-sidebar.active {
+        left: 0;
+    }
+    .module-content {
+        width: 100%;
+    }
+}
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px 10px;
-            }
+.module-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
 
-            .hub-tabs-nav {
-                gap: 8px;
-                padding: 15px 0;
-            }
+.module-sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
 
-            .hub-tab-btn {
-                padding: 10px 18px;
-                font-size: 0.85rem;
-            }
+.module-sidebar-title i {
+    font-size: 1.5rem;
+}
 
-            .hub-tab-btn i {
-                font-size: 1rem;
-            }
+.back-to-hub-btn {
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-            .hub-tab-badge {
-                font-size: 0.65rem;
-                padding: 2px 6px;
-            }
+.back-to-hub-btn:hover {
+    color: #0d6efd;
+    transform: scale(1.1);
+}
 
-            .hub-tab-content {
-                padding: 20px;
-            }
-        }
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-        @media (max-width: 480px) {
-            .hub-tabs-nav {
-                gap: 6px;
-            }
+.sidebar-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    text-decoration: none;
+    color: #495057;
+}
 
-            .hub-tab-btn {
-                padding: 8px 14px;
-                font-size: 0.8rem;
-            }
+.sidebar-menu-item:hover {
+    background: white;
+    border-color: #0d6efd;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    color: #0d6efd;
+}
 
-            .hub-tab-btn span {
-                display: none; /* Ẩn text trên mobile nhỏ */
-            }
+.sidebar-menu-item i {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
 
-            .hub-tab-btn i {
-                font-size: 1.2rem;
-                margin: 0;
-            }
+.sidebar-menu-item span {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
 
-            .hub-tab-badge {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-            }
-        }
-        .notification-btn {
-                color: #ffffff!important;
-        }
-    </style>
+.sidebar-menu-item .badge {
+    margin-left: auto;
+}
+
+.module-content {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   STATS & NOTIFICATIONS (REUSE FROM OLD)
+   ============================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: white;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2c3e50;
+}
+
+.stat-content p {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Stat Card Colors */
+.stat-pending { border-left-color: #ffc107; }
+.stat-pending .stat-icon { color: #ffc107; }
+.stat-progress { border-left-color: #0dcaf0; }
+.stat-progress .stat-icon { color: #0dcaf0; }
+.stat-overdue { border-left-color: #dc3545; }
+.stat-overdue .stat-icon { color: #dc3545; }
+.stat-done { border-left-color: #198754; }
+.stat-done .stat-icon { color: #198754; }
+.stat-info { border-left-color: #0dcaf0; }
+.stat-info .stat-icon { color: #0dcaf0; }
+.stat-warning { border-left-color: #ffc107; }
+.stat-warning .stat-icon { color: #ffc107; }
+.stat-danger { border-left-color: #dc3545; }
+.stat-danger .stat-icon { color: #dc3545; }
+.stat-primary { border-left-color: #0d6efd; }
+.stat-primary .stat-icon { color: #0d6efd; }
+
+/* Notification Box */
+.notification-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 25px;
+    border-radius: 16px;
+    border-left: 5px solid;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    margin-bottom: 30px;
+}
+
+.notification-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+}
+
+.notification-message {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 15px 0;
+}
+
+.notification-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+}
+
+/* Notification Types */
+.notification-danger {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    border-left-color: #dc3545;
+    color: white;
+}
+
+.notification-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-left-color: #ffc107;
+    color: white;
+}
+
+.notification-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    border-left-color: #198754;
+    color: white;
+}
+
+.notification-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-left-color: #0dcaf0;
+    color: white;
+}
+
+.notification-secondary {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border-left-color: #6c757d;
+    color: #2c3e50;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1200px) {
+    .module-sidebar {
+        width: 240px;
+    }
+}
+
+@media (max-width: 992px) {
+    .module-container {
+        flex-direction: column;
+    }
+
+    .module-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        margin: 0;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        max-height: 100vh;
+        border-radius: 0 16px 16px 0;
+    }
+
+    .module-sidebar.active {
+        left: 0;
+    }
+
+    .floating-menu-btn {
+        display: flex;
+    }
+
+    .module-content {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .hub-main-container {
+        padding: 20px 10px;
+    }
+
+    .hub-icon-grid {
+        gap: 15px;
+        padding: 20px 0;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hub-icon-card {
+        padding: 20px 15px;
+    }
+
+    .hub-icon-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+
+    .hub-icon-wrapper i {
+        font-size: 2rem;
+    }
+
+    .hub-icon-label {
+        font-size: 0.95rem;
+    }
+
+    .module-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hub-icon-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .hub-icon-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    .hub-icon-wrapper i {
+        font-size: 1.8rem;
+    }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.module-container.active {
+    animation: fadeIn 0.4s ease;
+}
+a:not(.btn):not(.nav-link):not(.sidebar-brand){
+    text-decoration: none;
+    color: #000000;
+}
+.notification-btn {
+    color: #ffffff;
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="hub-container">
-    <!-- Tab Navigation -->
-    <div class="hub-tabs">
-        <div class="hub-tabs-nav">
-        <button class="hub-tab-btn active" onclick="switchTab('my-work')">
-            <i class="bi bi-person-circle"></i>
-            <span>Cá nhân</span>
-            {% if my_work_badge > 0 %}
-            <span class="hub-tab-badge">{{ my_work_badge }}</span>
-            {% endif %}
-        </button>
-
-            {% if current_user.role in ['director', 'manager'] %}
-            <button class="hub-tab-btn" onclick="switchTab('management')">
-                <i class="bi bi-building"></i>
-                <span>Quản Lý</span>
-                {% if team_pending > 0 or team_overdue > 0 or tasks_need_rating > 0 %}
-                <span class="hub-tab-badge">{{ team_pending + team_overdue + tasks_need_rating }}</span>
-                {% endif %}
-            </button>
-            {% endif %}
-
-            <button class="hub-tab-btn" onclick="switchTab('tasks')">
+<div class="hub-main-container">
+    <!-- ============================================
+         MAIN HUB - 4 ICONS
+         ============================================ -->
+    <div id="main-hub" class="hub-icon-grid">
+        <!-- Icon 1: Công Việc -->
+        <div class="hub-icon-card" onclick="showModule('tasks')">
+            <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <i class="bi bi-briefcase-fill"></i>
-                <span>Công Việc</span>
-                {% if tasks_badge > 0 %}
-                <span class="hub-tab-badge">{{ tasks_badge }}</span>
-                {% endif %}
-            </button>
-
-            {% if current_user.role in ['director', 'accountant'] %}
-            <button class="hub-tab-btn" onclick="switchTab('salary')">
-                <i class="bi bi-cash-coin"></i>
-                <span>Lương</span>
-                {% if pending_penalties > 0 or pending_advances > 0 %}
-                <span class="hub-tab-badge">{{ pending_penalties + pending_advances }}</span>
-                {% endif %}
-            </button>
-            {% endif %}
-
-            <button class="hub-tab-btn" onclick="switchTab('info')">
-                <i class="bi bi-megaphone-fill"></i>
-                <span>Thông Tin</span>
-                {% if unconfirmed_news > 0 or unread_notifications > 0 %}
-                <span class="hub-tab-badge">{{ unconfirmed_news + unread_notifications }}</span>
-                {% endif %}
-            </button>
-            <button class="hub-tab-btn" onclick="switchTab('quick-actions')">
-                <i class="bi bi-lightning-charge-fill"></i>
-                <span>Thao Tác Nhanh</span>
-            </button>
-
-            {% if current_user.role == 'director' %}
-            <button class="hub-tab-btn" onclick="switchTab('admin')">
-                <i class="bi bi-gear-fill"></i>
-                <span>Quản Trị</span>
-            </button>
-            {% endif %}
+            </div>
+            <span class="hub-icon-label">Công Việc</span>
+            <span class="hub-icon-badge" id="work-badge" {% if not (my_work_badge > 0 or tasks_badge > 0) %}style="display: none;"{% endif %}>
+                {{ my_work_badge + tasks_badge }}
+            </span>
         </div>
 
-        <!-- Tab: Cá nhân -->
-        <div id="tab-my-work" class="hub-tab-content active">
-            <!-- ========================================
-             THÔNG BÁO CÁ NHÂN - HIỂN THỊ Ở ĐẦU TAB
-             ======================================== -->
-        {% if personal_notification %}
-        <div class="notification-box notification-{{ personal_notification.type }}"
-             style="margin-bottom: 30px; animation: slideInDown 0.5s ease;">
-            <div class="notification-icon">
-                <i class="{{ personal_notification.icon }}"></i>
+        <!-- Icon 2: Lương (chỉ Director/Accountant) -->
+        {% if current_user.role in ['director', 'accountant'] %}
+        <div class="hub-icon-card" onclick="showModule('salary')">
+            <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="bi bi-cash-coin"></i>
             </div>
-            <div class="notification-content">
-                <h4 class="notification-title">{{ personal_notification.title }}</h4>
-                <p class="notification-message">{{ personal_notification.message|safe }}</p>
-
-                <!-- Stats chi tiết (tùy chọn hiển thị) -->
-                <div class="notification-stats">
-                    {% if personal_notification.stats.completion_rate is defined %}
-                    <span class="stat-item">
-                        <i class="bi bi-check-circle"></i> Hoàn thành:
-                        <strong>{{ "%.0f"|format(personal_notification.stats.completion_rate) }}%</strong>
-                    </span>
-                    {% endif %}
-
-                    {% if personal_notification.stats.quality_rate is defined %}
-                    <span class="stat-item">
-                        <i class="bi bi-star"></i> Chất lượng:
-                        <strong>{{ "%.0f"|format(personal_notification.stats.quality_rate) }}%</strong>
-                    </span>
-                    {% endif %}
-
-                    {% if personal_notification.stats.overdue is defined and personal_notification.stats.overdue > 0 %}
-                    <span class="stat-item">
-                        <i class="bi bi-exclamation-triangle"></i> Quá hạn:
-                        <strong class="text-danger">{{ personal_notification.stats.overdue }}</strong>
-                    </span>
-                    {% endif %}
-                </div>
-            </div>
+            <span class="hub-icon-label">Lương</span>
+            <span class="hub-icon-badge" id="salary-badge" {% if not (pending_penalties > 0 or pending_advances > 0) %}style="display: none;"{% endif %}>
+                {{ pending_penalties + pending_advances }}
+            </span>
         </div>
         {% endif %}
+
+        <!-- Icon 3: Thông Tin -->
+        <div class="hub-icon-card" onclick="showModule('info')">
+            <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="bi bi-megaphone-fill"></i>
+            </div>
+            <span class="hub-icon-label">Thông Tin</span>
+            <span class="hub-icon-badge" id="info-badge" {% if not (unconfirmed_news > 0 or unread_notifications > 0) %}style="display: none;"{% endif %}>
+                {{ unconfirmed_news + unread_notifications }}
+            </span>
+        </div>
+
+        <!-- Icon 4: Tài Khoản -->
+        {% if current_user.role == 'director' %}
+        <div class="hub-icon-card" onclick="showModule('account')">
+            <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <span class="hub-icon-label">Tài Khoản</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================
+         MODULE 1: CÔNG VIỆC
+         ============================================ -->
+    <div id="module-tasks" class="module-container">
+        <!-- Sidebar Overlay - Mobile Only -->
+        <div class="sidebar-overlay" onclick="toggleSidebar('tasks')"></div>
+
+        <div class="module-sidebar" id="sidebar-tasks">
+            <div class="module-sidebar-header">
+                <div class="module-sidebar-title">
+                    <i class="bi bi-briefcase-fill" style="color: #667eea;"></i>
+                    <span>Công Việc</span>
+                </div>
+                <button class="back-to-hub-btn" onclick="backToHub()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.dashboard') }}', 'Thống Kê')">
+                    <i class="bi bi-speedometer2" style="color: #667eea;"></i>
+                    <span>Thống Kê</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.kanban') }}', 'Tóm Tắt CV')">
+                    <i class="bi bi-kanban" style="color: #f093fb;"></i>
+                    <span>Tóm Tắt CV</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('workflow.workflow_diagram') }}', 'Luồng Giao Việc')">
+                    <i class="bi bi-diagram-3-fill" style="color: #4facfe;"></i>
+                    <span>Luồng Giao Việc</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.create_task') }}', 'Tạo Công Việc')">
+                    <i class="bi bi-plus-circle-fill" style="color: #004989;"></i>
+                    <span>Tạo Công Việc</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.list_tasks') }}', 'Danh Sách CV')">
+                    <i class="bi bi-list-task" style="color: #43e97b;"></i>
+                    <span>Danh Sách CV</span>
+                </a>
+                {% if current_user.role in ['director', 'manager'] %}
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('performance.performance_review') }}', 'Hiệu Suất NV')">
+                    <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
+                    <span>Hiệu Suất NV</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'CV Chưa Đánh Giá')">
+                    <i class="bi bi-star-fill" style="color: #ffd700;"></i>
+                    <span>CV Chưa Đánh Giá</span>
+                    {% if my_tasks_need_rating > 0 %}
+                    <span class="badge bg-danger">{{ my_tasks_need_rating }}</span>
+                    {% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="module-content">
+            <!-- STATS CÁ NHÂN -->
+            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                <i class="bi bi-person-circle"></i> Công Việc Cá Nhân
+            </h5>
             <div class="stats-grid">
                 <div class="stat-card stat-pending" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myPendingModal">
                     <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
@@ -331,7 +676,7 @@
                     <div class="stat-icon"><i class="bi bi-alarm"></i></div>
                     <div class="stat-content">
                         <h3>{{ my_due_soon }}</h3>
-                        <p>Sắp Đến Hạn (3 ngày)</p>
+                        <p>Sắp Đến Hạn</p>
                     </div>
                 </div>
 
@@ -343,7 +688,7 @@
                     </div>
                 </div>
 
-                <div class="stat-card stat-done" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#pageModal" data-url="{{ url_for('hub.my_completed_tasks') }}" data-title="Công Việc Đã Hoàn Thành">
+                <div class="stat-card stat-done" style="cursor: pointer;" onclick="openInModal('{{ url_for('hub.my_completed_tasks') }}', 'Đã Hoàn Thành')">
                     <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
                     <div class="stat-content">
                         <h3>{{ my_completed_recent }}</h3>
@@ -351,57 +696,45 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Tab: Quản Lý -->
-        {% if current_user.role in ['director', 'manager'] %}
-        <div id="tab-management" class="hub-tab-content">
-        <!-- ========================================
-         THÔNG BÁO CÔNG TY - CHỈ DIRECTOR MỚI CÓ
-         ======================================== -->
-        {% if current_user.role == 'director' and company_notification %}
-        <div class="notification-box notification-{{ company_notification.type }}"
-             style="margin-bottom: 30px; animation: slideInDown 0.5s ease;">
-            <div class="notification-icon">
-                <i class="{{ company_notification.icon }}"></i>
-            </div>
-            <div class="notification-content">
-                <h4 class="notification-title">{{ company_notification.title }}</h4>
-                <p class="notification-message">{{ company_notification.message|safe }}</p>
-
-                <!-- Stats chi tiết công ty -->
-                <div class="notification-stats">
-                    {% if company_notification.stats.completion_rate is defined %}
-                    <span class="stat-item">
-                        <i class="bi bi-check-circle"></i> Hoàn thành:
-                        <strong>{{ "%.0f"|format(company_notification.stats.completion_rate) }}%</strong>
-                    </span>
-                    {% endif %}
-
-                    {% if company_notification.stats.on_time_rate is defined %}
-                    <span class="stat-item">
-                        <i class="bi bi-alarm"></i> Đúng hạn:
-                        <strong>{{ "%.0f"|format(company_notification.stats.on_time_rate) }}%</strong>
-                    </span>
-                    {% endif %}
-
-                    {% if company_notification.stats.overdue is defined and company_notification.stats.overdue > 0 %}
-                    <span class="stat-item">
-                        <i class="bi bi-exclamation-triangle"></i> Quá hạn:
-                        <strong class="text-danger">{{ company_notification.stats.overdue }}</strong>
-                    </span>
-                    {% endif %}
-
-                    {% if company_notification.stats.need_rating is defined and company_notification.stats.need_rating > 0 %}
-                    <span class="stat-item">
-                        <i class="bi bi-star"></i> Cần đánh giá:
-                        <strong>{{ company_notification.stats.need_rating }}</strong>
-                    </span>
-                    {% endif %}
+            <!-- THÔNG BÁO CÁ NHÂN -->
+            {% if personal_notification %}
+            <div class="notification-box notification-{{ personal_notification.type }}">
+                <div class="notification-icon">
+                    <i class="{{ personal_notification.icon }}"></i>
+                </div>
+                <div class="notification-content">
+                    <h4 class="notification-title">{{ personal_notification.title }}</h4>
+                    <p class="notification-message">{{ personal_notification.message|safe }}</p>
+                    <div class="notification-stats">
+                        {% if personal_notification.stats.completion_rate is defined %}
+                        <span class="stat-item">
+                            <i class="bi bi-check-circle"></i> Hoàn thành:
+                            <strong>{{ "%.0f"|format(personal_notification.stats.completion_rate) }}%</strong>
+                        </span>
+                        {% endif %}
+                        {% if personal_notification.stats.quality_rate is defined %}
+                        <span class="stat-item">
+                            <i class="bi bi-star"></i> Chất lượng:
+                            <strong>{{ "%.0f"|format(personal_notification.stats.quality_rate) }}%</strong>
+                        </span>
+                        {% endif %}
+                        {% if personal_notification.stats.overdue is defined and personal_notification.stats.overdue > 0 %}
+                        <span class="stat-item">
+                            <i class="bi bi-exclamation-triangle"></i> Quá hạn:
+                            <strong class="text-danger">{{ personal_notification.stats.overdue }}</strong>
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endif %}
+            {% endif %}
+            <!-- QUẢN LÝ (Director/Manager) -->
+            {% if current_user.role in ['director', 'manager'] %}
+            <hr style="margin: 40px 0; border-color: rgba(0,0,0,0.1);">
+
+            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                <i class="bi bi-building"></i> Quản Lý Công Việc
+            </h5>
             <div class="stats-grid">
                 <div class="stat-card stat-info" style="cursor: pointer;" onclick="openInModal('{{ url_for('tasks.tasks_by_status', status='ALL') }}', 'Tổng Công Việc')">
                     <div class="stat-icon"><i class="bi bi-list-check"></i></div>
@@ -410,6 +743,7 @@
                         <p>Tổng Công Việc</p>
                     </div>
                 </div>
+
                 <div class="stat-card stat-warning" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#teamPendingModal">
                     <div class="stat-icon"><i class="bi bi-hourglass-top"></i></div>
                     <div class="stat-content">
@@ -434,303 +768,264 @@
                     </div>
                 </div>
             </div>
-        </div>
-        {% endif %}
 
-        <!-- Tab: Công Việc -->
-        <div id="tab-tasks" class="hub-tab-content">
-            <!-- Grid Container 2x2 -->
-            <div class="quick-actions-grid">
-
-                <!-- ========================================
-                     Ô 1: TỔNG QUAN & THEO DÕI
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-speedometer2"></i>
-                        <h4>Tổng Quan & Theo Dõi</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.dashboard') }}', 'Dashboard')">
-                            <i class="bi bi-speedometer2" style="color: #667eea;"></i>
-                            <span>Thống Kê</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.kanban') }}', 'Tóm Tắt Công Việc')">
-                            <i class="bi bi-kanban" style="color: #f093fb;"></i>
-                            <span>Tóm Tắt CV</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('workflow.workflow_diagram') }}', 'Luồng Giao Việc')">
-                            <i class="bi bi-diagram-3-fill" style="color: #4facfe;"></i>
-                            <span>Luồng Giao Việc</span>
-                        </div>
-                    </div>
+            <!-- THÔNG BÁO CÔNG TY -->
+            {% if current_user.role == 'director' and company_notification %}
+            <div class="notification-box notification-{{ company_notification.type }}">
+                <div class="notification-icon">
+                    <i class="{{ company_notification.icon }}"></i>
                 </div>
-
-                <!-- ========================================
-                     Ô 2: QUẢN LÝ & ĐÁNH GIÁ
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-list-check"></i>
-                        <h4>Quản Lý & Đánh Giá</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.list_tasks') }}', 'Danh Sách Công Việc')">
-                            <i class="bi bi-list-task" style="color: #43e97b;"></i>
-                            <span>Danh Sách CV</span>
-                        </div>
-                        {% if current_user.role in ['director', 'manager'] %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('performance.performance_review') }}', 'Hiệu Suất Nhân Viên')">
-                            <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
-                            <span>Hiệu Suất NV</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'Công Việc Chưa Đánh Giá')">
-                            <i class="bi bi-star-fill" style="color: #ffd700;"></i>
-                            <span>CV Chưa Đánh Giá</span>
-                            {% if my_tasks_need_rating > 0 %}
-                            <span class="badge bg-white ms-1">{{ my_tasks_need_rating }}</span>
-                            {% endif %}
-                        </div>
+                <div class="notification-content">
+                    <h4 class="notification-title">{{ company_notification.title }}</h4>
+                    <p class="notification-message">{{ company_notification.message|safe }}</p>
+                    <div class="notification-stats">
+                        {% if company_notification.stats.completion_rate is defined %}
+                        <span class="stat-item">
+                            <i class="bi bi-check-circle"></i> Hoàn thành:
+                            <strong>{{ "%.0f"|format(company_notification.stats.completion_rate) }}%</strong>
+                        </span>
+                        {% endif %}
+                        {% if company_notification.stats.on_time_rate is defined %}
+                        <span class="stat-item">
+                            <i class="bi bi-alarm"></i> Đúng hạn:
+                            <strong>{{ "%.0f"|format(company_notification.stats.on_time_rate) }}%</strong>
+                        </span>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            {% endif %}
+            {% endif %}
         </div>
-
-        <!-- Tab: Lương -->
-        {% if current_user.role in ['director', 'accountant'] %}
-        <div id="tab-salary" class="hub-tab-content">
-
-            <!-- Grid Container 2x2 -->
-            <div class="quick-actions-grid">
-
-                <!-- ========================================
-                     Ô 1: QUẢN LÝ LƯƠNG & NHÂN VIÊN
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-wallet2"></i>
-                        <h4>Quản Lý Lương & NV</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.list_salaries') }}', 'Quản Lý Lương')">
-                            <i class="bi bi-wallet2" style="color: #a8edea;"></i>
-                            <span>Quản Lý Lương</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.list_employees') }}', 'Nhân Viên')">
-                            <i class="bi bi-people-fill" style="color: #ffecd2;"></i>
-                            <span>Nhân Viên</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.list_configs') }}', 'Số Công/Tháng')">
-                            <i class="bi bi-calendar-week" style="color: #ff9a9e;"></i>
-                            <span>Số Công/Tháng</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========================================
-                     Ô 2: TÀI CHÍNH & CHÍNH SÁCH
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-cash-coin"></i>
-                        <h4>Tài Chính & Chính Sách</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        {% if current_user.role == 'director' %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.list_grades') }}', 'Cấp Bậc Lương')">
-                            <i class="bi bi-award-fill" style="color: #ffd89b;"></i>
-                            <span>Cấp Bậc Lương</span>
-                        </div>
-                        {% endif %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
-                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
-                            <span>Biên Bản Phạt</span>
-                            {% if pending_penalties > 0 %}
-                            <span class="badge bg-white ms-1">{{ pending_penalties }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
-                            <i class="bi bi-cash-stack" style="color: #ffc3a0;"></i>
-                            <span>Tạm Ứng</span>
-                            {% if pending_advances > 0 %}
-                            <span class="badge bg-white ms-1">{{ pending_advances }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Tab: Thông Tin -->
-        <div id="tab-info" class="hub-tab-content">
-            <div class="icon-grid">
-                <div class="icon-card" onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo Nội Bộ')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #09203f 0%, #537895 100%);">
-                        <i class="bi bi-newspaper"></i>
-                    </div>
-                    <span class="icon-label">Thông Báo NB</span>
-                    {% if unconfirmed_news > 0 %}
-                    <div class="icon-badge">{{ unconfirmed_news }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('files.list_files') }}', 'Thư Viện File')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ebbba7 0%, #cfc7f8 100%);">
-                        <i class="bi bi-folder2-open"></i>
-                    </div>
-                    <span class="icon-label">Thư Viện File</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('notes.list_notes') }}', 'Ghi Chú')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%);">
-                        <i class="bi bi-journal-text"></i>
-                    </div>
-                    <span class="icon-label">Ghi Chú</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #f83600 0%, #f9d423 100%);">
-                        <i class="bi bi-bell"></i>
-                    </div>
-                    <span class="icon-label">Nhắc Nhở</span>
-                    {% if unread_notifications > 0 %}
-                    <div class="icon-badge">{{ unread_notifications }}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- THAO TÁC NHANH -->
-        <div id="tab-quick-actions" class="hub-tab-content">
-
-            <!-- Grid Container 2x2 -->
-            <div class="quick-actions-grid">
-
-                <!-- ========================================
-                     Ô 1: CÔNG VIỆC (TẤT CẢ ROLES)
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-briefcase-fill"></i>
-                        <h4>Công Việc</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('tasks.create_task') }}', 'Tạo Công Việc Mới')">
-                            <i class="bi bi-plus-circle-fill" style="color: #667eea;"></i>
-                            <span>Tạo Công Việc</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- ========================================
-                     Ô 2: THÔNG TIN & TÀI LIỆU
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-folder2-open"></i>
-                        <h4>Thông Tin & Tài Liệu</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <!-- Tạo Bài Đăng: CHỈ DIRECTOR/MANAGER -->
-                        {% if current_user.role in ['director', 'manager'] %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('news.create_news') }}', 'Tạo Bài Đăng')">
-                            <i class="bi bi-newspaper" style="color: #a8edea;"></i>
-                            <span>Tạo Bài Đăng</span>
-                        </div>
-                        {% endif %}
-
-                        <!-- Tạo Ghi Chú: TẤT CẢ ROLES -->
-                        <div class="quick-item" onclick="openInModal('{{ url_for('notes.create_note') }}', 'Tạo Ghi Chú')">
-                            <i class="bi bi-journal-plus" style="color: #ffecd2;"></i>
-                            <span>Tạo Ghi Chú</span>
-                        </div>
-
-                        <!-- Upload File: CHỈ DIRECTOR/MANAGER -->
-                        {% if current_user.role in ['director', 'manager'] %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('files.upload_file') }}', 'Upload File')">
-                            <i class="bi bi-cloud-upload-fill" style="color: #ff9a9e;"></i>
-                            <span>Upload File</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                <!-- ========================================
-                     Ô 3: LƯƠNG & NHÂN SỰ (CHỈ DIRECTOR/ACCOUNTANT)
-                     ======================================== -->
-                {% if current_user.role in ['director', 'accountant'] %}
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-cash-coin"></i>
-                        <h4>Lương & Nhân Sự</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salaries.create_salary') }}', 'Tạo Bảng Lương')">
-                            <i class="bi bi-wallet-fill" style="color: #f093fb;"></i>
-                            <span>Tạo Bảng Lương</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('employees.create_employee') }}', 'Thêm Nhân Viên')">
-                            <i class="bi bi-person-plus-fill" style="color: #4facfe;"></i>
-                            <span>Thêm Nhân Viên</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('work_days.create_config') }}', 'Tạo Số Công/Tháng')">
-                            <i class="bi bi-calendar-plus-fill" style="color: #43e97b;"></i>
-                            <span>Số Công/Tháng</span>
-                        </div>
-                        {% if current_user.role == 'director' %}
-                        <div class="quick-item" onclick="openInModal('{{ url_for('salary_grades.create_grade') }}', 'Tạo Cấp Bậc Lương')">
-                            <i class="bi bi-award-fill" style="color: #fa709a;"></i>
-                            <span>Cấp Bậc Lương</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- ========================================
-                     Ô 4: TÀI CHÍNH (CHỈ DIRECTOR/ACCOUNTANT)
-                     ======================================== -->
-                <div class="quick-action-box">
-                    <div class="quick-action-header">
-                        <i class="bi bi-currency-dollar"></i>
-                        <h4>Tài Chính</h4>
-                    </div>
-                    <div class="quick-action-items">
-                        <div class="quick-item" onclick="openInModal('{{ url_for('penalties.create_penalty') }}', 'Tạo Biên Bản Phạt')">
-                            <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
-                            <span>Biên Bản Phạt</span>
-                        </div>
-                        <div class="quick-item" onclick="openInModal('{{ url_for('advances.create_advance') }}', 'Tạo Tạm Ứng')">
-                            <i class="bi bi-cash-stack" style="color: #30cfd0;"></i>
-                            <span>Tạm Ứng</span>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Tab: Quản Trị -->
-        {% if current_user.role == 'director' %}
-        <div id="tab-admin" class="hub-tab-content">
-            <div class="icon-grid">
-                <div class="icon-card" onclick="openInModal('{{ url_for('auth.users') }}', 'Quản Lý Tài Khoản')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <span class="icon-label">Quản Lý TK</span>
-                </div>
-
-                <div class="icon-card" onclick="openInModal('{{ url_for('auth.register') }}', 'Tạo Tài Khoản')">
-                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #fddb92 0%, #d1fdff 100%);">
-                        <i class="bi bi-person-plus-fill"></i>
-                    </div>
-                    <span class="icon-label">Tạo Tài Khoản</span>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
+
+    <!-- ============================================
+         MODULE 2: LƯƠNG
+         ============================================ -->
+    {% if current_user.role in ['director', 'accountant'] %}
+    <div id="module-salary" class="module-container">
+        <!-- Sidebar Overlay - Mobile Only -->
+        <div class="sidebar-overlay" onclick="toggleSidebar('salary')"></div>
+
+        <div class="module-sidebar" id="sidebar-salary">
+            <div class="module-sidebar-header">
+                <div class="module-sidebar-title">
+                    <i class="bi bi-cash-coin" style="color: #f093fb;"></i>
+                    <span>Lương</span>
+                </div>
+                <button class="back-to-hub-btn" onclick="backToHub()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('salaries.list_salaries') }}', 'Quản Lý Lương')">
+                    <i class="bi bi-wallet2" style="color: #a8edea;"></i>
+                    <span>Quản Lý Lương</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('employees.list_employees') }}', 'Nhân Viên')">
+                    <i class="bi bi-people-fill" style="color: #ffecd2;"></i>
+                    <span>Nhân Viên</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('work_days.list_configs') }}', 'Số Công/Tháng')">
+                    <i class="bi bi-calendar-week" style="color: #ff9a9e;"></i>
+                    <span>Số Công/Tháng</span>
+                </a>
+                {% if current_user.role == 'director' %}
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('salary_grades.list_grades') }}', 'Cấp Bậc Lương')">
+                    <i class="bi bi-award-fill" style="color: #ffd89b;"></i>
+                    <span>Cấp Bậc Lương</span>
+                </a>
+                {% endif %}
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
+                    <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
+                    <span>Biên Bản Phạt</span>
+                    {% if pending_penalties > 0 %}
+                    <span class="badge bg-danger">{{ pending_penalties }}</span>
+                    {% endif %}
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
+                    <i class="bi bi-cash-stack" style="color: #ffc3a0;"></i>
+                    <span>Tạm Ứng</span>
+                    {% if pending_advances > 0 %}
+                    <span class="badge bg-warning">{{ pending_advances }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+
+        <div class="module-content">
+            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                <i class="bi bi-cash-coin"></i> Quản Lý Lương & Tài Chính
+            </h5>
+
+            <div class="stats-grid">
+                <div class="stat-card stat-info">
+                    <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ total_salaries }}</h3>
+                        <p>Bảng Lương</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ total_employees }}</h3>
+                        <p>Nhân Viên</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-danger">
+                    <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ pending_penalties }}</h3>
+                        <p>Phạt Chưa Trừ</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ pending_advances }}</h3>
+                        <p>Tạm Ứng Chưa Trừ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================
+         MODULE 3: THÔNG TIN
+         ============================================ -->
+    <div id="module-info" class="module-container">
+        <!-- Sidebar Overlay - Mobile Only -->
+        <div class="sidebar-overlay" onclick="toggleSidebar('info')"></div>
+
+        <div class="module-sidebar" id="sidebar-info">
+            <div class="module-sidebar-header">
+                <div class="module-sidebar-title">
+                    <i class="bi bi-megaphone-fill" style="color: #4facfe;"></i>
+                    <span>Thông Tin</span>
+                </div>
+                <button class="back-to-hub-btn" onclick="backToHub()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo Nội Bộ')">
+                    <i class="bi bi-newspaper" style="color: #09203f;"></i>
+                    <span>Thông Báo NB</span>
+                    {% if unconfirmed_news > 0 %}
+                    <span class="badge bg-danger">{{ unconfirmed_news }}</span>
+                    {% endif %}
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('files.list_files') }}', 'Thư Viện File')">
+                    <i class="bi bi-folder2-open" style="color: #ebbba7;"></i>
+                    <span>Thư Viện File</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('notes.list_notes') }}', 'Ghi Chú')">
+                    <i class="bi bi-journal-text" style="color: #c471f5;"></i>
+                    <span>Ghi Chú</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
+                    <i class="bi bi-bell" style="color: #f83600;"></i>
+                    <span>Nhắc Nhở</span>
+                    {% if unread_notifications > 0 %}
+                    <span class="badge bg-danger">{{ unread_notifications }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+
+        <div class="module-content">
+            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                <i class="bi bi-megaphone-fill"></i> Thông Tin & Tài Liệu
+            </h5>
+
+            <div class="stats-grid">
+                <div class="stat-card stat-info" style="cursor: pointer;" onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo NB')">
+                    <div class="stat-icon"><i class="bi bi-newspaper"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ unconfirmed_news }}</h3>
+                        <p>TB Chưa Xác Nhận</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-warning" style="cursor: pointer;" onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
+                    <div class="stat-icon"><i class="bi bi-bell"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ unread_notifications }}</h3>
+                        <p>Nhắc Nhở Chưa Đọc</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MODULE 4: TÀI KHOẢN
+         ============================================ -->
+    {% if current_user.role == 'director' %}
+    <div id="module-account" class="module-container">
+        <!-- Sidebar Overlay - Mobile Only -->
+        <div class="sidebar-overlay" onclick="toggleSidebar('account')"></div>
+
+        <div class="module-sidebar" id="sidebar-account">
+            <div class="module-sidebar-header">
+                <div class="module-sidebar-title">
+                    <i class="bi bi-person-circle" style="color: #fa709a;"></i>
+                    <span>Tài Khoản</span>
+                </div>
+                <button class="back-to-hub-btn" onclick="backToHub()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('auth.users') }}', 'Quản Lý Tài Khoản')">
+                    <i class="bi bi-people" style="color: #89f7fe;"></i>
+                    <span>Quản Lý TK</span>
+                </a>
+                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('auth.register') }}', 'Tạo Tài Khoản')">
+                    <i class="bi bi-person-plus-fill" style="color: #fddb92;"></i>
+                    <span>Tạo Tài Khoản</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="module-content">
+            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                <i class="bi bi-person-circle"></i> Quản Trị Tài Khoản
+            </h5>
+
+            <div class="stats-grid">
+                <div class="stat-card stat-primary" style="cursor: pointer;" onclick="openInModal('{{ url_for('auth.users') }}', 'Quản Lý Tài Khoản')">
+                    <div class="stat-icon"><i class="bi bi-people"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ total_users }}</h3>
+                        <p>Tổng Tài Khoản</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-done" style="cursor: pointer;" onclick="openInModal('{{ url_for('auth.users') }}', 'Tài Khoản Hoạt Động')">
+                    <div class="stat-icon"><i class="bi bi-person-check"></i></div>
+                    <div class="stat-content">
+                        <h3>{{ active_users }}</h3>
+                        <p>Đang Hoạt Động</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<!-- ============================================
+     MODALS (REUSE FROM OLD CODE)
+     ============================================ -->
 
 <!-- Modal: Công Việc CHƯA LÀM -->
 <div class="modal fade" id="myPendingModal" tabindex="-1">
@@ -761,7 +1056,7 @@
 
 <!-- Modal: Công Việc ĐANG LÀM -->
 <div class="modal fade" id="myInProgressModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);">
                 <h5 class="modal-title text-white">
@@ -788,7 +1083,7 @@
 
 <!-- Modal: Công Việc Sắp Đến Hạn -->
 <div class="modal fade" id="myDueSoonModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title">
@@ -810,7 +1105,7 @@
 
 <!-- Modal: Công Việc Quá Hạn Của Tôi -->
 <div class="modal fade" id="myOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">
@@ -833,7 +1128,7 @@
 {% if current_user.role in ['director', 'manager'] %}
 <!-- Modal: Công Việc CHƯA LÀM TEAM -->
 <div class="modal fade" id="teamPendingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
                 <h5 class="modal-title text-white">
@@ -857,9 +1152,10 @@
         </div>
     </div>
 </div>
+
 <!-- Modal: Quá Hạn Team -->
 <div class="modal fade" id="teamOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">
@@ -881,7 +1177,7 @@
 
 <!-- Modal: Cần Đánh Giá -->
 <div class="modal fade" id="needRatingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
@@ -906,9 +1202,10 @@
     </div>
 </div>
 {% endif %}
+
 <!-- Modal Universal Iframe -->
 <div class="modal fade" id="iframeModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="iframeModalTitle">
@@ -926,36 +1223,113 @@
         </div>
     </div>
 </div>
-<!-- Modal: Hiển thị trang trong iframe (cho stat-card) -->
-<div class="modal fade" id="pageModal" tabindex="-1">
-    <div class="modal-dialog modal-xl ">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="pageModalTitle">
-                    <i class="bi bi-window"></i> Đang tải...
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0" style="height: calc(100vh - 60px);">
-                <iframe id="pageModalFrame" style="width: 100%; height: 100%; border: none;"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-function switchTab(tabId) {
-    document.querySelectorAll('.hub-tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.hub-tab-content').forEach(content => content.classList.remove('active'));
-    event.target.closest('.hub-tab-btn').classList.add('active');
-    document.getElementById('tab-' + tabId).classList.add('active');
+// ========================================
+// MODULE NAVIGATION
+// ========================================
+function showModule(moduleName) {
+    // Hide main hub
+    document.getElementById('main-hub').style.display = 'none';
+
+    // Hide all modules
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+
+    // Show selected module
+    const module = document.getElementById('module-' + moduleName);
+    if (module) {
+        module.classList.add('active');
+    }
+}
+
+function backToHub() {
+    // Close sidebar if open on mobile
+    closeSidebarOnMobile();
+
+    // Hide all modules
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+
+    // Show main hub
+    document.getElementById('main-hub').style.display = 'grid';
 }
 
 // ========================================
-// 1. MODAL: CÔNG VIỆC SẮP ĐẾN HẠN
+// MOBILE SIDEBAR TOGGLE
 // ========================================
+function toggleSidebar(moduleName) {
+    const sidebar = document.getElementById('sidebar-' + moduleName);
+    const overlay = sidebar.nextElementSibling.previousElementSibling; // Get overlay
+
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+        // Find overlay in the same module
+        const module = document.getElementById('module-' + moduleName);
+        const overlay = module.querySelector('.sidebar-overlay');
+        if (overlay) {
+            overlay.classList.toggle('active');
+        }
+    }
+}
+
+function closeSidebarOnMobile() {
+    // Close all sidebars
+    document.querySelectorAll('.module-sidebar').forEach(s => {
+        s.classList.remove('active');
+    });
+    // Close all overlays
+    document.querySelectorAll('.sidebar-overlay').forEach(o => {
+        o.classList.remove('active');
+    });
+}
+
+// Close sidebar when clicking on menu item (mobile only)
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth <= 992) {
+        document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                closeSidebarOnMobile();
+            });
+        });
+    }
+});
+
+// ========================================
+// IFRAME MODAL HANDLER
+// ========================================
+function openInModal(url, title) {
+    const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
+    const iframe = document.getElementById('contentIframe');
+    const titleText = document.getElementById('iframeModalTitleText');
+
+    // Thêm tham số modal=1 vào URL
+    const separator = url.includes('?') ? '&' : '?';
+    const modalUrl = url + separator + 'modal=1';
+
+    // Set title và URL
+    titleText.textContent = title;
+    iframe.src = modalUrl;
+
+    // Show modal
+    modal.show();
+
+    // Clear iframe khi đóng modal
+    document.getElementById('iframeModal').addEventListener('hidden.bs.modal', function () {
+        iframe.src = '';
+    }, { once: true });
+}
+
+// ========================================
+// MODAL DATA LOADING (REUSE FROM OLD CODE)
+// ========================================
+
+// 1. Sắp đến hạn
 document.getElementById('myDueSoonModal')?.addEventListener('show.bs.modal', function () {
     const listContainer = document.getElementById('myDueSoonTasksList');
     fetch('{{ url_for("hub.get_my_due_soon_tasks") }}')
@@ -963,8 +1337,6 @@ document.getElementById('myDueSoonModal')?.addEventListener('show.bs.modal', fun
         .then(data => {
             if (data.tasks && data.tasks.length > 0) {
                 let html = '';
-
-                // DESKTOP: Table layout
                 html += '<div class="d-none d-md-block">';
                 html += '<div class="table-responsive"><table class="table table-hover align-middle">';
                 html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:18%;">Hạn hoàn thành</th><th style="width:12%;">Còn Lại</th><th style="width:12%;">Trạng Thái</th><th style="width:18%;">Phân Loại</th></tr></thead><tbody>';
@@ -1030,8 +1402,6 @@ document.getElementById('myDueSoonModal')?.addEventListener('show.bs.modal', fun
                     `;
                 });
                 html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);"><i class="bi bi-alarm" style="font-size: 1.5rem; color: #856404;"></i><div><strong style="color: #856404;">Lưu ý:</strong> <span style="color: #664d03;">Các công việc này sắp đến hạn trong 3 ngày tới. Hãy ưu tiên hoàn thành!</span></div></div>';
                 listContainer.innerHTML = html;
             } else {
                 listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào sắp đến hạn trong 3 ngày tới</p></div>';
@@ -1039,13 +1409,11 @@ document.getElementById('myDueSoonModal')?.addEventListener('show.bs.modal', fun
         })
         .catch(err => {
             console.error('Error loading due soon tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách. Vui lòng thử lại sau.</div>';
         });
 });
 
-// ========================================
-// 2. MODAL: CÔNG VIỆC QUÁ HẠN CỦA TÔI
-// ========================================
+// 2. Quá hạn của tôi
 document.getElementById('myOverdueModal')?.addEventListener('show.bs.modal', function () {
     const listContainer = document.getElementById('myOverdueTasksList');
     fetch('{{ url_for("hub.get_my_overdue_tasks") }}')
@@ -1053,8 +1421,6 @@ document.getElementById('myOverdueModal')?.addEventListener('show.bs.modal', fun
         .then(data => {
             if (data.tasks && data.tasks.length > 0) {
                 let html = '';
-
-                // DESKTOP: Table
                 html += '<div class="d-none d-md-block">';
                 html += '<div class="table-responsive"><table class="table table-hover align-middle">';
                 html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:25%;">Hạn hoàn thành</th><th style="width:15%;">Trạng Thái</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
@@ -1074,7 +1440,7 @@ document.getElementById('myOverdueModal')?.addEventListener('show.bs.modal', fun
                 });
                 html += '</tbody></table></div></div>';
 
-                // MOBILE: Card
+                // MOBILE
                 html += '<div class="d-md-none">';
                 data.tasks.forEach((task, index) => {
                     const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
@@ -1115,179 +1481,18 @@ document.getElementById('myOverdueModal')?.addEventListener('show.bs.modal', fun
                     `;
                 });
                 html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 1.5rem; color: #842029;"></i><div><strong style="color: #842029;">Lưu ý:</strong> <span style="color: #58151c;">Các công việc này đã quá hạn. Vui lòng ưu tiên hoàn thành!</span></div></div>';
                 listContainer.innerHTML = html;
             } else {
                 listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào quá hạn</p></div>';
             }
         })
         .catch(err => {
-            console.error('Error loading my overdue tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
         });
 });
 
-// ========================================
-// 3. MODAL: QUÁ HẠN TEAM
-// ========================================
-document.getElementById('teamOverdueModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('overdueTasksList');
-    fetch('{{ url_for("hub.get_overdue_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-
-                // DESKTOP
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hạn hoàn thành</th><th style="width:15%;">Trạng Thái</th><th style="width:15%;">Phân Loại</th><th style="width:15%;">Người Làm</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-danger">${task.due_date}</span></td>`;
-                    html += `<td>${statusBadge}</td>`;
-                    html += `<td>${priorityBadges}</td>`;
-                    html += `<td>${task.assignees}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm border-danger" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-danger me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-people"></i> Người làm:</span>
-                                        <span class="text-dark">${task.assignees}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-danger">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-flag"></i> Trạng thái:</span>
-                                        ${statusBadge}
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Không có công việc nào quá hạn</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error loading overdue tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
-        });
-});
-
-// ========================================
-// 4. MODAL: CẦN ĐÁNH GIÁ
-// ========================================
-document.getElementById('needRatingModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('unratedTasksList');
-    fetch('{{ url_for("hub.get_unrated_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-
-                // DESKTOP
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hoàn Thành</th><th style="width:20%;">Người Giao</th><th style="width:25%;">Người Thực Hiện</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong></td>`;
-                    html += `<td><span class="badge bg-success">${task.completed_at}</span></td>`;
-                    html += `<td><span class="text-primary"><i class="bi bi-person-check"></i> ${task.creator}</span></td>`;
-                    html += `<td>${task.assignees}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    html += `
-                        <div class="card mb-3 shadow-sm border-primary" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-primary me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-people"></i> Người làm:</span>
-                                        <span class="text-dark">${task.assignees}</span>
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-check-circle"></i> Hoàn thành:</span>
-                                        <span class="badge bg-success">${task.completed_at}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #cff4fc 0%, #9eeaf9 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(13, 202, 240, 0.15);"><i class="bi bi-info-circle" style="font-size: 1.5rem; color: #055160;"></i><span style="color: #053b47;">Click vào công việc để đánh giá</span></div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Hoàn Thành!</h5><p class="text-muted">Tất cả công việc đã được đánh giá</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error loading unrated tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
-        });
-});
-
-// ========================================
-// 5. MODAL: CÔNG VIỆC CHƯA LÀM
-// ========================================
+// 3. Chưa làm
 document.getElementById('myPendingModal')?.addEventListener('show.bs.modal', function () {
     const listContainer = document.getElementById('myPendingTasksList');
     fetch('{{ url_for("hub.get_my_pending_tasks_detail") }}')
@@ -1295,8 +1500,6 @@ document.getElementById('myPendingModal')?.addEventListener('show.bs.modal', fun
         .then(data => {
             if (data.tasks && data.tasks.length > 0) {
                 let html = '';
-
-                // DESKTOP: Table
                 html += '<div class="d-none d-md-block">';
                 html += '<div class="table-responsive"><table class="table table-hover align-middle">';
                 html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:20%;">Hạn hoàn thành</th><th style="width:20%;">Ngày tạo</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
@@ -1316,7 +1519,7 @@ document.getElementById('myPendingModal')?.addEventListener('show.bs.modal', fun
                 });
                 html += '</tbody></table></div></div>';
 
-                // MOBILE: Card
+                // MOBILE
                 html += '<div class="d-md-none">';
                 data.tasks.forEach((task, index) => {
                     let priorityBadges = '';
@@ -1356,22 +1559,18 @@ document.getElementById('myPendingModal')?.addEventListener('show.bs.modal', fun
                     `;
                 });
                 html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);"><i class="bi bi-info-circle" style="font-size: 1.5rem; color: #856404;"></i><div><strong style="color: #856404;">Gợi ý:</strong> <span style="color: #664d03;">Nhấp vào công việc để bắt đầu làm và cập nhật trạng thái</span></div></div>';
                 listContainer.innerHTML = html;
             } else {
                 listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào chưa làm</p></div>';
             }
         })
         .catch(err => {
-            console.error('Error loading pending tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
         });
 });
 
-// ========================================
-// 6. MODAL: CÔNG VIỆC ĐANG LÀM
-// ========================================
+// 4. Đang làm
 document.getElementById('myInProgressModal')?.addEventListener('show.bs.modal', function () {
     const listContainer = document.getElementById('myInProgressTasksList');
     fetch('{{ url_for("hub.get_my_inprogress_tasks_detail") }}')
@@ -1379,8 +1578,6 @@ document.getElementById('myInProgressModal')?.addEventListener('show.bs.modal', 
         .then(data => {
             if (data.tasks && data.tasks.length > 0) {
                 let html = '';
-
-                // DESKTOP: Table
                 html += '<div class="d-none d-md-block">';
                 html += '<div class="table-responsive"><table class="table table-hover align-middle">';
                 html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:20%;">Hạn hoàn thành</th><th style="width:20%;">Cập nhật gần nhất</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
@@ -1400,7 +1597,7 @@ document.getElementById('myInProgressModal')?.addEventListener('show.bs.modal', 
                 });
                 html += '</tbody></table></div></div>';
 
-                // MOBILE: Card
+                // MOBILE
                 html += '<div class="d-md-none">';
                 data.tasks.forEach((task, index) => {
                     let priorityBadges = '';
@@ -1440,21 +1637,18 @@ document.getElementById('myInProgressModal')?.addEventListener('show.bs.modal', 
                     `;
                 });
                 html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #cff4fc 0%, #9eeaf9 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(13, 202, 240, 0.15);"><i class="bi bi-hourglass-split" style="font-size: 1.5rem; color: #055160;"></i><div><strong style="color: #055160;">Đang làm:</strong> <span style="color: #053b47;">Tiếp tục làm việc và cập nhật tiến độ thường xuyên!</span></div></div>';
                 listContainer.innerHTML = html;
             } else {
                 listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-inbox text-muted" style="font-size:4rem;"></i><h5 class="mt-3 text-muted">Chưa có công việc nào</h5><p class="text-muted">Bạn chưa bắt đầu làm công việc nào</p></div>';
             }
         })
         .catch(err => {
-            console.error('Error loading in-progress tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
         });
 });
-// ========================================
-// 7. MODAL: CÔNG VIỆC CHƯA LÀM TEAM (Director/Manager)
-// ========================================
+
+// 5. Team pending
 document.getElementById('teamPendingModal')?.addEventListener('show.bs.modal', function () {
     const listContainer = document.getElementById('teamPendingTasksList');
     fetch('{{ url_for("hub.get_team_pending_tasks") }}')
@@ -1462,8 +1656,6 @@ document.getElementById('teamPendingModal')?.addEventListener('show.bs.modal', f
         .then(data => {
             if (data.tasks && data.tasks.length > 0) {
                 let html = '';
-
-                // DESKTOP: Table
                 html += '<div class="d-none d-md-block">';
                 html += '<div class="table-responsive"><table class="table table-hover align-middle">';
                 html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:30%;">Công Việc</th><th style="width:15%;">Hạn hoàn thành</th><th style="width:12%;">Ngày tạo</th><th style="width:15%;">Người Làm</th><th style="width:13%;">Người Giao</th><th style="width:10%;">Phân Loại</th></tr></thead><tbody>';
@@ -1484,107 +1676,419 @@ document.getElementById('teamPendingModal')?.addEventListener('show.bs.modal', f
                     html += `<td>${priorityBadges}</td></tr>`;
                 });
                 html += '</tbody></table></div></div>';
-
-                // MOBILE: Card
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm border-warning" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-warning me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-people"></i> Người làm:</span>
-                                        <span class="text-info">${task.assignees}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-primary">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-clock"></i> Ngày tạo:</span>
-                                        <span class="text-muted">${task.created_at}</span>
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-
-                html += '<div style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);"><i class="bi bi-info-circle" style="font-size: 1.5rem; color: #856404;"></i><div><strong style="color: #856404;">Lưu ý:</strong> <span style="color: #664d03;">Danh sách công việc chưa được thực hiện trong toàn hệ thống</span></div></div>';
                 listContainer.innerHTML = html;
             } else {
                 listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Không có công việc nào chưa làm trong hệ thống</p></div>';
             }
         })
         .catch(err => {
-            console.error('Error loading team pending tasks:', err);
-            listContainer.innerHTML = '<div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);"><i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #842029; display: block; margin-bottom: 12px;"></i><strong style="color: #842029;">Không thể tải danh sách</strong><br><span style="color: #58151c;">Vui lòng thử lại sau</span></div>';
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
+        });
+});
+
+// 6. Team overdue
+document.getElementById('teamOverdueModal')?.addEventListener('show.bs.modal', function () {
+    const listContainer = document.getElementById('overdueTasksList');
+    fetch('{{ url_for("hub.get_overdue_tasks") }}')
+        .then(res => res.json())
+        .then(data => {
+            if (data.tasks && data.tasks.length > 0) {
+                let html = '';
+                html += '<div class="d-none d-md-block">';
+                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
+                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hạn hoàn thành</th><th style="width:15%;">Trạng Thái</th><th style="width:15%;">Phân Loại</th><th style="width:15%;">Người Làm</th></tr></thead><tbody>';
+                data.tasks.forEach((task, index) => {
+                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
+                    let priorityBadges = '';
+                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
+                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
+                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
+                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
+                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
+                    html += `<td class="text-center">${index + 1}</td>`;
+                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
+                    html += `<td><span class="badge bg-danger">${task.due_date}</span></td>`;
+                    html += `<td>${statusBadge}</td>`;
+                    html += `<td>${priorityBadges}</td>`;
+                    html += `<td>${task.assignees}</td></tr>`;
+                });
+                html += '</tbody></table></div></div>';
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Không có công việc nào quá hạn</p></div>';
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
+        });
+});
+
+// 7. Need rating
+document.getElementById('needRatingModal')?.addEventListener('show.bs.modal', function () {
+    const listContainer = document.getElementById('unratedTasksList');
+    fetch('{{ url_for("hub.get_unrated_tasks") }}')
+        .then(res => res.json())
+        .then(data => {
+            if (data.tasks && data.tasks.length > 0) {
+                let html = '';
+                html += '<div class="d-none d-md-block">';
+                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
+                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hoàn Thành</th><th style="width:20%;">Người Giao</th><th style="width:25%;">Người Thực Hiện</th></tr></thead><tbody>';
+                data.tasks.forEach((task, index) => {
+                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
+                    html += `<td class="text-center">${index + 1}</td>`;
+                    html += `<td><strong>${task.title}</strong></td>`;
+                    html += `<td><span class="badge bg-success">${task.completed_at}</span></td>`;
+                    html += `<td><span class="text-primary"><i class="bi bi-person-check"></i> ${task.creator}</span></td>`;
+                    html += `<td>${task.assignees}</td></tr>`;
+                });
+                html += '</tbody></table></div></div>';
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Hoàn Thành!</h5><p class="text-muted">Tất cả công việc đã được đánh giá</p></div>';
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
         });
 });
 
 // ========================================
-// UNIVERSAL IFRAME MODAL HANDLER
+// MODULE MENU BUTTON TOGGLE
 // ========================================
-function openInModal(url, title) {
-    const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
-    const iframe = document.getElementById('contentIframe');
-    const titleText = document.getElementById('iframeModalTitleText');
+function updateModuleMenuButton() {
+    const menuBtn = document.getElementById('moduleMenuBtn');
+    const isInModule = document.querySelector('.module-container.active');
 
-    // Thêm tham số modal=1 vào URL
-    const separator = url.includes('?') ? '&' : '?';
-    const modalUrl = url + separator + 'modal=1';
-
-    // Set title và URL
-    titleText.textContent = title;
-    iframe.src = modalUrl;
-
-    // Show modal
-    modal.show();
-
-    // Clear iframe khi đóng modal
-    document.getElementById('iframeModal').addEventListener('hidden.bs.modal', function () {
-        iframe.src = '';
-    }, { once: true });
+    if (menuBtn) {
+        if (isInModule && window.innerWidth <= 992) {
+            menuBtn.style.display = 'block';
+        } else {
+            menuBtn.style.display = 'none';
+        }
+    }
 }
-// ========================================
-// MODAL: HIỂN THỊ TRANG TRONG IFRAME (STAT-CARD)
-// ========================================
-document.getElementById('pageModal')?.addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    let url = button.getAttribute('data-url');
-    const title = button.getAttribute('data-title');
 
-    // Thêm tham số modal=1 vào URL
-    const separator = url.includes('?') ? '&' : '?';
-    url = url + separator + 'modal=1';
-
-    document.getElementById('pageModalTitle').innerHTML = `<i class="bi bi-window"></i> ${title}`;
-    document.getElementById('pageModalFrame').src = url;
+// Gắn sự kiện click cho nút menu
+document.getElementById('moduleMenuBtn')?.addEventListener('click', function() {
+    // Tìm module đang active
+    const activeModule = document.querySelector('.module-container.active');
+    if (activeModule) {
+        const moduleName = activeModule.id.replace('module-', '');
+        toggleSidebar(moduleName);
+    }
 });
 
-// Clear iframe khi đóng modal
-document.getElementById('pageModal')?.addEventListener('hidden.bs.modal', function () {
-    document.getElementById('pageModalFrame').src = '';
+// Cập nhật khi show/hide module
+function showModule(moduleName) {
+    document.getElementById('main-hub').style.display = 'none';
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+
+    const module = document.getElementById('module-' + moduleName);
+    if (module) {
+        module.classList.add('active');
+    }
+
+    // Cập nhật nút menu
+    updateModuleMenuButton();
+}
+
+function backToHub() {
+    closeSidebarOnMobile();
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+    document.getElementById('main-hub').style.display = 'grid';
+
+    // Ẩn nút menu
+    updateModuleMenuButton();
+}
+
+// Cập nhật khi resize
+window.addEventListener('resize', updateModuleMenuButton);
+
+// Khởi tạo
+document.addEventListener('DOMContentLoaded', function() {
+    updateModuleMenuButton();
+});
+
+// Nhấn ESC để về Hub
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const activeModule = document.querySelector('.module-container.active');
+        if (activeModule) {
+            backToHub();
+        }
+    }
+});
+
+// ========================================
+// CLICK BACKDROP ĐỂ VỀ HUB (DESKTOP)
+// ========================================
+let backdropClickEnabled = false;
+
+function enableBackdropClick() {
+    if (backdropClickEnabled) return;
+    backdropClickEnabled = true;
+
+    document.addEventListener('click', handleBackdropClick);
+}
+
+function disableBackdropClick() {
+    backdropClickEnabled = false;
+    document.removeEventListener('click', handleBackdropClick);
+}
+
+function handleBackdropClick(e) {
+    if (window.innerWidth > 992) {
+        const activeModule = document.querySelector('.module-container.active');
+        if (!activeModule) {
+            disableBackdropClick();
+            return;
+        }
+
+        const moduleContent = activeModule.querySelector('.module-content');
+        const moduleSidebar = activeModule.querySelector('.module-sidebar');
+
+        // Bỏ qua các vùng không cần check
+        if (e.target.closest('.hub-icon-card')) return;
+        if (e.target.closest('.top-navbar')) return;
+
+        // Click ngoài content và sidebar → Về Hub
+        if (!moduleContent.contains(e.target) && !moduleSidebar.contains(e.target)) {
+            backToHub();
+        }
+    }
+}
+
+// Sửa lại hàm showModule
+function showModule(moduleName) {
+    document.getElementById('main-hub').style.display = 'none';
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+
+    const module = document.getElementById('module-' + moduleName);
+    if (module) {
+        module.classList.add('active');
+    }
+
+    updateModuleMenuButton();
+
+    // BẬT backdrop click SAU KHI module hiện
+    setTimeout(() => {
+        enableBackdropClick();
+    }, 100);
+}
+
+// Sửa lại hàm backToHub
+function backToHub() {
+    closeSidebarOnMobile();
+    document.querySelectorAll('.module-container').forEach(m => {
+        m.classList.remove('active');
+    });
+    document.getElementById('main-hub').style.display = 'grid';
+
+    updateModuleMenuButton();
+
+    // TẮT backdrop click khi về Hub
+    disableBackdropClick();
+}
+
+// ========================================
+// REAL-TIME UPDATES VỚI POLLING
+// ========================================
+let pollingInterval = null;
+
+function startRealtimeUpdates() {
+    // Update ngay khi load trang
+    updateRealtimeData();
+
+    // Sau đó update mỗi 30 giây
+    pollingInterval = setInterval(updateRealtimeData, 30000);
+
+    console.log('✅ Real-time updates started (30s interval)');
+}
+
+function stopRealtimeUpdates() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+        console.log('⏸️ Real-time updates stopped');
+    }
+}
+
+function updateRealtimeData() {
+    fetch('{{ url_for("hub.get_realtime_stats") }}')
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
+        .then(data => {
+            console.log('📊 Real-time update:', data);
+
+            // 1. Cập nhật Notification badge (navbar) - GỌI HÀM CÓ SẴN
+            updateNotifCount();
+
+            // 2. Cập nhật Work Badge (Công Việc)
+            const workBadge = document.getElementById('work-badge');
+            if (workBadge) {
+                if (data.work_badge > 0) {
+                    workBadge.textContent = data.work_badge;
+                    workBadge.style.display = 'inline-block';
+                } else {
+                    workBadge.style.display = 'none';
+                }
+            }
+
+            // 3. Cập nhật Info Badge (Thông Tin)
+            const infoBadge = document.getElementById('info-badge');
+            if (infoBadge) {
+                if (data.info_badge > 0) {
+                    infoBadge.textContent = data.info_badge;
+                    infoBadge.style.display = 'inline-block';
+                } else {
+                    infoBadge.style.display = 'none';
+                }
+            }
+
+            // 4. Cập nhật Salary Badge (Lương) - nếu có
+            const salaryBadge = document.getElementById('salary-badge');
+            if (salaryBadge && data.salary_badge !== undefined) {
+                if (data.salary_badge > 0) {
+                    salaryBadge.textContent = data.salary_badge;
+                    salaryBadge.style.display = 'inline-block';
+                } else {
+                    salaryBadge.style.display = 'none';
+                }
+            }
+
+            // 5. Cập nhật số trong module Công Việc nếu đang mở
+            updateTaskModuleStats(data);
+
+            // 6. Cập nhật số trong module Thông Tin nếu đang mở
+            updateInfoModuleStats(data);
+
+            // 7. Cập nhật số trong module Lương nếu đang mở
+            updateSalaryModuleStats(data);
+
+            // 8. Show warning nếu có quá hạn
+            if (data.my_overdue > 0) {
+                console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
+            }
+        })
+        .catch(err => {
+            console.error('❌ Real-time update error:', err);
+        });
+}
+
+function updateTaskModuleStats(data) {
+    // Nếu đang ở module Công Việc
+    const tasksModule = document.getElementById('module-tasks');
+    if (tasksModule && tasksModule.classList.contains('active')) {
+        // Card Quá Hạn
+        const overdueCard = tasksModule.querySelector('.stat-overdue h3');
+        if (overdueCard) overdueCard.textContent = data.my_overdue;
+
+        // Card Sắp Đến Hạn
+        const dueSoonCard = tasksModule.querySelector('.stat-warning h3');
+        if (dueSoonCard) dueSoonCard.textContent = data.my_due_soon;
+
+        // Card Chưa Làm
+        const pendingCard = tasksModule.querySelector('.stat-pending h3');
+        if (pendingCard) pendingCard.textContent = data.my_pending_tasks;
+
+        // Card Đang Làm
+        const progressCard = tasksModule.querySelector('.stat-progress h3');
+        if (progressCard) progressCard.textContent = data.my_in_progress;
+
+        // Stats cho Manager/Director
+        if (data.team_overdue !== undefined) {
+            // Card Team Overdue
+            const teamOverdueCard = tasksModule.querySelectorAll('.stat-danger h3')[0];
+            if (teamOverdueCard) teamOverdueCard.textContent = data.team_overdue;
+
+            // Card Team Pending
+            const teamPendingCard = tasksModule.querySelectorAll('.stat-warning h3')[1];
+            if (teamPendingCard) teamPendingCard.textContent = data.team_pending;
+
+            // Card Need Rating
+            const ratingCard = tasksModule.querySelector('.stat-primary h3');
+            if (ratingCard) ratingCard.textContent = data.tasks_need_rating;
+        }
+    }
+}
+
+function updateInfoModuleStats(data) {
+    // Nếu đang ở module Thông Tin
+    const infoModule = document.getElementById('module-info');
+    if (infoModule && infoModule.classList.contains('active')) {
+        // Card TB Chưa Xác Nhận
+        const unconfirmedCard = infoModule.querySelector('.stat-info h3');
+        if (unconfirmedCard) unconfirmedCard.textContent = data.unconfirmed_news;
+
+        // Card Nhắc Nhở Chưa Đọc
+        const unreadCard = infoModule.querySelector('.stat-warning h3');
+        if (unreadCard) unreadCard.textContent = data.unread_notifications;
+    }
+}
+
+function updateSalaryModuleStats(data) {
+    // Nếu đang ở module Lương
+    const salaryModule = document.getElementById('module-salary');
+    if (salaryModule && salaryModule.classList.contains('active')) {
+        // Card Phạt Chưa Trừ
+        const penaltyCard = salaryModule.querySelector('.stat-danger h3');
+        if (penaltyCard) penaltyCard.textContent = data.pending_penalties;
+
+        // Card Tạm Ứng Chưa Trừ
+        const advanceCard = salaryModule.querySelector('.stat-warning h3');
+        if (advanceCard) advanceCard.textContent = data.pending_advances;
+    }
+}
+
+// Khởi động khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    startRealtimeUpdates();
+});
+
+// Dừng khi rời trang
+window.addEventListener('beforeunload', function() {
+    stopRealtimeUpdates();
+});
+
+// Pause polling khi tab không active (tiết kiệm resources)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopRealtimeUpdates();
+    } else {
+        startRealtimeUpdates();
+    }
+});
+    // ========================================
+// AUTO CENTER ICONS
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const iconGrid = document.getElementById('main-hub');
+    const iconCount = iconGrid.querySelectorAll('.hub-icon-card').length;
+
+    // Điều chỉnh grid-template-columns và max-width dựa trên số icon
+    if (iconCount === 2) {
+        iconGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        iconGrid.style.maxWidth = '550px';
+    } else if (iconCount === 3) {
+        iconGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        iconGrid.style.maxWidth = '750px';
+    } else if (iconCount === 1) {
+        iconGrid.style.gridTemplateColumns = '1fr';
+        iconGrid.style.maxWidth = '250px';
+    }
+    // 4 icons: giữ nguyên default
 });
 </script>
 {% endblock %}

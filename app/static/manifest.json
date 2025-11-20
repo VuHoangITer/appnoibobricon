@@ -1,11 +1,11 @@
 {
-  "name": "Hệ thống quản lý công việc BRICON",
-  "short_name": "BRICON Workflow",
-  "description": "Ứng dụng quản lý công việc, lương, file và ghi chú",
+  "name": "No Thing",
+  "short_name": "NoThing",
+  "description": "Ứng dụng quản lý công việc",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0d6efd",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "icons": [
     {

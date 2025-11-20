@@ -178,7 +178,7 @@ def workflow_hub():
             'type': 'secondary',
             'icon': 'bi-clipboard-data',
             'title': '📊 Theo Dõi Tiến Độ',
-            'message': f'Bạn có <strong>{my_in_progress} việc đang xử lý</strong>, <strong>{my_pending_tasks} việc chưa làm</strong>, <strong>{my_overdue} việc quá hạn</strong>. Hãy hoàn thành đúng hạn để đạt hiệu suất cao!',
+            'message': f'Bạn có <strong>{my_in_progress} việc đang làm</strong>, <strong>{my_pending_tasks} việc chưa làm</strong>, <strong>{my_overdue} việc quá hạn</strong>. Hãy hoàn thành đúng hạn để đạt hiệu suất cao!',
             'stats': {
                 'total': total_my_tasks,
                 'completed': my_completed_recent,
@@ -925,4 +925,122 @@ def get_team_pending_tasks():
 
     except Exception as e:
         print(f"Error in get_team_pending_tasks: {str(e)}")
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+
+# ========================================
+# API: REAL-TIME STATS (POLLING)
+# ========================================
+@bp.route('/api/realtime-stats')
+@login_required
+def get_realtime_stats():
+    """API trả về stats real-time cho polling"""
+    try:
+        now = datetime.utcnow()
+
+        # Lấy task IDs của user
+        my_assignments = TaskAssignment.query.filter_by(
+            user_id=current_user.id,
+            accepted=True
+        ).all()
+        my_task_ids = [a.task_id for a in my_assignments]
+
+        # Đếm các chỉ số cá nhân
+        my_overdue = Task.query.filter(
+            Task.id.in_(my_task_ids),
+            Task.due_date < now,
+            Task.status.in_(['PENDING', 'IN_PROGRESS'])
+        ).count()
+
+        three_days_later = now + timedelta(days=3)
+        my_due_soon = Task.query.filter(
+            Task.id.in_(my_task_ids),
+            Task.due_date >= now,
+            Task.due_date <= three_days_later,
+            Task.status.in_(['PENDING', 'IN_PROGRESS'])
+        ).count()
+
+        my_pending_tasks = Task.query.filter(
+            Task.id.in_(my_task_ids),
+            Task.status == 'PENDING'
+        ).count()
+
+        my_in_progress = Task.query.filter(
+            Task.id.in_(my_task_ids),
+            Task.status == 'IN_PROGRESS'
+        ).count()
+
+        # Thông báo
+        unread_notifications = Notification.query.filter_by(
+            user_id=current_user.id,
+            read=False
+        ).count()
+
+        unconfirmed_news = News.query.filter(
+            ~News.confirmations.any(user_id=current_user.id)
+        ).count()
+
+        # Stats cho Director/Manager
+        team_overdue = 0
+        team_pending = 0
+        tasks_need_rating = 0
+
+        if current_user.role in ['director', 'manager']:
+            team_overdue = Task.query.filter(
+                Task.due_date < now,
+                Task.status.in_(['PENDING', 'IN_PROGRESS'])
+            ).count()
+
+            team_pending = Task.query.filter_by(status='PENDING').count()
+
+            tasks_need_rating = Task.query.filter(
+                Task.status == 'DONE',
+                Task.performance_rating == None
+            ).count()
+
+        # Tính badges
+        work_badge = my_overdue + my_due_soon
+        info_badge = unconfirmed_news + unread_notifications
+
+        # Stats cho Lương (Director/Accountant)
+        pending_penalties = 0
+        pending_advances = 0
+
+        if current_user.role in ['director', 'accountant']:
+            from app.models import Penalty, Advance
+            pending_penalties = Penalty.query.filter_by(is_deducted=False).count()
+            pending_advances = Advance.query.filter_by(is_deducted=False).count()
+
+        salary_badge = pending_penalties + pending_advances
+
+        return jsonify({
+            # Công việc cá nhân
+            'my_overdue': my_overdue,
+            'my_due_soon': my_due_soon,
+            'my_pending_tasks': my_pending_tasks,
+            'my_in_progress': my_in_progress,
+
+            # Thông báo
+            'unread_notifications': unread_notifications,
+            'unconfirmed_news': unconfirmed_news,
+
+            # Stats team (Director/Manager)
+            'team_overdue': team_overdue,
+            'team_pending': team_pending,
+            'tasks_need_rating': tasks_need_rating,
+
+            # Stats lương
+            'pending_penalties': pending_penalties,
+            'pending_advances': pending_advances,
+
+            # Badges
+            'work_badge': work_badge,
+            'info_badge': info_badge,
+            'salary_badge': salary_badge,
+
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"❌ Error in get_realtime_stats: {str(e)}")
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500

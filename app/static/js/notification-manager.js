@@ -635,9 +635,6 @@ async speakLatestNotification() {
 
 // Khởi động khi DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Chỉ khởi động nếu user đã đăng nhập
-    if (document.getElementById('sidebar')) {
-        window.notificationManager = new NotificationManager();
-        console.log('✅ Notification Manager initialized (Backend TTS)');
-    }
+    window.notificationManager = new NotificationManager();
+    console.log('✅ Notification Manager initialized (Backend TTS)');
 });

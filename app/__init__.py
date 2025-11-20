@@ -26,6 +26,7 @@ def create_app(config_class=Config):
     csrf.init_app(app)
 
     login_manager.login_view = 'auth.login'
+    login_manager.login_message = None
 
     # Create upload folder
     upload_path = app.config['UPLOAD_FOLDER']

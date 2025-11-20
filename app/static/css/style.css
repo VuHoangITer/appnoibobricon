@@ -1,5 +1,4 @@
 :root {
-    --sidebar-width: 260px;
     --navbar-height: 60px;
     --primary-color: #0d6efd;
     --secondary-color: #6c757d;
@@ -9,9 +8,6 @@
     --info-color: #0dcaf0;
     --dark-color: #212529;
     --light-bg: #f8f9fa;
-    --sidebar-bg: #2c3e50;
-    --sidebar-hover: #34495e;
-    --text-light: #ecf0f1;
 }
 
 * {
@@ -27,156 +23,16 @@ body {
 }
 
 /* ============================================
-   SIDEBAR STYLES
+   MAIN WRAPPER
    ============================================ */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: var(--sidebar-width);
-    background: linear-gradient(180deg, var(--sidebar-bg) 0%, #1a252f 100%);
-    z-index: 1000;
-    transition: transform 0.3s ease-in-out;
-    overflow-y: auto;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-}
-
-.sidebar-header {
-    padding: 20px;
-    background: rgba(0,0,0,0.2);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.sidebar-brand {
-    color: var(--text-light);
-    font-size: 1.3rem;
-    font-weight: bold;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sidebar-brand i {
-    font-size: 1.5rem;
-    color: var(--primary-color);
-}
-
-.sidebar-nav {
-    padding: 20px 0;
-}
-
-.nav-section-title {
-    color: rgba(255,255,255,0.5);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    padding: 10px 20px;
-    margin-top: 10px;
-    letter-spacing: 1px;
-}
-
-.nav-item {
-    margin: 5px 10px;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: var(--text-light);
-    text-decoration: none;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-}
-
-.nav-link i {
-    font-size: 1.2rem;
-    width: 24px;
-    text-align: center;
-}
-
-.nav-link:hover {
-    background: var(--sidebar-hover);
-    color: white;
-    transform: translateX(5px);
-}
-
-.nav-link.active {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.4);
-}
-
-.sidebar-footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    padding: 15px 20px;
-    background: rgba(0,0,0,0.2);
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-light);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-.user-details {
-    flex: 1;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.user-role {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-}
-
-.logout-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-light);
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s;
-}
-
-.logout-btn:hover {
-    background: var(--danger-color);
-    color: white;
+.main-wrapper {
+    margin-left: 0 !important;
+    min-height: 100vh;
 }
 
 /* ============================================
-   MAIN CONTENT AREA
+   TOP NAVBAR
    ============================================ */
-.main-wrapper {
-    margin-left: var(--sidebar-width);
-    min-height: 100vh;
-    transition: margin-left 0.3s ease-in-out;
-}
-
-/* Top Navbar */
 .top-navbar {
     position: sticky;
     top: 0;
@@ -186,7 +42,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     z-index: 999;
 }
 
@@ -194,22 +50,6 @@ body {
     display: flex;
     align-items: center;
     gap: 20px;
-}
-
-.menu-toggle {
-    display: none;
-    background: transparent;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--dark-color);
-}
-
-.page-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--dark-color);
-    margin: 0;
 }
 
 .navbar-right {
@@ -230,6 +70,10 @@ body {
     transition: all 0.3s;
 }
 
+.notification-btn:hover {
+    background: var(--light-bg);
+}
+
 .notification-badge {
     position: absolute;
     top: 0;
@@ -242,50 +86,17 @@ body {
     font-weight: bold;
 }
 
-/* Main Content */
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
 .main-content {
     padding: 30px;
     min-height: calc(100vh - var(--navbar-height));
 }
 
 /* ============================================
-   MOBILE RESPONSIVE
+   SIDEBAR OVERLAY (Dùng cho HUB module sidebar)
    ============================================ */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-    
-    .sidebar.active {
-        transform: translateX(0);
-    }
-    
-    .main-wrapper {
-        margin-left: 0;
-    }
-    
-    .menu-toggle {
-        display: block;
-    }
-    
-    .top-navbar {
-        padding: 0 15px;
-    }
-    
-    .page-title {
-        font-size: 1.2rem;
-    }
-    
-    .main-content {
-        padding: 15px;
-    }
-    
-    .sidebar-footer {
-        position: relative;
-    }
-}
-
-/* Overlay for mobile */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -293,8 +104,9 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 999;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    backdrop-filter: blur(4px);
 }
 
 .sidebar-overlay.active {
@@ -307,7 +119,7 @@ body {
 .card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-bottom: 20px;
     border: none;
     overflow: hidden;
@@ -326,6 +138,25 @@ body {
     padding: 20px;
 }
 
+.card.border-danger {
+    border-left: 4px solid var(--danger-color) !important;
+}
+
+.card.border-warning {
+    border-left: 4px solid var(--warning-color) !important;
+}
+
+.card.border-danger .card-header,
+.card.border-warning .card-header {
+    font-weight: 600;
+}
+
+.card-body small.text-muted {
+    display: block;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
 /* Dashboard Cards */
 .stats-card {
     border-radius: 12px;
@@ -337,7 +168,7 @@ body {
 
 .stats-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .stats-card h5 {
@@ -376,42 +207,6 @@ body {
     vertical-align: middle;
 }
 
-@media (max-width: 768px) {
-    .table {
-        font-size: 0.85rem;
-    }
-    
-    .table thead {
-        display: none;
-    }
-    
-    .table tbody tr {
-        display: block;
-        margin-bottom: 15px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        background: white;
-    }
-    
-    .table tbody td {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 15px;
-        border: none;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .table tbody td:last-child {
-        border-bottom: none;
-    }
-    
-    .table tbody td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: var(--dark-color);
-    }
-}
-
 /* ============================================
    BUTTONS
    ============================================ */
@@ -434,6 +229,13 @@ body {
     box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
 }
 
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
 /* ============================================
    ALERTS
    ============================================ */
@@ -448,6 +250,19 @@ body {
     padding: 18px 20px;
 }
 
+.alert-danger {
+    border-left: 4px solid var(--danger-color);
+}
+
+.alert h5 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.alert p:last-child {
+    margin-bottom: 0;
+}
+
 /* ============================================
    BADGES
    ============================================ */
@@ -458,27 +273,49 @@ body {
     font-size: 0.85rem;
 }
 
+.badge.bg-danger {
+    background-color: var(--danger-color) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--warning-color) !important;
+    color: #000 !important;
+}
+
 /* ============================================
    FORMS
    ============================================ */
-.form-control, .form-select {
+.form-control,
+.form-select {
     border-radius: 8px;
     border: 1px solid #dee2e6;
     padding: 10px 15px;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
 
+.form-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
 /* ============================================
-   RESPONSIVE GRID
+   LINKS
    ============================================ */
-@media (max-width: 576px) {
-    .row > * {
-        margin-bottom: 15px;
-    }
+a:not(.btn):not(.nav-link):not(.navbar-logo-link) {
+    text-decoration: none;
+    color: var(--danger-color);
+    transition: color 0.2s ease;
+}
+
+a:not(.btn):not(.nav-link):not(.navbar-logo-link):hover {
+    color: #0a58ca;
 }
 
 /* ============================================
@@ -492,7 +329,19 @@ body {
 }
 
 .shadow-sm-custom {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
+}
+
+.text-warning {
+    color: var(--warning-color) !important;
+}
+
+.bi {
+    margin-right: 4px;
 }
 
 /* Loading Animation */
@@ -500,111 +349,90 @@ body {
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 3px solid rgba(255,255,255,0.3);
+    border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: white;
     animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
-}
-/* Existing styles remain unchanged */
-
-/* Locked Task Styles */
-.form-select:disabled,
-.btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.alert-danger {
-    border-left: 4px solid #dc3545;
-}
-
-.card.border-danger {
-    border-left: 4px solid #dc3545 !important;
-}
-
-.card.border-warning {
-    border-left: 4px solid #ffc107 !important;
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Lock icon animation */
 @keyframes shake {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-5deg); }
-    75% { transform: rotate(5deg); }
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-5deg);
+    }
+    75% {
+        transform: rotate(5deg);
+    }
 }
 
 .bi-lock-fill {
     animation: shake 0.5s ease-in-out;
 }
 
-/* Disabled form styling */
-select:disabled {
-    background-color: #e9ecef;
-    border-color: #ced4da;
-}
-
-button:disabled {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-/* Warning and danger text colors */
-.text-danger {
-    color: #dc3545 !important;
-}
-
-.text-warning {
-    color: #ffc107 !important;
-}
-
-/* Badge styling for locked status */
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-}
-
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-}
-
-/* Alert box styling */
-.alert {
-    border-radius: 8px;
-    padding: 15px;
-}
-
-.alert h5 {
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.alert p:last-child {
-    margin-bottom: 0;
-}
-
-/* Card styling for status information */
-.card.border-danger .card-header,
-.card.border-warning .card-header {
-    font-weight: 600;
-}
-
-.card-body small.text-muted {
-    display: block;
-    margin-top: 8px;
-    line-height: 1.5;
-}
-
-/* Icon spacing */
-.bi {
-    margin-right: 4px;
-}
-
-/* Responsive adjustments */
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
+    .top-navbar {
+        padding: 0 15px;
+    }
+
+    .navbar-left {
+        gap: 10px;
+    }
+
+    .navbar-right {
+        gap: 10px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    .table {
+        font-size: 0.85rem;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 15px;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .table tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
     .alert {
         padding: 12px;
         font-size: 0.9rem;
@@ -614,142 +442,54 @@ button:disabled {
         font-size: 1rem;
     }
 }
-/* ============================================
-   SIMPLE LINK STYLES
-   ============================================ */
 
-/* Xóa gạch chân, màu xanh đẹp hơn */
-a:not(.btn):not(.nav-link):not(.sidebar-brand) {
-    text-decoration: none;
-    color: #dc3545;
-    transition: color 0.2s ease;
-}
+@media (max-width: 576px) {
+    .row > * {
+        margin-bottom: 15px;
+    }
 
-a:not(.btn):not(.nav-link):not(.sidebar-brand):hover {
-    color: #0a58ca;
-}
-/* Nút Toggle Sidebar - Siêu nhỏ, chỉ là icon tròn */
-.sidebar-toggle-container {
-    position: fixed;
-    top: 75px;
-    right: 15px;
-    z-index: 999;
-}
-
-.sidebar-toggle-btn {
-    width: 44px;           /* cố định kích thước nhỏ */
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border: 2px solid #0d6efd;
-    border-radius: 50%;    /* tròn hoàn toàn */
-    color: #0d6efd;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 12px rgba(13,110,253,0.3);
-}
-
-.sidebar-toggle-btn:hover {
-    background: #0d6efd;
-    color: #fff;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 6px 18px rgba(13,110,253,0.4);
-}
-
-/* Chỉ để lại icon, ẩn hết chữ */
-.sidebar-toggle-btn i {
-    font-size: 1.3rem;
-}
-.sidebar-toggle-btn span {
-    display: none !important;
-}
-
-/* Ẩn sidebar */
-body.sidebar-hidden .sidebar { transform: translateX(-100%)!important; }
-body.sidebar-hidden .main-wrapper { margin-left: 0!important; }
-body.sidebar-hidden .sidebar-overlay { display: none!important; }
-.sidebar, .main-wrapper { transition: all 0.3s ease-in-out!important; }
-
-/* Mobile: càng nhỏ càng đẹp */
-@media (max-width: 768px) {
-    .sidebar-toggle-container { top: 68px; right: 12px; }
-    .sidebar-toggle-btn { width: 42px; height: 42px; }
-    .sidebar-toggle-btn i { font-size: 1.25rem; }
-    body.sidebar-hidden .sidebar.active { transform: translateX(0)!important; }
+    .main-content {
+        padding: 10px;
+    }
 }
 
 @media (max-width: 480px) {
-    .sidebar-toggle-container { top: 65px; right: 10px; }
-    .sidebar-toggle-btn { width: 40px; height: 40px; }
-    .sidebar-toggle-btn i { font-size: 1.2rem; }
-}
-/* FIX TOP NAVBAR MOBILE */
-@media (max-width: 768px) {
     .top-navbar {
         padding: 0 10px;
-    }
-
-    .navbar-left {
-        gap: 8px;
-        flex-shrink: 1;
-        min-width: 0;
-    }
-
-    .navbar-logo {
-        height: 32px;
-    }
-
-    .page-title {
-        font-size: 1rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 120px;
-    }
-
-    .navbar-right {
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .sidebar-toggle-btn {
-        width: 36px;
-        height: 36px;
-        padding: 0;
-    }
-
-    .sidebar-toggle-btn i {
-        font-size: 1.1rem;
     }
 
     .notification-btn {
         font-size: 1.1rem;
         padding: 6px;
     }
-
-    .user-avatar-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-        margin-left: 0;
-    }
+}
+/* Ẩn scrollbar toàn bộ trang */
+html, body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE, Edge */
 }
 
-@media (max-width: 480px) {
-    .navbar-logo {
-        height: 28px;
-    }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
 
-    .page-title {
-        max-width: 80px;
-        font-size: 0.9rem;
-    }
+/* Ẩn scrollbar cho modal sidebar */
+.module-sidebar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
 
-    .sidebar-toggle-btn,
-    .user-avatar-btn {
-        width: 32px;
-        height: 32px;
-    }
+.module-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ẩn scrollbar cho tất cả elements */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+    display: none;
 }

@@ -5,18 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ thống quản lý công việc{% endblock %}</title>
 
-    <!-- CRITICAL: INLINE SCRIPT - CHẠY TRƯỚC HẾT -->
-    <script>
-    // Chạy ĐỒNG BỘ ngay lập tức - TRƯỚC KHI parse CSS
-    (function() {
-        const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
-        if (sidebarHidden) {
-            // Thêm class vào <html> ngay lập tức
-            document.documentElement.className = 'sidebar-hidden';
-        }
-    })();
-    </script>
-
     <!-- PWA Manifest -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
@@ -52,11 +40,9 @@
         }
 
         /* ==========================================
-           MODAL MODE: ẨN SIDEBAR VÀ TOP NAVBAR
+           MODAL MODE: ẨN TOP NAVBAR
            ========================================== */
         {% if request.args.get('modal') %}
-        .sidebar,
-        .sidebar-overlay,
         .top-navbar {
             display: none !important;
         }
@@ -70,55 +56,9 @@
         }
         {% endif %}
 
-        .sidebar {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100vh !important;
-            overflow: hidden !important;
-            transition: none !important;
-        }
-
-        .sidebar.transition-enabled {
-            transition: transform 0.3s ease-in-out !important;
-        }
-
-        .sidebar-nav {
-            flex: 1 1 auto !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            padding: 20px 0 !important;
-            scroll-behavior: smooth;
-        }
-
-        .nav-section-title {
-            margin-top: 20px !important;
-            margin-bottom: 8px !important;
-            padding-top: 20px !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .nav-section-title + .nav-item {
-            margin-top: 5px !important;
-        }
-
-        html.sidebar-hidden .sidebar {
-            transform: translateX(-100%) !important;
-        }
-
-        html.sidebar-hidden .main-wrapper {
-            margin-left: 0 !important;
-        }
-
-        html.sidebar-hidden .sidebar-overlay {
-            display: none !important;
-        }
-
         .main-wrapper {
+            margin-left: 0 !important;
             transition: none !important;
-        }
-
-        .main-wrapper.transition-enabled {
-            transition: margin-left 0.3s ease-in-out !important;
         }
 
         /* TOP NAVBAR LOGO */
@@ -263,175 +203,75 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .sidebar-toggle-btn {
-                display: none !important;
-            }
             .navbar-logo {
                 height: 38px;
-            }
-
-            html.sidebar-hidden .sidebar.active {
-                transform: translateX(0) !important;
             }
 
             .user-dropdown {
                 right: -10px;
             }
         }
+
         @media (max-width: 480px) {
-            .sidebar-toggle-btn {
-                display: none !important;
-            }
             .navbar-logo {
                 height: 32px;
             }
         }
+    /* MODULE MENU BUTTON */
+    .module-menu-btn {
+        position: relative;
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #ffffff;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.3s;
+        display: none;
+    }
+
+    .module-menu-btn:hover {
+        background: var(--light-bg);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .navbar-logo {
+            height: 38px;
+        }
+
+        .user-dropdown {
+            right: -10px;
+        }
+
+        .module-menu-btn {
+            font-size: 1.3rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .navbar-logo {
+            height: 32px;
+        }
+
+        .module-menu-btn {
+            font-size: 1.2rem;
+        }
+    }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% if current_user.is_authenticated %}
 
-    <!-- ========================================
-         CHỈ HIỂN THỊ SIDEBAR NẾU KHÔNG PHẢI MODAL
-         ======================================== -->
-    {% if not request.args.get('modal') %}
-    <aside class="sidebar" id="sidebar">
-        <nav class="sidebar-nav">
-            <div class="nav-item">
-                <a href="{{ url_for('tasks.dashboard') }}" class="nav-link {% if request.endpoint == 'tasks.dashboard' %}active{% endif %}">
-                    <i class="bi bi-speedometer2"></i>
-                    <span>Tổng quan</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('tasks.kanban') }}" class="nav-link {% if request.endpoint == 'tasks.kanban' %}active{% endif %}">
-                    <i class="bi bi-kanban"></i>
-                    <span>Tóm Tắt công việc</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('workflow.workflow_diagram') }}"
-                   class="nav-link {% if request.endpoint == 'workflow.workflow_diagram' %}active{% endif %}">
-                    <i class="bi bi-diagram-3-fill"></i>
-                    <span>Luồng Giao Việc</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('tasks.list_tasks') }}" class="nav-link {% if 'tasks.list' in request.endpoint or 'tasks.task' in request.endpoint or 'tasks.create' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-list-task"></i>
-                    <span>Công việc</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('news.list_news') }}" class="nav-link {% if 'news' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-newspaper"></i>
-                    <span>Thông báo nội bộ</span>
-                </a>
-            </div>
-            {% if current_user.role in ['director', 'manager'] %}
-            <div class="nav-item">
-                <a href="{{ url_for('performance.performance_review') }}"
-                   class="nav-link {% if request.endpoint == 'performance.performance_review' %}active{% endif %}">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>Hiệu Suất Nhân Viên</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('performance.unrated_tasks') }}"
-                   class="nav-link {% if request.endpoint == 'performance.unrated_tasks' %}active{% endif %}">
-                    <i class="bi bi-hourglass-split"></i>
-                    <span>NVụ Chưa Đ.Giá</span>
-                </a>
-            </div>
-            {% endif %}
-            <div class="nav-item">
-                <a href="{{ url_for('files.list_files') }}" class="nav-link {% if 'files' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-folder2-open"></i>
-                    <span>Thư viện File</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('notes.list_notes') }}" class="nav-link {% if 'notes' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-journal-text"></i>
-                    <span>Ghi chú</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('notifications.list_notifications') }}" class="nav-link {% if 'notifications' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-bell"></i>
-                    <span>Nhắc nhở</span>
-                    <span class="badge bg-danger ms-auto" id="sidebar-notif-count" style="display: none;"></span>
-                </a>
-            </div>
-            {% if current_user.role in ['director', 'accountant'] %}
-                <div class="nav-section-title">Lương</div>
-                <div class="nav-item">
-                    <a href="{{ url_for('salaries.list_salaries') }}" class="nav-link {% if 'salaries' in request.endpoint %}active{% endif %}">
-                        <i class="bi bi-cash-coin"></i>
-                        <span>Lương</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ url_for('employees.list_employees') }}" class="nav-link {% if 'employees' in request.endpoint %}active{% endif %}">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Quản Lý Nhân Viên</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{{ url_for('work_days.list_configs') }}" class="nav-link {% if 'work_days' in request.endpoint %}active{% endif %}">
-                        <i class="bi bi-calendar-week"></i>
-                        <span>Số Công/Tháng</span>
-                    </a>
-                </div>
-                {% if current_user.role == 'director' %}
-                <div class="nav-item">
-                    <a href="{{ url_for('salary_grades.list_grades') }}" class="nav-link {% if 'salary_grades' in request.endpoint %}active{% endif %}">
-                        <i class="bi bi-award-fill"></i>
-                        <span>Cấp Bậc Lương</span>
-                    </a>
-                </div>
-                {% endif %}
-            <div class="nav-item">
-                <a href="{{ url_for('penalties.list_penalties') }}" class="nav-link {% if 'penalties' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <span>Biên Bản Phạt</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{{ url_for('advances.list_advances') }}" class="nav-link {% if 'advances' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>Tạm Ứng</span>
-                </a>
-            </div>
-            {% endif %}
-            {% if current_user.role == 'director' %}
-            <div class="nav-item">
-                <div class="nav-section-title">Giám đốc</div>
-                <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth.users' in request.endpoint or 'auth.register' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Quản lý Tài Khoản</span>
-                </a>
-            </div>
-            {% endif %}
-        </nav>
-    </aside>
-
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    {% endif %}
-    <!-- END SIDEBAR -->
-
     <div class="main-wrapper" id="mainWrapper">
-
         <!-- ========================================
              CHỈ HIỂN THỊ TOP NAVBAR NẾU KHÔNG PHẢI MODAL
              ======================================== -->
-        {% if not request.args.get('modal') %}
+        {% if not request.args.get('modal') and request.endpoint == 'hub.workflow_hub' %}
         <nav class="top-navbar">
             <div class="navbar-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="bi bi-list"></i>
-                </button>
                 <a href="{{ url_for('hub.workflow_hub') }}" class="navbar-logo-link" title="Về Trang Chủ">
                     <img src="{{ url_for('static', filename='images/logo.png') }}"
                          alt="BRICON Logo"
@@ -439,8 +279,8 @@
                 </a>
             </div>
             <div class="navbar-right">
-                <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebarMode()">
-                    <i class="bi bi-layout-sidebar-inset"></i>
+                <button class="module-menu-btn" id="moduleMenuBtn" style="display: none;">
+                    <i class="bi bi-list"></i>
                 </button>
                 <button class="notification-btn" onclick="window.location.href='{{ url_for('notifications.list_notifications') }}'">
                     <i class="bi bi-bell-fill"></i>
@@ -513,6 +353,9 @@
     {% endif %}
 
     <script>
+        // ==========================================
+        // USER DROPDOWN TOGGLE
+        // ==========================================
         function toggleUserDropdown() {
             const btn = document.getElementById('userAvatarBtn');
             btn.classList.toggle('active');
@@ -536,57 +379,23 @@
             }
         }
 
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        if (menuToggle) {
-            menuToggle.addEventListener('click', function() {
-                // Trên mobile, bỏ class sidebar-hidden khi mở menu
-                if (window.innerWidth <= 768) {
-                    document.documentElement.classList.remove('sidebar-hidden');
-                }
-
-                sidebar.classList.toggle('active');
-                sidebarOverlay.classList.toggle('active');
-            });
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-
-                // Khôi phục lại trạng thái sidebar-hidden nếu có
-                if (window.innerWidth <= 768) {
-                    const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
-                    if (sidebarHidden) {
-                        document.documentElement.classList.add('sidebar-hidden');
-                    }
-                }
-            });
-        }
-
+        // ==========================================
+        // NOTIFICATION COUNT UPDATE
+        // ==========================================
         {% if current_user.is_authenticated %}
         function updateNotifCount() {
             fetch('{{ url_for("notifications.unread_count") }}')
                 .then(res => res.json())
                 .then(data => {
                     const badge = document.getElementById('notif-count');
-                    const sidebarBadge = document.getElementById('sidebar-notif-count');
 
                     if (data.count > 0) {
                         if (badge) {
                             badge.textContent = data.count > 99 ? '99+' : data.count;
                             badge.style.display = 'inline-block';
                         }
-                        if (sidebarBadge) {
-                            sidebarBadge.textContent = data.count > 99 ? '99+' : data.count;
-                            sidebarBadge.style.display = 'inline-block';
-                        }
                     } else {
                         if (badge) badge.style.display = 'none';
-                        if (sidebarBadge) sidebarBadge.style.display = 'none';
                     }
                 })
                 .catch(err => console.error('Error fetching notifications:', err));
@@ -596,6 +405,9 @@
         setInterval(updateNotifCount, 30000);
         {% endif %}
 
+        // ==========================================
+        // ALERT AUTO DISMISS
+        // ==========================================
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
@@ -604,26 +416,12 @@
             });
         }, 12000);
 
+        // ==========================================
+        // SCROLL POSITION PERSISTENCE
+        // ==========================================
         {% if current_user.is_authenticated %}
         (function() {
-            const SCROLL_KEY = 'sidebar_scroll_position';
             const CONTENT_SCROLL_KEY = 'main_content_scroll_position';
-
-            const sidebar = document.querySelector('.sidebar-nav');
-            if (sidebar) {
-                const savedSidebarScroll = sessionStorage.getItem(SCROLL_KEY);
-                if (savedSidebarScroll) {
-                    sidebar.scrollTop = parseInt(savedSidebarScroll);
-                }
-
-                let sidebarScrollTimeout;
-                sidebar.addEventListener('scroll', function() {
-                    clearTimeout(sidebarScrollTimeout);
-                    sidebarScrollTimeout = setTimeout(function() {
-                        sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
-                    }, 100);
-                });
-            }
 
             const mainContent = document.querySelector('.main-content');
             if (mainContent) {
@@ -647,73 +445,10 @@
                 const link = e.target.closest('a[href]');
                 if (link && !link.getAttribute('href').startsWith('#')) {
                     sessionStorage.setItem(CONTENT_SCROLL_KEY, window.scrollY);
-                    if (sidebar) {
-                        sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop);
-                    }
                 }
-            });
-            document.querySelectorAll('.sidebar-nav .nav-link').forEach(function(navLink) {
-                navLink.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        if (sidebar) sidebar.classList.remove('active');
-                        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-                    }
-                });
             });
         })();
         {% endif %}
-    </script>
-
-    <script>
-    window.toggleSidebarMode = function() {
-        // Chỉ hoạt động trên desktop
-        if (window.innerWidth <= 768) {
-            return;
-        }
-
-        const html = document.documentElement;
-        html.classList.toggle('sidebar-hidden');
-
-        const isHidden = html.classList.contains('sidebar-hidden');
-        localStorage.setItem('sidebarHidden', isHidden);
-
-        const btn = document.getElementById('sidebarToggleBtn');
-        if (btn) {
-            const icon = btn.querySelector('i');
-            if (isHidden) {
-                icon.className = 'bi bi-layout-sidebar';
-            } else {
-                icon.className = 'bi bi-layout-sidebar-inset';
-            }
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
-        const btn = document.getElementById('sidebarToggleBtn');
-        const sidebar = document.getElementById('sidebar');
-        const mainWrapper = document.getElementById('mainWrapper');
-
-        setTimeout(function() {
-            if (sidebar) sidebar.classList.add('transition-enabled');
-            if (mainWrapper) mainWrapper.classList.add('transition-enabled');
-        }, 100);
-
-        if (btn && sidebarHidden) {
-            const icon = btn.querySelector('i');
-            icon.className = 'bi bi-layout-sidebar';
-        }
-
-        if (localStorage.getItem('sidebarHidden') === null) {
-            document.documentElement.classList.add('sidebar-hidden');
-            localStorage.setItem('sidebarHidden', 'true');
-
-            const btn = document.getElementById('sidebarToggleBtn');
-            if (btn) {
-                btn.querySelector('i').className = 'bi bi-layout-sidebar';
-            }
-        }
-    });
     </script>
 
     {% block scripts %}{% endblock %}
