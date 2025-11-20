@@ -271,6 +271,45 @@
 
         <!-- Tab: Cá nhân -->
         <div id="tab-my-work" class="hub-tab-content active">
+            <!-- ========================================
+             THÔNG BÁO CÁ NHÂN - HIỂN THỊ Ở ĐẦU TAB
+             ======================================== -->
+        {% if personal_notification %}
+        <div class="notification-box notification-{{ personal_notification.type }}"
+             style="margin-bottom: 30px; animation: slideInDown 0.5s ease;">
+            <div class="notification-icon">
+                <i class="{{ personal_notification.icon }}"></i>
+            </div>
+            <div class="notification-content">
+                <h4 class="notification-title">{{ personal_notification.title }}</h4>
+                <p class="notification-message">{{ personal_notification.message|safe }}</p>
+
+                <!-- Stats chi tiết (tùy chọn hiển thị) -->
+                <div class="notification-stats">
+                    {% if personal_notification.stats.completion_rate is defined %}
+                    <span class="stat-item">
+                        <i class="bi bi-check-circle"></i> Hoàn thành:
+                        <strong>{{ "%.0f"|format(personal_notification.stats.completion_rate) }}%</strong>
+                    </span>
+                    {% endif %}
+
+                    {% if personal_notification.stats.quality_rate is defined %}
+                    <span class="stat-item">
+                        <i class="bi bi-star"></i> Chất lượng:
+                        <strong>{{ "%.0f"|format(personal_notification.stats.quality_rate) }}%</strong>
+                    </span>
+                    {% endif %}
+
+                    {% if personal_notification.stats.overdue is defined and personal_notification.stats.overdue > 0 %}
+                    <span class="stat-item">
+                        <i class="bi bi-exclamation-triangle"></i> Quá hạn:
+                        <strong class="text-danger">{{ personal_notification.stats.overdue }}</strong>
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
             <div class="stats-grid">
                 <div class="stat-card stat-pending" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myPendingModal">
                     <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
@@ -317,6 +356,52 @@
         <!-- Tab: Quản Lý -->
         {% if current_user.role in ['director', 'manager'] %}
         <div id="tab-management" class="hub-tab-content">
+        <!-- ========================================
+         THÔNG BÁO CÔNG TY - CHỈ DIRECTOR MỚI CÓ
+         ======================================== -->
+        {% if current_user.role == 'director' and company_notification %}
+        <div class="notification-box notification-{{ company_notification.type }}"
+             style="margin-bottom: 30px; animation: slideInDown 0.5s ease;">
+            <div class="notification-icon">
+                <i class="{{ company_notification.icon }}"></i>
+            </div>
+            <div class="notification-content">
+                <h4 class="notification-title">{{ company_notification.title }}</h4>
+                <p class="notification-message">{{ company_notification.message|safe }}</p>
+
+                <!-- Stats chi tiết công ty -->
+                <div class="notification-stats">
+                    {% if company_notification.stats.completion_rate is defined %}
+                    <span class="stat-item">
+                        <i class="bi bi-check-circle"></i> Hoàn thành:
+                        <strong>{{ "%.0f"|format(company_notification.stats.completion_rate) }}%</strong>
+                    </span>
+                    {% endif %}
+
+                    {% if company_notification.stats.on_time_rate is defined %}
+                    <span class="stat-item">
+                        <i class="bi bi-alarm"></i> Đúng hạn:
+                        <strong>{{ "%.0f"|format(company_notification.stats.on_time_rate) }}%</strong>
+                    </span>
+                    {% endif %}
+
+                    {% if company_notification.stats.overdue is defined and company_notification.stats.overdue > 0 %}
+                    <span class="stat-item">
+                        <i class="bi bi-exclamation-triangle"></i> Quá hạn:
+                        <strong class="text-danger">{{ company_notification.stats.overdue }}</strong>
+                    </span>
+                    {% endif %}
+
+                    {% if company_notification.stats.need_rating is defined and company_notification.stats.need_rating > 0 %}
+                    <span class="stat-item">
+                        <i class="bi bi-star"></i> Cần đánh giá:
+                        <strong>{{ company_notification.stats.need_rating }}</strong>
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
             <div class="stats-grid">
                 <div class="stat-card stat-info" style="cursor: pointer;" onclick="openInModal('{{ url_for('tasks.tasks_by_status', status='ALL') }}', 'Tổng Công Việc')">
                     <div class="stat-icon"><i class="bi bi-list-check"></i></div>
@@ -352,7 +437,6 @@
         </div>
         {% endif %}
 
-        <!-- Tab: Công Việc -->
         <!-- Tab: Công Việc -->
         <div id="tab-tasks" class="hub-tab-content">
             <!-- Grid Container 2x2 -->
