@@ -240,6 +240,57 @@
 .perf-stat-card:nth-child(6) {
 	animation-delay: 0.3s;
 }
+/* Selected User Info */
+.selected-user-info {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.selected-user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.selected-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Creator Avatar in Table */
+.creator-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
+}
+
+.creator-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
 </style>
 {% endblock %}
 
@@ -257,6 +308,25 @@
                 </option>
                 {% endfor %}
             </select>
+
+            <!-- Hiển thị info người được chọn -->
+            {% if selected_user %}
+            <div class="selected-user-info mt-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="selected-user-avatar">
+                        {% if selected_user.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=selected_user.avatar) }}" alt="">
+                        {% else %}
+                            {{ selected_user.full_name[0].upper() }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ selected_user.full_name }}</h5>
+                        <small class="opacity-75">{{ selected_user.role | role_vn }} • {{ selected_user.email }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         {% if selected_user %}
@@ -474,9 +544,20 @@
                             {% endif %}
                         </td>
                         <td data-label="Người Giao">
-                            {{ task.creator.full_name }}
-                            <br>
-                            <small class="text-muted">{{ task.creator.role | role_vn }}</small>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="creator-avatar">
+                                    {% if task.creator.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}" alt="">
+                                    {% else %}
+                                        {{ task.creator.full_name[0].upper() }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong>{{ task.creator.full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ task.creator.role | role_vn }}</small>
+                                </div>
+                            </div>
                         </td>
                         <td data-label="Hạn Chót">
                             {% if task.due_date %}

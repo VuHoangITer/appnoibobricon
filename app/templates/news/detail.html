@@ -29,6 +29,12 @@
 .news-comment {
     transition: all 0.3s ease;
 }
+.news-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
 </style>
 {% endblock %}
 
@@ -44,7 +50,13 @@
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="news-avatar" style="width: 44px; height: 44px; font-size: 1rem;">
-                                    {{ news.author.full_name[0].upper() }}
+                                    <div class="news-avatar" style="width: 44px; height: 44px; font-size: 1rem;">
+                                        {% if news.author.avatar %}
+                                            <img src="{{ url_for('profile.get_avatar', filename=news.author.avatar) }}" alt="">
+                                        {% else %}
+                                            {{ news.author.full_name[0].upper() }}
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <div>
                                     <div class="news-author-name">
@@ -160,7 +172,11 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="d-flex gap-2">
                             <div class="news-avatar small">
-                                {{ current_user.full_name[0].upper() }}
+                                {% if current_user.avatar %}
+                                    <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}" alt="">
+                                {% else %}
+                                    {{ current_user.full_name[0].upper() }}
+                                {% endif %}
                             </div>
                             <div class="flex-grow-1">
                                 <textarea class="news-form-control"
@@ -183,7 +199,11 @@
                         <div class="news-comment" data-comment-id="{{ comment.id }}">
                             <div class="d-flex gap-2">
                                 <div class="news-avatar small">
-                                    {{ comment.user.full_name[0].upper() }}
+                                    {% if comment.user.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=comment.user.avatar) }}" alt="">
+                                    {% else %}
+                                        {{ comment.user.full_name[0].upper() }}
+                                    {% endif %}
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="news-comment-bubble">
@@ -291,7 +311,11 @@
         return `
             <div class="news-comment new-comment" data-comment-id="${comment.id}">
                 <div class="d-flex gap-2">
-                    <div class="news-avatar small">${comment.user.avatar_letter}</div>
+                    <div class="news-avatar small">
+                        ${comment.user.avatar
+                            ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
+                            : comment.user.avatar_letter}
+                    </div
                     <div class="flex-grow-1">
                         <div class="news-comment-bubble">
                             <div class="d-flex justify-content-between align-items-start news-mb-1">

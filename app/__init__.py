@@ -156,6 +156,9 @@ def create_app(config_class=Config):
     from app.advances import bp as advances_bp
     app.register_blueprint(advances_bp, url_prefix='/advances')
 
+    from app.profile import bp as profile_bp
+    app.register_blueprint(profile_bp, url_prefix='/profile')
+
     from app.hub import bp as hub_bp
     app.register_blueprint(hub_bp)
 

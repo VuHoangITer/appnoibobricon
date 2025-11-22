@@ -3,6 +3,55 @@
 {% block title %}Chi tiết Task{% endblock %}
 {% block page_title %}Chi tiết Công việc{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Assignment Avatar */
+.assignment-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
+}
+
+.assignment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+/* Completer Avatar */
+.completer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
+}
+
+.completer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-md-8">
@@ -217,9 +266,19 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <p class="mb-1"><strong><i class="bi bi-person-fill"></i> Người hoàn thành:</strong></p>
-                                        <p>{{ completion_report.completer.full_name }}
-                                            <span class="badge bg-secondary">{{ completion_report.completer.role | role_vn }}</span>
-                                        </p>
+                                        <div class="d-flex align-items-center gap-2 mt-2">
+                                            <div class="completer-avatar">
+                                                {% if completion_report.completer.avatar %}
+                                                    <img src="{{ url_for('profile.get_avatar', filename=completion_report.completer.avatar) }}" alt="">
+                                                {% else %}
+                                                    {{ completion_report.completer.full_name[0].upper() }}
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <strong>{{ completion_report.completer.full_name }}</strong>
+                                                <span class="badge bg-secondary ms-1">{{ completion_report.completer.role | role_vn }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <p class="mb-1"><strong><i class="bi bi-calendar-check"></i> Thời gian:</strong></p>
@@ -369,11 +428,21 @@
                 <h5><i class="bi bi-people"></i> Người được giao nhiệm vụ</h5>
             </div>
             <div class="card-body">
-                {% if assignments %}
-                <ul class="list-group">
-                    {% for assignment in assignments %}
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
+            {% if assignments %}
+            <ul class="list-group">
+                {% for assignment in assignments %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Avatar -->
+                            <div class="assignment-avatar">
+                                {% if assignment.user.avatar %}
+                                    <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="">
+                                {% else %}
+                                    {{ assignment.user.full_name[0].upper() }}
+                                {% endif %}
+                            </div>
+                            <!-- Info -->
                             <div>
                                 <strong>{{ assignment.user.full_name }}</strong>
                                 <br>
@@ -383,25 +452,24 @@
                                 <small><span class="badge bg-secondary">Nhóm: {{ assignment.assigned_group | role_vn }}</span></small>
                                 {% endif %}
                             </div>
-                            <div>
-                                {% if assignment.accepted %}
-                                <span class="badge bg-success">Đã chấp nhận</span>
-                                {% else %}
-                                <span class="badge bg-warning">Chờ chấp nhận</span>
-                                {% endif %}
-                            </div>
                         </div>
-                        {% if assignment.accepted and assignment.accepted_at %}
-                        <small class="text-muted">Chấp nhận lúc: {{ assignment.accepted_at | vn_datetime }}</small>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted">Chưa có người được gán.</p>
-                {% endif %}
-            </div>
-        </div>
+                        <div>
+                            {% if assignment.accepted %}
+                            <span class="badge bg-success">Đã chấp nhận</span>
+                            {% else %}
+                            <span class="badge bg-warning">Chờ chấp nhận</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if assignment.accepted and assignment.accepted_at %}
+                    <small class="text-muted d-block mt-2">Chấp nhận lúc: {{ assignment.accepted_at | vn_datetime }}</small>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">Chưa có người được gán.</p>
+            {% endif %}
 
         <!-- Card: Trạng thái nhiệm vụ (nếu DONE) -->
         {% if task.status == 'DONE' %}
@@ -495,19 +563,19 @@
                     <p class="text-center text-muted mb-3">
                         <i class="bi bi-info-circle"></i> Nhiệm vụ này đã hoàn thành. Hãy đánh giá hiệu suất làm việc:
                     </p>
-                    <div class="text-center">
-                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" style="display: inline;">
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <input type="hidden" name="rating" value="good"/>
-                            <button type="submit" class="btn btn-success btn-lg me-3">
-                                <i class="bi bi-hand-thumbs-up-fill"></i> TỐT
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
                             </button>
                         </form>
-                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" style="display: inline;">
+                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <input type="hidden" name="rating" value="bad"/>
-                            <button type="submit" class="btn btn-danger btn-lg">
-                                <i class="bi bi-hand-thumbs-down-fill"></i> CẦN CẢI THIỆN
+                            <button type="submit" class="btn btn-danger btn-lg w-100">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>
                             </button>
                         </form>
                     </div>

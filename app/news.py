@@ -82,6 +82,7 @@ def get_latest_comments(news_id):
                     'id': comment.user_id,
                     'full_name': comment.user.full_name,
                     'role': comment.user.role,
+                    'avatar': comment.user.avatar,
                     'avatar_letter': comment.user.full_name[0].upper()
                 },
                 'can_delete': comment.user_id == current_user.id or current_user.role == 'director'
@@ -360,6 +361,7 @@ def add_comment(news_id):
                     'id': comment.user_id,
                     'full_name': comment.user.full_name,
                     'role': comment.user.role,
+                    'avatar': comment.user.avatar,
                     'avatar_letter': comment.user.full_name[0].upper()
                 },
                 'can_delete': True  # User just created it

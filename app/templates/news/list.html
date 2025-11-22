@@ -32,7 +32,11 @@
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="news-avatar">
-                                    {{ news.author.full_name[0].upper() }}
+                                    {% if news.author.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=news.author.avatar) }}" alt="">
+                                    {% else %}
+                                        {{ news.author.full_name[0].upper() }}
+                                    {% endif %}
                                 </div>
                                 <div>
                                     <div class="news-author-name">

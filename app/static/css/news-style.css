@@ -387,3 +387,9 @@
         font-size: 0.875rem;
     }
 }
+.news-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}

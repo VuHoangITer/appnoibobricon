@@ -384,6 +384,28 @@
     content: " ⭐";
     font-size: 10px;
 }
+/* Workflow Avatar */
+.workflow-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 2px solid #e9ecef;
+}
+
+.workflow-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
 </style>
 {% endblock %}
 
@@ -437,8 +459,17 @@
                 </th>
                 {% for to_user in all_users %}
                 <th>
-                    <div>{{ to_user.full_name }}</div>
-                    <span class="role-badge {{ to_user.role }}">{{ role_names[to_user.role] }}</span>
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="workflow-avatar">
+                            {% if to_user.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=to_user.avatar) }}" alt="">
+                            {% else %}
+                                {{ to_user.full_name[0].upper() }}
+                            {% endif %}
+                        </div>
+                        <div>{{ to_user.full_name }}</div>
+                        <span class="role-badge {{ to_user.role }}">{{ role_names[to_user.role] }}</span>
+                    </div>
                 </th>
                 {% endfor %}
             </tr>
@@ -447,52 +478,63 @@
             {% for from_user in all_users %}
             <tr data-role="{{ from_user.role }}">
                 <th>
-                    <div>{{ from_user.full_name }}</div>
-                    <span class="role-badge {{ from_user.role }}">{{ role_names[from_user.role] }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="workflow-avatar">
+                            {% if from_user.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=from_user.avatar) }}" alt="">
+                            {% else %}
+                                {{ from_user.full_name[0].upper() }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div>{{ from_user.full_name }}</div>
+                            <span class="role-badge {{ from_user.role }}">{{ role_names[from_user.role] }}</span>
+                        </div>
+                    </div>
                 </th>
-{% for to_user in all_users %}
-<td>
-    {% if from_user.id == to_user.id %}
-        <span class="task-count no-tasks">—</span>
-    {% else %}
-        {% set key = from_user.id|string ~ '->' ~ to_user.id|string %}
-        {% if key in workflow_data %}
-            {% set conn = workflow_data[key] %}
-            {% if conn.can_view %}
-                {% set level = 'level-1' %}
-                {% if conn.count >= 20 %}
-                    {% set level = 'level-5' %}
-                {% elif conn.count >= 15 %}
-                    {% set level = 'level-4' %}
-                {% elif conn.count >= 10 %}
-                    {% set level = 'level-3' %}
-                {% elif conn.count >= 5 %}
-                    {% set level = 'level-2' %}
-                {% endif %}
+                {% for to_user in all_users %}
+                <td>
+                    {% if from_user.id == to_user.id %}
+                        <span class="task-count no-tasks">—</span>
+                    {% else %}
+                        {% set key = from_user.id|string ~ '->' ~ to_user.id|string %}
+                        {% if key in workflow_data %}
+                            {% set conn = workflow_data[key] %}
+                            {% if conn.can_view %}
+                                {% set level = 'level-1' %}
+                                {% if conn.count >= 20 %}
+                                    {% set level = 'level-5' %}
+                                {% elif conn.count >= 15 %}
+                                    {% set level = 'level-4' %}
+                                {% elif conn.count >= 10 %}
+                                    {% set level = 'level-3' %}
+                                {% elif conn.count >= 5 %}
+                                    {% set level = 'level-2' %}
+                                {% endif %}
 
-                {# ===== SỬA: Thêm class needs-rating nếu có tasks cần đánh giá ===== #}
-                {% set extra_class = '' %}
-                {% if conn.needs_rating > 0 %}
-                    {% set extra_class = 'needs-rating' %}
-                {% endif %}
+                                {# ===== SỬA: Thêm class needs-rating nếu có tasks cần đánh giá ===== #}
+                                {% set extra_class = '' %}
+                                {% if conn.needs_rating > 0 %}
+                                    {% set extra_class = 'needs-rating' %}
+                                {% endif %}
 
-                <a href="/workflow/{{ from_user.id }}/{{ to_user.id }}"
-                   class="task-count has-tasks {{ level }} {{ extra_class }}"
-                   title="{% if conn.active > 0 %}Đang giao: {{ conn.active }}{% endif %}{% if conn.active > 0 and conn.needs_rating > 0 %} | {% endif %}{% if conn.needs_rating > 0 %}Cần đánh giá: {{ conn.needs_rating }}{% endif %}">
-                    {{ conn.count }}
-                </a>
-            {% else %}
-                <span class="task-count locked"
-                      title="Bạn không có quyền xem">
-                    {{ conn.count }}
-                </span>
-            {% endif %}
-        {% else %}
-            <span class="task-count no-tasks">0</span>
-        {% endif %}
-    {% endif %}
-</td>
-{% endfor %}
+                                <a href="/workflow/{{ from_user.id }}/{{ to_user.id }}"
+                                   class="task-count has-tasks {{ level }} {{ extra_class }}"
+                                   title="{% if conn.active > 0 %}Đang giao: {{ conn.active }}{% endif %}{% if conn.active > 0 and conn.needs_rating > 0 %} | {% endif %}{% if conn.needs_rating > 0 %}Cần đánh giá: {{ conn.needs_rating }}{% endif %}">
+                                    {{ conn.count }}
+                                </a>
+                            {% else %}
+                                <span class="task-count locked"
+                                      title="Bạn không có quyền xem">
+                                    {{ conn.count }}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="task-count no-tasks">0</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                {% endfor %}
             </tr>
             {% endfor %}
         </tbody>

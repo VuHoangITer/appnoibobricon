@@ -481,9 +481,14 @@
                             {% for assignment in task.assignments %}
                                 {% if assignment.accepted %}
                                 <div class="assignee-item">
-                                    <div class="assignee-avatar">
+                                <div class="assignee-avatar">
+                                    {% if assignment.user.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}"
+                                             alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    {% else %}
                                         {{ assignment.user.full_name[0].upper() }}
-                                    </div>
+                                    {% endif %}
+                                </div>
                                     <div class="assignee-name">{{ assignment.user.full_name }}</div>
                                 </div>
                                 {% endif %}
@@ -556,9 +561,14 @@
                             {% for assignment in task.assignments %}
                                 {% if assignment.accepted %}
                                 <div class="assignee-item">
-                                    <div class="assignee-avatar">
+                                <div class="assignee-avatar">
+                                    {% if assignment.user.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}"
+                                             alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    {% else %}
                                         {{ assignment.user.full_name[0].upper() }}
-                                    </div>
+                                    {% endif %}
+                                </div>
                                     <div class="assignee-name">{{ assignment.user.full_name }}</div>
                                 </div>
                                 {% endif %}
@@ -646,9 +656,14 @@
                             {% for assignment in task.assignments %}
                                 {% if assignment.accepted %}
                                 <div class="assignee-item">
-                                    <div class="assignee-avatar">
+                                <div class="assignee-avatar">
+                                    {% if assignment.user.avatar %}
+                                        <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}"
+                                             alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    {% else %}
                                         {{ assignment.user.full_name[0].upper() }}
-                                    </div>
+                                    {% endif %}
+                                </div>
                                     <div class="assignee-name">{{ assignment.user.full_name }}</div>
                                 </div>
                                 {% endif %}

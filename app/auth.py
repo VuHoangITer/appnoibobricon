@@ -42,7 +42,6 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('Bạn đã đăng xuất thành công.', 'success')
     return redirect(url_for('auth.login'))
 
 
