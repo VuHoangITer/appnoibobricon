@@ -159,6 +159,9 @@ def create_app(config_class=Config):
     from app.hub import bp as hub_bp
     app.register_blueprint(hub_bp)
 
+    from app.sse import bp as sse_bp
+    app.register_blueprint(sse_bp)
+
     # Dashboard route
     @app.route('/')
     def index():

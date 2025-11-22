@@ -639,7 +639,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                     <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
                     <span>Hiệu Suất NV</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'CV Chưa Đánh Giá')">
+                <a href="#" class="sidebar-menu-item"
+                   data-badge-id="my_tasks_need_rating"
+                   onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'CV Chưa Đánh Giá')">
                     <i class="bi bi-star-fill" style="color: #ffd700;"></i>
                     <span>CV Chưa Đánh Giá</span>
                     {% if my_tasks_need_rating > 0 %}
@@ -837,14 +839,18 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                     <span>Cấp Bậc Lương</span>
                 </a>
                 {% endif %}
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
+                <a href="#" class="sidebar-menu-item"
+                   data-badge-id="penalties"
+                   onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
                     <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
                     <span>Biên Bản Phạt</span>
                     {% if pending_penalties > 0 %}
                     <span class="badge bg-danger">{{ pending_penalties }}</span>
                     {% endif %}
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
+                <a href="#" class="sidebar-menu-item"
+                   data-badge-id="advances"
+                   onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
                     <i class="bi bi-cash-stack" style="color: #ffc3a0;"></i>
                     <span>Tạm Ứng</span>
                     {% if pending_advances > 0 %}
@@ -915,7 +921,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </div>
 
             <div class="sidebar-menu">
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo Nội Bộ')">
+                <a href="#" class="sidebar-menu-item"
+                   data-badge-id="unconfirmed_news"
+                   onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo Nội Bộ')">
                     <i class="bi bi-newspaper" style="color: #09203f;"></i>
                     <span>Thông Báo NB</span>
                     {% if unconfirmed_news > 0 %}
@@ -930,7 +938,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                     <i class="bi bi-journal-text" style="color: #c471f5;"></i>
                     <span>Ghi Chú</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
+                <a href="#" class="sidebar-menu-item"
+                   data-badge-id="unread_notifications"
+                   onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
                     <i class="bi bi-bell" style="color: #f83600;"></i>
                     <span>Nhắc Nhở</span>
                     {% if unread_notifications > 0 %}
@@ -1859,6 +1869,14 @@ function handleBackdropClick(e) {
         if (e.target.closest('.hub-icon-card')) return;
         if (e.target.closest('.top-navbar')) return;
 
+        // ✅ BỎ QUA NẾU CÓ MODAL ĐANG MỞ
+        if (e.target.closest('.modal')) return;
+        if (e.target.classList.contains('modal')) return;
+        if (document.querySelector('.modal.show')) return;
+
+        // ✅ BỎ QUA NẾU CLICK VÀO MODAL BACKDROP
+        if (e.target.classList.contains('modal-backdrop')) return;
+
         // Click ngoài content và sidebar → Về Hub
         if (!moduleContent.contains(e.target) && !moduleSidebar.contains(e.target)) {
             backToHub();
@@ -1901,96 +1919,149 @@ function backToHub() {
 }
 
 // ========================================
-// REAL-TIME UPDATES VỚI POLLING
+// REAL-TIME UPDATES: SSE + FALLBACK POLLING
 // ========================================
-let pollingInterval = null;
+let sseStatsConnected = false;
 
 function startRealtimeUpdates() {
-    // Update ngay khi load trang
+    console.log('🚀 Starting real-time stats updates...');
+
+    // Update initial data
     updateRealtimeData();
 
-    // Sau đó update mỗi 30 giây
-    pollingInterval = setInterval(updateRealtimeData, 30000);
+    // Kiểm tra SSE support
+    if (typeof window.sseManager === 'undefined') {
+        console.warn('⚠️ SSE Manager not loaded, using polling');
+        startPollingFallback();
+        return;
+    }
 
-    console.log('✅ Real-time updates started (30s interval)');
+    // Kết nối SSE cho dashboard stats
+    window.sseManager.connect(
+        'dashboard-stats',
+        '/sse/dashboard-stats',
+        {
+            onOpen: () => {
+                console.log('✅ SSE Dashboard Stats connected');
+                sseStatsConnected = true;
+            },
+            onError: (error, attempts) => {
+                console.error('❌ SSE Stats error:', error, 'attempts:', attempts);
+                sseStatsConnected = false;
+            },
+            events: {
+                'stats_update': (data) => {
+                    console.log('📊 SSE stats update:', data);
+                    updateUIWithStats(data);
+                },
+                'heartbeat': (data) => {
+                    console.log('💓 SSE stats heartbeat');
+                },
+                'error': (data) => {
+                    console.error('❌ SSE stats error event:', data);
+                },
+                'close': (data) => {
+                    console.log('🔌 SSE stats closed by server');
+                }
+            }
+        },
+        {
+            // Fallback polling config
+            url: '/hub/api/realtime-stats',
+            interval: 30000, // 30 seconds
+            onData: (data) => {
+                console.log('📊 Polling stats:', data);
+                updateUIWithStats(data);
+            }
+        }
+    );
+}
+
+function startPollingFallback() {
+    console.log('🔄 Starting polling fallback for stats (30s interval)');
+    setInterval(updateRealtimeData, 30000);
 }
 
 function stopRealtimeUpdates() {
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-        pollingInterval = null;
-        console.log('⏸️ Real-time updates stopped');
+    if (window.sseManager) {
+        window.sseManager.disconnect('dashboard-stats');
     }
 }
 
+// GIỮ NGUYÊN hàm updateRealtimeData() (dùng cho fallback)
 function updateRealtimeData() {
-    fetch('{{ url_for("hub.get_realtime_stats") }}')
+    fetch('/hub/api/realtime-stats')
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok');
             return res.json();
         })
         .then(data => {
             console.log('📊 Real-time update:', data);
-
-            // 1. Cập nhật Notification badge (navbar) - GỌI HÀM CÓ SẴN
-            updateNotifCount();
-
-            // 2. Cập nhật Work Badge (Công Việc)
-            const workBadge = document.getElementById('work-badge');
-            if (workBadge) {
-                if (data.work_badge > 0) {
-                    workBadge.textContent = data.work_badge;
-                    workBadge.style.display = 'inline-block';
-                } else {
-                    workBadge.style.display = 'none';
-                }
-            }
-
-            // 3. Cập nhật Info Badge (Thông Tin)
-            const infoBadge = document.getElementById('info-badge');
-            if (infoBadge) {
-                if (data.info_badge > 0) {
-                    infoBadge.textContent = data.info_badge;
-                    infoBadge.style.display = 'inline-block';
-                } else {
-                    infoBadge.style.display = 'none';
-                }
-            }
-
-            // 4. Cập nhật Salary Badge (Lương) - nếu có
-            const salaryBadge = document.getElementById('salary-badge');
-            if (salaryBadge && data.salary_badge !== undefined) {
-                if (data.salary_badge > 0) {
-                    salaryBadge.textContent = data.salary_badge;
-                    salaryBadge.style.display = 'inline-block';
-                } else {
-                    salaryBadge.style.display = 'none';
-                }
-            }
-
-            // 5. Cập nhật số trong module Công Việc nếu đang mở
-            updateTaskModuleStats(data);
-
-            // 6. Cập nhật số trong module Thông Tin nếu đang mở
-            updateInfoModuleStats(data);
-
-            // 7. Cập nhật số trong module Lương nếu đang mở
-            updateSalaryModuleStats(data);
-
-            // 8. Show warning nếu có quá hạn
-            if (data.my_overdue > 0) {
-                console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
-            }
+            updateUIWithStats(data);
         })
         .catch(err => {
             console.error('❌ Real-time update error:', err);
         });
 }
 
+//  Function update UI (tách riêng để dùng chung cho SSE và Polling)
+function updateUIWithStats(data) {
+    // 1. Cập nhật Notification badge (navbar) - GỌI HÀM CÓ SẴN
+    if (typeof updateNotifCount === 'function') {
+        updateNotifCount();
+    }
+
+    // 2. Cập nhật Work Badge (Công Việc)
+    const workBadge = document.getElementById('work-badge');
+    if (workBadge) {
+        if (data.work_badge > 0) {
+            workBadge.textContent = data.work_badge;
+            workBadge.style.display = 'inline-block';
+        } else {
+            workBadge.style.display = 'none';
+        }
+    }
+
+    // 3. Cập nhật Info Badge (Thông Tin)
+    const infoBadge = document.getElementById('info-badge');
+    if (infoBadge) {
+        if (data.info_badge > 0) {
+            infoBadge.textContent = data.info_badge;
+            infoBadge.style.display = 'inline-block';
+        } else {
+            infoBadge.style.display = 'none';
+        }
+    }
+
+    // 4. Cập nhật Salary Badge (Lương) - nếu có
+    const salaryBadge = document.getElementById('salary-badge');
+    if (salaryBadge && data.salary_badge !== undefined) {
+        if (data.salary_badge > 0) {
+            salaryBadge.textContent = data.salary_badge;
+            salaryBadge.style.display = 'inline-block';
+        } else {
+            salaryBadge.style.display = 'none';
+        }
+    }
+
+    // 5. Cập nhật số trong module Công Việc nếu đang mở
+    updateTaskModuleStats(data);
+
+    // 6. Cập nhật số trong module Thông Tin nếu đang mở
+    updateInfoModuleStats(data);
+
+    // 7. Cập nhật số trong module Lương nếu đang mở
+    updateSalaryModuleStats(data);
+
+    // 8. Show warning nếu có quá hạn
+    if (data.my_overdue > 0) {
+        console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
+    }
+}
+
 function updateTaskModuleStats(data) {
-    // Nếu đang ở module Công Việc
     const tasksModule = document.getElementById('module-tasks');
-    if (tasksModule && tasksModule.classList.contains('active')) {
+    if (tasksModule) {  //
         // Card Quá Hạn
         const overdueCard = tasksModule.querySelector('.stat-overdue h3');
         if (overdueCard) overdueCard.textContent = data.my_overdue;
@@ -2020,14 +2091,17 @@ function updateTaskModuleStats(data) {
             // Card Need Rating
             const ratingCard = tasksModule.querySelector('.stat-primary h3');
             if (ratingCard) ratingCard.textContent = data.tasks_need_rating;
+
+            //  Cập nhật badge trong sidebar
+            updateSidebarBadge(tasksModule, 'my_tasks_need_rating', data.my_tasks_need_rating);
         }
     }
 }
 
 function updateInfoModuleStats(data) {
-    // Nếu đang ở module Thông Tin
     const infoModule = document.getElementById('module-info');
-    if (infoModule && infoModule.classList.contains('active')) {
+    if (infoModule) {  // ← XÓA check .classList.contains('active')
+
         // Card TB Chưa Xác Nhận
         const unconfirmedCard = infoModule.querySelector('.stat-info h3');
         if (unconfirmedCard) unconfirmedCard.textContent = data.unconfirmed_news;
@@ -2035,13 +2109,16 @@ function updateInfoModuleStats(data) {
         // Card Nhắc Nhở Chưa Đọc
         const unreadCard = infoModule.querySelector('.stat-warning h3');
         if (unreadCard) unreadCard.textContent = data.unread_notifications;
+
+        // Cập nhật badge trong sidebar
+        updateSidebarBadge(infoModule, 'unconfirmed_news', data.unconfirmed_news);
+        updateSidebarBadge(infoModule, 'unread_notifications', data.unread_notifications);
     }
 }
 
 function updateSalaryModuleStats(data) {
-    // Nếu đang ở module Lương
     const salaryModule = document.getElementById('module-salary');
-    if (salaryModule && salaryModule.classList.contains('active')) {
+    if (salaryModule) {
         // Card Phạt Chưa Trừ
         const penaltyCard = salaryModule.querySelector('.stat-danger h3');
         if (penaltyCard) penaltyCard.textContent = data.pending_penalties;
@@ -2049,6 +2126,10 @@ function updateSalaryModuleStats(data) {
         // Card Tạm Ứng Chưa Trừ
         const advanceCard = salaryModule.querySelector('.stat-warning h3');
         if (advanceCard) advanceCard.textContent = data.pending_advances;
+
+        // Cập nhật badge trong sidebar
+        updateSidebarBadge(salaryModule, 'penalties', data.pending_penalties);
+        updateSidebarBadge(salaryModule, 'advances', data.pending_advances);
     }
 }
 
@@ -2062,6 +2143,54 @@ window.addEventListener('beforeunload', function() {
     stopRealtimeUpdates();
 });
 
+// Cleanup SSE khi rời trang
+window.addEventListener('beforeunload', function() {
+    stopRealtimeUpdates();
+});
+
+// ============================================================
+// HELPER: CẬP NHẬT BADGE TRONG SIDEBAR
+// ============================================================
+function updateSidebarBadge(module, badgeType, count) {
+    // Tìm sidebar trong module
+    const sidebar = module.querySelector('.module-sidebar');
+    if (!sidebar) {
+        console.warn('[Badge] Sidebar not found for module:', module.id);
+        return;
+    }
+
+    // ✅ TÌM LINK DỰA VÀO data-badge-id (dễ hơn và chính xác hơn)
+    const targetLink = sidebar.querySelector(`a[data-badge-id="${badgeType}"]`);
+
+    if (!targetLink) {
+        console.warn(`[Badge] Link not found for badge type: ${badgeType}`);
+        return;
+    }
+
+    // Tìm badge hiện tại
+    let badge = targetLink.querySelector('.badge');
+
+    if (count > 0) {
+        // Nếu có count: tạo hoặc cập nhật badge
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'badge bg-danger';
+            targetLink.appendChild(badge);
+            console.log(`[Badge] Created badge for ${badgeType}: ${count}`);
+        } else {
+            console.log(`[Badge] Updated badge for ${badgeType}: ${count}`);
+        }
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+    } else {
+        // Nếu count = 0: xóa badge
+        if (badge) {
+            badge.remove();
+            console.log(`[Badge] Removed badge for ${badgeType}`);
+        }
+    }
+}
+
 // Pause polling khi tab không active (tiết kiệm resources)
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
@@ -2070,7 +2199,8 @@ document.addEventListener('visibilitychange', function() {
         startRealtimeUpdates();
     }
 });
-    // ========================================
+
+// ========================================
 // AUTO CENTER ICONS
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {

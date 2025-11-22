@@ -348,6 +348,9 @@
         }
     </script>
     {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/sse-manager.js') }}"></script>
+    {% endif %}
+    {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notification-sound.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notification-manager.js') }}"></script>
     {% endif %}
@@ -405,16 +408,16 @@
         setInterval(updateNotifCount, 30000);
         {% endif %}
 
-        // ==========================================
-        // ALERT AUTO DISMISS
-        // ==========================================
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 12000);
+<!--        // ==========================================-->
+<!--        // ALERT AUTO DISMISS-->
+<!--        // ==========================================-->
+<!--        setTimeout(function() {-->
+<!--            const alerts = document.querySelectorAll('.alert');-->
+<!--            alerts.forEach(alert => {-->
+<!--                const bsAlert = new bootstrap.Alert(alert);-->
+<!--                bsAlert.close();-->
+<!--            });-->
+<!--        }, 12000);-->
 
         // ==========================================
         // SCROLL POSITION PERSISTENCE

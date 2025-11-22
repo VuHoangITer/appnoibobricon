@@ -235,12 +235,11 @@
 </div>
 
 <script>
-// ============ REALTIME COMMENT POLLING ============
+// ============ REALTIME COMMENT: SSE + FALLBACK POLLING ============
 (function() {
     'use strict';
 
     const CONFIG = {
-        POLL_INTERVAL: 3000,
         NEWS_ID: {{ news.id }},
         CURRENT_USER_ID: {{ current_user.id }},
         CURRENT_USER_ROLE: '{{ current_user.role }}',
@@ -254,20 +253,10 @@
         'hr': 'Nhân Sự'
     };
 
-    // Initialize lastTimestamp - start from 0 to get all comments on first poll
     let lastTimestamp = 0;
-    console.log('[POLL] Initial lastTimestamp:', lastTimestamp, '(will load all on first poll)');
-
-    let pollTimer = null;
-    let isPolling = false;
-    let isFirstPoll = true;
     let knownCommentIds = new Set();
-
-    // Initialize known comment IDs from existing comments
-    document.querySelectorAll('[data-comment-id]').forEach(el => {
-        const id = parseInt(el.getAttribute('data-comment-id'));
-        knownCommentIds.add(id);
-    });
+    let sseCommentsConnected = false;
+    let isFirstPoll = true;
 
     // DOM elements
     const commentsList = document.getElementById('comments-list');
@@ -276,6 +265,12 @@
     const noCommentsMsg = document.getElementById('no-comments-msg');
     const commentForm = document.getElementById('comment-form');
     const commentTextarea = document.getElementById('comment-textarea');
+
+    // Initialize known comment IDs
+    document.querySelectorAll('[data-comment-id]').forEach(el => {
+        const id = parseInt(el.getAttribute('data-comment-id'));
+        knownCommentIds.add(id);
+    });
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -319,100 +314,118 @@
         `;
     }
 
-    async function pollComments() {
-        if (isPolling) return;
-        isPolling = true;
+    // ============================================================
+    // SSE + FALLBACK LOGIC
+    // ============================================================
 
+    function startRealtimeComments() {
+        console.log('🚀 Starting real-time comments for news', CONFIG.NEWS_ID);
+
+        // Kiểm tra SSE support
+        if (typeof window.sseManager === 'undefined') {
+            console.warn('⚠️ SSE Manager not loaded, using polling fallback');
+            startPollingFallback();
+            return;
+        }
+
+        // Kết nối SSE
+        window.sseManager.connect(
+            'news-comments',
+            `/sse/news/${CONFIG.NEWS_ID}/comments?last_timestamp=${lastTimestamp}`,
+            {
+                onOpen: () => {
+                    console.log('✅ SSE Comments connected');
+                    sseCommentsConnected = true;
+                },
+                onError: (error, attempts) => {
+                    console.error('❌ SSE Comments error:', error, 'attempts:', attempts);
+                    sseCommentsConnected = false;
+                },
+                events: {
+                    'comments_update': (data) => {
+                        console.log('[SSE] Comments update:', data);
+                        handleCommentsUpdate(data);
+                    },
+                    'new_comments': (data) => {
+                        console.log('[SSE] New comments:', data);
+                        handleNewComments(data);
+                    },
+                    'comments_sync': (data) => {
+                        console.log('[SSE] Comments sync:', data);
+                        handleCommentsSync(data);
+                    },
+                    'heartbeat': (data) => {
+                        console.log('💓 SSE comments heartbeat');
+                    },
+                    'error': (data) => {
+                        console.error('❌ SSE error event:', data);
+                    },
+                    'close': (data) => {
+                        console.log('🔌 SSE comments closed by server');
+                    }
+                }
+            },
+            {
+                // Fallback polling
+                url: `/news/${CONFIG.NEWS_ID}/comments/latest?last_timestamp=${lastTimestamp}`,
+                interval: 3000,
+                onData: (data) => {
+                    console.log('[POLLING] Fallback data:', data);
+                    if (data.success && data.comments && data.comments.length > 0) {
+                        handleNewComments(data);
+                    }
+                }
+            }
+        );
+    }
+
+    function startPollingFallback() {
+        console.log('🔄 Starting polling fallback for comments (3s interval)');
+        pollComments();
+        setInterval(pollComments, 3000);
+    }
+
+    async function pollComments() {
         try {
             const url = `/news/${CONFIG.NEWS_ID}/comments/latest?last_timestamp=${lastTimestamp}`;
-            console.log('[POLL] Fetching:', url, 'lastTimestamp=', lastTimestamp);
+            console.log('[POLLING] Fetching:', url);
 
             const response = await fetch(url);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(`HTTP ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('[POLL] Response:', data);
 
             if (data.success) {
-                // On first poll, just mark existing comments and update timestamp
+                // First poll: just update timestamp
                 if (isFirstPoll && data.comments && data.comments.length > 0) {
-                    console.log('[POLL] First poll - marking existing comments');
-
-                    // Find the latest timestamp from returned comments
+                    console.log('[POLLING] First poll - marking existing comments');
                     let maxTimestamp = lastTimestamp;
                     data.comments.forEach(comment => {
                         if (comment.created_at_timestamp) {
                             maxTimestamp = Math.max(maxTimestamp, parseFloat(comment.created_at_timestamp));
                         }
                     });
-
                     lastTimestamp = maxTimestamp;
-                    console.log('[POLL] Updated lastTimestamp to:', lastTimestamp);
+                    console.log('[POLLING] Updated lastTimestamp to:', lastTimestamp);
                     isFirstPoll = false;
                     return;
                 }
 
                 isFirstPoll = false;
 
-                // Remove no comments message if we have comments
-                if (data.total_count > 0 && noCommentsMsg) {
-                    noCommentsMsg.remove();
-                }
-
                 // Process new comments
                 if (data.comments && data.comments.length > 0) {
-                    console.log('[POLL] Found', data.comments.length, 'new comments');
-
-                    // Create list if not exists
-                    let list = document.getElementById('comments-list');
-                    if (!list) {
-                        list = document.createElement('div');
-                        list.id = 'comments-list';
-                        list.className = 'comments-list';
-                        commentsContainer.appendChild(list);
-                    }
-
-                    // Add new comments
-                    data.comments.forEach(comment => {
-                        const exists = document.querySelector(`[data-comment-id="${comment.id}"]`);
-                        if (!exists) {
-                            console.log('[POLL] Adding new comment ID:', comment.id, 'timestamp:', comment.created_at_timestamp);
-                            list.insertAdjacentHTML('afterbegin', createCommentHTML(comment));
-                            knownCommentIds.add(comment.id);
-
-                            // Remove animation class after it completes
-                            const newEl = list.querySelector(`[data-comment-id="${comment.id}"]`);
-                            if (newEl) {
-                                setTimeout(() => newEl.classList.remove('new-comment'), 1500);
-                            }
-
-                            // Update timestamp to the latest comment
-                            if (comment.created_at_timestamp) {
-                                const newTimestamp = parseFloat(comment.created_at_timestamp);
-                                console.log('[POLL] Updating lastTimestamp from', lastTimestamp, 'to', newTimestamp);
-                                lastTimestamp = Math.max(lastTimestamp, newTimestamp);
-                            }
-                        }
-                    });
-
-                    // Update count
-                    if (commentCount && data.total_count !== undefined) {
-                        commentCount.textContent = data.total_count;
-                    }
-                } else {
-                    console.log('[POLL] No new comments');
+                    handleNewComments(data);
                 }
 
                 // Check for deleted comments
                 await checkDeletedComments();
             }
         } catch (error) {
-            console.error('[POLL] Error:', error);
-        } finally {
-            isPolling = false;
+            console.error('[POLLING] Error:', error);
         }
     }
 
@@ -422,66 +435,118 @@
             const data = await response.json();
 
             if (data.success) {
-                const existingIds = new Set(data.existing_ids);
-
-                // Find comments that should be removed
-                knownCommentIds.forEach(id => {
-                    if (!existingIds.has(id)) {
-                        console.log('[POLL] Comment deleted:', id);
-                        const element = document.querySelector(`[data-comment-id="${id}"]`);
-                        if (element) {
-                            // Fade out animation
-                            element.style.transition = 'opacity 0.3s ease-out';
-                            element.style.opacity = '0';
-                            setTimeout(() => {
-                                element.remove();
-                                knownCommentIds.delete(id);
-
-                                // Update count
-                                if (commentCount) {
-                                    commentCount.textContent = data.total_count;
-                                }
-
-                                // Show "no comments" message if all comments deleted
-                                if (data.total_count === 0) {
-                                    const list = document.getElementById('comments-list');
-                                    if (list) list.remove();
-                                    if (!document.getElementById('no-comments-msg')) {
-                                        const msg = document.createElement('p');
-                                        msg.id = 'no-comments-msg';
-                                        msg.className = 'text-center news-mb-2';
-                                        msg.style.cssText = 'color: var(--news-text-muted); font-size: 0.85rem;';
-                                        msg.textContent = 'Chưa có bình luận nào. Hãy là người đầu tiên!';
-                                        commentsContainer.appendChild(msg);
-                                    }
-                                }
-                            }, 300);
-                        } else {
-                            knownCommentIds.delete(id);
-                        }
-                    }
+                handleCommentsSync({
+                    existing_ids: data.existing_ids,
+                    total_count: data.total_count
                 });
             }
         } catch (error) {
-            console.error('[POLL] Error checking deleted comments:', error);
+            console.error('[POLLING] Error checking deleted comments:', error);
         }
     }
 
-    function startPolling() {
-        if (pollTimer) return;
-        pollTimer = setInterval(pollComments, CONFIG.POLL_INTERVAL);
-        console.log('[POLL] Started (every 3 seconds)');
-    }
+    // ============================================================
+    // HANDLERS
+    // ============================================================
 
-    function stopPolling() {
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-            console.log('[POLL] Stopped');
+    function handleCommentsUpdate(data) {
+        if (data.comments && data.comments.length > 0) {
+            handleNewComments(data);
         }
     }
 
-    // Form submit handler - AJAX submission
+    function handleNewComments(data) {
+        console.log('[HANDLER] Processing', data.comments.length, 'new comments');
+
+        // Remove "no comments" message
+        if (data.total_count > 0 && noCommentsMsg) {
+            noCommentsMsg.remove();
+        }
+
+        // Create list if not exists
+        let list = document.getElementById('comments-list');
+        if (!list) {
+            list = document.createElement('div');
+            list.id = 'comments-list';
+            list.className = 'comments-list';
+            commentsContainer.appendChild(list);
+        }
+
+        // Add new comments
+        data.comments.forEach(comment => {
+            const exists = document.querySelector(`[data-comment-id="${comment.id}"]`);
+            if (!exists) {
+                console.log('[HANDLER] Adding new comment ID:', comment.id);
+                list.insertAdjacentHTML('afterbegin', createCommentHTML(comment));
+                knownCommentIds.add(comment.id);
+
+                // Remove animation class
+                const newEl = list.querySelector(`[data-comment-id="${comment.id}"]`);
+                if (newEl) {
+                    setTimeout(() => newEl.classList.remove('new-comment'), 1500);
+                }
+
+                // Update timestamp
+                if (comment.created_at_timestamp) {
+                    lastTimestamp = Math.max(lastTimestamp, parseFloat(comment.created_at_timestamp));
+                }
+            }
+        });
+
+        // Update count
+        if (commentCount && data.total_count !== undefined) {
+            commentCount.textContent = data.total_count;
+        }
+    }
+
+    function handleCommentsSync(data) {
+        const existingIds = new Set(data.existing_ids);
+
+        // Find deleted comments
+        knownCommentIds.forEach(id => {
+            if (!existingIds.has(id)) {
+                console.log('[HANDLER] Comment deleted:', id);
+                const element = document.querySelector(`[data-comment-id="${id}"]`);
+                if (element) {
+                    // Fade out
+                    element.style.transition = 'opacity 0.3s ease-out';
+                    element.style.opacity = '0';
+
+                    setTimeout(() => {
+                        element.remove();
+                        knownCommentIds.delete(id);
+
+                        // Update count
+                        if (commentCount) {
+                            commentCount.textContent = data.total_count;
+                        }
+
+                        // Show "no comments" if empty
+                        if (data.total_count === 0) {
+                            const list = document.getElementById('comments-list');
+                            if (list) list.remove();
+
+                            if (!document.getElementById('no-comments-msg')) {
+                                const msg = document.createElement('p');
+                                msg.id = 'no-comments-msg';
+                                msg.className = 'text-center news-mb-2';
+                                msg.style.cssText = 'color: var(--news-text-muted); font-size: 0.85rem;';
+                                msg.textContent = 'Chưa có bình luận nào. Hãy là người đầu tiên!';
+                                commentsContainer.appendChild(msg);
+                            }
+                        }
+                    }, 300);
+                } else {
+                    knownCommentIds.delete(id);
+                }
+            }
+        });
+    }
+
+    // ============================================================
+    // FORM SUBMIT (AJAX)
+    // ============================================================
+
     if (commentForm) {
         commentForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -529,11 +594,10 @@
                         list = document.createElement('div');
                         list.id = 'comments-list';
                         list.className = 'comments-list';
-                        const container = document.getElementById('comments-container');
-                        container.appendChild(list);
+                        commentsContainer.appendChild(list);
                     }
 
-                    // Add comment to UI immediately
+                    // Add comment immediately
                     list.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
                     knownCommentIds.add(data.comment.id);
 
@@ -549,7 +613,6 @@
                         countEl.textContent = currentCount + 1;
                     }
 
-                    // Show success message
                     showToast('Đã gửi bình luận', 'success');
                 } else {
                     showToast(data.error || 'Có lỗi xảy ra', 'danger');
@@ -565,7 +628,10 @@
         });
     }
 
-    // Delete comment handler - AJAX deletion
+    // ============================================================
+    // DELETE COMMENT (AJAX)
+    // ============================================================
+
     document.addEventListener('click', async function(e) {
         const deleteBtn = e.target.closest('form[action*="/comment/"][action*="/delete"]');
         if (deleteBtn) {
@@ -596,7 +662,7 @@
                 if (data.success) {
                     console.log('[DELETE] Comment deleted successfully:', commentId);
 
-                    // Fade out and remove
+                    // Fade out
                     commentElement.style.transition = 'opacity 0.3s ease-out';
                     commentElement.style.opacity = '0';
 
@@ -610,7 +676,7 @@
                             commentCount.textContent = Math.max(0, currentCount - 1);
                         }
 
-                        // Check if no comments left
+                        // Check if empty
                         const remainingComments = document.querySelectorAll('[data-comment-id]');
                         if (remainingComments.length === 0) {
                             const list = document.getElementById('comments-list');
@@ -638,9 +704,11 @@
         }
     });
 
-    // Simple toast notification
+    // ============================================================
+    // UTILS
+    // ============================================================
+
     function showToast(message, type = 'info') {
-        // Check if Bootstrap toast exists, otherwise use alert
         const toast = document.createElement('div');
         toast.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
         toast.style.zIndex = '9999';
@@ -655,21 +723,33 @@
         }, 2000);
     }
 
-    // Page visibility
+    // ============================================================
+    // PAGE VISIBILITY
+    // ============================================================
+
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
-            stopPolling();
+            console.log('📴 Tab hidden, pausing comments');
         } else {
-            startPolling();
+            console.log('📳 Tab visible, resuming comments');
         }
     });
 
-    // Cleanup
-    window.addEventListener('beforeunload', stopPolling);
-    window.addEventListener('unload', stopPolling);
+    // ============================================================
+    // CLEANUP
+    // ============================================================
 
-    // Start
-    startPolling();
+    window.addEventListener('beforeunload', () => {
+        if (window.sseManager) {
+            window.sseManager.disconnect('news-comments');
+        }
+    });
+
+    // ============================================================
+    // START
+    // ============================================================
+
+    startRealtimeComments();
 
 })();
 </script>
