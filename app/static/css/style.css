@@ -493,3 +493,169 @@ body::-webkit-scrollbar {
 *::-webkit-scrollbar {
     display: none;
 }
+/* ==========================================
+   FLASH MESSAGES - MODERN STYLE
+   ========================================== */
+.flash-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    width: 100%;
+}
+
+.flash-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s forwards;
+    border-left: 4px solid;
+    background: white;
+}
+
+.flash-message.success {
+    border-left-color: #198754;
+    background: #ffffff;
+}
+
+.flash-message.danger {
+    border-left-color: #dc3545;
+    background: #ffffff;
+}
+
+.flash-message.warning {
+    border-left-color: #ffc107;
+    background: #ffffff;
+}
+
+.flash-message.info {
+    border-left-color: #0dcaf0;
+    background: #ffffff;
+}
+
+.flash-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.flash-message.success .flash-icon {
+    background: #198754;
+}
+
+.flash-message.danger .flash-icon {
+    background: #dc3545;
+}
+
+.flash-message.warning .flash-icon {
+    background: #ffc107;
+    color: #333;
+}
+
+.flash-message.info .flash-icon {
+    background: #0dcaf0;
+}
+
+.flash-content {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.flash-message strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #2c3e50;
+}
+
+.flash-message p {
+    margin: 0;
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.flash-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.flash-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+}
+
+.flash-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: currentColor;
+    width: 100%;
+    animation: progressBar 5s linear forwards;
+    opacity: 0.3;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
+@keyframes progressBar {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+@media (max-width: 768px) {
+    .flash-container {
+        top: 70px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+
+    .flash-message {
+        padding: 14px 16px;
+    }
+}

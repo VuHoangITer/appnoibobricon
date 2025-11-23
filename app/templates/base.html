@@ -331,13 +331,23 @@
         <main class="main-content">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
+                <div class="flash-container" id="flashContainer">
                     {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}-fill me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="flash-message {{ category }}" data-duration="5000">
+                        <div class="flash-icon">
+                            <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-triangle-fill{% elif category == 'warning' %}exclamation-circle-fill{% else %}info-circle-fill{% endif %}"></i>
+                        </div>
+                        <div class="flash-content">
+                            <strong>{% if category == 'success' %}Thành công{% elif category == 'danger' %}Lỗi{% elif category == 'warning' %}Cảnh báo{% else %}Thông báo{% endif %}</strong>
+                            <p>{{ message }}</p>
+                        </div>
+                        <button class="flash-close" onclick="closeFlash(this)">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <div class="flash-progress"></div>
                     </div>
                     {% endfor %}
+                </div>
                 {% endif %}
             {% endwith %}
 
@@ -468,6 +478,37 @@
             });
         })();
         {% endif %}
+// ==========================================
+// FLASH MESSAGES AUTO DISMISS
+// ==========================================
+function closeFlash(btn) {
+    const flashMsg = btn.closest('.flash-message');
+    flashMsg.style.animation = 'fadeOut 0.3s ease forwards';
+    setTimeout(() => {
+        flashMsg.remove();
+
+        // Xóa container nếu không còn flash nào
+        const container = document.getElementById('flashContainer');
+        if (container && container.children.length === 0) {
+            container.remove();
+        }
+    }, 300);
+}
+
+// Auto dismiss all flash messages after duration
+document.addEventListener('DOMContentLoaded', function() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+
+    flashMessages.forEach(function(flash) {
+        const duration = parseInt(flash.dataset.duration) || 5000;
+
+        setTimeout(function() {
+            if (flash.parentElement) {
+                closeFlash(flash.querySelector('.flash-close'));
+            }
+        }, duration);
+    });
+});
     </script>
 
     {% block scripts %}{% endblock %}

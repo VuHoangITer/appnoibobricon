@@ -552,6 +552,14 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
 .notification-btn {
     color: #ffffff;
 }
+#iframeDirectLink {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 </style>
 {% endblock %}
 
@@ -1046,7 +1054,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
 </div>
 
 <!-- ============================================
-     MODALS (REUSE FROM OLD CODE)
+     MODALS
      ============================================ -->
 
 <!-- Modal: Công Việc CHƯA LÀM -->
@@ -1233,7 +1241,12 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                 <h5 class="modal-title" id="iframeModalTitle">
                     <i class="bi bi-window"></i> <span id="iframeModalTitleText">Đang tải...</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
+                <div class="d-flex gap-2 align-items-center">
+                    <a href="#" id="iframeDirectLink" class="btn btn-light btn-sm rounded-circle" target="_blank" title="Mở trang mới">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
+                </div>
             </div>
             <div class="modal-body p-0" style="height: calc(100vh - 60px);">
                 <iframe
@@ -1329,8 +1342,9 @@ function openInModal(url, title) {
     const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
     const iframe = document.getElementById('contentIframe');
     const titleText = document.getElementById('iframeModalTitleText');
+    const directLink = document.getElementById('iframeDirectLink');
 
-    // Thêm tham số modal=1 vào URL
+    // Thêm tham số modal=1 vào URL cho iframe
     const separator = url.includes('?') ? '&' : '?';
     const modalUrl = url + separator + 'modal=1';
 
@@ -1338,12 +1352,16 @@ function openInModal(url, title) {
     titleText.textContent = title;
     iframe.src = modalUrl;
 
+    // Set URL gốc cho nút "Mở trang mới" (không có modal=1)
+    directLink.href = url;
+
     // Show modal
     modal.show();
 
     // Clear iframe khi đóng modal
     document.getElementById('iframeModal').addEventListener('hidden.bs.modal', function () {
         iframe.src = '';
+        directLink.href = '#';
     }, { once: true });
 }
 
@@ -2026,8 +2044,12 @@ function updateUIWithStats(data) {
     // 2. Cập nhật Work Badge (Công Việc)
     const workBadge = document.getElementById('work-badge');
     if (workBadge) {
-        if (data.work_badge > 0) {
-            workBadge.textContent = data.work_badge;
+        const myWorkBadge = (data.my_overdue || 0) + (data.my_due_soon || 0);
+        const tasksBadge = (data.my_tasks_need_rating || 0);
+        const totalWorkBadge = myWorkBadge + tasksBadge;
+
+        if (totalWorkBadge > 0) {
+            workBadge.textContent = totalWorkBadge;
             workBadge.style.display = 'inline-block';
         } else {
             workBadge.style.display = 'none';

@@ -1002,6 +1002,13 @@ def get_realtime_stats():
         work_badge = my_overdue + my_due_soon
         info_badge = unconfirmed_news + unread_notifications
 
+        # Tasks do MÌNH giao cần đánh giá
+        my_tasks_need_rating = Task.query.filter(
+            Task.creator_id == current_user.id,
+            Task.status == 'DONE',
+            Task.performance_rating == None
+        ).count()
+
         # Stats cho Lương (Director/Accountant)
         pending_penalties = 0
         pending_advances = 0
@@ -1028,6 +1035,7 @@ def get_realtime_stats():
             'team_overdue': team_overdue,
             'team_pending': team_pending,
             'tasks_need_rating': tasks_need_rating,
+            'my_tasks_need_rating': my_tasks_need_rating,
 
             # Stats lương
             'pending_penalties': pending_penalties,
