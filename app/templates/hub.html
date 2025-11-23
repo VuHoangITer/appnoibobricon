@@ -34,11 +34,11 @@ nav.top-navbar {
    ============================================ */
 .hub-icon-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 30px;
-    max-width: 1000px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    max-width: 600px;
     margin: 0 auto;
-    padding: 40px 0;
+    padding: 30px 20px;
 }
 
 .hub-icon-card {
@@ -46,67 +46,73 @@ nav.top-navbar {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    padding: 30px 20px;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
+    gap: 8px;
+    padding: 15px 10px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 .hub-icon-card:hover {
-    background: rgba(255, 255, 255, 0.4);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.hub-icon-card:active {
+    transform: translateY(-1px) scale(0.98);
 }
 
 .hub-icon-wrapper {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s ease;
 }
 
 .hub-icon-card:hover .hub-icon-wrapper {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    transform: scale(1.08);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
 }
 
 .hub-icon-wrapper i {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     color: white;
 }
 
 .hub-icon-label {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: dark;
     text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    line-height: 1.2;
 }
 
 .hub-icon-badge {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 8px;
+    right: 8px;
     background: #dc3545;
     color: white;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    padding: 5px 10px;
-    border-radius: 15px;
-    min-width: 28px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    min-width: 20px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+    border: 2px solid white;
 }
-
 /* ============================================
    MODULE PAGE - SIDEBAR + CONTENT
    ============================================ */
@@ -474,25 +480,26 @@ nav.top-navbar {
 
     .hub-icon-grid {
         gap: 15px;
-        padding: 20px 0;
-        grid-template-columns: repeat(2, 1fr);
+        padding: 20px 10px;
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
 
     .hub-icon-card {
-        padding: 20px 15px;
+        padding: 12px 8px;
+        gap: 6px;
     }
 
     .hub-icon-wrapper {
-        width: 70px;
-        height: 70px;
+        width: 55px;
+        height: 55px;
     }
 
     .hub-icon-wrapper i {
-        font-size: 2rem;
+        font-size: 1.6rem;
     }
 
     .hub-icon-label {
-        font-size: 0.95rem;
+        font-size: 0.8rem;
     }
 
     .module-content {
@@ -502,17 +509,22 @@ nav.top-navbar {
 
 @media (max-width: 480px) {
     .hub-icon-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
+        max-width: 100%;
     }
 
     .hub-icon-wrapper {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
     }
 
     .hub-icon-wrapper i {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+    }
+
+    .hub-icon-label {
+        font-size: 0.75rem;
     }
 }
 

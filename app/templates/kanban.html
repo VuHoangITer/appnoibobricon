@@ -332,7 +332,7 @@
             <div class="d-flex gap-2 align-items-center">
                 <!-- Nút Toggle Filter -->
                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
-                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                    <i class="bi bi-funnel-fill"></i>
                     {% if search or assigned_user or tag_filter or date_from or date_to %}
                     <span class="badge bg-danger ms-1">
                         {{ (1 if search else 0) + (1 if assigned_user else 0) + (1 if tag_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) }}

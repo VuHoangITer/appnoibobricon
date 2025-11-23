@@ -114,7 +114,7 @@ def workflow_hub():
         personal_notification = {
             'type': 'danger',
             'icon': 'bi-exclamation-triangle-fill',
-            'title': '🚨 KHẨN CẤP - Hành Động Ngay!',
+            'title': '🚨 KHẨN CẤP ',
             'message': f'Bạn có <strong>{my_overdue} công việc quá hạn</strong>, <strong>{my_bad_rating_count} việc bị đánh giá kém</strong>. Hãy ưu tiên xử lý các công việc này ngay!',
             'stats': {
                 'total': total_my_tasks,
@@ -129,8 +129,8 @@ def workflow_hub():
         personal_notification = {
             'type': 'warning',
             'icon': 'bi-exclamation-circle-fill',
-            'title': '⚠️ Chú Ý - Cần Xử Lý!',
-            'message': f'Bạn có <strong>{my_overdue} việc quá hạn</strong>, <strong>{my_due_soon} việc sắp đến hạn</strong> trong 3 ngày tới. Hãy tập trung hoàn thành!',
+            'title': '⚠️ Chú Ý ',
+            'message': f'Bạn có <strong>{my_overdue} việc quá hạn</strong>, <strong>{my_due_soon} việc sắp đến hạn</strong> trong 3 ngày tới và <strong>{my_done_overdue_count} nhiệm vụ hoàn thành nhưng bị quá hạn!</strong> CẦN TẬP TRUNG ',
             'stats': {
                 'total': total_my_tasks,
                 'completed': my_completed_recent,
@@ -160,7 +160,7 @@ def workflow_hub():
         personal_notification = {
             'type': 'info',
             'icon': 'bi-hand-thumbs-up-fill',
-            'title': '👍 Làm Tốt - Đang Ổn!',
+            'title': '👍 Làm Tốt ',
             'message': f'Bạn đã hoàn thành <strong>{my_completed_recent}/{total_my_tasks} việc ({my_completion_rate:.0f}%)</strong>, <strong>{my_quality_rate:.0f}%</strong> đúng hạn. Còn <strong>{my_pending_tasks} việc chưa làm</strong>, <strong>{my_in_progress} việc đang làm</strong>. Cố gắng thêm!',
             'stats': {
                 'total': total_my_tasks,
@@ -296,7 +296,7 @@ def workflow_hub():
                 company_notification = {
                     'type': 'warning',
                     'icon': 'bi-exclamation-circle-fill',
-                    'title': '⚠️ Cảnh Báo - Cần Giám Sát Sát!',
+                    'title': '⚠️ Cảnh Báo - Cần Giám Sát!',
                     'message': f'Có <strong>{team_overdue} việc quá hạn</strong>, <strong>{tasks_need_rating} việc cần đánh giá</strong>, <strong>{company_bad_rating} việc đánh giá kém</strong>. Một số bộ phận đang gặp khó khăn, cần họp với trưởng phòng!',
                     'stats': {
                         'total': total_tasks,

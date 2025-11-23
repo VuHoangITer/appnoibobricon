@@ -22,11 +22,9 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user is None or not user.check_password(password):
-            flash('Email hoặc mật khẩu không đúng.', 'danger')
             return redirect(url_for('auth.login'))
 
         if not user.is_active:
-            flash('Tài khoản của bạn đã bị vô hiệu hóa.', 'danger')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=remember)
@@ -56,11 +54,9 @@ def register():
         role = request.form.get('role')
 
         if User.query.filter_by(email=email).first():
-            flash('Email đã tồn tại.', 'danger')
             return redirect(url_for('auth.register'))
 
         if role not in ['director', 'manager', 'accountant', 'hr']:
-            flash('Role không hợp lệ.', 'danger')
             return redirect(url_for('auth.register'))
 
         user = User(email=email, full_name=full_name, role=role)
@@ -68,7 +64,6 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        flash(f'Tạo tài khoản {email} thành công.', 'success')
         return redirect(url_for('auth.users'))
 
     return render_template('register.html')
