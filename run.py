@@ -4,6 +4,10 @@ Run script for Flask application
 Usage: python run.py (development) or gunicorn run:app (production)
 """
 
+from gevent import monkey
+monkey.patch_all()
+print(" Gevent patched early in run.py (including SSL)")
+
 from app import create_app, db
 import os
 
