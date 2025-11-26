@@ -17,13 +17,15 @@ bp = Blueprint('tasks', __name__)
 def get_task_unread_comment_count(task_id, user_id):
     """
     Đếm số comment chưa đọc của user trong task
+    (KHÔNG bao gồm comment do chính user viết)
     Returns: int
     """
     from app.models import TaskComment, TaskCommentRead
 
-    # Lấy tất cả comment IDs của task
+    # Lấy tất cả comment IDs của task, LOẠI TRỪ comment do chính user viết
     all_comment_ids = db.session.query(TaskComment.id).filter(
-        TaskComment.task_id == task_id
+        TaskComment.task_id == task_id,
+        TaskComment.user_id != user_id  # ← THÊM DÒNG NÀY
     ).all()
     all_comment_ids = [c[0] for c in all_comment_ids]
 

@@ -5,17 +5,35 @@
 
 {% block extra_css %}
 <style>
-/* ============================================
-   MINIMAL DESIGN - DESKTOP 3 CARDS/ROW
-   ============================================ */
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-primary-soft: #e7f1ff;
+    --ed-success: #198754;
+    --ed-success-soft: #e8f5e9;
+    --ed-danger: #dc3545;
+    --ed-danger-soft: #ffebee;
+    --ed-info-soft: #e3f2fd;
+    --ed-radius-lg: 12px;
+    --ed-radius-md: 8px;
+    --ed-radius-pill: 999px;
+}
 
-/* Section 1: Priority Header */
+/* --------------------------------------------
+   Section 1: Priority Header
+   -------------------------------------------- */
+
 .priority-header {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    padding: 20px;
-    border-radius: 8px;
+    background: var(--ed-card-bg);
+    border: 1px solid var(--ed-border);
+    padding: 20px 24px;
+    border-radius: var(--ed-radius-lg);
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .priority-badge {
@@ -23,63 +41,61 @@
     font-weight: 600;
     text-align: center;
     margin-bottom: 15px;
-    color: #2c3e50;
+    color: var(--ed-text);
 }
 
 .priority-stats {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 24px;
     flex-wrap: wrap;
 }
 
 .priority-stat-item {
     text-align: center;
-    padding: 10px 20px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+    padding: 10px 22px;
+    background: #f8f9fb;
+    border-radius: var(--ed-radius-pill);
+    border: 1px solid var(--ed-border);
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.priority-stat-item:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
 }
 
 .priority-stat-item.active {
-    background: #0d6efd;
-    border-color: #0d6efd;
+    background: var(--ed-primary);
+    border-color: var(--ed-primary);
 }
 
 .priority-stat-item.active .priority-stat-number,
 .priority-stat-item.active .priority-stat-label {
-    color: white;
+    color: #ffffff;
 }
 
 .priority-stat-number {
     font-size: 1.8rem;
     font-weight: 700;
     display: block;
-    color: #2c3e50;
+    color: var(--ed-text);
 }
 
 .priority-stat-label {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--ed-muted);
     margin-top: 4px;
+    font-weight: 500;
 }
 
-/* Create Task Button */
+/* --------------------------------------------
+   Floating "Create Task" Button
+   -------------------------------------------- */
+
 .create-task-btn {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    width: 50px;
-    height: 50px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
-    background: #0d6efd;
+    background: var(--ed-primary);
     color: white;
     border: none;
     cursor: pointer;
@@ -88,10 +104,11 @@
     justify-content: center;
     z-index: 1000;
     padding: 0;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
 }
 
 .create-task-btn i {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     margin: 0;
     line-height: 1;
 }
@@ -100,15 +117,19 @@
     .create-task-btn {
         bottom: 20px;
         right: 20px;
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        height: 50px;
     }
 
     .create-task-btn i {
         font-size: 1.4rem;
     }
 }
-/* Section 2: Task Cards Container - 3 columns on desktop */
+
+/* --------------------------------------------
+   Section 2: Task Cards Container
+   -------------------------------------------- */
+
 .task-cards-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -116,57 +137,64 @@
     margin-bottom: 20px;
 }
 
+/* --------------------------------------------
+   Task Card – Enterprise Style
+   -------------------------------------------- */
+
 .task-card {
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    background: white;
+    border: 1px solid var(--ed-border);
+    border-radius: 24px;
+    background: var(--ed-card-bg);
     display: flex;
     flex-direction: column;
-    transition: all 0.2s ease;
-}
-
-.task-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
 }
 
 .task-card-header {
-    padding: 12px 15px;
+    padding: 12px 16px;
     font-weight: 600;
     font-size: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--ed-border);
     text-align: center;
 }
 
+/* Header theo trạng thái */
 .task-card-header.on-time {
-    background: #d1e7dd;
-    color: #0f5132;
+    background: var(--ed-success-soft);
+    color: #155724;
 }
 
 .task-card-header.overdue {
-    background: #f8d7da;
+    background: var(--ed-danger-soft);
     color: #842029;
 }
 
 .task-card-header.completed {
-    background: #cfe2ff;
-    color: #084298;
+    background: var(--ed-info-soft);
+    color: #0d47a1;
 }
 
 .task-card-body {
-    padding: 15px;
+    padding: 15px 16px;
     display: flex;
     flex-direction: column;
     flex: 1;
 }
-
-.task-top-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+/* Nếu task quá hạn → tô soft đỏ cho body */
+.task-card-header.overdue + .task-card-body {
+    background: var(--ed-danger-soft);
 }
 
-/* Layout: Avatar và countdown cùng hàng, yêu cầu full dưới */
+/* Hoàn thành → soft xanh dương nhạt */
+.task-card-header.completed + .task-card-body {
+    background: var(--ed-info-soft);
+}
+
+/* --------------------------------------------
+   Layout nội dung trên card
+   -------------------------------------------- */
+
 .task-card-content {
     display: flex;
     flex-direction: column;
@@ -206,17 +234,18 @@
     align-items: center;
 }
 
+/* Avatar dạng enterprise */
 .task-user-avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: #6c757d;
-    color: white;
+    background: #e9ecef;
+    color: #495057;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     flex-shrink: 0;
 }
 
@@ -233,17 +262,24 @@
 
 .task-arrow {
     font-size: 1rem;
-    color: #6c757d;
+    color: var(--ed-muted);
     margin: 0 4px;
 }
 
+/* --------------------------------------------
+   Requirement Box
+   -------------------------------------------- */
+
 .task-requirement {
+    margin-top: 4px;
     padding: 12px;
     background: #f8f9fa;
-    border-left: 3px solid #6c757d;
-    border-radius: 4px;
+    border-radius: var(--ed-radius-md);
     font-size: 0.9rem;
     word-break: break-word;
+
+    /* khung nét đứt quanh ô YÊU CẦU */
+    border: 1px dashed var(--ed-primary);
 }
 
 .task-requirement-label {
@@ -253,21 +289,17 @@
     font-size: 0.85rem;
 }
 
-.task-countdown {
-    text-align: center;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    white-space: nowrap;
-}
+/* --------------------------------------------
+   Countdown
+   -------------------------------------------- */
 
+.task-countdown,
 .task-countdown-static {
     text-align: center;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
+    padding: 8px 14px;
+    background: #f9fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--ed-radius-pill);
     white-space: nowrap;
 }
 
@@ -276,19 +308,24 @@
 }
 
 .countdown-timer {
-    font-size: 1.1rem;
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    color: #2c3e50;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1f2933;
+    letter-spacing: 0.4px;
 }
 
 .countdown-timer.overdue {
-    color: #dc3545;
+    color: var(--ed-danger);
 }
 
 .countdown-timer.on-time-done {
-    color: #198754;
+    color: var(--ed-success);
 }
+
+/* --------------------------------------------
+   Task Actions & Buttons
+   -------------------------------------------- */
 
 .task-actions {
     display: flex;
@@ -296,24 +333,20 @@
     gap: 10px;
     margin-top: auto;
     padding-top: 15px;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--ed-border);
 }
 
 .task-btn {
     padding: 8px 20px;
-    border-radius: 4px;
-    border: 1px solid;
+    border-radius: var(--ed-radius-pill);
+    border: 1px solid transparent;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    background: white;
+    background: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-
-.task-btn:hover {
-    opacity: 0.8;
 }
 
 .task-btn:disabled {
@@ -321,47 +354,55 @@
     cursor: not-allowed;
 }
 
+/* Nút theo trạng thái */
+
 .task-btn-start {
-    border-color: #0d6efd;
-    color: #0d6efd;
+    border-color: var(--ed-primary);
+    background: var(--ed-primary-soft);
+    color: var(--ed-primary);
 }
 
 .task-btn-start:hover {
-    background: #0d6efd;
-    color: white;
+    background: var(--ed-primary);
+    color: #ffffff;
 }
 
 .task-btn-complete {
-    border-color: #198754;
-    color: #198754;
+    border-color: var(--ed-success);
+    background: var(--ed-success-soft);
+    color: var(--ed-success);
 }
 
 .task-btn-complete:hover {
-    background: #198754;
-    color: white;
+    background: var(--ed-success);
+    color: #ffffff;
 }
 
 .task-btn-discuss {
-    border-color: #6c757d;
-    color: #6c757d;
+    border-color: var(--ed-muted);
+    background: #ffc700;
+    color: var(--ed-text);
 }
 
 .task-btn-discuss:hover {
-    background: #6c757d;
-    color: white;
+    background: #ffc700;
+    color: #ffffff;
 }
 
-/* Responsive */
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+
 @media (max-width: 1024px) {
     .task-cards-container {
         grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        gap: 16px;
     }
 }
 
 @media (max-width: 768px) {
     .priority-header {
-        padding: 15px;
+        padding: 16px;
     }
 
     .priority-badge {
@@ -369,7 +410,7 @@
     }
 
     .priority-stats {
-        gap: 15px;
+        gap: 12px;
     }
 
     .priority-stat-number {
@@ -378,33 +419,33 @@
 
     .task-cards-container {
         grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .task-card-content {
-        grid-template-columns: 1fr auto;
-        gap: 10px;
+        gap: 14px;
     }
 
     .countdown-timer {
-        font-size: 1rem;
+        font-size: 0.98rem;
     }
 
     .task-actions {
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     .task-btn {
-        width: 100%;
+        width: 48%;
         justify-content: center;
     }
 }
+
+/* --------------------------------------------
+   Unread badge – rõ ràng nhưng gọn
+   -------------------------------------------- */
 
 .unread-badge {
     position: absolute;
     top: -8px;
     right: -8px;
-    background: #dc3545;
+    background: var(--ed-danger);
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -415,13 +456,6 @@
     box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
     border: 2px solid white;
     line-height: 1.2;
-}
-.countdown-timer {
-    font-size: 1.05rem;
-    font-weight: 600;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #2c3e50;
-    letter-spacing: 0.5px;
 }
 </style>
 {% endblock %}
