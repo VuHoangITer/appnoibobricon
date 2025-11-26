@@ -5,16 +5,140 @@
 
 {% block extra_css %}
 <style>
-/* CSS cho clickable row */
+/* ============================================
+   TASK LIST – ENTERPRISE DASHBOARD STYLE
+   (chỉ CSS, không động vào HTML/JS)
+   ============================================ */
 
-/* Thêm style cho row clickable */
+:root {
+    --task-bg: #f5f7fb;
+    --task-card-bg: #ffffff;
+    --task-border: #e1e5ee;
+    --task-muted: #6c757d;
+    --task-text: #1f2933;
+    --task-primary: #0d6efd;
+    --task-danger: #dc3545;
+    --task-danger-soft: #ffe5e9;
+    --task-warning-soft: #fff7e0;
+    --task-success-soft: #e8f5e9;
+    --task-radius-lg: 14px;
+    --task-radius-md: 10px;
+    --task-radius-pill: 999px;
+}
+
+/* Nền tổng thể nhẹ, kiểu dashboard */
+body {
+    background-color: var(--task-bg);
+}
+
+/* --------------------------------------------
+   Card chính bao tasks
+   -------------------------------------------- */
+
+.card {
+    border-radius: var(--task-radius-lg);
+    border: 1px solid var(--task-border);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+/* Header card: gradient nhẹ + căn chỉnh nút */
+.card-header {
+    border-bottom: 1px solid var(--task-border);
+    background: linear-gradient(125deg, #ffffff, #eef4ff);
+    padding: 14px 18px;
+}
+
+.card-header h5 {
+    font-weight: 600;
+    color: var(--task-text);
+}
+
+/* Badge trong header */
+.card-header .badge {
+    border-radius: var(--task-radius-pill);
+}
+
+/* Nhóm nút bên phải header */
+.card-header .btn {
+    border-radius: 999px;
+}
+
+/* Nút filter với badge số filter đang dùng */
+.card-header .btn-outline-primary {
+    border-color: #cbd5f5;
+    background-color: #f8f9ff;
+}
+
+/* Nút tạo nhiệm vụ */
+.card-header .btn-primary {
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.35);
+}
+
+/* Nút xoá nhiều */
+.card-header .btn-danger {
+    box-shadow: none;
+}
+
+/* --------------------------------------------
+   Modal filter – chỉnh nhẹ cho dễ nhìn
+   -------------------------------------------- */
+
+#filterModal .modal-content {
+    border-radius: var(--task-radius-lg);
+    border: 1px solid var(--task-border);
+}
+
+#filterModal .modal-header {
+    border-bottom: 1px solid var(--task-border);
+}
+
+#filterModal .modal-footer {
+    border-top: 1px solid var(--task-border);
+}
+
+/* --------------------------------------------
+   Table – layout, màu sắc
+   -------------------------------------------- */
+
+.table-responsive {
+    border-radius: var(--task-radius-md);
+    border: 1px solid var(--task-border);
+    overflow: hidden;
+}
+
+/* Header của table */
+.table thead th {
+    background-color: #eef2ff;
+    color: #4b5563;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid var(--task-border);
+    white-space: nowrap;
+}
+
+/* Hàng dữ liệu */
+.table tbody tr {
+    background-color: #ffffff;
+    border-bottom: 1px solid #edf0f7;
+}
+
+/* Zebra nhẹ */
+.table tbody tr:nth-child(even) {
+    background-color: #fafbff;
+}
+
+/* --------------------------------------------
+   Clickable row – không nhảy, chỉ đổi màu
+   -------------------------------------------- */
+
 .clickable-row {
     cursor: pointer;
-    transition: background-color 0.2s;
 }
 
 .clickable-row:hover {
-    background-color: rgba(0, 123, 255, 0.1);
+    background-color: rgba(13,110,253,0.06);
 }
 
 /* Ngăn click vào checkbox trigger row click */
@@ -22,6 +146,160 @@
     cursor: pointer;
     position: relative;
     z-index: 10;
+}
+
+/* --------------------------------------------
+   Hàng QUÁ HẠN – override lại table-danger
+   -------------------------------------------- */
+
+.table-danger {
+    background-color: var(--task-danger-soft) !important;
+}
+
+.table-danger:hover {
+    background-color: #ffd6dd !important;
+}
+
+/* Badge QUÁ HẠN */
+.badge.bg-danger {
+    background-color: #e11d48 !important;
+}
+
+/* Badge “QUÁ HẠN” khi DONE quá hạn – cho nổi hơn chút */
+.badge.bg-danger.text-dark {
+    background-color: #ffe1e5 !important;
+    color: #b91c1c !important;
+}
+
+/* --------------------------------------------
+   Badge tag (Khẩn cấp / Quan trọng / Lặp lại)
+   -------------------------------------------- */
+
+.badge.bg-danger.mt-1 {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+.badge.bg-warning.text-dark.mt-1 {
+    background-color: #fef9c3 !important;
+    color: #854d0e !important;
+}
+
+.badge.bg-info.text-dark.mt-1 {
+    background-color: #cffafe !important;
+    color: #075985 !important;
+}
+
+/* Badge hạn hoàn thành */
+td[data-label="Hạn Hoàn Thành"] .badge {
+    border-radius: var(--task-radius-pill);
+}
+
+/* Badge trạng thái */
+td[data-label="Trạng thái"] .badge {
+    border-radius: var(--task-radius-pill);
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/* Cột ngày tạo */
+td[data-label="Ngày tạo"] small {
+    color: var(--task-muted);
+}
+
+.due-badge {
+    border-radius: var(--task-radius-pill);
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* DONE trước hạn → xanh lá soft */
+.due-badge.due-on-time {
+    background-color: var(--task-success-soft);
+    color: #166534; /* xanh lá đậm để dễ đọc */
+}
+
+/* --------------------------------------------
+   Bulk checkbox + cột checkbox
+   -------------------------------------------- */
+
+th[style*="width: 40px"],
+td[data-label=""] {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Checkbox align giữa */
+.form-check-input {
+    cursor: pointer;
+}
+
+/* --------------------------------------------
+   Icon đánh giá (👍 / 👎)
+   -------------------------------------------- */
+
+td[data-label="Đ.Giá"] i {
+    font-size: 1.25rem !important;
+}
+
+/* --------------------------------------------
+   Pagination
+   -------------------------------------------- */
+.pagination {
+    gap: 4px;
+}
+
+.pagination .page-item .page-link {
+    border-radius: var(--task-radius-pill) !important;
+    min-width: 34px;
+    padding: 0.35rem 0.65rem;
+    margin: 0;
+    border: 1px solid var(--task-border);
+    text-align: center;
+    color: var(--task-text);
+    background-color: #ffffff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--task-primary);
+    border-color: var(--task-primary);
+    color: #ffffff;
+}
+
+/* --------------------------------------------
+   Empty state (không có task)
+   -------------------------------------------- */
+
+.text-center.py-5 i.bi-inbox {
+    opacity: 0.7;
+}
+
+/* --------------------------------------------
+   Responsive – cải thiện mobile
+   -------------------------------------------- */
+
+@media (max-width: 768px) {
+    .card-header {
+        padding: 12px 14px;
+    }
+
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    .card-header .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .card-header .d-flex.gap-2 {
+        justify-content: flex-start;
+    }
+
+    /* Cho table dạng “card list” trên mobile nếu muốn:
+       Chỉ dùng data-label đã có – nhưng giữ nguyên Bootstrap responsive nên không đụng sâu ở đây. */
 }
 </style>
 {% endblock %}
@@ -218,28 +496,18 @@
                                 {{ task.title }}
                             </td>
                             <td data-label="Phân Loại">
-                                {% if task | is_overdue %}
-                                <span class="badge bg-danger ms-2">QUÁ HẠN</span>
-                                {% endif %}
-                                <!-- Icon hoàn thành quá hạn -->
-                                {% if task.status == 'DONE' and task.completed_overdue %}
-                                <span class="badge bg-danger text-dark ms-2">
-                                    <i class="bi bi-clock-history"></i> QUÁ HẠN
-                                </span>
-                                {% endif %}
-                                <!--  Hiển thị các thẻ tags -->
                                 {% if task.is_urgent %}
-                                <span class="badge bg-danger mt-1">
+                                <span class="badge bg-danger text-light task-tag-badge">
                                     Khẩn Cấp
                                 </span>
                                 {% endif %}
                                 {% if task.is_important %}
-                                <span class="badge bg-warning text-dark mt-1">
+                                <span class="badge bg-warning text-dark task-tag-badge">
                                     Quan Trọng
                                 </span>
                                 {% endif %}
                                 {% if task.is_recurring %}
-                                <span class="badge bg-info text-dark mt-1">
+                                <span class="badge bg-info text-dark task-tag-badge">
                                     Lặp Lại
                                 </span>
                                 {% endif %}
@@ -265,11 +533,24 @@
                             </td>
                             <td data-label="Hạn Hoàn Thành">
                                 {% if task.due_date %}
-                                <span class="badge bg-{{ 'danger' if (task | is_overdue) else 'secondary' }}">
-                                    {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
-                                </span>
+                                    {% set is_qua_han = (task | is_overdue) or (task.status == 'DONE' and task.completed_overdue) %}
+                                    {% set done_on_time = (task.status == 'DONE' and not is_qua_han) %}
+                                    <span class="badge due-badge
+                                        {% if is_qua_han %}
+                                            bg-danger text-light
+                                        {% elif done_on_time %}
+                                            due-on-time
+                                        {% else %}
+                                            bg-secondary
+                                        {% endif %}
+                                    ">
+                                        {% if is_qua_han %}
+                                            <i class="bi bi-clock-history me-1"></i>
+                                        {% endif %}
+                                        {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
+                                    </span>
                                 {% else %}
-                                <span class="text-muted">Chưa có</span>
+                                    <span class="text-muted">Chưa có</span>
                                 {% endif %}
                             </td>
                             <td data-label="Trạng thái">
@@ -300,16 +581,6 @@
         {% if pagination.pages > 1 %}
         <nav aria-label="Task pagination" class="mt-4">
             <ul class="pagination justify-content-center">
-                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                    {% if pagination.has_prev %}
-                    <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.prev_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
-                        <i class="bi bi-chevron-left"></i> Trước
-                    </a>
-                    {% else %}
-                    <span class="page-link"><i class="bi bi-chevron-left"></i> Trước</span>
-                    {% endif %}
-                </li>
-
                 {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                     {% if page_num %}
                         {% if page_num == pagination.page %}
@@ -318,7 +589,7 @@
                         </li>
                         {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
+                            <a class="page-link" href="{{ url_for('tasks.list_tasks', page=page_num, status=(status_filter if status_filter else None), date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
                                 {{ page_num }}
                             </a>
                         </li>
@@ -329,16 +600,6 @@
                     </li>
                     {% endif %}
                 {% endfor %}
-
-                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                    {% if pagination.has_next %}
-                        <a class="page-link" href="{{ url_for('tasks.list_tasks', page=pagination.next_num, status=status_filter, date_from=date_from, date_to=date_to, assigned_user=assigned_user, tag=tag_filter) }}">
-                            Sau <i class="bi bi-chevron-right"></i>
-                        </a>
-                    {% else %}
-                    <span class="page-link">Sau <i class="bi bi-chevron-right"></i></span>
-                    {% endif %}
-                </li>
             </ul>
         </nav>
 
