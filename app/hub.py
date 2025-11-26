@@ -7,6 +7,110 @@ from app import db
 
 bp = Blueprint('hub', __name__, url_prefix='/hub')
 
+# ========================================
+def get_team_performance_data(date_from=None, date_to=None):
+    """
+    Lấy performance data - dùng chung cho cả server render và API
+    Returns: list of dict
+    """
+    # Xác định users theo role
+    if current_user.role == 'director':
+        users = User.query.filter_by(is_active=True).all()
+    elif current_user.role == 'manager':
+        created_tasks = db.session.query(Task.id).filter_by(
+            creator_id=current_user.id
+        ).all()
+        created_task_ids = [t[0] for t in created_tasks]
+
+        assigned_user_ids = db.session.query(TaskAssignment.user_id).filter(
+            TaskAssignment.task_id.in_(created_task_ids)
+        ).distinct().all()
+
+        user_ids = [current_user.id] + [uid[0] for uid in assigned_user_ids]
+        users = User.query.filter(
+            User.id.in_(user_ids),
+            User.is_active == True
+        ).all()
+    else:
+        users = [current_user]
+
+    results = []
+
+    for user in users:
+        base_query = db.session.query(Task).join(
+            TaskAssignment, Task.id == TaskAssignment.task_id
+        ).filter(
+            TaskAssignment.user_id == user.id
+        )
+
+        # Apply date filters
+        if date_from:
+            try:
+                from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+                from_utc = vn_to_utc(from_dt)
+                base_query = base_query.filter(Task.created_at >= from_utc)
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+                to_dt = to_dt.replace(hour=23, minute=59, second=59)
+                to_utc = vn_to_utc(to_dt)
+                base_query = base_query.filter(Task.created_at <= to_utc)
+            except ValueError:
+                pass
+
+        # Count - CHỈ ĐẾM CHƯA HOÀN THÀNH
+        urgent_count = base_query.filter(
+            Task.is_urgent == True,
+            Task.status != 'DONE'
+        ).count()
+
+        important_count = base_query.filter(
+            Task.is_important == True,
+            Task.status != 'DONE'
+        ).count()
+
+        recurring_count = base_query.filter(
+            Task.is_recurring == True,
+            Task.status != 'DONE'
+        ).count()
+
+        done_count = base_query.filter(
+            Task.status == 'DONE'
+        ).count()
+
+        results.append({
+            'user_id': user.id,
+            'full_name': user.full_name,
+            'avatar': user.avatar,
+            'urgent_count': urgent_count,
+            'important_count': important_count,
+            'recurring_count': recurring_count,
+            'done_count': done_count
+        })
+
+    # Sort by done_count
+    results.sort(key=lambda x: x['done_count'], reverse=True)
+
+    # Đánh dấu rank
+    if len(results) > 1:
+        max_done = results[0]['done_count']
+        min_done = results[-1]['done_count']
+
+        for r in results:
+            if r['done_count'] == max_done and max_done > min_done:
+                r['rank'] = 1
+            elif r['done_count'] == min_done and max_done > min_done:
+                r['rank'] = -1
+            else:
+                r['rank'] = 0
+    else:
+        if results:
+            results[0]['rank'] = 0
+
+    return results
 
 @bp.route('/')
 @login_required
@@ -104,6 +208,8 @@ def workflow_hub():
         total_users = User.query.count()
         active_users = User.query.filter_by(is_active=True).count()
 
+    initial_performance = get_team_performance_data()
+
     return render_template('hub.html',
                            my_pending_tasks=my_pending_tasks,
                            my_in_progress=my_in_progress,
@@ -118,7 +224,9 @@ def workflow_hub():
                            unread_notifications=unread_notifications,
                            unconfirmed_news=unconfirmed_news,
                            total_users=total_users,
-                           active_users=active_users)
+                           active_users=active_users,
+                           initial_performance=initial_performance
+                           )
 
 
 # ========================================
@@ -240,110 +348,13 @@ def get_realtime_stats():
 def get_team_performance():
     """
     API trả về performance của team members
-    Hỗ trợ SSE real-time update
+    Dùng cho filters và SSE real-time update
     """
     try:
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
 
-        # Xác định users theo role
-        if current_user.role == 'director':
-            users = User.query.filter_by(is_active=True).all()
-        elif current_user.role == 'manager':
-            # Lấy danh sách task IDs trực tiếp
-            created_tasks = db.session.query(Task.id).filter_by(
-                creator_id=current_user.id
-            ).all()
-
-            created_task_ids = [t[0] for t in created_tasks]
-
-            assigned_user_ids = db.session.query(TaskAssignment.user_id).filter(
-                TaskAssignment.task_id.in_(created_task_ids)
-            ).distinct().all()
-
-            user_ids = [current_user.id] + [uid[0] for uid in assigned_user_ids]
-            users = User.query.filter(
-                User.id.in_(user_ids),
-                User.is_active == True
-            ).all()
-        else:
-            users = [current_user]
-
-        results = []
-
-        for user in users:
-            base_query = db.session.query(Task).join(
-                TaskAssignment, Task.id == TaskAssignment.task_id
-            ).filter(
-                TaskAssignment.user_id == user.id
-            )
-
-            # Apply date filter
-            if date_from:
-                try:
-                    from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                    from_utc = vn_to_utc(from_dt)
-                    base_query = base_query.filter(Task.created_at >= from_utc)
-                except ValueError:
-                    pass
-
-            if date_to:
-                try:
-                    to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                    to_dt = to_dt.replace(hour=23, minute=59, second=59)
-                    to_utc = vn_to_utc(to_dt)
-                    base_query = base_query.filter(Task.created_at <= to_utc)
-                except ValueError:
-                    pass
-
-            # Count - CHỈ ĐẾM CHƯA HOÀN THÀNH
-            urgent_count = base_query.filter(
-                Task.is_urgent == True,
-                Task.status != 'DONE'
-            ).count()
-
-            important_count = base_query.filter(
-                Task.is_important == True,
-                Task.status != 'DONE'
-            ).count()
-
-            recurring_count = base_query.filter(
-                Task.is_recurring == True,
-                Task.status != 'DONE'
-            ).count()
-
-            done_count = base_query.filter(
-                Task.status == 'DONE'
-            ).count()
-
-            results.append({
-                'user_id': user.id,
-                'full_name': user.full_name,
-                'avatar': user.avatar,
-                'urgent_count': urgent_count,
-                'important_count': important_count,
-                'recurring_count': recurring_count,
-                'done_count': done_count
-            })
-
-        # Sort by done_count
-        results.sort(key=lambda x: x['done_count'], reverse=True)
-
-        # Đánh dấu rank
-        if len(results) > 1:
-            max_done = results[0]['done_count']
-            min_done = results[-1]['done_count']
-
-            for r in results:
-                if r['done_count'] == max_done and max_done > min_done:
-                    r['rank'] = 1
-                elif r['done_count'] == min_done and max_done > min_done:
-                    r['rank'] = -1
-                else:
-                    r['rank'] = 0
-        else:
-            if results:
-                results[0]['rank'] = 0
+        results = get_team_performance_data(date_from, date_to)  # ✅ Dùng helper function
 
         return jsonify({
             'success': True,

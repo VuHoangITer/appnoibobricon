@@ -1099,6 +1099,25 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
 .count-cell.done .task-count-link:visited {
     color: #198754 !important;
 }
+/* Animation cho cell updates */
+.cell-updating {
+    background: rgba(255, 193, 7, 0.3) !important;
+    transition: background 0.3s ease;
+}
+
+.cell-updated {
+    background: rgba(25, 135, 84, 0.3) !important;
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
 </style>
 {% endblock %}
 
@@ -1207,7 +1226,35 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                     </button>
 
                     <div class="top-bottom-users" id="topBottomUsers">
-                        <!-- Rendered by JS -->
+                        <!-- ✅ SERVER-SIDE RENDER với Jinja2 -->
+                        {% if initial_performance %}
+                            {% set top_user = initial_performance|selectattr('rank', 'equalto', 1)|first %}
+                            {% set bottom_user = initial_performance|selectattr('rank', 'equalto', -1)|first %}
+
+                            {% if top_user %}
+                            <div class="top-user" title="Làm nhiều nhất">
+                                <i class="bi bi-trophy-fill" style="color: #ffd700; font-size: 1.3rem;"></i>
+                                <img src="{% if top_user.avatar %}/profile/avatar/{{ top_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ top_user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128{% endif %}"
+                                     alt="{{ top_user.full_name }}"
+                                     class="user-badge-avatar"
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ top_user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128'">
+                                <span class="user-badge-name">{{ top_user.full_name }}</span>
+                                <span class="user-badge-count">{{ top_user.done_count }} việc</span>
+                            </div>
+                            {% endif %}
+
+                            {% if bottom_user %}
+                            <div class="bottom-user" title="Cần cố gắng thêm">
+                                <i class="bi bi-exclamation-circle-fill" style="color: #dc3545; font-size: 1.3rem;"></i>
+                                <img src="{% if bottom_user.avatar %}/profile/avatar/{{ bottom_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ bottom_user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128{% endif %}"
+                                     alt="{{ bottom_user.full_name }}"
+                                     class="user-badge-avatar"
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ bottom_user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128'">
+                                <span class="user-badge-name">{{ bottom_user.full_name }}</span>
+                                <span class="user-badge-count">{{ bottom_user.done_count }} việc</span>
+                            </div>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
 
@@ -1236,12 +1283,59 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                         </tr>
                     </thead>
                         <tbody id="performanceTableBody">
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
-                                    <div class="spinner-border text-primary" role="status"></div>
-                                    <p class="text-muted mt-3">Đang tải dữ liệu...</p>
-                                </td>
-                            </tr>
+                            <!-- ✅ SERVER-SIDE RENDER với Jinja2 -->
+                            {% if initial_performance %}
+                                {% for user in initial_performance %}
+                                <tr data-user-id="{{ user.user_id }}">
+                                    <td>
+                                        <img src="{% if user.avatar %}/profile/avatar/{{ user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128{% endif %}"
+                                             alt="{{ user.full_name }}"
+                                             class="user-avatar-cell"
+                                             onerror="this.src='https://ui-avatars.com/api/?name={{ user.full_name|urlencode }}&background=0dcaf0&color=fff&size=128'">
+                                    </td>
+                                    <td class="user-name-cell">{{ user.full_name }}</td>
+                                    <td class="count-cell urgent" data-type="urgent">
+                                        {% if user.urgent_count > 0 %}
+                                        <a href="{{ url_for('tasks.priority_detail', assigned_user=user.user_id, tag='urgent') }}"
+                                           class="task-count-link">{{ user.urgent_count }}</a>
+                                        {% else %}
+                                        {{ user.urgent_count }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="count-cell important" data-type="important">
+                                        {% if user.important_count > 0 %}
+                                        <a href="{{ url_for('tasks.priority_detail', assigned_user=user.user_id, tag='important') }}"
+                                           class="task-count-link">{{ user.important_count }}</a>
+                                        {% else %}
+                                        {{ user.important_count }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="count-cell recurring" data-type="recurring">
+                                        {% if user.recurring_count > 0 %}
+                                        <a href="{{ url_for('tasks.priority_detail', assigned_user=user.user_id, tag='recurring') }}"
+                                           class="task-count-link">{{ user.recurring_count }}</a>
+                                        {% else %}
+                                        {{ user.recurring_count }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="count-cell done" data-type="done">
+                                        {% if user.done_count > 0 %}
+                                        <a href="{{ url_for('tasks.priority_detail', assigned_user=user.user_id, status='DONE') }}"
+                                           class="task-count-link">{{ user.done_count }}</a>
+                                        {% else %}
+                                        {{ user.done_count }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px;">
+                                        <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                                        <p class="text-muted mt-3">Chưa có dữ liệu</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -1821,6 +1915,7 @@ function updateSidebarBadge(module, badgeType, count) {
 let performancePollingInterval = null;
 let lastPerformanceUpdate = 0;
 const PERFORMANCE_POLL_INTERVAL = 60000;
+let animationTimeouts = {};
 
 function startSmartPerformancePolling() {
     console.log('🔄 Starting smart performance polling (60s interval)');
@@ -1895,7 +1990,7 @@ function autoCenterIcons() {
 let performanceLoadTimeout = null;
 
 function loadPerformance() {
-    // ✅ Debounce - tránh gọi duplicate khi load trang
+    //  Debounce - tránh gọi duplicate khi load trang
     if (performanceLoadTimeout) {
         clearTimeout(performanceLoadTimeout);
     }
@@ -1911,8 +2006,7 @@ function loadPerformance() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    renderPerformanceTable(data.data);
-                    renderTopBottomUsers(data.data);
+                    updateTableRows(data.data);
                 } else {
                     console.error('Error loading performance:', data.error);
                     document.getElementById('performanceTableBody').innerHTML = `
@@ -1936,13 +2030,16 @@ function loadPerformance() {
                     </tr>
                 `;
             });
-    }, 100); // Đợi 100ms trước khi thực sự gọi API
+    }, 100);
 }
 
-function renderPerformanceTable(data) {
+// ========================================
+// FUNCTION 1: UPDATE TABLE ROWS (CHỈ UPDATE THAY ĐỔI)
+// ========================================
+function updateTableRows(newData) {
     const tbody = document.getElementById('performanceTableBody');
 
-    if (data.length === 0) {
+    if (!newData || newData.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; padding: 40px;">
@@ -1954,72 +2051,191 @@ function renderPerformanceTable(data) {
         return;
     }
 
-    let html = '';
-    data.forEach((user, index) => {
-        const avatarUrl = user.avatar
-            ? `/profile/avatar/${user.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128`;
-
-        const filterParams = new URLSearchParams();
-        if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
-        if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
-
-        const baseUrl = '/tasks/priority-detail';
-
-        const urgentParams = new URLSearchParams(filterParams);
-        urgentParams.append('assigned_user', user.user_id);
-        urgentParams.append('tag', 'urgent');
-        const urgentUrl = baseUrl + '?' + urgentParams.toString();
-
-        const importantParams = new URLSearchParams(filterParams);
-        importantParams.append('assigned_user', user.user_id);
-        importantParams.append('tag', 'important');
-        const importantUrl = baseUrl + '?' + importantParams.toString();
-
-        const recurringParams = new URLSearchParams(filterParams);
-        recurringParams.append('assigned_user', user.user_id);
-        recurringParams.append('tag', 'recurring');
-        const recurringUrl = baseUrl + '?' + recurringParams.toString();
-
-        const doneParams = new URLSearchParams(filterParams);
-        doneParams.append('assigned_user', user.user_id);
-        doneParams.append('status', 'DONE');
-        const doneUrl = baseUrl + '?' + doneParams.toString();
-
-        html += `
-            <tr>
-                <td>
-                    <img src="${avatarUrl}"
-                         alt="${user.full_name}"
-                         class="user-avatar-cell"
-                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128'">
-                </td>
-                <td class="user-name-cell">${user.full_name}</td>
-                <td class="count-cell urgent">
-                    ${user.urgent_count > 0
-                        ? `<a href="${urgentUrl}" class="task-count-link">${user.urgent_count}</a>`
-                        : user.urgent_count}
-                </td>
-                <td class="count-cell important">
-                    ${user.important_count > 0
-                        ? `<a href="${importantUrl}" class="task-count-link">${user.important_count}</a>`
-                        : user.important_count}
-                </td>
-                <td class="count-cell recurring">
-                    ${user.recurring_count > 0
-                        ? `<a href="${recurringUrl}" class="task-count-link">${user.recurring_count}</a>`
-                        : user.recurring_count}
-                </td>
-                <td class="count-cell done">
-                    ${user.done_count > 0
-                        ? `<a href="${doneUrl}" class="task-count-link">${user.done_count}</a>`
-                        : user.done_count}
-                </td>
-            </tr>
-        `;
+    // Map existing rows by user_id
+    const existingRows = {};
+    tbody.querySelectorAll('tr[data-user-id]').forEach(row => {
+        const userId = row.getAttribute('data-user-id');
+        existingRows[userId] = row;
     });
 
-    tbody.innerHTML = html;
+    // Track which users we've seen
+    const seenUsers = new Set();
+
+    newData.forEach((user, index) => {
+        seenUsers.add(user.user_id.toString());
+        const existingRow = existingRows[user.user_id];
+
+        if (existingRow) {
+            // ✅ UPDATE existing row - CHỈ UPDATE CHANGED CELLS
+            updateCellIfChanged(existingRow, 'urgent', user.urgent_count, user.user_id);
+            updateCellIfChanged(existingRow, 'important', user.important_count, user.user_id);
+            updateCellIfChanged(existingRow, 'recurring', user.recurring_count, user.user_id);
+            updateCellIfChanged(existingRow, 'done', user.done_count, user.user_id);
+
+            // Reorder if needed
+            const currentIndex = Array.from(tbody.children).indexOf(existingRow);
+            if (currentIndex !== index) {
+                tbody.insertBefore(existingRow, tbody.children[index]);
+            }
+        } else {
+            // ✅ ADD new row
+            const newRow = createTableRow(user);
+            if (tbody.children[index]) {
+                tbody.insertBefore(newRow, tbody.children[index]);
+            } else {
+                tbody.appendChild(newRow);
+            }
+        }
+    });
+
+    // ✅ REMOVE rows that are no longer in data
+    Object.keys(existingRows).forEach(userId => {
+        if (!seenUsers.has(userId)) {
+            existingRows[userId].remove();
+        }
+    });
+
+    // Update top/bottom users
+    renderTopBottomUsers(newData);
+}
+
+// ========================================
+// FUNCTION 2: UPDATE MỘT CELL NÊU CÓ THAY ĐỔI
+// ========================================
+function updateCellIfChanged(row, type, newCount, userId) {
+    // Tìm cell cần update
+    const cell = row.querySelector(`td[data-type="${type}"]`);
+    if (!cell) return;
+
+    // Lấy giá trị hiện tại
+    const link = cell.querySelector('a.task-count-link');
+    const currentCount = link ? parseInt(link.textContent) : parseInt(cell.textContent);
+
+    // CHỈ update nếu giá trị thay đổi
+    if (currentCount !== newCount) {
+
+        // Tạo key unique cho cell này (VD: "5-urgent")
+        const cellKey = `${userId}-${type}`;
+
+        // ✅ NẾU ĐANG CÓ ANIMATION CŨ → HUỶ NÓ
+        if (animationTimeouts[cellKey]) {
+            clearTimeout(animationTimeouts[cellKey]);
+            cell.classList.remove('cell-updating', 'cell-updated');
+        }
+
+        // Bắt đầu animation mới
+        cell.classList.add('cell-updating');
+
+        // Lưu timeout vào object
+        animationTimeouts[cellKey] = setTimeout(() => {
+
+            // Build URL cho link
+            const filterParams = new URLSearchParams();
+            if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
+            if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
+
+            const baseUrl = '/tasks/priority-detail';
+
+            if (type === 'done') {
+                filterParams.append('assigned_user', userId);
+                filterParams.append('status', 'DONE');
+            } else {
+                filterParams.append('assigned_user', userId);
+                filterParams.append('tag', type);
+            }
+
+            const url = baseUrl + '?' + filterParams.toString();
+
+            // Update nội dung cell
+            if (newCount > 0) {
+                cell.innerHTML = `<a href="${url}" class="task-count-link">${newCount}</a>`;
+            } else {
+                cell.textContent = newCount;
+            }
+
+            // Kết thúc animation
+            cell.classList.remove('cell-updating');
+            cell.classList.add('cell-updated');
+
+            // Sau 1s thì cleanup
+            setTimeout(() => {
+                cell.classList.remove('cell-updated');
+                delete animationTimeouts[cellKey]; // Giải phóng memory
+            }, 1000);
+
+        }, 300);
+    }
+}
+
+// ========================================
+// FUNCTION 3: TẠO ROW MỚI CHO USER MỚI
+// ========================================
+function createTableRow(user) {
+    const row = document.createElement('tr');
+    row.setAttribute('data-user-id', user.user_id);
+
+    const avatarUrl = user.avatar
+        ? `/profile/avatar/${user.avatar}`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128`;
+
+    const filterParams = new URLSearchParams();
+    if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
+    if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
+
+    const baseUrl = '/tasks/priority-detail';
+
+    // Build URLs cho từng loại
+    const urgentParams = new URLSearchParams(filterParams);
+    urgentParams.append('assigned_user', user.user_id);
+    urgentParams.append('tag', 'urgent');
+    const urgentUrl = baseUrl + '?' + urgentParams.toString();
+
+    const importantParams = new URLSearchParams(filterParams);
+    importantParams.append('assigned_user', user.user_id);
+    importantParams.append('tag', 'important');
+    const importantUrl = baseUrl + '?' + importantParams.toString();
+
+    const recurringParams = new URLSearchParams(filterParams);
+    recurringParams.append('assigned_user', user.user_id);
+    recurringParams.append('tag', 'recurring');
+    const recurringUrl = baseUrl + '?' + recurringParams.toString();
+
+    const doneParams = new URLSearchParams(filterParams);
+    doneParams.append('assigned_user', user.user_id);
+    doneParams.append('status', 'DONE');
+    const doneUrl = baseUrl + '?' + doneParams.toString();
+
+    row.innerHTML = `
+        <td>
+            <img src="${avatarUrl}"
+                 alt="${user.full_name}"
+                 class="user-avatar-cell"
+                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128'">
+        </td>
+        <td class="user-name-cell">${user.full_name}</td>
+        <td class="count-cell urgent" data-type="urgent">
+            ${user.urgent_count > 0
+                ? `<a href="${urgentUrl}" class="task-count-link">${user.urgent_count}</a>`
+                : user.urgent_count}
+        </td>
+        <td class="count-cell important" data-type="important">
+            ${user.important_count > 0
+                ? `<a href="${importantUrl}" class="task-count-link">${user.important_count}</a>`
+                : user.important_count}
+        </td>
+        <td class="count-cell recurring" data-type="recurring">
+            ${user.recurring_count > 0
+                ? `<a href="${recurringUrl}" class="task-count-link">${user.recurring_count}</a>`
+                : user.recurring_count}
+        </td>
+        <td class="count-cell done" data-type="done">
+            ${user.done_count > 0
+                ? `<a href="${doneUrl}" class="task-count-link">${user.done_count}</a>`
+                : user.done_count}
+        </td>
+    `;
+
+    return row;
 }
 
 function renderTopBottomUsers(data) {
