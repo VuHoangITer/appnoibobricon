@@ -30,7 +30,7 @@
                         <small class="text-muted">Chọn cả ngày và giờ hạn hoàn thành</small>
                     </div>
 
-                    <!-- THÊM MỚI: 3 thẻ tags -->
+                    <!-- Tags -->
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
@@ -69,7 +69,8 @@
                         </div>
                     </div>
                     {% endif %}
-                    <!--  Enable Recurring -->
+
+                    <!-- Recurrence -->
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
@@ -100,15 +101,13 @@
                             </div>
                         </div>
                     </div>
-
-                    <script>
-                    document.getElementById('recurrence_enabled').addEventListener('change', function() {
-                        document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
-                    });
-                    </script>
                     {% endif %}
+
+                    <!-- ASSIGNMENT OPTIONS -->
                     <div class="mb-3">
                         <label class="form-label">Gán cho</label>
+
+                        <!-- Option 1: Self -->
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_self" value="self" checked>
                             <label class="form-check-label" for="assign_self">
@@ -117,10 +116,11 @@
                         </div>
 
                         {% if current_user.can_assign_tasks() %}
+                        <!-- Option 2: Single User -->
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_user" value="user">
                             <label class="form-check-label" for="assign_user">
-                                Gán cho người cụ thể
+                                Gán cho 1 người cụ thể
                             </label>
                         </div>
                         <select class="form-select mt-2" id="assign_to_user" name="assign_to_user" disabled>
@@ -130,10 +130,34 @@
                             {% endfor %}
                         </select>
 
-                        <div class="form-check mt-2">
+                        <!-- ========== MỚI: Option 3: Multiple Users ========== -->
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="radio" name="assign_type" id="assign_multiple" value="multiple">
+                            <label class="form-check-label" for="assign_multiple">
+                                <strong>Gán cho nhiều người tùy chọn</strong>
+                            </label>
+                        </div>
+                        <div id="assign_multiple_container" class="mt-2 border rounded p-3 bg-light" style="display: none; max-height: 300px; overflow-y: auto;">
+                            {% for user in users %}
+                            <div class="form-check">
+                                <input class="form-check-input user-checkbox" type="checkbox"
+                                       name="assign_to_multiple[]"
+                                       value="{{ user.id }}"
+                                       id="user_{{ user.id }}"
+                                       disabled>
+                                <label class="form-check-label" for="user_{{ user.id }}">
+                                    <strong>{{ user.full_name }}</strong>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- ========== END MỚI ========== -->
+
+                        <!-- Option 4: Group -->
+                        <div class="form-check mt-3">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_group" value="group">
                             <label class="form-check-label" for="assign_group">
-                                Gán cho nhóm
+                                Gán cho cả nhóm
                             </label>
                         </div>
                         <select class="form-select mt-2" id="assign_to_group" name="assign_to_group" disabled>
@@ -160,11 +184,29 @@
 
 {% block scripts %}
 <script>
-    // Enable/disable select based on radio button
+    // Recurrence toggle
+    document.getElementById('recurrence_enabled').addEventListener('change', function() {
+        document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Assignment type toggle
     document.querySelectorAll('input[name="assign_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            document.getElementById('assign_to_user').disabled = this.value !== 'user';
-            document.getElementById('assign_to_group').disabled = this.value !== 'group';
+            // Disable tất cả
+            document.getElementById('assign_to_user').disabled = true;
+            document.getElementById('assign_to_group').disabled = true;
+            document.getElementById('assign_multiple_container').style.display = 'none';
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = true);
+
+            // Enable theo lựa chọn
+            if (this.value === 'user') {
+                document.getElementById('assign_to_user').disabled = false;
+            } else if (this.value === 'group') {
+                document.getElementById('assign_to_group').disabled = false;
+            } else if (this.value === 'multiple') {
+                document.getElementById('assign_multiple_container').style.display = 'block';
+                document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = false);
+            }
         });
     });
 </script>

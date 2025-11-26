@@ -11,21 +11,29 @@ class SSEManager {
         this.pollingFallbacks = new Map();
 
         // Configuration
-        this.maxReconnectAttempts = 5;
-        this.baseReconnectDelay = 2000;  // 2 seconds
-        this.maxReconnectDelay = 30000;  // 30 seconds max
+        this.maxReconnectAttempts = 3;
+        this.baseReconnectDelay = 3000;     // ✅ 3 giây
+        this.maxReconnectDelay = 60000;     // ✅ 60 giây
+        this.maxConnections = 3;            //  Giới hạn 3 SSE/user
 
         this.sseSupported = typeof EventSource !== 'undefined';
 
         console.log('🚀 SSE Manager v2 initialized', { sseSupported: this.sseSupported });
     }
 
-    /**
-     * Connect to SSE endpoint with auto-reconnect
-     */
+    /* Connect to SSE endpoint with auto-reconnect*/
     connect(name, url, callbacks, fallbackConfig = null) {
+        // check connection limit
+        if (this.connections.size >= this.maxConnections && !this.connections.has(name)) {
+            console.warn(` Max ${this.maxConnections} SSE connections, using polling for ${name}`);
+            if (fallbackConfig) {
+                this.startPollingFallback(name, fallbackConfig);
+            }
+            return;
+        }
+
         if (!this.sseSupported) {
-            console.warn(`⚠️ SSE not supported, using polling for ${name}`);
+            console.warn(` SSE not supported, using polling for ${name}`);
             this.startPollingFallback(name, fallbackConfig);
             return;
         }

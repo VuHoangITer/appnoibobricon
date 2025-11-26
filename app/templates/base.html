@@ -39,23 +39,6 @@
             scroll-behavior: smooth;
         }
 
-        /* ==========================================
-           MODAL MODE: ẨN TOP NAVBAR
-           ========================================== */
-        {% if request.args.get('modal') %}
-        .top-navbar {
-            display: none !important;
-        }
-
-        .main-wrapper {
-            margin-left: 0 !important;
-        }
-
-        .main-content {
-            padding: 20px !important;
-        }
-        {% endif %}
-
         .main-wrapper {
             margin-left: 0 !important;
             transition: none !important;
@@ -201,6 +184,24 @@
             color: #dc3545;
         }
 
+        /* MODULE MENU BUTTON */
+        .module-menu-btn {
+            position: relative;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .module-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .navbar-logo {
@@ -210,55 +211,21 @@
             .user-dropdown {
                 right: -10px;
             }
+
+            .module-menu-btn {
+                font-size: 1.3rem;
+            }
         }
 
         @media (max-width: 480px) {
             .navbar-logo {
                 height: 32px;
             }
-        }
-    /* MODULE MENU BUTTON */
-    .module-menu-btn {
-        position: relative;
-        background: transparent;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: #ffffff;
-        padding: 8px;
-        border-radius: 8px;
-        transition: all 0.3s;
-        display: none;
-    }
 
-    .module-menu-btn:hover {
-        background: var(--light-bg);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .navbar-logo {
-            height: 38px;
+            .module-menu-btn {
+                font-size: 1.2rem;
+            }
         }
-
-        .user-dropdown {
-            right: -10px;
-        }
-
-        .module-menu-btn {
-            font-size: 1.3rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .navbar-logo {
-            height: 32px;
-        }
-
-        .module-menu-btn {
-            font-size: 1.2rem;
-        }
-    }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -266,10 +233,7 @@
     {% if current_user.is_authenticated %}
 
     <div class="main-wrapper" id="mainWrapper">
-        <!-- ========================================
-             CHỈ HIỂN THỊ TOP NAVBAR NẾU KHÔNG PHẢI MODAL
-             ======================================== -->
-        {% if not request.args.get('modal') and request.endpoint == 'hub.workflow_hub' %}
+        <!-- TOP NAVBAR -->
         <nav class="top-navbar">
             <div class="navbar-left">
                 <a href="{{ url_for('hub.workflow_hub') }}" class="navbar-logo-link" title="Về Trang Chủ">
@@ -288,15 +252,15 @@
                 </button>
 
                 <div style="position: relative;">
-                <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()">
-                    {% if current_user.avatar %}
-                        <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
-                             alt="Avatar"
-                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                    {% else %}
-                        {{ current_user.full_name[0].upper() }}
-                    {% endif %}
-                </button>
+                    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()">
+                        {% if current_user.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
+                                 alt="Avatar"
+                                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        {% else %}
+                            {{ current_user.full_name[0].upper() }}
+                        {% endif %}
+                    </button>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="user-dropdown-header">
                             <div class="user-dropdown-avatar">
@@ -325,7 +289,6 @@
                 </div>
             </div>
         </nav>
-        {% endif %}
         <!-- END TOP NAVBAR -->
 
         <main class="main-content">
@@ -360,22 +323,72 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/static/sw.js')
                     .then(function(registration) {
-                        console.log('ServiceWorker registered successfully');
+                        console.log('✅ ServiceWorker registered successfully');
                     })
                     .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
+                        console.log('❌ ServiceWorker registration failed:', err);
                     });
             });
         }
     </script>
+
+    <!-- SSE Manager - Load cho tất cả authenticated users -->
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/sse-manager.js') }}"></script>
+    <script>
+    // ==========================================
+    // SSE CLEANUP ON NAVIGATION
+    // ==========================================
+    (function() {
+        let isNavigating = false;
+
+        // Disconnect khi click link
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (link && !link.href.startsWith('#') && !link.target) {
+                isNavigating = true;
+                if (window.sseManager) {
+                    console.log('🚪 Link clicked - disconnecting SSE');
+                    window.sseManager.disconnectAll();
+                }
+            }
+        });
+
+        // Disconnect khi submit form
+        document.addEventListener('submit', function(e) {
+            isNavigating = true;
+            if (window.sseManager) {
+                console.log('🚪 Form submit - disconnecting SSE');
+                window.sseManager.disconnectAll();
+            }
+        });
+
+        // Disconnect khi unload
+        window.addEventListener('beforeunload', function() {
+            if (window.sseManager && !isNavigating) {
+                console.log('🚪 Page unload - disconnecting SSE');
+                window.sseManager.disconnectAll();
+            }
+        });
+
+        // Disconnect khi pagehide (mobile Safari)
+        window.addEventListener('pagehide', function() {
+            if (window.sseManager) {
+                console.log('🚪 Page hide - disconnecting SSE');
+                window.sseManager.disconnectAll();
+            }
+        });
+    })();
+    </script>
     {% endif %}
+
+    <!-- Notification Sound & Manager -->
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notification-sound.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notification-manager.js') }}"></script>
@@ -387,6 +400,8 @@
         // ==========================================
         function toggleUserDropdown() {
             const btn = document.getElementById('userAvatarBtn');
+            if (!btn) return;
+
             btn.classList.toggle('active');
 
             if (btn.classList.contains('active')) {
@@ -402,48 +417,33 @@
             const btn = document.getElementById('userAvatarBtn');
             const dropdown = document.getElementById('userDropdown');
 
+            if (!btn || !dropdown) return;
+
             if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
                 btn.classList.remove('active');
                 document.removeEventListener('click', closeUserDropdownOutside);
             }
         }
 
-        // ==========================================
         // NOTIFICATION COUNT UPDATE
-        // ==========================================
         {% if current_user.is_authenticated %}
         function updateNotifCount() {
             fetch('{{ url_for("notifications.unread_count") }}')
                 .then(res => res.json())
                 .then(data => {
                     const badge = document.getElementById('notif-count');
+                    if (!badge) return;
 
                     if (data.count > 0) {
-                        if (badge) {
-                            badge.textContent = data.count > 99 ? '99+' : data.count;
-                            badge.style.display = 'inline-block';
-                        }
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'inline-block';
                     } else {
-                        if (badge) badge.style.display = 'none';
+                        badge.style.display = 'none';
                     }
                 })
-                .catch(err => console.error('Error fetching notifications:', err));
+                .catch(err => console.error(' Error fetching notifications:', err));
         }
-
-        updateNotifCount();
-        setInterval(updateNotifCount, 30000);
         {% endif %}
-
-<!--        // ==========================================-->
-<!--        // ALERT AUTO DISMISS-->
-<!--        // ==========================================-->
-<!--        setTimeout(function() {-->
-<!--            const alerts = document.querySelectorAll('.alert');-->
-<!--            alerts.forEach(alert => {-->
-<!--                const bsAlert = new bootstrap.Alert(alert);-->
-<!--                bsAlert.close();-->
-<!--            });-->
-<!--        }, 12000);-->
 
         // ==========================================
         // SCROLL POSITION PERSISTENCE
@@ -454,6 +454,7 @@
 
             const mainContent = document.querySelector('.main-content');
             if (mainContent) {
+                // Restore scroll position
                 const savedContentScroll = sessionStorage.getItem(CONTENT_SCROLL_KEY);
                 if (savedContentScroll) {
                     setTimeout(function() {
@@ -461,6 +462,7 @@
                     }, 50);
                 }
 
+                // Save scroll position
                 let contentScrollTimeout;
                 window.addEventListener('scroll', function() {
                     clearTimeout(contentScrollTimeout);
@@ -470,6 +472,7 @@
                 });
             }
 
+            // Save scroll position before navigation
             document.addEventListener('click', function(e) {
                 const link = e.target.closest('a[href]');
                 if (link && !link.getAttribute('href').startsWith('#')) {
@@ -478,37 +481,38 @@
             });
         })();
         {% endif %}
-// ==========================================
-// FLASH MESSAGES AUTO DISMISS
-// ==========================================
-function closeFlash(btn) {
-    const flashMsg = btn.closest('.flash-message');
-    flashMsg.style.animation = 'fadeOut 0.3s ease forwards';
-    setTimeout(() => {
-        flashMsg.remove();
 
-        // Xóa container nếu không còn flash nào
-        const container = document.getElementById('flashContainer');
-        if (container && container.children.length === 0) {
-            container.remove();
+        // ==========================================
+        // FLASH MESSAGES AUTO DISMISS
+        // ==========================================
+        function closeFlash(btn) {
+            const flashMsg = btn.closest('.flash-message');
+            flashMsg.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => {
+                flashMsg.remove();
+
+                // Xóa container nếu không còn flash nào
+                const container = document.getElementById('flashContainer');
+                if (container && container.children.length === 0) {
+                    container.remove();
+                }
+            }, 300);
         }
-    }, 300);
-}
 
-// Auto dismiss all flash messages after duration
-document.addEventListener('DOMContentLoaded', function() {
-    const flashMessages = document.querySelectorAll('.flash-message');
+        // Auto dismiss all flash messages after duration
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
 
-    flashMessages.forEach(function(flash) {
-        const duration = parseInt(flash.dataset.duration) || 5000;
+            flashMessages.forEach(function(flash) {
+                const duration = parseInt(flash.dataset.duration) || 5000;
 
-        setTimeout(function() {
-            if (flash.parentElement) {
-                closeFlash(flash.querySelector('.flash-close'));
-            }
-        }, duration);
-    });
-});
+                setTimeout(function() {
+                    if (flash.parentElement) {
+                        closeFlash(flash.querySelector('.flash-close'));
+                    }
+                }, duration);
+            });
+        });
     </script>
 
     {% block scripts %}{% endblock %}

@@ -29,7 +29,7 @@ body {
         left: 0;
         width: 100%;
         height: 100vh;
-        height: 100dvh; /* Dynamic viewport height - tự động điều chỉnh khi thanh địa chỉ ẩn/hiện */
+        height: 100dvh;
         background-image: url('{{ url_for('static', filename='images/hinh-nen.webp') }}');
         background-size: cover;
         background-position: center;
@@ -77,6 +77,8 @@ nav.top-navbar {
     cursor: pointer;
     transition: all 0.25s ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
+    color: inherit;
 }
 
 .hub-icon-card:hover {
@@ -135,11 +137,12 @@ nav.top-navbar {
     box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
     border: 2px solid white;
 }
+
 /* ============================================
    MODULE PAGE - SIDEBAR + CONTENT
    ============================================ */
 .module-container {
-    display: none; /* Hidden by default */
+    display: none;
     max-width: 1800px;
     margin: 0 auto;
     padding: 20px;
@@ -165,7 +168,6 @@ nav.top-navbar {
     overflow-y: auto;
 }
 
-/* Sidebar Overlay - Mobile */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -182,7 +184,6 @@ nav.top-navbar {
     display: block;
 }
 
-/* Mobile Sidebar Drawer */
 @media (max-width: 992px) {
     .module-sidebar {
         position: fixed;
@@ -293,7 +294,7 @@ nav.top-navbar {
 }
 
 /* ============================================
-   STATS & NOTIFICATIONS (REUSE FROM OLD)
+   STATS & NOTIFICATIONS
    ============================================ */
 .stats-grid {
     display: grid;
@@ -343,7 +344,6 @@ nav.top-navbar {
     margin: 0;
 }
 
-/* Stat Card Colors */
 .stat-pending { border-left-color: #ffc107; }
 .stat-pending .stat-icon { color: #ffc107; }
 .stat-progress { border-left-color: #0dcaf0; }
@@ -361,7 +361,6 @@ nav.top-navbar {
 .stat-primary { border-left-color: #0d6efd; }
 .stat-primary .stat-icon { color: #0d6efd; }
 
-/* Notification Box */
 .notification-box {
     display: flex;
     align-items: flex-start;
@@ -424,7 +423,6 @@ nav.top-navbar {
     backdrop-filter: blur(5px);
 }
 
-/* Notification Types */
 .notification-danger {
     background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
     border-left-color: #dc3545;
@@ -550,9 +548,6 @@ nav.top-navbar {
     }
 }
 
-/* ============================================
-   ANIMATIONS
-   ============================================ */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -567,29 +562,549 @@ nav.top-navbar {
 .module-container.active {
     animation: fadeIn 0.4s ease;
 }
+
 a:not(.btn):not(.nav-link):not(.sidebar-brand){
     text-decoration: none;
     color: #000000;
 }
+
 .notification-btn {
     color: #ffffff;
 }
-#iframeDirectLink {
-    width: 32px;
-    height: 32px;
-    padding: 0;
+
+/* ============================================
+   PERFORMANCE TABLE
+   ============================================ */
+.performance-section {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 30px;
+}
+
+.filter-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.top-bottom-users {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.top-user, .bottom-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s;
+}
+
+.top-user {
+    border: 2px solid #ffd700;
+    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+}
+
+.bottom-user {
+    border: 2px solid #dc3545;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+}
+
+.user-badge-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.user-badge-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.user-badge-count {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.top-user .user-badge-count {
+    color: #ffa500;
+}
+
+.bottom-user .user-badge-count {
+    color: #dc3545;
+}
+
+.performance-table-container {
+    overflow-x: auto;
+}
+
+.performance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.1rem;
+}
+
+.performance-table thead th {
+    background: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.performance-table tbody td {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    font-size: 1.6rem;
+}
+
+.performance-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.user-avatar-cell {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e0e0e0;
+}
+
+.user-name-cell {
+    font-weight: 600;
+    color: #2c3e50;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.count-cell {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.count-cell.urgent { color: #dc3545; }
+.count-cell.important { color: #ffa500; }
+.count-cell.recurring { color: #0dcaf0; }
+.count-cell.done { color: #198754; }
+
+@media (max-width: 768px) {
+    .performance-section {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .filter-bar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-bottom: 12px;
+        margin-bottom: 15px;
+    }
+
+    .filter-date-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .filter-date-btn i {
+        font-size: 1rem;
+    }
+
+    .filter-indicator {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+
+    .top-bottom-users {
+        gap: 6px;
+        flex: 0;
+        justify-content: flex-end;
+    }
+
+    .top-user, .bottom-user {
+        padding: 4px 6px;
+        gap: 4px;
+        border-radius: 8px;
+        flex-shrink: 0;
+        min-width: auto;
+    }
+
+    .top-user i, .bottom-user i {
+        font-size: 0.9rem;
+    }
+
+    .user-badge-avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .user-badge-name,
+    .user-badge-count {
+        display: none;
+    }
+
+    .performance-table-container {
+        overflow-x: visible;
+    }
+
+    .performance-table {
+        font-size: 1rem;
+    }
+
+    .performance-table thead th {
+        padding: 8px 4px;
+        font-size: 1rem;
+    }
+
+    .performance-table thead th:nth-child(2) {
+        display: none;
+    }
+
+    .performance-table tbody td {
+        padding: 8px 4px;
+        font-size: 1.5rem;
+    }
+
+    .performance-table tbody td:nth-child(2) {
+        display: none;
+    }
+
+    .user-avatar-cell {
+        width: 35px;
+        height: 35px;
+    }
+
+    .user-name-cell {
+        font-size: 1rem;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .count-cell {
+        font-size: 0.95rem;
+    }
+
+    .performance-table thead th {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .performance-section {
+        padding: 10px;
+    }
+
+    .filter-bar {
+        gap: 10px;
+    }
+
+    .performance-table {
+        font-size: 0.7rem;
+    }
+
+    .performance-table thead th {
+        padding: 6px 2px;
+        font-size: 1.1rem;
+    }
+
+    .performance-table tbody td {
+        padding: 6px 2px;
+    }
+
+    .user-avatar-cell {
+        width: 30px;
+        height: 30px;
+    }
+
+    .user-name-cell {
+        font-size: 0.75rem;
+        max-width: 70px;
+    }
+
+    .count-cell {
+        font-size: 0.8rem;
+    }
+
+    .top-user i, .bottom-user i {
+        font-size: 1.1rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+    .performance-table {
+        font-size: 0.85rem;
+    }
+
+    .performance-table thead th,
+    .performance-table tbody td {
+        padding: 12px 8px;
+    }
+
+    .user-avatar-cell {
+        width: 45px;
+        height: 45px;
+    }
+
+    .count-cell {
+        font-size: 1rem;
+    }
+}
+
+.filter-date-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: darkblue;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.filter-date-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.filter-date-btn:active {
+    transform: translateY(0);
+}
+
+.filter-date-btn i {
+    font-size: 1.2rem;
+}
+
+.filter-indicator {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.filter-indicator i {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .filter-bar {
+        gap: 8px;
+        padding-bottom: 12px;
+        margin-bottom: 15px;
+    }
+
+    .filter-date-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .filter-date-btn i {
+        font-size: 1rem;
+    }
+
+    .filter-date-btn span:first-of-type {
+        display: none;
+    }
+
+    .filter-indicator {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+
+    .top-bottom-users {
+        gap: 8px;
+        flex: 1;
+        justify-content: flex-end;
+    }
+
+    .top-user, .bottom-user {
+        padding: 6px 10px;
+        gap: 6px;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+
+    .top-user i, .bottom-user i {
+        font-size: 1rem;
+    }
+
+    .user-badge-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .user-badge-name {
+        font-size: 0.75rem;
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .user-badge-count {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .filter-date-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filter-date-btn span:first-of-type {
+        display: inline;
+    }
+
+    .top-bottom-users {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .top-user, .bottom-user {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+#filterDateModal .form-control-lg {
+    padding: 12px;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+#filterDateModal .form-control-lg:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#filterDateModal .modal-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+
+#filterDateModal .modal-title {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+#filterDateModal .modal-footer {
+    border-top: 2px solid #dee2e6;
+}
+
+.task-count-link {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.task-count-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    text-decoration: underline;
+}
+
+.count-cell.urgent .task-count-link {
+    color: #dc3545 !important;
+}
+
+.count-cell.urgent .task-count-link:hover {
+    background: rgba(220, 53, 69, 0.2);
+}
+
+.count-cell.important .task-count-link {
+    color: #ffa500 !important;
+}
+
+.count-cell.important .task-count-link:hover {
+    background: rgba(255, 193, 7, 0.2);
+}
+
+.count-cell.recurring .task-count-link {
+    color: #0dcaf0 !important;
+}
+
+.count-cell.recurring .task-count-link:hover {
+    background: rgba(13, 202, 240, 0.2);
+}
+
+.count-cell.done .task-count-link {
+    color: #198754 !important;
+}
+
+.count-cell.done .task-count-link:hover {
+    background: rgba(25, 135, 84, 0.2);
+}
+
+.count-cell.urgent .task-count-link:visited {
+    color: #dc3545 !important;
+}
+
+.count-cell.important .task-count-link:visited {
+    color: #ffa500 !important;
+}
+
+.count-cell.recurring .task-count-link:visited {
+    color: #0dcaf0 !important;
+}
+
+.count-cell.done .task-count-link:visited {
+    color: #198754 !important;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="hub-main-container">
-    <!-- ============================================
-         MAIN HUB - 4 ICONS
-         ============================================ -->
+    <!-- MAIN HUB - 4 ICONS -->
     <div id="main-hub" class="hub-icon-grid">
         <!-- Icon 1: Công Việc -->
         <div class="hub-icon-card" onclick="showModule('tasks')">
@@ -597,12 +1112,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
                 <i class="bi bi-briefcase-fill"></i>
             </div>
             <span class="hub-icon-label">Công Việc</span>
-            <span class="hub-icon-badge" id="work-badge" {% if not (my_work_badge > 0 or tasks_badge > 0) %}style="display: none;"{% endif %}>
-                {{ my_work_badge + tasks_badge }}
-            </span>
         </div>
 
-        <!-- Icon 2: Lương (chỉ Director/Accountant) -->
+        <!-- Icon 2: Lương -->
         {% if current_user.role in ['director', 'accountant'] %}
         <div class="hub-icon-card" onclick="showModule('salary')">
             <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
@@ -637,11 +1149,8 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
         {% endif %}
     </div>
 
-    <!-- ============================================
-         MODULE 1: CÔNG VIỆC
-         ============================================ -->
+    <!-- MODULE 1: CÔNG VIỆC -->
     <div id="module-tasks" class="module-container">
-        <!-- Sidebar Overlay - Mobile Only -->
         <div class="sidebar-overlay" onclick="toggleSidebar('tasks')"></div>
 
         <div class="module-sidebar" id="sidebar-tasks">
@@ -656,34 +1165,24 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </div>
 
             <div class="sidebar-menu">
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.dashboard') }}', 'Thống Kê')">
-                    <i class="bi bi-speedometer2" style="color: #667eea;"></i>
-                    <span>Thống Kê</span>
-                </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.kanban') }}', 'Tóm Tắt CV')">
-                    <i class="bi bi-kanban" style="color: #f093fb;"></i>
-                    <span>Tóm Tắt CV</span>
-                </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('workflow.workflow_diagram') }}', 'Luồng Giao Việc')">
-                    <i class="bi bi-diagram-3-fill" style="color: #4facfe;"></i>
-                    <span>Luồng Giao Việc</span>
-                </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.create_task') }}', 'Tạo Công Việc')">
+                <a href="{{ url_for('tasks.create_task') }}" class="sidebar-menu-item">
                     <i class="bi bi-plus-circle-fill" style="color: #004989;"></i>
                     <span>Tạo Công Việc</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('tasks.list_tasks') }}', 'Danh Sách CV')">
-                    <i class="bi bi-list-task" style="color: #43e97b;"></i>
-                    <span>Danh Sách CV</span>
+                <a href="{{ url_for('tasks.dashboard') }}" class="sidebar-menu-item">
+                    <i class="bi bi-speedometer2" style="color: #667eea;"></i>
+                    <span>Thống Kê</span>
+                </a>
+                <a href="{{ url_for('tasks.kanban') }}" class="sidebar-menu-item">
+                    <i class="bi bi-kanban" style="color: #f093fb;"></i>
+                    <span>Tóm Tắt CV</span>
                 </a>
                 {% if current_user.role in ['director', 'manager'] %}
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('performance.performance_review') }}', 'Hiệu Suất NV')">
+                <a href="{{ url_for('performance.performance_review') }}" class="sidebar-menu-item">
                     <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
                     <span>Hiệu Suất NV</span>
                 </a>
-                <a href="#" class="sidebar-menu-item"
-                   data-badge-id="my_tasks_need_rating"
-                   onclick="openInModal('{{ url_for('performance.unrated_tasks') }}', 'CV Chưa Đánh Giá')">
+                <a href="{{ url_for('performance.unrated_tasks') }}" class="sidebar-menu-item" data-badge-id="my_tasks_need_rating">
                     <i class="bi bi-star-fill" style="color: #ffd700;"></i>
                     <span>CV Chưa Đánh Giá</span>
                     {% if my_tasks_need_rating > 0 %}
@@ -695,160 +1194,64 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
         </div>
 
         <div class="module-content">
-            <!-- STATS CÁ NHÂN -->
-            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
-                <i class="bi bi-person-circle"></i> Công Việc Cá Nhân
+            <h5 class="text-center" style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
+                TỔNG QUAN
             </h5>
-            <div class="stats-grid">
-                <div class="stat-card stat-pending" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myPendingModal">
-                    <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ my_pending_tasks }}</h3>
-                        <p>Chưa Làm</p>
+            <div class="performance-section">
+                <div class="filter-bar">
+                    <button class="filter-date-btn" onclick="openFilterModal()">
+                        <i class="bi bi-calendar-range"></i>
+                        <span class="filter-indicator" id="filterIndicator" style="display: none;">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </span>
+                    </button>
+
+                    <div class="top-bottom-users" id="topBottomUsers">
+                        <!-- Rendered by JS -->
                     </div>
                 </div>
 
-                <div class="stat-card stat-progress" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myInProgressModal">
-                    <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ my_in_progress }}</h3>
-                        <p>Đang Làm</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-warning" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myDueSoonModal">
-                    <div class="stat-icon"><i class="bi bi-alarm"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ my_due_soon }}</h3>
-                        <p>Sắp Đến Hạn</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-overdue" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#myOverdueModal">
-                    <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ my_overdue }}</h3>
-                        <p>Quá Hạn</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-done" style="cursor: pointer;" onclick="openInModal('{{ url_for('hub.my_completed_tasks') }}', 'Đã Hoàn Thành')">
-                    <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ my_completed_recent }}</h3>
-                        <p>Đã Hoàn Thành</p>
-                    </div>
+                <div class="performance-table-container">
+                    <table class="performance-table">
+                       <thead>
+                        <tr>
+                            <th style="width: 80px;">Avatar</th>
+                            <th>Tên NV</th>
+                            <th style="width: 100px; text-align: center;">
+                                <span class="d-none d-md-inline">🔴 Khẩn Cấp</span>
+                                <span class="d-md-none">🔴</span>
+                            </th>
+                            <th style="width: 100px; text-align: center;">
+                                <span class="d-none d-md-inline">⭐ Quan Trọng</span>
+                                <span class="d-md-none">⭐</span>
+                            </th>
+                            <th style="width: 100px; text-align: center;">
+                                <span class="d-none d-md-inline">🔁 Lặp Lại</span>
+                                <span class="d-md-none">🔁</span>
+                            </th>
+                            <th style="width: 100px; text-align: center;">
+                                <span class="d-none d-md-inline">✅ Hoàn Thành</span>
+                                <span class="d-md-none">✅</span>
+                            </th>
+                        </tr>
+                    </thead>
+                        <tbody id="performanceTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="text-muted mt-3">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <!-- THÔNG BÁO CÁ NHÂN -->
-            {% if personal_notification %}
-            <div class="notification-box notification-{{ personal_notification.type }}">
-                <div class="notification-icon">
-                    <i class="{{ personal_notification.icon }}"></i>
-                </div>
-                <div class="notification-content">
-                    <h4 class="notification-title">{{ personal_notification.title }}</h4>
-                    <p class="notification-message">{{ personal_notification.message|safe }}</p>
-                    <div class="notification-stats">
-                        {% if personal_notification.stats.completion_rate is defined %}
-                        <span class="stat-item">
-                            <i class="bi bi-check-circle"></i> Hoàn thành:
-                            <strong>{{ "%.0f"|format(personal_notification.stats.completion_rate) }}%</strong>
-                        </span>
-                        {% endif %}
-                        {% if personal_notification.stats.quality_rate is defined %}
-                        <span class="stat-item">
-                            <i class="bi bi-star"></i> Chất lượng:
-                            <strong>{{ "%.0f"|format(personal_notification.stats.quality_rate) }}%</strong>
-                        </span>
-                        {% endif %}
-                        {% if personal_notification.stats.overdue is defined and personal_notification.stats.overdue > 0 %}
-                        <span class="stat-item">
-                            <i class="bi bi-exclamation-triangle"></i> Quá hạn:
-                            <strong class="text-danger">{{ personal_notification.stats.overdue }}</strong>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            <!-- QUẢN LÝ (Director/Manager) -->
-            {% if current_user.role in ['director', 'manager'] %}
-            <hr style="margin: 40px 0; border-color: rgba(0,0,0,0.1);">
-
-            <h5 style="margin-bottom: 20px; color: #2c3e50; font-weight: 700;">
-                <i class="bi bi-building"></i> Quản Lý Công Việc
-            </h5>
-            <div class="stats-grid">
-                <div class="stat-card stat-info" style="cursor: pointer;" onclick="openInModal('{{ url_for('tasks.tasks_by_status', status='ALL') }}', 'Tổng Công Việc')">
-                    <div class="stat-icon"><i class="bi bi-list-check"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ total_tasks }}</h3>
-                        <p>Tổng Công Việc</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-warning" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#teamPendingModal">
-                    <div class="stat-icon"><i class="bi bi-hourglass-top"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ team_pending }}</h3>
-                        <p>Chưa Làm (Team)</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-danger" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#teamOverdueModal">
-                    <div class="stat-icon"><i class="bi bi-exclamation-octagon"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ team_overdue }}</h3>
-                        <p>Quá Hạn (Team)</p>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-primary" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#needRatingModal">
-                    <div class="stat-icon"><i class="bi bi-star"></i></div>
-                    <div class="stat-content">
-                        <h3>{{ tasks_need_rating }}</h3>
-                        <p>Cần Đánh Giá</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- THÔNG BÁO CÔNG TY -->
-            {% if current_user.role == 'director' and company_notification %}
-            <div class="notification-box notification-{{ company_notification.type }}">
-                <div class="notification-icon">
-                    <i class="{{ company_notification.icon }}"></i>
-                </div>
-                <div class="notification-content">
-                    <h4 class="notification-title">{{ company_notification.title }}</h4>
-                    <p class="notification-message">{{ company_notification.message|safe }}</p>
-                    <div class="notification-stats">
-                        {% if company_notification.stats.completion_rate is defined %}
-                        <span class="stat-item">
-                            <i class="bi bi-check-circle"></i> Hoàn thành:
-                            <strong>{{ "%.0f"|format(company_notification.stats.completion_rate) }}%</strong>
-                        </span>
-                        {% endif %}
-                        {% if company_notification.stats.on_time_rate is defined %}
-                        <span class="stat-item">
-                            <i class="bi bi-alarm"></i> Đúng hạn:
-                            <strong>{{ "%.0f"|format(company_notification.stats.on_time_rate) }}%</strong>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% endif %}
         </div>
     </div>
 
-    <!-- ============================================
-         MODULE 2: LƯƠNG
-         ============================================ -->
+    <!-- MODULE 2: LƯƠNG -->
     {% if current_user.role in ['director', 'accountant'] %}
     <div id="module-salary" class="module-container">
-        <!-- Sidebar Overlay - Mobile Only -->
         <div class="sidebar-overlay" onclick="toggleSidebar('salary')"></div>
 
         <div class="module-sidebar" id="sidebar-salary">
@@ -863,36 +1266,32 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </div>
 
             <div class="sidebar-menu">
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('salaries.list_salaries') }}', 'Quản Lý Lương')">
+                <a href="{{ url_for('salaries.list_salaries') }}" class="sidebar-menu-item">
                     <i class="bi bi-wallet2" style="color: #a8edea;"></i>
                     <span>Quản Lý Lương</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('employees.list_employees') }}', 'Nhân Viên')">
+                <a href="{{ url_for('employees.list_employees') }}" class="sidebar-menu-item">
                     <i class="bi bi-people-fill" style="color: #ffecd2;"></i>
                     <span>Nhân Viên</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('work_days.list_configs') }}', 'Số Công/Tháng')">
+                <a href="{{ url_for('work_days.list_configs') }}" class="sidebar-menu-item">
                     <i class="bi bi-calendar-week" style="color: #ff9a9e;"></i>
                     <span>Số Công/Tháng</span>
                 </a>
                 {% if current_user.role == 'director' %}
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('salary_grades.list_grades') }}', 'Cấp Bậc Lương')">
+                <a href="{{ url_for('salary_grades.list_grades') }}" class="sidebar-menu-item">
                     <i class="bi bi-award-fill" style="color: #ffd89b;"></i>
                     <span>Cấp Bậc Lương</span>
                 </a>
                 {% endif %}
-                <a href="#" class="sidebar-menu-item"
-                   data-badge-id="penalties"
-                   onclick="openInModal('{{ url_for('penalties.list_penalties') }}', 'Biên Bản Phạt')">
+                <a href="{{ url_for('penalties.list_penalties') }}" class="sidebar-menu-item" data-badge-id="penalties">
                     <i class="bi bi-exclamation-triangle-fill" style="color: #f43b47;"></i>
                     <span>Biên Bản Phạt</span>
                     {% if pending_penalties > 0 %}
                     <span class="badge bg-danger">{{ pending_penalties }}</span>
                     {% endif %}
                 </a>
-                <a href="#" class="sidebar-menu-item"
-                   data-badge-id="advances"
-                   onclick="openInModal('{{ url_for('advances.list_advances') }}', 'Tạm Ứng')">
+                <a href="{{ url_for('advances.list_advances') }}" class="sidebar-menu-item" data-badge-id="advances">
                     <i class="bi bi-cash-stack" style="color: #ffc3a0;"></i>
                     <span>Tạm Ứng</span>
                     {% if pending_advances > 0 %}
@@ -944,11 +1343,8 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
     </div>
     {% endif %}
 
-    <!-- ============================================
-         MODULE 3: THÔNG TIN
-         ============================================ -->
+    <!-- MODULE 3: THÔNG TIN -->
     <div id="module-info" class="module-container">
-        <!-- Sidebar Overlay - Mobile Only -->
         <div class="sidebar-overlay" onclick="toggleSidebar('info')"></div>
 
         <div class="module-sidebar" id="sidebar-info">
@@ -963,26 +1359,22 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </div>
 
             <div class="sidebar-menu">
-                <a href="#" class="sidebar-menu-item"
-                   data-badge-id="unconfirmed_news"
-                   onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo Nội Bộ')">
+                <a href="{{ url_for('news.list_news') }}" class="sidebar-menu-item" data-badge-id="unconfirmed_news">
                     <i class="bi bi-newspaper" style="color: #09203f;"></i>
                     <span>Thông Báo NB</span>
                     {% if unconfirmed_news > 0 %}
                     <span class="badge bg-danger">{{ unconfirmed_news }}</span>
                     {% endif %}
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('files.list_files') }}', 'Thư Viện File')">
+                <a href="{{ url_for('files.list_files') }}" class="sidebar-menu-item">
                     <i class="bi bi-folder2-open" style="color: #ebbba7;"></i>
                     <span>Thư Viện File</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('notes.list_notes') }}', 'Ghi Chú')">
+                <a href="{{ url_for('notes.list_notes') }}" class="sidebar-menu-item">
                     <i class="bi bi-journal-text" style="color: #c471f5;"></i>
                     <span>Ghi Chú</span>
                 </a>
-                <a href="#" class="sidebar-menu-item"
-                   data-badge-id="unread_notifications"
-                   onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
+                <a href="{{ url_for('notifications.list_notifications') }}" class="sidebar-menu-item" data-badge-id="unread_notifications">
                     <i class="bi bi-bell" style="color: #f83600;"></i>
                     <span>Nhắc Nhở</span>
                     {% if unread_notifications > 0 %}
@@ -998,31 +1390,28 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </h5>
 
             <div class="stats-grid">
-                <div class="stat-card stat-info" style="cursor: pointer;" onclick="openInModal('{{ url_for('news.list_news') }}', 'Thông Báo NB')">
+                <a href="{{ url_for('news.list_news') }}" class="stat-card stat-info" style="cursor: pointer;">
                     <div class="stat-icon"><i class="bi bi-newspaper"></i></div>
                     <div class="stat-content">
                         <h3>{{ unconfirmed_news }}</h3>
                         <p>TB Chưa Xác Nhận</p>
                     </div>
-                </div>
+                </a>
 
-                <div class="stat-card stat-warning" style="cursor: pointer;" onclick="openInModal('{{ url_for('notifications.list_notifications') }}', 'Nhắc Nhở')">
+                <a href="{{ url_for('notifications.list_notifications') }}" class="stat-card stat-warning" style="cursor: pointer;">
                     <div class="stat-icon"><i class="bi bi-bell"></i></div>
                     <div class="stat-content">
                         <h3>{{ unread_notifications }}</h3>
                         <p>Nhắc Nhở Chưa Đọc</p>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- ============================================
-         MODULE 4: TÀI KHOẢN
-         ============================================ -->
+    <!-- MODULE 4: TÀI KHOẢN -->
     {% if current_user.role == 'director' %}
     <div id="module-account" class="module-container">
-        <!-- Sidebar Overlay - Mobile Only -->
         <div class="sidebar-overlay" onclick="toggleSidebar('account')"></div>
 
         <div class="module-sidebar" id="sidebar-account">
@@ -1037,11 +1426,11 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </div>
 
             <div class="sidebar-menu">
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('auth.users') }}', 'Quản Lý Tài Khoản')">
+                <a href="{{ url_for('auth.users') }}" class="sidebar-menu-item">
                     <i class="bi bi-people" style="color: #89f7fe;"></i>
                     <span>Quản Lý TK</span>
                 </a>
-                <a href="#" class="sidebar-menu-item" onclick="openInModal('{{ url_for('auth.register') }}', 'Tạo Tài Khoản')">
+                <a href="{{ url_for('auth.register') }}" class="sidebar-menu-item">
                     <i class="bi bi-person-plus-fill" style="color: #fddb92;"></i>
                     <span>Tạo Tài Khoản</span>
                 </a>
@@ -1054,233 +1443,62 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
             </h5>
 
             <div class="stats-grid">
-                <div class="stat-card stat-primary" style="cursor: pointer;" onclick="openInModal('{{ url_for('auth.users') }}', 'Quản Lý Tài Khoản')">
+                <a href="{{ url_for('auth.users') }}" class="stat-card stat-primary" style="cursor: pointer;">
                     <div class="stat-icon"><i class="bi bi-people"></i></div>
                     <div class="stat-content">
                         <h3>{{ total_users }}</h3>
                         <p>Tổng Tài Khoản</p>
                     </div>
-                </div>
+                </a>
 
-                <div class="stat-card stat-done" style="cursor: pointer;" onclick="openInModal('{{ url_for('auth.users') }}', 'Tài Khoản Hoạt Động')">
+                <a href="{{ url_for('auth.users') }}" class="stat-card stat-done" style="cursor: pointer;">
                     <div class="stat-icon"><i class="bi bi-person-check"></i></div>
                     <div class="stat-content">
                         <h3>{{ active_users }}</h3>
                         <p>Đang Hoạt Động</p>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
     {% endif %}
 </div>
 
-<!-- ============================================
-     MODALS
-     ============================================ -->
-
-<!-- Modal: Công Việc CHƯA LÀM -->
-<div class="modal fade" id="myPendingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+<!-- Modal Filter Ngày -->
+<div class="modal fade" id="filterDateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="bi bi-clock-history"></i> Công Việc Chưa Làm - <span>{{ my_pending_tasks }}</span>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-range text-primary"></i>
                 </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="myPendingTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-calendar-event text-success"></i> Từ Ngày:
+                    </label>
+                    <input type="date" class="form-control form-control-lg" id="modalDateFrom">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-calendar-check text-danger"></i> Đến Ngày:
+                    </label>
+                    <input type="date" class="form-control form-control-lg" id="modalDateTo">
                 </div>
             </div>
             <div class="modal-footer">
-                <a href="{{ url_for('hub.my_pending_tasks') }}" class="btn btn-warning">
-                    <i class="bi bi-list-task"></i> Xem tất cả
-                </a>
+                <button type="button" class="btn btn-secondary" onclick="resetFilter()">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+                <button type="button" class="btn btn-primary" onclick="applyFilter()">
+                    <i class="bi bi-funnel-fill"></i> Lọc
+                </button>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Modal: Công Việc ĐANG LÀM -->
-<div class="modal fade" id="myInProgressModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="bi bi-hourglass-split"></i> Công Việc Đang Làm - <span>{{ my_in_progress }}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="myInProgressTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-info" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="{{ url_for('hub.my_in_progress_tasks') }}" class="btn btn-info text-white">
-                    <i class="bi bi-list-task"></i> Xem tất cả
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Công Việc Sắp Đến Hạn -->
-<div class="modal fade" id="myDueSoonModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">
-                    <i class="bi bi-alarm"></i> Công Việc Sắp Đến Hạn (3 ngày tới) - <span>{{ my_due_soon }}</span>
-                </h5>
-                <button type="button" class="btn-close d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="myDueSoonTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Công Việc Quá Hạn Của Tôi -->
-<div class="modal fade" id="myOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle"></i> Công Việc Quá Hạn Của Tôi - <span>{{ my_overdue }}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="myOverdueTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-danger" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% if current_user.role in ['director', 'manager'] %}
-<!-- Modal: Công Việc CHƯA LÀM TEAM -->
-<div class="modal fade" id="teamPendingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="bi bi-hourglass-top"></i> Công Việc Chưa Làm (Team) - <span>{{ team_pending }}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="teamPendingTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="{{ url_for('tasks.tasks_by_status', status='PENDING') }}" class="btn btn-warning">
-                    <i class="bi bi-list-task"></i> Xem tất cả
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Quá Hạn Team -->
-<div class="modal fade" id="teamOverdueModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-octagon"></i> Công Việc Quá Hạn (Team) - <span>{{ team_overdue }}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="overdueTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-danger" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Cần Đánh Giá -->
-<div class="modal fade" id="needRatingModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-star"></i> Công Việc Cần Đánh Giá - <span>{{ tasks_need_rating }}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="unratedTasksList">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="text-muted mt-3">Đang tải...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="{{ url_for('performance.unrated_tasks') }}" class="btn btn-primary">
-                     Đến trang đánh giá
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Modal Universal Iframe -->
-<div class="modal fade" id="iframeModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="iframeModalTitle">
-                    <i class="bi bi-window"></i> <span id="iframeModalTitleText">Đang tải...</span>
-                </h5>
-                <div class="d-flex gap-2 align-items-center">
-                    <a href="#" id="iframeDirectLink" class="btn btn-light btn-sm rounded-circle" target="_blank" title="Mở trang mới">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                    </a>
-                    <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="modal"></button>
-                </div>
-            </div>
-            <div class="modal-body p-0" style="height: calc(100vh - 60px);">
-                <iframe
-                    id="contentIframe"
-                    style="width: 100%; height: 100%; border: none;"
-                    src=""
-                ></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -1289,32 +1507,42 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand){
 // MODULE NAVIGATION
 // ========================================
 function showModule(moduleName) {
-    // Hide main hub
     document.getElementById('main-hub').style.display = 'none';
 
-    // Hide all modules
     document.querySelectorAll('.module-container').forEach(m => {
         m.classList.remove('active');
     });
 
-    // Show selected module
     const module = document.getElementById('module-' + moduleName);
     if (module) {
         module.classList.add('active');
     }
+
+    updateModuleMenuButton();
+
+    setTimeout(() => {
+        enableBackdropClick();
+    }, 100);
+
+    if (moduleName === 'tasks') {
+        setTimeout(() => {
+            console.log('📊 Entering Tasks module - refreshing performance');
+            refreshPerformanceNow();
+        }, 500);
+    }
 }
 
 function backToHub() {
-    // Close sidebar if open on mobile
     closeSidebarOnMobile();
 
-    // Hide all modules
     document.querySelectorAll('.module-container').forEach(m => {
         m.classList.remove('active');
     });
 
-    // Show main hub
     document.getElementById('main-hub').style.display = 'grid';
+
+    updateModuleMenuButton();
+    disableBackdropClick();
 }
 
 // ========================================
@@ -1322,11 +1550,9 @@ function backToHub() {
 // ========================================
 function toggleSidebar(moduleName) {
     const sidebar = document.getElementById('sidebar-' + moduleName);
-    const overlay = sidebar.nextElementSibling.previousElementSibling; // Get overlay
 
     if (sidebar) {
         sidebar.classList.toggle('active');
-        // Find overlay in the same module
         const module = document.getElementById('module-' + moduleName);
         const overlay = module.querySelector('.sidebar-overlay');
         if (overlay) {
@@ -1336,487 +1562,13 @@ function toggleSidebar(moduleName) {
 }
 
 function closeSidebarOnMobile() {
-    // Close all sidebars
     document.querySelectorAll('.module-sidebar').forEach(s => {
         s.classList.remove('active');
     });
-    // Close all overlays
     document.querySelectorAll('.sidebar-overlay').forEach(o => {
         o.classList.remove('active');
     });
 }
-
-// Close sidebar when clicking on menu item (mobile only)
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.innerWidth <= 992) {
-        document.querySelectorAll('.sidebar-menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                closeSidebarOnMobile();
-            });
-        });
-    }
-});
-
-// ========================================
-// IFRAME MODAL HANDLER
-// ========================================
-function openInModal(url, title) {
-    const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
-    const iframe = document.getElementById('contentIframe');
-    const titleText = document.getElementById('iframeModalTitleText');
-    const directLink = document.getElementById('iframeDirectLink');
-
-    // Thêm tham số modal=1 vào URL cho iframe
-    const separator = url.includes('?') ? '&' : '?';
-    const modalUrl = url + separator + 'modal=1';
-
-    // Set title và URL
-    titleText.textContent = title;
-    iframe.src = modalUrl;
-
-    // Set URL gốc cho nút "Mở trang mới" (không có modal=1)
-    directLink.href = url;
-
-    // Show modal
-    modal.show();
-
-    // Clear iframe khi đóng modal
-    document.getElementById('iframeModal').addEventListener('hidden.bs.modal', function () {
-        iframe.src = '';
-        directLink.href = '#';
-    }, { once: true });
-}
-
-// ========================================
-// MODAL DATA LOADING (REUSE FROM OLD CODE)
-// ========================================
-
-// 1. Sắp đến hạn
-document.getElementById('myDueSoonModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('myDueSoonTasksList');
-    fetch('{{ url_for("hub.get_my_due_soon_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:18%;">Hạn hoàn thành</th><th style="width:12%;">Còn Lại</th><th style="width:12%;">Trạng Thái</th><th style="width:18%;">Phân Loại</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-warning">${task.due_date}</span></td>`;
-                    html += `<td><span class="badge bg-primary">${task.time_left}</span></td>`;
-                    html += `<td>${statusBadge}</td>`;
-                    html += `<td>${priorityBadges}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE: Card layout
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-primary me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-warning">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-hourglass-split"></i> Còn lại:</span>
-                                        <span class="badge bg-primary">${task.time_left}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-flag"></i> Trạng thái:</span>
-                                        ${statusBadge}
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào sắp đến hạn trong 3 ngày tới</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error loading due soon tasks:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách. Vui lòng thử lại sau.</div>';
-        });
-});
-
-// 2. Quá hạn của tôi
-document.getElementById('myOverdueModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('myOverdueTasksList');
-    fetch('{{ url_for("hub.get_my_overdue_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:25%;">Hạn hoàn thành</th><th style="width:15%;">Trạng Thái</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-danger">${task.due_date}</span></td>`;
-                    html += `<td>${statusBadge}</td>`;
-                    html += `<td>${priorityBadges}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm border-danger" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-danger me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-danger">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-flag"></i> Trạng thái:</span>
-                                        ${statusBadge}
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào quá hạn</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
-
-// 3. Chưa làm
-document.getElementById('myPendingModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('myPendingTasksList');
-    fetch('{{ url_for("hub.get_my_pending_tasks_detail") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:20%;">Hạn hoàn thành</th><th style="width:20%;">Ngày tạo</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-primary">${task.due_date}</span></td>`;
-                    html += `<td><small class="text-muted">${task.created_at}</small></td>`;
-                    html += `<td>${priorityBadges}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm border-warning" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-warning me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-primary">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-clock"></i> Ngày tạo:</span>
-                                        <span class="text-muted">${task.created_at}</span>
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:100px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Bạn không có công việc nào chưa làm</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
-
-// 4. Đang làm
-document.getElementById('myInProgressModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('myInProgressTasksList');
-    fetch('{{ url_for("hub.get_my_inprogress_tasks_detail") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:40%;">Công Việc</th><th style="width:20%;">Hạn hoàn thành</th><th style="width:20%;">Cập nhật gần nhất</th><th style="width:15%;">Phân Loại</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-primary">${task.due_date}</span></td>`;
-                    html += `<td><small class="text-muted">${task.updated_at}</small></td>`;
-                    html += `<td>${priorityBadges}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-
-                // MOBILE
-                html += '<div class="d-md-none">';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-
-                    html += `
-                        <div class="card mb-3 shadow-sm border-info" onclick="window.location.href='/tasks/${task.id}'" style="cursor:pointer;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-start mb-2">
-                                    <span class="badge bg-info me-2" style="font-size:0.9rem;">${index + 1}</span>
-                                    <h6 class="mb-0 flex-grow-1">${task.title}</h6>
-                                </div>
-                                <hr class="my-2">
-                                <div class="small">
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-person-check"></i> Người giao:</span>
-                                        <span class="text-dark">${task.creator}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-calendar-event"></i> Hạn chót:</span>
-                                        <span class="badge bg-primary">${task.due_date}</span>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-clock-history"></i> Cập nhật:</span>
-                                        <span class="text-muted">${task.updated_at}</span>
-                                    </div>
-                                    <div class="d-flex">
-                                        <span class="text-muted" style="min-width:110px;"><i class="bi bi-star"></i> Phân Loại:</span>
-                                        <div>${priorityBadges}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-inbox text-muted" style="font-size:4rem;"></i><h5 class="mt-3 text-muted">Chưa có công việc nào</h5><p class="text-muted">Bạn chưa bắt đầu làm công việc nào</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
-
-// 5. Team pending
-document.getElementById('teamPendingModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('teamPendingTasksList');
-    fetch('{{ url_for("hub.get_team_pending_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:30%;">Công Việc</th><th style="width:15%;">Hạn hoàn thành</th><th style="width:12%;">Ngày tạo</th><th style="width:15%;">Người Làm</th><th style="width:13%;">Người Giao</th><th style="width:10%;">Phân Loại</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Thường</span>';
-
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong></td>`;
-                    html += `<td><span class="badge bg-primary">${task.due_date}</span></td>`;
-                    html += `<td><small class="text-muted">${task.created_at}</small></td>`;
-                    html += `<td><span class="text-info">${task.assignees}</span></td>`;
-                    html += `<td><small class="text-muted">${task.creator}</small></td>`;
-                    html += `<td>${priorityBadges}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Không có công việc nào chưa làm trong hệ thống</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
-
-// 6. Team overdue
-document.getElementById('teamOverdueModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('overdueTasksList');
-    fetch('{{ url_for("hub.get_overdue_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hạn hoàn thành</th><th style="width:15%;">Trạng Thái</th><th style="width:15%;">Phân Loại</th><th style="width:15%;">Người Làm</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    const statusBadge = task.status === 'PENDING' ? '<span class="badge bg-warning">Chưa Làm</span>' : '<span class="badge bg-info">Đang Làm</span>';
-                    let priorityBadges = '';
-                    if (task.is_urgent) priorityBadges += '<span class="badge bg-danger me-1">Khẩn cấp</span>';
-                    if (task.is_important) priorityBadges += '<span class="badge bg-warning me-1">Quan trọng</span>';
-                    if (task.is_recurring) priorityBadges += '<span class="badge bg-info me-1">Lặp lại</span>';
-                    if (!priorityBadges) priorityBadges = '<span class="badge bg-secondary">Bình thường</span>';
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong><br><small class="text-muted">Người giao: ${task.creator}</small></td>`;
-                    html += `<td><span class="badge bg-danger">${task.due_date}</span></td>`;
-                    html += `<td>${statusBadge}</td>`;
-                    html += `<td>${priorityBadges}</td>`;
-                    html += `<td>${task.assignees}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Tuyệt vời!</h5><p class="text-muted">Không có công việc nào quá hạn</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
-
-// 7. Need rating
-document.getElementById('needRatingModal')?.addEventListener('show.bs.modal', function () {
-    const listContainer = document.getElementById('unratedTasksList');
-    fetch('{{ url_for("hub.get_unrated_tasks") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data.tasks && data.tasks.length > 0) {
-                let html = '';
-                html += '<div class="d-none d-md-block">';
-                html += '<div class="table-responsive"><table class="table table-hover align-middle">';
-                html += '<thead class="table-light"><tr><th style="width:5%;">ID</th><th style="width:35%;">Công Việc</th><th style="width:15%;">Hoàn Thành</th><th style="width:20%;">Người Giao</th><th style="width:25%;">Người Thực Hiện</th></tr></thead><tbody>';
-                data.tasks.forEach((task, index) => {
-                    html += `<tr style="cursor:pointer;" onclick="window.location.href='/tasks/${task.id}'">`;
-                    html += `<td class="text-center">${index + 1}</td>`;
-                    html += `<td><strong>${task.title}</strong></td>`;
-                    html += `<td><span class="badge bg-success">${task.completed_at}</span></td>`;
-                    html += `<td><span class="text-primary"><i class="bi bi-person-check"></i> ${task.creator}</span></td>`;
-                    html += `<td>${task.assignees}</td></tr>`;
-                });
-                html += '</tbody></table></div></div>';
-                listContainer.innerHTML = html;
-            } else {
-                listContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-check-circle text-success" style="font-size:4rem;"></i><h5 class="mt-3 text-success">Hoàn Thành!</h5><p class="text-muted">Tất cả công việc đã được đánh giá</p></div>';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            listContainer.innerHTML = '<div class="alert alert-danger">Không thể tải danh sách</div>';
-        });
-});
 
 // ========================================
 // MODULE MENU BUTTON TOGGLE
@@ -1834,63 +1586,8 @@ function updateModuleMenuButton() {
     }
 }
 
-// Gắn sự kiện click cho nút menu
-document.getElementById('moduleMenuBtn')?.addEventListener('click', function() {
-    // Tìm module đang active
-    const activeModule = document.querySelector('.module-container.active');
-    if (activeModule) {
-        const moduleName = activeModule.id.replace('module-', '');
-        toggleSidebar(moduleName);
-    }
-});
-
-// Cập nhật khi show/hide module
-function showModule(moduleName) {
-    document.getElementById('main-hub').style.display = 'none';
-    document.querySelectorAll('.module-container').forEach(m => {
-        m.classList.remove('active');
-    });
-
-    const module = document.getElementById('module-' + moduleName);
-    if (module) {
-        module.classList.add('active');
-    }
-
-    // Cập nhật nút menu
-    updateModuleMenuButton();
-}
-
-function backToHub() {
-    closeSidebarOnMobile();
-    document.querySelectorAll('.module-container').forEach(m => {
-        m.classList.remove('active');
-    });
-    document.getElementById('main-hub').style.display = 'grid';
-
-    // Ẩn nút menu
-    updateModuleMenuButton();
-}
-
-// Cập nhật khi resize
-window.addEventListener('resize', updateModuleMenuButton);
-
-// Khởi tạo
-document.addEventListener('DOMContentLoaded', function() {
-    updateModuleMenuButton();
-});
-
-// Nhấn ESC để về Hub
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const activeModule = document.querySelector('.module-container.active');
-        if (activeModule) {
-            backToHub();
-        }
-    }
-});
-
 // ========================================
-// CLICK BACKDROP ĐỂ VỀ HUB (DESKTOP)
+// CLICK BACKDROP TO GO BACK TO HUB
 // ========================================
 let backdropClickEnabled = false;
 
@@ -1907,67 +1604,32 @@ function disableBackdropClick() {
 }
 
 function handleBackdropClick(e) {
+    const activeModule = document.querySelector('.module-container.active');
+    if (!activeModule) {
+        disableBackdropClick();
+        return;
+    }
+
+    const moduleContent = activeModule.querySelector('.module-content');
+    const moduleSidebar = activeModule.querySelector('.module-sidebar');
+
+    if (e.target.closest('.hub-icon-card')) return;
+    if (e.target.closest('.top-navbar')) return;
+    if (e.target.closest('.modal')) return;
+    if (e.target.classList.contains('modal')) return;
+    if (document.querySelector('.modal.show')) return;
+    if (e.target.classList.contains('modal-backdrop')) return;
+
     if (window.innerWidth > 992) {
-        const activeModule = document.querySelector('.module-container.active');
-        if (!activeModule) {
-            disableBackdropClick();
-            return;
-        }
-
-        const moduleContent = activeModule.querySelector('.module-content');
-        const moduleSidebar = activeModule.querySelector('.module-sidebar');
-
-        // Bỏ qua các vùng không cần check
-        if (e.target.closest('.hub-icon-card')) return;
-        if (e.target.closest('.top-navbar')) return;
-
-        // ✅ BỎ QUA NẾU CÓ MODAL ĐANG MỞ
-        if (e.target.closest('.modal')) return;
-        if (e.target.classList.contains('modal')) return;
-        if (document.querySelector('.modal.show')) return;
-
-        // ✅ BỎ QUA NẾU CLICK VÀO MODAL BACKDROP
-        if (e.target.classList.contains('modal-backdrop')) return;
-
-        // Click ngoài content và sidebar → Về Hub
         if (!moduleContent.contains(e.target) && !moduleSidebar.contains(e.target)) {
             backToHub();
         }
+    } else {
+        const overlay = activeModule.querySelector('.sidebar-overlay');
+        if (overlay && e.target === overlay) {
+            closeSidebarOnMobile();
+        }
     }
-}
-
-// Sửa lại hàm showModule
-function showModule(moduleName) {
-    document.getElementById('main-hub').style.display = 'none';
-    document.querySelectorAll('.module-container').forEach(m => {
-        m.classList.remove('active');
-    });
-
-    const module = document.getElementById('module-' + moduleName);
-    if (module) {
-        module.classList.add('active');
-    }
-
-    updateModuleMenuButton();
-
-    // BẬT backdrop click SAU KHI module hiện
-    setTimeout(() => {
-        enableBackdropClick();
-    }, 100);
-}
-
-// Sửa lại hàm backToHub
-function backToHub() {
-    closeSidebarOnMobile();
-    document.querySelectorAll('.module-container').forEach(m => {
-        m.classList.remove('active');
-    });
-    document.getElementById('main-hub').style.display = 'grid';
-
-    updateModuleMenuButton();
-
-    // TẮT backdrop click khi về Hub
-    disableBackdropClick();
 }
 
 // ========================================
@@ -1978,17 +1640,16 @@ let sseStatsConnected = false;
 function startRealtimeUpdates() {
     console.log('🚀 Starting real-time stats updates...');
 
-    // Update initial data
-    updateRealtimeData();
+    // ✅ KHÔNG gọi updateRealtimeData() ở đây
+    // SSE sẽ tự động update khi connected
 
-    // Kiểm tra SSE support
     if (typeof window.sseManager === 'undefined') {
         console.warn('⚠️ SSE Manager not loaded, using polling');
         startPollingFallback();
+        startSmartPerformancePolling();
         return;
     }
 
-    // Kết nối SSE cho dashboard stats
     window.sseManager.connect(
         'dashboard-stats',
         '/sse/dashboard-stats',
@@ -2018,15 +1679,16 @@ function startRealtimeUpdates() {
             }
         },
         {
-            // Fallback polling config
             url: '/hub/api/realtime-stats',
-            interval: 30000, // 30 seconds
+            interval: 30000,
             onData: (data) => {
                 console.log('📊 Polling stats:', data);
                 updateUIWithStats(data);
             }
         }
     );
+
+    startSmartPerformancePolling();
 }
 
 function startPollingFallback() {
@@ -2038,9 +1700,10 @@ function stopRealtimeUpdates() {
     if (window.sseManager) {
         window.sseManager.disconnect('dashboard-stats');
     }
+
+    stopSmartPerformancePolling();
 }
 
-// GIỮ NGUYÊN hàm updateRealtimeData() (dùng cho fallback)
 function updateRealtimeData() {
     fetch('/hub/api/realtime-stats')
         .then(res => {
@@ -2056,29 +1719,11 @@ function updateRealtimeData() {
         });
 }
 
-//  Function update UI (tách riêng để dùng chung cho SSE và Polling)
 function updateUIWithStats(data) {
-    // 1. Cập nhật Notification badge (navbar) - GỌI HÀM CÓ SẴN
     if (typeof updateNotifCount === 'function') {
         updateNotifCount();
     }
 
-    // 2. Cập nhật Work Badge (Công Việc)
-    const workBadge = document.getElementById('work-badge');
-    if (workBadge) {
-        const myWorkBadge = (data.my_overdue || 0) + (data.my_due_soon || 0);
-        const tasksBadge = (data.my_tasks_need_rating || 0);
-        const totalWorkBadge = myWorkBadge + tasksBadge;
-
-        if (totalWorkBadge > 0) {
-            workBadge.textContent = totalWorkBadge;
-            workBadge.style.display = 'inline-block';
-        } else {
-            workBadge.style.display = 'none';
-        }
-    }
-
-    // 3. Cập nhật Info Badge (Thông Tin)
     const infoBadge = document.getElementById('info-badge');
     if (infoBadge) {
         if (data.info_badge > 0) {
@@ -2089,7 +1734,6 @@ function updateUIWithStats(data) {
         }
     }
 
-    // 4. Cập nhật Salary Badge (Lương) - nếu có
     const salaryBadge = document.getElementById('salary-badge');
     if (salaryBadge && data.salary_badge !== undefined) {
         if (data.salary_badge > 0) {
@@ -2100,73 +1744,23 @@ function updateUIWithStats(data) {
         }
     }
 
-    // 5. Cập nhật số trong module Công Việc nếu đang mở
-    updateTaskModuleStats(data);
-
-    // 6. Cập nhật số trong module Thông Tin nếu đang mở
     updateInfoModuleStats(data);
-
-    // 7. Cập nhật số trong module Lương nếu đang mở
     updateSalaryModuleStats(data);
 
-    // 8. Show warning nếu có quá hạn
     if (data.my_overdue > 0) {
         console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
     }
 }
 
-function updateTaskModuleStats(data) {
-    const tasksModule = document.getElementById('module-tasks');
-    if (tasksModule) {  //
-        // Card Quá Hạn
-        const overdueCard = tasksModule.querySelector('.stat-overdue h3');
-        if (overdueCard) overdueCard.textContent = data.my_overdue;
-
-        // Card Sắp Đến Hạn
-        const dueSoonCard = tasksModule.querySelector('.stat-warning h3');
-        if (dueSoonCard) dueSoonCard.textContent = data.my_due_soon;
-
-        // Card Chưa Làm
-        const pendingCard = tasksModule.querySelector('.stat-pending h3');
-        if (pendingCard) pendingCard.textContent = data.my_pending_tasks;
-
-        // Card Đang Làm
-        const progressCard = tasksModule.querySelector('.stat-progress h3');
-        if (progressCard) progressCard.textContent = data.my_in_progress;
-
-        // Stats cho Manager/Director
-        if (data.team_overdue !== undefined) {
-            // Card Team Overdue
-            const teamOverdueCard = tasksModule.querySelectorAll('.stat-danger h3')[0];
-            if (teamOverdueCard) teamOverdueCard.textContent = data.team_overdue;
-
-            // Card Team Pending
-            const teamPendingCard = tasksModule.querySelectorAll('.stat-warning h3')[1];
-            if (teamPendingCard) teamPendingCard.textContent = data.team_pending;
-
-            // Card Need Rating
-            const ratingCard = tasksModule.querySelector('.stat-primary h3');
-            if (ratingCard) ratingCard.textContent = data.tasks_need_rating;
-
-            //  Cập nhật badge trong sidebar
-            updateSidebarBadge(tasksModule, 'my_tasks_need_rating', data.my_tasks_need_rating);
-        }
-    }
-}
-
 function updateInfoModuleStats(data) {
     const infoModule = document.getElementById('module-info');
-    if (infoModule) {  // ← XÓA check .classList.contains('active')
-
-        // Card TB Chưa Xác Nhận
+    if (infoModule) {
         const unconfirmedCard = infoModule.querySelector('.stat-info h3');
         if (unconfirmedCard) unconfirmedCard.textContent = data.unconfirmed_news;
 
-        // Card Nhắc Nhở Chưa Đọc
         const unreadCard = infoModule.querySelector('.stat-warning h3');
         if (unreadCard) unreadCard.textContent = data.unread_notifications;
 
-        // Cập nhật badge trong sidebar
         updateSidebarBadge(infoModule, 'unconfirmed_news', data.unconfirmed_news);
         updateSidebarBadge(infoModule, 'unread_notifications', data.unread_notifications);
     }
@@ -2175,47 +1769,24 @@ function updateInfoModuleStats(data) {
 function updateSalaryModuleStats(data) {
     const salaryModule = document.getElementById('module-salary');
     if (salaryModule) {
-        // Card Phạt Chưa Trừ
         const penaltyCard = salaryModule.querySelector('.stat-danger h3');
         if (penaltyCard) penaltyCard.textContent = data.pending_penalties;
 
-        // Card Tạm Ứng Chưa Trừ
         const advanceCard = salaryModule.querySelector('.stat-warning h3');
         if (advanceCard) advanceCard.textContent = data.pending_advances;
 
-        // Cập nhật badge trong sidebar
         updateSidebarBadge(salaryModule, 'penalties', data.pending_penalties);
         updateSidebarBadge(salaryModule, 'advances', data.pending_advances);
     }
 }
 
-// Khởi động khi trang load
-document.addEventListener('DOMContentLoaded', function() {
-    startRealtimeUpdates();
-});
-
-// Dừng khi rời trang
-window.addEventListener('beforeunload', function() {
-    stopRealtimeUpdates();
-});
-
-// Cleanup SSE khi rời trang
-window.addEventListener('beforeunload', function() {
-    stopRealtimeUpdates();
-});
-
-// ============================================================
-// HELPER: CẬP NHẬT BADGE TRONG SIDEBAR
-// ============================================================
 function updateSidebarBadge(module, badgeType, count) {
-    // Tìm sidebar trong module
     const sidebar = module.querySelector('.module-sidebar');
     if (!sidebar) {
         console.warn('[Badge] Sidebar not found for module:', module.id);
         return;
     }
 
-    // ✅ TÌM LINK DỰA VÀO data-badge-id (dễ hơn và chính xác hơn)
     const targetLink = sidebar.querySelector(`a[data-badge-id="${badgeType}"]`);
 
     if (!targetLink) {
@@ -2223,11 +1794,9 @@ function updateSidebarBadge(module, badgeType, count) {
         return;
     }
 
-    // Tìm badge hiện tại
     let badge = targetLink.querySelector('.badge');
 
     if (count > 0) {
-        // Nếu có count: tạo hoặc cập nhật badge
         if (!badge) {
             badge = document.createElement('span');
             badge.className = 'badge bg-danger';
@@ -2239,7 +1808,6 @@ function updateSidebarBadge(module, badgeType, count) {
         badge.textContent = count;
         badge.style.display = 'inline-block';
     } else {
-        // Nếu count = 0: xóa badge
         if (badge) {
             badge.remove();
             console.log(`[Badge] Removed badge for ${badgeType}`);
@@ -2247,23 +1815,68 @@ function updateSidebarBadge(module, badgeType, count) {
     }
 }
 
-// Pause polling khi tab không active (tiết kiệm resources)
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        stopRealtimeUpdates();
-    } else {
-        startRealtimeUpdates();
+// ========================================
+// SMART PERFORMANCE POLLING
+// ========================================
+let performancePollingInterval = null;
+let lastPerformanceUpdate = 0;
+const PERFORMANCE_POLL_INTERVAL = 60000;
+
+function startSmartPerformancePolling() {
+    console.log('🔄 Starting smart performance polling (60s interval)');
+
+    // ✅ KHÔNG load performance ở đây
+    // Sẽ được gọi trong showModule('tasks')
+
+    stopSmartPerformancePolling();
+
+    performancePollingInterval = setInterval(() => {
+        const activeModule = document.querySelector('.module-container.active');
+        const isTaskModule = activeModule && activeModule.id === 'module-tasks';
+
+        const now = Date.now();
+        const timeSinceLastUpdate = now - lastPerformanceUpdate;
+        const shouldPoll = isTaskModule &&
+                          !document.hidden &&
+                          timeSinceLastUpdate >= PERFORMANCE_POLL_INTERVAL;
+
+        if (shouldPoll) {
+            console.log(`🔄 Smart polling: Refreshing performance data (${Math.round(timeSinceLastUpdate/1000)}s since last update)`);
+            loadPerformance();
+            lastPerformanceUpdate = now;
+        } else {
+            if (!isTaskModule) {
+                console.log('⏸️ Skipping poll: Not in Tasks module');
+            } else if (document.hidden) {
+                console.log('⏸️ Skipping poll: Tab hidden');
+            } else {
+                console.log(`⏸️ Skipping poll: Too soon (${Math.round(timeSinceLastUpdate/1000)}s < 60s)`);
+            }
+        }
+    }, PERFORMANCE_POLL_INTERVAL);
+}
+
+function stopSmartPerformancePolling() {
+    if (performancePollingInterval) {
+        console.log('🛑 Stopping performance polling');
+        clearInterval(performancePollingInterval);
+        performancePollingInterval = null;
     }
-});
+}
+
+function refreshPerformanceNow() {
+    console.log('✅ Manual refresh: Updating performance immediately');
+    loadPerformance();
+    lastPerformanceUpdate = Date.now();
+}
 
 // ========================================
 // AUTO CENTER ICONS
 // ========================================
-document.addEventListener('DOMContentLoaded', function() {
+function autoCenterIcons() {
     const iconGrid = document.getElementById('main-hub');
     const iconCount = iconGrid.querySelectorAll('.hub-icon-card').length;
 
-    // Điều chỉnh grid-template-columns và max-width dựa trên số icon
     if (iconCount === 2) {
         iconGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
         iconGrid.style.maxWidth = '550px';
@@ -2274,7 +1887,357 @@ document.addEventListener('DOMContentLoaded', function() {
         iconGrid.style.gridTemplateColumns = '1fr';
         iconGrid.style.maxWidth = '250px';
     }
-    // 4 icons: giữ nguyên default
+}
+
+// ========================================
+// PERFORMANCE TABLE - LOAD DATA
+// ========================================
+let performanceLoadTimeout = null;
+
+function loadPerformance() {
+    // ✅ Debounce - tránh gọi duplicate khi load trang
+    if (performanceLoadTimeout) {
+        clearTimeout(performanceLoadTimeout);
+    }
+
+    performanceLoadTimeout = setTimeout(() => {
+        const params = new URLSearchParams();
+        if (currentFilterFrom) params.append('date_from', currentFilterFrom);
+        if (currentFilterTo) params.append('date_to', currentFilterTo);
+
+        const url = '/hub/api/team-performance?' + params.toString();
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderPerformanceTable(data.data);
+                    renderTopBottomUsers(data.data);
+                } else {
+                    console.error('Error loading performance:', data.error);
+                    document.getElementById('performanceTableBody').innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                                <p class="text-danger mt-3">Không thể tải dữ liệu. Vui lòng thử lại.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching performance:', err);
+                document.getElementById('performanceTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                            <p class="text-danger mt-3">Lỗi kết nối. Vui lòng thử lại.</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }, 100); // Đợi 100ms trước khi thực sự gọi API
+}
+
+function renderPerformanceTable(data) {
+    const tbody = document.getElementById('performanceTableBody');
+
+    if (data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                    <p class="text-muted mt-3">Chưa có dữ liệu</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    data.forEach((user, index) => {
+        const avatarUrl = user.avatar
+            ? `/profile/avatar/${user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128`;
+
+        const filterParams = new URLSearchParams();
+        if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
+        if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
+
+        const baseUrl = '/tasks/priority-detail';
+
+        const urgentParams = new URLSearchParams(filterParams);
+        urgentParams.append('assigned_user', user.user_id);
+        urgentParams.append('tag', 'urgent');
+        const urgentUrl = baseUrl + '?' + urgentParams.toString();
+
+        const importantParams = new URLSearchParams(filterParams);
+        importantParams.append('assigned_user', user.user_id);
+        importantParams.append('tag', 'important');
+        const importantUrl = baseUrl + '?' + importantParams.toString();
+
+        const recurringParams = new URLSearchParams(filterParams);
+        recurringParams.append('assigned_user', user.user_id);
+        recurringParams.append('tag', 'recurring');
+        const recurringUrl = baseUrl + '?' + recurringParams.toString();
+
+        const doneParams = new URLSearchParams(filterParams);
+        doneParams.append('assigned_user', user.user_id);
+        doneParams.append('status', 'DONE');
+        const doneUrl = baseUrl + '?' + doneParams.toString();
+
+        html += `
+            <tr>
+                <td>
+                    <img src="${avatarUrl}"
+                         alt="${user.full_name}"
+                         class="user-avatar-cell"
+                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128'">
+                </td>
+                <td class="user-name-cell">${user.full_name}</td>
+                <td class="count-cell urgent">
+                    ${user.urgent_count > 0
+                        ? `<a href="${urgentUrl}" class="task-count-link">${user.urgent_count}</a>`
+                        : user.urgent_count}
+                </td>
+                <td class="count-cell important">
+                    ${user.important_count > 0
+                        ? `<a href="${importantUrl}" class="task-count-link">${user.important_count}</a>`
+                        : user.important_count}
+                </td>
+                <td class="count-cell recurring">
+                    ${user.recurring_count > 0
+                        ? `<a href="${recurringUrl}" class="task-count-link">${user.recurring_count}</a>`
+                        : user.recurring_count}
+                </td>
+                <td class="count-cell done">
+                    ${user.done_count > 0
+                        ? `<a href="${doneUrl}" class="task-count-link">${user.done_count}</a>`
+                        : user.done_count}
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+function renderTopBottomUsers(data) {
+    const container = document.getElementById('topBottomUsers');
+
+    if (data.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>';
+        return;
+    }
+
+    let html = '';
+
+    const topUser = data.find(u => u.rank === 1);
+    if (topUser) {
+        const avatarUrl = topUser.avatar
+            ? `/profile/avatar/${topUser.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(topUser.full_name)}&background=0dcaf0&color=fff&size=128`;
+
+        html += `
+            <div class="top-user" title="Làm nhiều nhất">
+                <i class="bi bi-trophy-fill" style="color: #ffd700; font-size: 1.3rem;"></i>
+                <img src="${avatarUrl}"
+                     alt="${topUser.full_name}"
+                     class="user-badge-avatar"
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(topUser.full_name)}&background=0dcaf0&color=fff&size=128'">
+                <span class="user-badge-name">${topUser.full_name}</span>
+                <span class="user-badge-count">${topUser.done_count} việc</span>
+            </div>
+        `;
+    }
+
+    const bottomUser = data.find(u => u.rank === -1);
+    if (bottomUser) {
+        const avatarUrl = bottomUser.avatar
+            ? `/profile/avatar/${bottomUser.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(bottomUser.full_name)}&background=0dcaf0&color=fff&size=128`;
+
+        html += `
+            <div class="bottom-user" title="Cần cố gắng thêm">
+                <i class="bi bi-exclamation-circle-fill" style="color: #dc3545; font-size: 1.3rem;"></i>
+                <img src="${avatarUrl}"
+                     alt="${bottomUser.full_name}"
+                     class="user-badge-avatar"
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(bottomUser.full_name)}&background=0dcaf0&color=fff&size=128'">
+                <span class="user-badge-name">${bottomUser.full_name}</span>
+                <span class="user-badge-count">${bottomUser.done_count} việc</span>
+            </div>
+        `;
+    }
+
+    if (data.length === 1 && data[0].rank === 0) {
+        const user = data[0];
+        const avatarUrl = user.avatar
+            ? `/profile/avatar/${user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128`;
+
+        html = `
+            <div class="top-user" title="Duy nhất">
+                <i class="bi bi-person-circle" style="color: #0d6efd; font-size: 1.3rem;"></i>
+                <img src="${avatarUrl}"
+                     alt="${user.full_name}"
+                     class="user-badge-avatar"
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128'">
+                <span class="user-badge-name">${user.full_name}</span>
+                <span class="user-badge-count">${user.done_count} việc</span>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html || '<p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>';
+}
+
+// ========================================
+// FILTER MODAL FUNCTIONS
+// ========================================
+let filterModalInstance = null;
+let currentFilterFrom = '';
+let currentFilterTo = '';
+
+function openFilterModal() {
+    if (!filterModalInstance) {
+        filterModalInstance = new bootstrap.Modal(document.getElementById('filterDateModal'));
+    }
+
+    document.getElementById('modalDateFrom').value = currentFilterFrom;
+    document.getElementById('modalDateTo').value = currentFilterTo;
+
+    filterModalInstance.show();
+}
+
+function applyFilter() {
+    currentFilterFrom = document.getElementById('modalDateFrom').value;
+    currentFilterTo = document.getElementById('modalDateTo').value;
+
+    filterModalInstance.hide();
+
+    const indicator = document.getElementById('filterIndicator');
+    if (currentFilterFrom || currentFilterTo) {
+        indicator.style.display = 'inline-flex';
+
+        let filterText = '';
+        if (currentFilterFrom && currentFilterTo) {
+            filterText = `${formatDate(currentFilterFrom)} - ${formatDate(currentFilterTo)}`;
+        } else if (currentFilterFrom) {
+            filterText = `Từ ${formatDate(currentFilterFrom)}`;
+        } else if (currentFilterTo) {
+            filterText = `Đến ${formatDate(currentFilterTo)}`;
+        }
+        indicator.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${filterText}`;
+    } else {
+        indicator.style.display = 'none';
+    }
+
+    loadPerformance();
+}
+
+function resetFilter() {
+    currentFilterFrom = '';
+    currentFilterTo = '';
+    document.getElementById('modalDateFrom').value = '';
+    document.getElementById('modalDateTo').value = '';
+
+    document.getElementById('filterIndicator').style.display = 'none';
+
+    filterModalInstance.hide();
+
+    loadPerformance();
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+}
+
+// ========================================
+// EVENT LISTENERS
+// ========================================
+document.getElementById('moduleMenuBtn')?.addEventListener('click', function() {
+    const activeModule = document.querySelector('.module-container.active');
+    if (activeModule) {
+        const moduleName = activeModule.id.replace('module-', '');
+        toggleSidebar(moduleName);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth <= 992) {
+        document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                closeSidebarOnMobile();
+            });
+        });
+    }
+});
+
+window.addEventListener('resize', updateModuleMenuButton);
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const activeModule = document.querySelector('.module-container.active');
+        if (activeModule) {
+            backToHub();
+        }
+    }
+});
+
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        console.log('📴 Tab hidden - connections remain open');
+    } else {
+        console.log('📳 Tab visible - checking connections');
+        if (window.sseManager) {
+            for (const [name, conn] of window.sseManager.connections) {
+                if (conn.eventSource.readyState === EventSource.CLOSED) {
+                    console.log(`🔄 Reconnecting ${name}`);
+                    window.sseManager.connect(name, conn.url, conn.callbacks, conn.fallbackConfig);
+                }
+            }
+        }
+    }
+});
+
+window.addEventListener('beforeunload', function() {
+    console.log('🚪 Page unloading - disconnecting all SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnectAll();
+    }
+    stopSmartPerformancePolling();
+});
+
+window.addEventListener('pagehide', function() {
+    console.log('🚪 Page hiding - disconnecting all SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnectAll();
+    }
+});
+
+// ========================================
+// INITIALIZATION
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    autoCenterIcons();
+    updateModuleMenuButton();
+    startRealtimeUpdates();
+
+    // ✅ CHỈ load performance khi vào module tasks
+    // Không load ngay khi vào hub
+    // Sẽ được gọi trong showModule('tasks')
+
+    console.log('📊 Bandwidth estimate for 50 users:');
+    console.log('- SSE (dashboard-stats): ~6.5GB/month');
+    console.log('- SSE (notifications): ~2GB/month');
+    console.log('- Polling (performance): ~2GB/month');
+    console.log('- Total: ~10.5GB/month');
+    console.log('✅ Optimized with smart polling!');
 });
 </script>
 {% endblock %}

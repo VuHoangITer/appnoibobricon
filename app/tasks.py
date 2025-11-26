@@ -1,14 +1,76 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
-from app.models import Task, TaskAssignment, User, Notification
+from app.models import Task, TaskAssignment, User, Notification, TaskComment
 from app.decorators import role_required
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
-from app.utils import vn_to_utc, vn_now
+from app.utils import vn_to_utc, utc_to_vn, vn_now
 
 bp = Blueprint('tasks', __name__)
 
+
+# ============================================
+# HELPER FUNCTIONS - COMMENT UNREAD TRACKING
+# ============================================
+
+def get_task_unread_comment_count(task_id, user_id):
+    """
+    Đếm số comment chưa đọc của user trong task
+    Returns: int
+    """
+    from app.models import TaskComment, TaskCommentRead
+
+    # Lấy tất cả comment IDs của task
+    all_comment_ids = db.session.query(TaskComment.id).filter(
+        TaskComment.task_id == task_id
+    ).all()
+    all_comment_ids = [c[0] for c in all_comment_ids]
+
+    if not all_comment_ids:
+        return 0
+
+    # Lấy comment IDs đã đọc
+    read_comment_ids = db.session.query(TaskCommentRead.comment_id).filter(
+        TaskCommentRead.user_id == user_id,
+        TaskCommentRead.comment_id.in_(all_comment_ids)
+    ).all()
+    read_comment_ids = [c[0] for c in read_comment_ids]
+
+    # Trả về số comment chưa đọc
+    unread_count = len(all_comment_ids) - len(read_comment_ids)
+    return unread_count
+
+
+def mark_task_comments_as_read(task_id, user_id):
+    """
+    Đánh dấu TẤT CẢ comments của task là đã đọc bởi user
+    """
+    from app.models import TaskComment, TaskCommentRead
+
+    # Lấy tất cả comment IDs của task
+    all_comments = TaskComment.query.filter_by(task_id=task_id).all()
+
+    for comment in all_comments:
+        # Check xem đã đánh dấu chưa
+        existing = TaskCommentRead.query.filter_by(
+            user_id=user_id,
+            comment_id=comment.id
+        ).first()
+
+        # Nếu chưa có thì tạo mới
+        if not existing:
+            read_record = TaskCommentRead(
+                task_id=task_id,
+                user_id=user_id,
+                comment_id=comment.id
+            )
+            db.session.add(read_record)
+
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
 
 @bp.route('/dashboard')
 @login_required
@@ -363,115 +425,20 @@ def dashboard():
                                date_to=date_to)
 
 
-# Route để xem chi tiết tasks theo status
-@bp.route('/by-status/<status>')
-@login_required
-def tasks_by_status(status):
-    """Hiển thị danh sách tasks theo status với filter"""
-    # Validate status
-    valid_statuses = ['ALL', 'PENDING', 'IN_PROGRESS', 'DONE']
-    if status not in valid_statuses:
-        flash('Trạng thái không hợp lệ.', 'danger')
-        return redirect(url_for('tasks.dashboard'))
-
-    # Get filters from query params
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
-    assigned_user = request.args.get('assigned_user', '')
-    tag_filter = request.args.get('tag', '')  # urgent, important, recurring
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-
-    # Base query
-    if current_user.role in ['director', 'manager']:
-        query = Task.query
-    else:
-        # HR/Accountant: only their tasks
-        accepted_assignments = TaskAssignment.query.filter_by(
-            user_id=current_user.id,
-            accepted=True
-        ).all()
-        assigned_task_ids = [a.task_id for a in accepted_assignments]
-        query = Task.query.filter(
-            or_(
-                Task.id.in_(assigned_task_ids),
-                Task.creator_id == current_user.id
-            )
-        )
-
-    # Apply status filter
-    if status != 'ALL':
-        query = query.filter_by(status=status)
-
-    # Apply date filters
-    if date_from:
-        try:
-            date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-            date_from_utc = vn_to_utc(date_from_dt)
-            query = query.filter(Task.created_at >= date_from_utc)
-        except:
-            pass
-
-    if date_to:
-        try:
-            date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-            date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-            date_to_utc = vn_to_utc(date_to_dt)
-            query = query.filter(Task.created_at <= date_to_utc)
-        except:
-            pass
-
-    # Apply assigned user filter
-    if assigned_user:
-        task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
-            user_id=int(assigned_user),
-            accepted=True
-        ).all()]
-        query = query.filter(Task.id.in_(task_ids))
-
-    # Apply tag filters
-    if tag_filter == 'urgent':
-        query = query.filter_by(is_urgent=True)
-    elif tag_filter == 'important':
-        query = query.filter_by(is_important=True)
-    elif tag_filter == 'recurring':
-        query = query.filter_by(is_recurring=True)
-
-    # Pagination
-    pagination = query.order_by(Task.created_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    tasks = pagination.items
-
-    # Get all users for filter dropdown
-    all_users = None
-    if current_user.role in ['director', 'manager']:
-        all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
-
-    # Status name for display
-    status_names = {
-        'ALL': 'Tất cả nhiệm vụ',
-        'PENDING': 'Chưa Làm',
-        'IN_PROGRESS': 'Đang Làm',
-        'DONE': 'Hoàn thành'
-    }
-
-    return render_template('tasks_by_status.html',
-                           tasks=tasks,
-                           pagination=pagination,
-                           status=status,
-                           status_name=status_names[status],
-                           date_from=date_from,
-                           date_to=date_to,
-                           assigned_user=assigned_user,
-                           tag_filter=tag_filter,
-                           all_users=all_users)
-
-
 @bp.route('/')
+@bp.route('/status/<status>')
 @login_required
-def list_tasks():
-    status_filter = request.args.get('status', '')
+def list_tasks(status=None):
+    # Lấy status từ URL parameter hoặc query string
+    if status is None:
+        status = request.args.get('status', '')
+
+    # Validate status nếu có
+    valid_statuses = ['PENDING', 'IN_PROGRESS', 'DONE']
+    if status and status not in valid_statuses:
+        flash('Trạng thái không hợp lệ.', 'danger')
+        return redirect(url_for('tasks.list_tasks'))
+
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     assigned_user = request.args.get('assigned_user', '')
@@ -482,8 +449,8 @@ def list_tasks():
     if current_user.role in ['director', 'manager']:
         query = Task.query
 
-        if status_filter:
-            query = query.filter_by(status=status_filter)
+        if status:
+            query = query.filter_by(status=status)
 
         # Date filters
         if date_from:
@@ -540,8 +507,8 @@ def list_tasks():
             )
         )
 
-        if status_filter:
-            query = query.filter_by(status=status_filter)
+        if status:
+            query = query.filter_by(status=status)
 
         if date_from:
             try:
@@ -574,10 +541,19 @@ def list_tasks():
         tasks = pagination.items
         all_users = None
 
+    status_names = {
+        'PENDING': 'Chưa Làm',
+        'IN_PROGRESS': 'Đang Làm',
+        'DONE': 'Hoàn thành',
+        '': 'Tất cả nhiệm vụ'
+    }
+    status_name = status_names.get(status, 'Tất cả nhiệm vụ')
+
     return render_template('tasks.html',
                            tasks=tasks,
                            pagination=pagination,
-                           status_filter=status_filter,
+                           status_filter=status or '',
+                           status_name=status_name,
                            date_from=date_from,
                            date_to=date_to,
                            assigned_user=assigned_user,
@@ -617,13 +593,18 @@ def task_detail(task_id):
         user_assignment.seen = True
         db.session.commit()
 
+    mark_task_comments_as_read(task_id, current_user.id)
+
     # Get all assignments
     assignments = TaskAssignment.query.filter_by(task_id=task_id).all()
+
+    sorted_comments = TaskComment.query.filter_by(task_id=task_id).order_by(TaskComment.created_at.asc()).all()
 
     return render_template('task_detail.html',
                            task=task,
                            user_assignment=user_assignment,
-                           assignments=assignments)
+                           assignments=assignments,
+                           sorted_comments=sorted_comments)
 
 
 @bp.route('/create', methods=['GET', 'POST'])
@@ -636,6 +617,7 @@ def create_task():
         assign_type = request.form.get('assign_type')
         assign_to_user_id = request.form.get('assign_to_user')
         assign_to_group = request.form.get('assign_to_group')
+        assign_to_multiple = request.form.getlist('assign_to_multiple[]')  # ← MỚI: Lấy nhiều người
         is_urgent = request.form.get('is_urgent') == 'on'
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
@@ -742,6 +724,45 @@ def create_task():
                 db.session.rollback()
                 return redirect(url_for('tasks.list_tasks'))
 
+        # ========== MỚI: GIAO CHO NHIỀU NGƯỜI TÙY CHỌN ==========
+        elif assign_type == 'multiple' and assign_to_multiple:
+            if current_user.can_assign_tasks():
+                if len(assign_to_multiple) == 0:
+                    flash('Vui lòng chọn ít nhất 1 người.', 'warning')
+                    db.session.rollback()
+                    return redirect(url_for('tasks.create_task'))
+
+                # Giao cho từng người được chọn
+                for user_id_str in assign_to_multiple:
+                    user_id = int(user_id_str)
+
+                    assignment = TaskAssignment(
+                        task_id=task.id,
+                        user_id=user_id,
+                        assigned_by=current_user.id,
+                        accepted=True,
+                        accepted_at=datetime.utcnow(),
+                        seen=False
+                    )
+                    db.session.add(assignment)
+
+                    # Gửi notification cho từng người
+                    notif = Notification(
+                        user_id=user_id,
+                        type='task_assigned',
+                        title='Nhiệm vụ mới được giao',
+                        body=f'{current_user.full_name} đã giao nhiệm vụ "{title}" cho bạn.',
+                        link=f'/tasks/{task.id}'
+                    )
+                    db.session.add(notif)
+
+                flash(f'Đã giao nhiệm vụ cho {len(assign_to_multiple)} người.', 'success')
+            else:
+                flash('Bạn không có quyền giao nhiệm vụ cho nhiều người.', 'danger')
+                db.session.rollback()
+                return redirect(url_for('tasks.list_tasks'))
+        # ========== END MỚI ==========
+
         db.session.commit()
         flash('Tạo nhiệm vụ thành công.', 'success')
         return redirect(url_for('tasks.task_detail', task_id=task.id))
@@ -749,12 +770,12 @@ def create_task():
     # GET request
     users = []
     if current_user.can_assign_tasks():
-        users = User.query.filter(User.is_active == True).all()
+        users = User.query.filter(User.is_active == True).order_by(User.full_name).all()
 
     return render_template('create_task.html', users=users)
 
 
-# THÊM MỚI: Route để cập nhật tags
+#  Route để cập nhật tags
 @bp.route('/<int:task_id>/update-tags', methods=['POST'])
 @login_required
 @role_required(['director', 'manager'])
@@ -809,7 +830,6 @@ def reject_task(task_id):
     db.session.delete(assignment)
     db.session.commit()
 
-    flash('Giỡn mặt à ?', 'success')
     return redirect(url_for('tasks.list_tasks'))
 
 
@@ -1236,3 +1256,529 @@ def kanban():
                            date_from=date_from,
                            date_to=date_to,
                            now=now)
+
+
+@bp.route('/priority-detail')
+@login_required
+def priority_detail():
+    """
+    Trang chi tiết công việc theo loại ưu tiên
+    Params:
+    - assigned_user: ID người được giao
+    - tag: urgent/important/recurring
+    - status: DONE (cho hoàn thành)
+    - date_from, date_to: filter theo ngày (optional)
+    """
+    assigned_user_id = request.args.get('assigned_user', type=int)
+    tag = request.args.get('tag', '')
+    status = request.args.get('status', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+
+    if not assigned_user_id:
+        flash('Thiếu thông tin người dùng.', 'danger')
+        return redirect(url_for('hub.workflow_hub'))
+
+    # Lấy thông tin user
+    user = User.query.get_or_404(assigned_user_id)
+
+    # Base query
+    query = db.session.query(Task).join(
+        TaskAssignment, Task.id == TaskAssignment.task_id
+    ).filter(
+        TaskAssignment.user_id == assigned_user_id,
+        TaskAssignment.accepted == True
+    )
+
+    # Apply filters
+    if date_from:
+        try:
+            date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            date_from_utc = vn_to_utc(date_from_dt)
+            query = query.filter(Task.created_at >= date_from_utc)
+        except:
+            pass
+
+    if date_to:
+        try:
+            date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
+            date_to_utc = vn_to_utc(date_to_dt)
+            query = query.filter(Task.created_at <= date_to_utc)
+        except:
+            pass
+
+    # Xác định loại và filter
+    priority_type = ''
+    priority_icon = ''
+    priority_color = ''
+
+    if tag == 'urgent':
+        query = query.filter(Task.is_urgent == True, Task.status != 'DONE')
+        priority_type = 'KHẨN CẤP'
+        priority_icon = '🔴'
+        priority_color = 'danger'
+    elif tag == 'important':
+        query = query.filter(Task.is_important == True, Task.status != 'DONE')
+        priority_type = 'QUAN TRỌNG'
+        priority_icon = '⭐'
+        priority_color = 'warning'
+    elif tag == 'recurring':
+        query = query.filter(Task.is_recurring == True, Task.status != 'DONE')
+        priority_type = 'LẶP LẠI'
+        priority_icon = '🔁'
+        priority_color = 'info'
+    elif status == 'DONE':
+        query = query.filter(Task.status == 'DONE')
+        priority_type = 'HOÀN THÀNH'
+        priority_icon = '✅'
+        priority_color = 'success'
+    else:
+        flash('Loại công việc không hợp lệ.', 'danger')
+        return redirect(url_for('hub.workflow_hub'))
+
+    if status == 'DONE':
+        all_tasks = query.order_by(Task.updated_at.desc()).all()
+    else:
+        from sqlalchemy import case, func
+
+        priority_order = case(
+            (Task.due_date.is_(None), 3),  # Không có hạn → xuống dưới cùng
+            (Task.due_date < func.now(), 1),  # QUÁ HẠN → lên đầu
+            else_=2  # CÒN HẠN
+        )
+
+        all_tasks = query.order_by(
+            priority_order.asc(),  # 1 → 2 → 3
+            Task.due_date.asc().nulls_last()  # Trong cùng nhóm: hạn gần nhất trước, nulls xuống dưới
+        ).all()
+
+    # Đếm còn hạn và quá hạn
+    now = datetime.utcnow()
+    on_time_count = 0
+    overdue_count = 0
+
+    for task in all_tasks:
+        if task.due_date:
+            task.vn_due_date = utc_to_vn(task.due_date)
+
+        # Đếm on-time và overdue
+        if task.status != 'DONE' and task.due_date:
+            if task.due_date >= now:
+                on_time_count += 1
+            else:
+                overdue_count += 1
+
+    # ✅ TÍNH UNREAD COMMENT COUNT CHO MỖI TASK
+    for task in all_tasks:
+        task.unread_comment_count = get_task_unread_comment_count(task.id, current_user.id)
+
+    return render_template('priority_detail.html',
+                           user=user,
+                           tasks=all_tasks,
+                           priority_type=priority_type,
+                           priority_icon=priority_icon,
+                           priority_color=priority_color,
+                           on_time_count=on_time_count,
+                           overdue_count=overdue_count,
+                           tag=tag,
+                           status=status)
+
+
+@bp.route('/<int:task_id>/quick-update-status', methods=['POST'])
+@login_required
+def quick_update_status(task_id):
+    """
+    API cập nhật nhanh trạng thái task (cho nút Bắt đầu/Hoàn thành)
+    """
+    task = Task.query.get_or_404(task_id)
+    new_status = request.json.get('status')
+
+    if new_status not in ['IN_PROGRESS', 'DONE']:
+        return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
+
+    # Check permission
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    if not assignment and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    now = datetime.utcnow()
+    old_status = task.status
+
+    # Update status
+    if new_status == 'DONE' and old_status != 'DONE':
+        is_overdue = task.due_date and task.due_date < now
+        task.completed_overdue = is_overdue
+
+        # Tính completion time
+        completion_time = None
+        if task.created_at:
+            time_delta = now - task.created_at
+            completion_time = int(time_delta.total_seconds() / 60)
+
+        # Tạo báo cáo
+        from app.models import TaskCompletionReport
+        completion_report = TaskCompletionReport(
+            task_id=task.id,
+            completed_by=current_user.id,
+            completion_note=None,
+            completed_at=now,
+            was_overdue=is_overdue,
+            completion_time=completion_time
+        )
+        db.session.add(completion_report)
+
+        # Logic đánh giá tự động (giống như route update_status)
+        creator = task.creator
+        if current_user.role == 'director' and creator.role == 'manager':
+            task.performance_rating = 'good'
+            task.rated_by = creator.id
+            task.rated_at = now
+        elif current_user.role == 'manager' and creator.role == 'director':
+            # Gửi thông báo
+            notif = Notification(
+                user_id=creator.id,
+                type='task_completed',
+                title='✅ Nhiệm vụ hoàn thành',
+                body=f'Trưởng phòng {current_user.full_name} đã hoàn thành: {task.title}',
+                link=f'/tasks/{task.id}'
+            )
+            db.session.add(notif)
+
+    task.status = new_status
+    task.updated_at = now
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'new_status': new_status,
+        'message': 'Cập nhật thành công'
+    })
+
+import os
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
+
+# Config upload
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'rar'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_file_type(filename):
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext in ['png', 'jpg', 'jpeg', 'gif', 'webp']:
+        return 'image'
+    elif ext in ['pdf']:
+        return 'pdf'
+    elif ext in ['doc', 'docx']:
+        return 'document'
+    elif ext in ['xls', 'xlsx']:
+        return 'spreadsheet'
+    elif ext in ['zip', 'rar']:
+        return 'archive'
+    else:
+        return 'other'
+
+
+# ============================================
+# TASK ATTACHMENTS
+# ============================================
+
+@bp.route('/<int:task_id>/upload-attachment', methods=['POST'])
+@login_required
+def upload_attachment(task_id):
+    """Upload file đính kèm vào task"""
+    task = Task.query.get_or_404(task_id)
+
+    # Check permission
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    if not assignment and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'Không có file'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Chưa chọn file'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'error': 'Loại file không được phép'}), 400
+
+    # Check file size
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+
+    if file_size > MAX_FILE_SIZE:
+        return jsonify({'success': False, 'error': 'File quá lớn (tối đa 10MB)'}), 400
+
+    try:
+        # Save file
+        filename = secure_filename(file.filename)
+        unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
+
+        upload_folder = os.path.join(current_app.root_path, 'uploads', 'task_attachments')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+
+        # Save to database
+        from app.models import TaskAttachment
+        attachment = TaskAttachment(
+            task_id=task_id,
+            uploaded_by=current_user.id,
+            filename=unique_filename,
+            original_filename=filename,
+            file_path=file_path,
+            file_size=file_size,
+            file_type=get_file_type(filename)
+        )
+        db.session.add(attachment)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'attachment': {
+                'id': attachment.id,
+                'filename': attachment.original_filename,
+                'file_type': attachment.file_type,
+                'file_size': attachment.file_size,
+                'uploaded_by': current_user.full_name,
+                'uploaded_at': attachment.uploaded_at.isoformat()
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/<int:task_id>/attachments/<int:attachment_id>/download')
+@login_required
+def download_attachment(task_id, attachment_id):
+    """Download file đính kèm"""
+    from app.models import TaskAttachment
+    attachment = TaskAttachment.query.get_or_404(attachment_id)
+
+    if attachment.task_id != task_id:
+        flash('File không tồn tại', 'danger')
+        return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+    # Check permission
+    task = Task.query.get_or_404(task_id)
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
+        flash('Bạn không có quyền tải file này', 'danger')
+        return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+    directory = os.path.dirname(attachment.file_path)
+    return send_from_directory(directory, attachment.filename, as_attachment=True,
+                               download_name=attachment.original_filename)
+
+
+@bp.route('/<int:task_id>/attachments/<int:attachment_id>/delete', methods=['POST'])
+@login_required
+def delete_attachment(task_id, attachment_id):
+    """Xóa file đính kèm"""
+    from app.models import TaskAttachment
+    attachment = TaskAttachment.query.get_or_404(attachment_id)
+
+    # Only uploader or director/manager can delete
+    if attachment.uploaded_by != current_user.id and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền xóa'}), 403
+
+    try:
+        # Delete physical file
+        if os.path.exists(attachment.file_path):
+            os.remove(attachment.file_path)
+
+        # Delete from database
+        db.session.delete(attachment)
+        db.session.commit()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================
+# TASK COMMENTS (REAL-TIME)
+# ============================================
+
+@bp.route('/<int:task_id>/comments', methods=['GET'])
+@login_required
+def get_comments(task_id):
+    """Lấy danh sách comments (for AJAX)"""
+    task = Task.query.get_or_404(task_id)
+
+    # Check permission
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    from app.models import TaskComment
+    from app.utils import utc_to_vn
+
+    comments = TaskComment.query.filter_by(task_id=task_id).order_by(TaskComment.created_at.asc()).all()
+
+    comments_data = []
+    for comment in comments:
+        vn_time = utc_to_vn(comment.created_at)
+        comments_data.append({
+            'id': comment.id,
+            'content': comment.content,
+            'created_at': comment.created_at.isoformat(),
+            'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
+            'user': {
+                'id': comment.user_id,
+                'full_name': comment.user.full_name,
+                'role': comment.user.role,
+                'avatar': comment.user.avatar,
+                'avatar_letter': comment.user.full_name[0].upper()
+            },
+            'can_delete': comment.user_id == current_user.id or current_user.role == 'director'
+        })
+
+    return jsonify({
+        'success': True,
+        'comments': comments_data,
+        'total': len(comments_data)
+    })
+
+
+@bp.route('/<int:task_id>/comments', methods=['POST'])
+@login_required
+def add_comment(task_id):
+    """Thêm comment mới"""
+    task = Task.query.get_or_404(task_id)
+
+    # Check permission
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    content = request.json.get('content', '').strip()
+
+    if not content:
+        return jsonify({'success': False, 'error': 'Nội dung không được để trống'}), 400
+
+    try:
+        from app.models import TaskComment
+        from app.utils import utc_to_vn
+
+        comment = TaskComment(
+            task_id=task_id,
+            user_id=current_user.id,
+            content=content
+        )
+        db.session.add(comment)
+        db.session.commit()
+
+        # Gửi thông báo cho người liên quan
+        # Nếu là nhân viên comment -> gửi cho creator
+        if current_user.id != task.creator_id:
+            notif = Notification(
+                user_id=task.creator_id,
+                type='task_comment',
+                title=f'💬 Bình luận mới từ {current_user.full_name}',
+                body=f'Trong nhiệm vụ: {task.title}',
+                link=f'/tasks/{task_id}'
+            )
+            db.session.add(notif)
+
+        # Nếu là creator comment -> gửi cho assignees
+        else:
+            assignments = TaskAssignment.query.filter_by(task_id=task_id, accepted=True).all()
+            for assignment in assignments:
+                if assignment.user_id != current_user.id:
+                    notif = Notification(
+                        user_id=assignment.user_id,
+                        type='task_comment',
+                        title=f'💬 Bình luận mới từ {current_user.full_name}',
+                        body=f'Trong nhiệm vụ: {task.title}',
+                        link=f'/tasks/{task_id}'
+                    )
+                    db.session.add(notif)
+
+        db.session.commit()
+
+        vn_time = utc_to_vn(comment.created_at)
+
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': comment.id,
+                'content': comment.content,
+                'created_at': comment.created_at.isoformat(),
+                'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
+                'created_at_timestamp': comment.created_at.timestamp(),
+                'user': {
+                    'id': current_user.id,
+                    'full_name': current_user.full_name,
+                    'role': current_user.role,
+                    'avatar': current_user.avatar,
+                    'avatar_letter': current_user.full_name[0].upper()
+                },
+                'can_delete': True
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/<int:task_id>/comments/<int:comment_id>', methods=['DELETE'])
+@login_required
+def delete_comment(task_id, comment_id):
+    """Xóa comment"""
+    from app.models import TaskComment
+    comment = TaskComment.query.get_or_404(comment_id)
+
+    if comment.task_id != task_id:
+        return jsonify({'success': False, 'error': 'Comment không tồn tại'}), 404
+
+    # Only owner or director can delete
+    if comment.user_id != current_user.id and current_user.role != 'director':
+        return jsonify({'success': False, 'error': 'Không có quyền xóa'}), 403
+
+    try:
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

@@ -167,6 +167,20 @@ class Task(db.Model):
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
+    attachments = db.relationship(
+        'TaskAttachment',
+        back_populates='task',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+
+    comments = db.relationship(
+        'TaskComment',
+        back_populates='task',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='TaskComment.created_at.desc()'
+    )
 
     def __repr__(self):
         return f'<Task {self.title}>'
@@ -186,7 +200,6 @@ class TaskAssignment(db.Model):
     seen = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # SỬA: Thêm back_populates
     task = db.relationship(
         'Task',
         foreign_keys=[task_id],
@@ -756,6 +769,71 @@ class Advance(db.Model):
         self.is_deducted = True
         self.deducted_in_salary_id = salary_id
         self.deducted_at = datetime.utcnow()
+
+
+class TaskAttachment(db.Model):
+    """File đính kèm khi hoàn thành task"""
+    __tablename__ = 'task_attachments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer)
+    file_type = db.Column(db.String(50))
+
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # SỬA: Dùng back_populates thay vì backref
+    task = db.relationship('Task', back_populates='attachments')
+    uploader = db.relationship('User', foreign_keys=[uploaded_by])
+
+    def __repr__(self):
+        return f'<TaskAttachment {self.original_filename}>'
+
+
+class TaskComment(db.Model):
+    """Trao đổi giữa sếp và nhân viên về task"""
+    __tablename__ = 'task_comments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    task = db.relationship('Task', back_populates='comments')
+    user = db.relationship('User', foreign_keys=[user_id])
+
+    def __repr__(self):
+        return f'<TaskComment task={self.task_id} user={self.user_id}>'
+
+
+class TaskCommentRead(db.Model):
+    __tablename__ = 'task_comment_reads'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    comment_id = db.Column(db.Integer, db.ForeignKey('task_comments.id', ondelete='CASCADE'), nullable=False)
+    read_at = db.Column(db.DateTime, default=datetime.utcnow)
+    task = db.relationship('Task', backref='comment_reads')
+    user = db.relationship('User', backref='comment_reads')
+    comment = db.relationship('TaskComment', backref=db.backref('read_records', cascade='all, delete-orphan'))
+
+    # Unique constraint: mỗi user chỉ đánh dấu đọc 1 lần cho 1 comment
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'comment_id', name='unique_user_comment_read'),
+        db.Index('idx_task_user_unread', 'task_id', 'user_id'),
+    )
+
+    def __repr__(self):
+        return f'<TaskCommentRead user={self.user_id} comment={self.comment_id}>'
 
 @login_manager.user_loader
 def load_user(user_id):

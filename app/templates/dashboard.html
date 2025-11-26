@@ -852,7 +852,7 @@ function setChartDateRange(days) {
         <div class="row mb-4 stats-row">
             <!-- Tổng Nhiệm Vụ -->
             <div class="col-md-3 col-12 mb-3 stat-card-total">
-                <a href="{{ url_for('tasks.tasks_by_status', status='ALL', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+                <a href="{{ url_for('tasks.list_tasks', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
                    class="stat-card-clickable">
                     <div class="card text-white bg-primary">
                         <div class="card-body">
@@ -882,7 +882,7 @@ function setChartDateRange(days) {
 
             <!-- Chưa Làm -->
             <div class="col-md-3 col-12 mb-3 stat-card-pending">
-                <a href="{{ url_for('tasks.tasks_by_status', status='PENDING', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+                <a href="{{ url_for('tasks.list_tasks', status='PENDING', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
                    class="stat-card-clickable">
                     <div class="card text-white bg-warning">
                         <div class="card-body">
@@ -912,7 +912,7 @@ function setChartDateRange(days) {
 
             <!-- Đang Làm -->
             <div class="col-md-3 col-12 mb-3 stat-card-progress">
-                <a href="{{ url_for('tasks.tasks_by_status', status='IN_PROGRESS', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+                <a href="{{ url_for('tasks.list_tasks', status='IN_PROGRESS', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
                    class="stat-card-clickable">
                     <div class="card text-white bg-info">
                         <div class="card-body">
@@ -942,7 +942,7 @@ function setChartDateRange(days) {
 
             <!-- Hoàn thành -->
             <div class="col-md-3 col-12 mb-3 stat-card-done">
-                <a href="{{ url_for('tasks.tasks_by_status', status='DONE', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
+                <a href="{{ url_for('tasks.list_tasks', status='DONE', date_from=date_from, date_to=date_to, assigned_user=assigned_user) }}"
                    class="stat-card-clickable">
                     <div class="card text-white bg-success">
                         <div class="card-body">

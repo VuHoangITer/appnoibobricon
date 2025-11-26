@@ -27,6 +27,7 @@
     object-fit: cover;
     border-radius: 50%;
 }
+
 /* Completer Avatar */
 .completer-avatar {
     width: 40px;
@@ -49,37 +50,166 @@
     object-fit: cover;
     border-radius: 50%;
 }
+
+/* Attachments */
+.attachment-item {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.attachment-icon {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.attachment-info {
+    flex: 1;
+}
+
+.attachment-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* Comments */
+.comments-section {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.comment-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.comment-text {
+    color: #495057;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.comment-input-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.comment-input-wrapper textarea {
+    flex: 1;
+    resize: none;
+}
+
+/* Upload area */
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f8f9fa;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.upload-area.drag-over {
+    border-color: #198754;
+    background: #d1e7dd;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row">
+    <!-- ===== CỘT TRÁI: THÔNG TIN CHÍNH ===== -->
     <div class="col-md-8">
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">
                     <i class="bi bi-card-text"></i> {{ task.title }}
                     {% if task | is_overdue and task.status != 'DONE' %}
                     <span class="badge bg-danger ms-2">QUÁ HẠN</span>
                     {% endif %}
-                    {% if task.status == 'DONE' %}
-                        {% if task.completed_overdue %}
-                        <span class="badge bg-danger text-dark ms-2">
-                            <i class="bi bi-exclamation-triangle-fill"></i> HOÀN THÀNH QUÁ HẠN
-                        </span>
-                        {% endif %}
+                    {% if task.status == 'DONE' and task.completed_overdue %}
+                    <span class="badge bg-danger text-dark ms-2">
+                        <i class="bi bi-exclamation-triangle-fill"></i> HOÀN THÀNH QUÁ HẠN
+                    </span>
                     {% endif %}
                 </h4>
                 <div class="d-flex gap-2 align-items-center">
                     <span class="badge bg-{{ task.status | status_badge }}" style="font-size: 0.9rem;">
                         {{ task.status | status_vn }}
                     </span>
-
-                    <!-- Nút xóa nhỏ, bo tròn, chỉ có icon -->
                     {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
                     <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}"
-                          onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');"
-                          class="mb-0">
+                          onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');" class="mb-0">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="btn btn-danger btn-sm rounded-circle"
                                 style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"
@@ -91,33 +221,32 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- Hiển thị các thẻ tags -->
+                <!-- Thẻ đánh dấu -->
                 <div class="mb-3">
-                    <h5><i class="bi bi-tags-fill"></i> Thẻ đánh dấu:</h5>
+                    <h6><i class="bi bi-tags-fill"></i> Thẻ đánh dấu:</h6>
                     <div class="d-flex flex-wrap gap-2">
                         {% if task.is_urgent %}
-                        <span class="badge bg-danger" style="font-size: 1rem; padding: 8px 12px;">
+                        <span class="badge bg-danger" style="font-size: 0.95rem; padding: 6px 10px;">
                             <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
                         </span>
                         {% endif %}
                         {% if task.is_important %}
-                        <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 8px 12px;">
+                        <span class="badge bg-warning text-dark" style="font-size: 0.95rem; padding: 6px 10px;">
                             <i class="bi bi-star-fill"></i> QUAN TRỌNG
                         </span>
                         {% endif %}
                         {% if task.is_recurring %}
-                        <span class="badge bg-info text-dark" style="font-size: 1rem; padding: 8px 12px;">
+                        <span class="badge bg-info text-dark" style="font-size: 0.95rem; padding: 6px 10px;">
                             <i class="bi bi-arrow-repeat"></i> LẶP LẠI
                         </span>
                         {% endif %}
                         {% if not task.is_urgent and not task.is_important and not task.is_recurring %}
-                        <span class="text-muted"><i>Chưa có thẻ nào</i></span>
+                        <span class="text-muted"><i>Chưa có thẻ</i></span>
                         {% endif %}
                     </div>
 
-                    <!-- Form cập nhật tags - chỉ Director/Manager -->
                     {% if current_user.role in ['director', 'manager'] %}
-                    <div class="mt-3">
+                    <div class="mt-2">
                         <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#updateTagsForm">
                             <i class="bi bi-pencil"></i> Cập nhật thẻ
                         </button>
@@ -125,32 +254,26 @@
                             <div class="card card-body bg-light">
                                 <form method="POST" action="{{ url_for('tasks.update_tags', task_id=task.id) }}">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <div class="mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="is_urgent" id="edit_is_urgent" {% if task.is_urgent %}checked{% endif %}>
-                                            <label class="form-check-label" for="edit_is_urgent">
-                                                <span class="badge bg-danger">KHẨN CẤP</span>
-                                            </label>
-                                        </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_urgent" id="edit_is_urgent" {% if task.is_urgent %}checked{% endif %}>
+                                        <label class="form-check-label" for="edit_is_urgent">
+                                            <span class="badge bg-danger">KHẨN CẤP</span>
+                                        </label>
                                     </div>
-                                    <div class="mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="is_important" id="edit_is_important" {% if task.is_important %}checked{% endif %}>
-                                            <label class="form-check-label" for="edit_is_important">
-                                                <span class="badge bg-warning text-dark">QUAN TRỌNG</span>
-                                            </label>
-                                        </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_important" id="edit_is_important" {% if task.is_important %}checked{% endif %}>
+                                        <label class="form-check-label" for="edit_is_important">
+                                            <span class="badge bg-warning text-dark">QUAN TRỌNG</span>
+                                        </label>
                                     </div>
-                                    <div class="mb-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="is_recurring" id="edit_is_recurring" {% if task.is_recurring %}checked{% endif %}>
-                                            <label class="form-check-label" for="edit_is_recurring">
-                                                <span class="badge bg-info text-dark">LẶP LẠI</span>
-                                            </label>
-                                        </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="is_recurring" id="edit_is_recurring" {% if task.is_recurring %}checked{% endif %}>
+                                        <label class="form-check-label" for="edit_is_recurring">
+                                            <span class="badge bg-info text-dark">LẶP LẠI</span>
+                                        </label>
                                     </div>
                                     <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-check-circle"></i> Lưu thẻ
+                                        <i class="bi bi-check-circle"></i> Lưu
                                     </button>
                                 </form>
                             </div>
@@ -161,433 +284,898 @@
 
                 <hr>
 
-                <p><strong>Mô tả:</strong></p>
-                <p>{{ task.description or 'Không có mô tả' }}</p>
+                <!-- Mô tả -->
+                <div class="mb-3">
+                    <h6><i class="bi bi-file-text"></i> Mô tả:</h6>
+                    <p class="mb-0">{{ task.description or 'Không có mô tả' }}</p>
+                </div>
 
                 <hr>
 
+                <!-- Thông tin cơ bản -->
                 <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Người tạo:</strong> {{ task.creator.full_name }}</p>
-                        <p><strong>Ngày tạo:</strong> {{ task.created_at | vn_datetime }}</p>
+                    <div class="col-md-6 mb-2">
+                        <p class="mb-1"><strong>Người tạo:</strong></p>
+                        <p class="mb-0">{{ task.creator.full_name }}</p>
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Hạn hoàn thành:</strong>
-                            {% if task.due_date %}
-                            <span class="badge bg-{{ 'danger' if (task | is_overdue and task.status != 'DONE') else 'secondary' }}">
-                                {{ task.due_date | vn_datetime('%H:%M - %d/%m/%Y') }}
-                            </span>
-                            {% if task | is_overdue and task.status != 'DONE' %}
-                            <span class="text-danger ms-2"><i class="bi bi-exclamation-triangle-fill"></i> Quá hạn</span>
-                            {% endif %}
-                            {% else %}
-                            <span class="text-muted">Chưa có</span>
-                            {% endif %}
-                        </p>
-                        <p><strong>Cập nhật lần cuối:</strong> {{ task.updated_at | vn_datetime }}</p>
+                    <div class="col-md-6 mb-2">
+                        <p class="mb-1"><strong>Ngày tạo:</strong></p>
+                        <p class="mb-0">{{ task.created_at | vn_datetime }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <p class="mb-1"><strong>Hạn hoàn thành:</strong></p>
+                        {% if task.due_date %}
+                        <span class="badge bg-{{ 'danger' if (task | is_overdue and task.status != 'DONE') else 'secondary' }}">
+                            {{ task.due_date | vn_datetime('%H:%M - %d/%m/%Y') }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">Chưa có</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <p class="mb-1"><strong>Cập nhật cuối:</strong></p>
+                        <p class="mb-0">{{ task.updated_at | vn_datetime }}</p>
                     </div>
                 </div>
 
-                <!-- Thông tin Recurring Task -->
+                <!-- Thông tin Recurring -->
                 {% if task.recurrence_enabled %}
-                <div class="recurring-task-info mb-4">
-                    <div class="border-start border-primary border-4 ps-4">
-                        <h6 class="text-primary fw-bold mb-3">
-                            <i class="bi bi-arrow-repeat"></i> Tự động lặp lại
-                        </h6>
-
-                        <div class="small text-muted">
-                            <div class="mb-2">
-                                <strong>Chu kỳ:</strong>
-                                {% if task.recurrence_interval_days == 7 %}
-                                    Hàng tuần (7 ngày)
-                                {% elif task.recurrence_interval_days == 14 %}
-                                    2 tuần (14 ngày)
-                                {% elif task.recurrence_interval_days == 30 %}
-                                    Hàng tháng (30 ngày)
-                                {% else %}
-                                    {{ task.recurrence_interval_days }} ngày
-                                {% endif %}
-                            </div>
-
-                            {% if task.last_recurrence_date %}
-                            <div class="mb-2">
-                                <strong>Lần tạo gần nhất:</strong> {{ task.last_recurrence_date | vn_datetime }}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Lần tạo tiếp theo:</strong>
-                                <span class="text-primary fw-500">
-                                    {{ task.last_recurrence_date | add_days(task.recurrence_interval_days) | vn_datetime }}
-                                </span>
-                            </div>
-                            {% endif %}
-
-                            {% if current_user.role in ['director', 'manager'] %}
-                            <div class="text-muted mt-3">
-                                <small><i class="bi bi-info-circle"></i> Hệ thống sẽ tự động tạo nhiệm vụ mới và giao cho cùng người/nhóm khi đến chu kỳ.</small>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Task con (tạo tự động từ nhiệm vụ lặp) -->
-                {% if task.parent_task_id %}
-                <div class="mb-4">
-                    <div class="border-start border-success border-4 ps-4">
-                        <div class="small text-muted">
-                            <i class="bi bi-link-45deg"></i>
-                            <strong class="text-dark">Nhiệm vụ lặp lại</strong><br>
-                            Nhiệm vụ này được tạo tự động từ:
-                            <a href="{{ url_for('tasks.task_detail', task_id=task.parent_task_id) }}" class="text-decoration-none fw-500">
-                                Nhiệm vụ gốc #{{ task.parent_task_id }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
                 <hr>
+                <div class="border-start border-primary border-3 ps-3 mb-3">
+                    <h6 class="text-primary mb-2">
+                        <i class="bi bi-arrow-repeat"></i> Tự động lặp lại
+                    </h6>
+                    <small class="text-muted">
+                        <strong>Chu kỳ:</strong>
+                        {% if task.recurrence_interval_days == 7 %}Hàng tuần
+                        {% elif task.recurrence_interval_days == 14 %}2 tuần
+                        {% elif task.recurrence_interval_days == 30 %}Hàng tháng
+                        {% else %}{{ task.recurrence_interval_days }} ngày{% endif %}
+                        {% if task.last_recurrence_date %}
+                        <br><strong>Lần tạo tiếp theo:</strong> {{ task.last_recurrence_date | add_days(task.recurrence_interval_days) | vn_datetime }}
+                        {% endif %}
+                    </small>
+                </div>
+                {% endif %}
 
-                <!-- BÁO CÁO HOÀN THÀNH -->
-                    {% if task.status == 'DONE' %}
-                    <div class="card mb-3 border-white">
-                        <div class="card-header bg-white text-light">
-                            <h5 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h5>
-                        </div>
-                        <div class="card-body">
-                            {% set reports = task.completion_reports.all() %}
-                            {% if reports %}
-                                {% set completion_report = reports[0] %}
+                <!-- Task con -->
+                {% if task.parent_task_id %}
+                <div class="border-start border-success border-3 ps-3 mb-3">
+                    <small class="text-muted">
+                        <i class="bi bi-link-45deg"></i> Nhiệm vụ lặp lại từ
+                        <a href="{{ url_for('tasks.task_detail', task_id=task.parent_task_id) }}">
+                            #{{ task.parent_task_id }}
+                        </a>
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1"><strong><i class="bi bi-person-fill"></i> Người hoàn thành:</strong></p>
-                                        <div class="d-flex align-items-center gap-2 mt-2">
-                                            <div class="completer-avatar">
-                                                {% if completion_report.completer.avatar %}
-                                                    <img src="{{ url_for('profile.get_avatar', filename=completion_report.completer.avatar) }}" alt="">
-                                                {% else %}
-                                                    {{ completion_report.completer.full_name[0].upper() }}
-                                                {% endif %}
-                                            </div>
-                                            <div>
-                                                <strong>{{ completion_report.completer.full_name }}</strong>
-                                                <span class="badge bg-secondary ms-1">{{ completion_report.completer.role | role_vn }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1"><strong><i class="bi bi-calendar-check"></i> Thời gian:</strong></p>
-                                        <p>{{ completion_report.completed_at | vn_datetime }}</p>
-                                    </div>
-                                </div>
-
-                                {% if completion_report.completion_time %}
-                                <p class="mb-2">
-                                    <strong> Thời gian làm việc:</strong>
-                                        {% set days = (completion_report.completion_time // 1440) %}
-                                        {% set hours = ((completion_report.completion_time % 1440) // 60) %}
-                                        {% set minutes = (completion_report.completion_time % 60) %}
-                                        {% if days > 0 %}{{ days }} ngày {% endif %}
-                                        {% if hours > 0 %}{{ hours }} giờ {% endif %}{{ minutes }} phút
-                                </p>
-                                {% endif %}
-
-                                {% if completion_report.completion_note %}
-                                <div class="mb-0">
-                                    <p class="mb-1"><strong> Nội dung Báo cáo:</strong></p>
-                                    <p class="mb-0" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
-                                </div>
-                                {% endif %}
-
-                            {% else %}
-                                <div class="alert alert-secondary mb-0">
-                                    <i class="bi bi-info-circle"></i> Nhiệm vụ hoàn thành trước khi có hệ thống báo cáo.
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                <!-- Accept/Reject buttons cho task được giao nhóm -->
+        <!-- FORM CẬP NHẬT TRẠNG THÁI -->
+        {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật trạng thái</h5>
+            </div>
+            <div class="card-body">
+                <!-- Accept/Reject -->
                 {% if user_assignment and not user_assignment.accepted and user_assignment.assigned_group %}
                 <div class="alert alert-info">
-                    <h5><i class="bi bi-info-circle"></i> Nhiệm vụ này được giao cho nhóm {{ user_assignment.assigned_group | role_vn }}</h5>
-                    <p>Bạn cần chấp nhận nhiệm vụ này để nó xuất hiện trong danh sách task của bạn.</p>
+                    <p class="mb-2"><strong>Nhiệm vụ được giao cho nhóm {{ user_assignment.assigned_group | role_vn }}</strong></p>
+                    <p class="mb-3">Bạn cần chấp nhận để hiển thị trong danh sách của mình.</p>
                     <form method="POST" action="{{ url_for('tasks.accept_task', task_id=task.id) }}" style="display: inline;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success btn-sm">
                             <i class="bi bi-check-circle"></i> Chấp nhận
                         </button>
                     </form>
-                    <form method="POST" action="{{ url_for('tasks.reject_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn từ chối task này?');">
+                    <form method="POST" action="{{ url_for('tasks.reject_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn từ chối?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-danger">
+                        <button type="submit" class="btn btn-danger btn-sm">
                             <i class="bi bi-x-circle"></i> Từ chối
                         </button>
                     </form>
                 </div>
-                <hr>
                 {% endif %}
 
-                <!-- Update status form -->
-                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
-
-                {% set is_done_locked = (task.status == 'DONE') and current_user.role not in ['director', 'manager'] %}
-
-                <!-- CẢNH BÁO NẾU ĐANG QUÁ HẠN -->
+                <!-- Cảnh báo quá hạn -->
                 {% if (task | is_overdue) and task.status != 'DONE' %}
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>Nhiệm vụ này đã quá hạn!</strong>
-                    Nếu bạn đánh dấu hoàn thành, nó sẽ được ghi nhận là "Hoàn thành quá hạn".
+                    <strong>Nhiệm vụ đã quá hạn!</strong> Hoàn thành sẽ được ghi nhận là "Quá hạn".
                 </div>
                 {% endif %}
 
-                <!-- Alert nếu task DONE bị khóa -->
-                {% if is_done_locked %}
-                <div class="alert alert-success border-success">
-                    <h5><i class="bi bi-lock-fill"></i> Nhiệm vụ đã hoàn thành và bị khóa</h5>
-                    <p class="mb-0">Task này đã được đánh dấu hoàn thành. Chỉ <strong>Giám đốc</strong> hoặc <strong>Trưởng phòng</strong> mới có thể thay đổi trạng thái.</p>
+                <!-- Khóa DONE -->
+                {% if task.status == 'DONE' and current_user.role not in ['director', 'manager'] %}
+                <div class="alert alert-success">
+                    <i class="bi bi-lock-fill"></i> <strong>Nhiệm vụ đã hoàn thành</strong><br>
+                    Chỉ Giám đốc/Trưởng phòng mới có thể thay đổi.
                 </div>
                 {% endif %}
 
-                <div class="mb-3">
-                    <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <!-- Form -->
+                <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="status" class="form-label"><strong>Trạng thái:</strong></label>
+                        <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
+                            <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
+                            <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
+                            <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                            <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="completionNoteDiv" style="display: none;">
+                        <label for="completion_note" class="form-label">
+                            <strong><i class="bi bi-chat-left-text"></i> Nội dung báo cáo:</strong>
+                        </label>
+                        <textarea class="form-control" id="completion_note" name="completion_note" rows="3"
+                                  placeholder="Nhập báo cáo..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Cập nhật
+                    </button>
+                </form>
 
-                        <div class="mb-3">
-                            <label for="status" class="form-label"><strong>Cập nhật trạng thái:</strong></label>
-                            <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
-                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
-                                <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
-                                <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
-                                <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
-                            </select>
-                        </div>
-
-                        <!-- THÊM MỚI: TEXTAREA GHI CHÚ -->
-                        <div class="mb-3" id="completionNoteDiv" style="display: none;">
-                            <label for="completion_note" class="form-label">
-                                <strong><i class="bi bi-chat-left-text"></i> Nội dung báo cáo:<small class="text-muted">(Nếu có)</small></strong>
-                            </label>
-                            <textarea
-                                class="form-control"
-                                id="completion_note"
-                                name="completion_note"
-                                rows="3"
-                                placeholder="Nhập ghi chú về cách bạn hoàn thành nhiệm vụ..."></textarea>
-                            <small class="text-muted">
-                                <i class="bi bi-info-circle"></i> Ghi chú này sẽ được gửi đến người giao việc.
-                            </small>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Cập nhật
-                        </button>
-
-                        {% if task.status == 'DONE' %}
-                        {% if current_user.role not in ['director', 'manager'] %}
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <i class="bi bi-lock-fill"></i> <strong>Lưu ý:</strong> Nhiệm vụ đã hoàn thành và bị khóa.
-                            Chỉ Giám đốc hoặc Trưởng phòng mới có thể thay đổi trạng thái.
-                        </div>
-                        {% endif %}
-                        {% endif %}
-                    </form>
-
-                    <script>
-                    function handleStatusChange() {
-                        const statusSelect = document.getElementById('status');
-                        const completionNoteDiv = document.getElementById('completionNoteDiv');
-                        const currentStatus = '{{ task.status }}';
-
-                        if (statusSelect.value === 'DONE' && currentStatus !== 'DONE') {
-                            completionNoteDiv.style.display = 'block';
-                        } else {
-                            completionNoteDiv.style.display = 'none';
-                        }
+                <script>
+                function handleStatusChange() {
+                    const statusSelect = document.getElementById('status');
+                    const completionNoteDiv = document.getElementById('completionNoteDiv');
+                    const currentStatus = '{{ task.status }}';
+                    if (statusSelect.value === 'DONE' && currentStatus !== 'DONE') {
+                        completionNoteDiv.style.display = 'block';
+                    } else {
+                        completionNoteDiv.style.display = 'none';
                     }
+                }
+                document.addEventListener('DOMContentLoaded', handleStatusChange);
+                </script>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
-                    document.addEventListener('DOMContentLoaded', handleStatusChange);
-                    </script>
-                </div>
+    <!-- ===== CỘT PHẢI: NGƯỜI ĐƯỢC GIAO + CARDS PHỤ ===== -->
+    <div class="col-md-4">
+        <!-- Người được giao -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-people"></i> Người được giao</h6>
+            </div>
+            <div class="card-body">
+                {% if assignments %}
+                <ul class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                    <li class="list-group-item px-0">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="assignment-avatar">
+                                {% if assignment.user.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="">
+                                {% else %}
+                                {{ assignment.user.full_name[0].upper() }}
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong class="d-block">{{ assignment.user.full_name }}</strong>
+                                <small class="text-muted">{{ assignment.user.role | role_vn }}</small>
+                            </div>
+                            <div>
+                                {% if assignment.accepted %}
+                                <span class="badge bg-success">Đã nhận</span>
+                                {% else %}
+                                <span class="badge bg-warning">Chờ</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if assignment.assigned_group %}
+                        <small class="text-muted">Nhóm: {{ assignment.assigned_group | role_vn }}</small>
+                        {% endif %}
+                        {% if assignment.accepted and assignment.accepted_at %}
+                        <small class="text-muted d-block">{{ assignment.accepted_at | vn_datetime }}</small>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">Chưa có người được gán</p>
                 {% endif %}
             </div>
         </div>
-    </div>
 
-    <div class="col-md-4">
-        <!-- Card: Người được giao nhiệm vụ -->
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="bi bi-people"></i> Người được giao nhiệm vụ</h5>
+        <!-- Báo cáo hoàn thành -->
+        {% if task.status == 'DONE' %}
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h6>
             </div>
             <div class="card-body">
-            {% if assignments %}
-            <ul class="list-group">
-                {% for assignment in assignments %}
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-3">
-                            <!-- Avatar -->
-                            <div class="assignment-avatar">
-                                {% if assignment.user.avatar %}
-                                    <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="">
-                                {% else %}
-                                    {{ assignment.user.full_name[0].upper() }}
-                                {% endif %}
-                            </div>
-                            <!-- Info -->
-                            <div>
-                                <strong>{{ assignment.user.full_name }}</strong>
-                                <br>
-                                <small class="text-muted">{{ assignment.user.role | role_vn }}</small>
-                                {% if assignment.assigned_group %}
-                                <br>
-                                <small><span class="badge bg-secondary">Nhóm: {{ assignment.assigned_group | role_vn }}</span></small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div>
-                            {% if assignment.accepted %}
-                            <span class="badge bg-success">Đã chấp nhận</span>
-                            {% else %}
-                            <span class="badge bg-warning">Chờ chấp nhận</span>
-                            {% endif %}
-                        </div>
+                {% set reports = task.completion_reports.all() %}
+                {% if reports %}
+                {% set completion_report = reports[0] %}
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="completer-avatar">
+                        {% if completion_report.completer.avatar %}
+                        <img src="{{ url_for('profile.get_avatar', filename=completion_report.completer.avatar) }}" alt="">
+                        {% else %}
+                        {{ completion_report.completer.full_name[0].upper() }}
+                        {% endif %}
                     </div>
-                    {% if assignment.accepted and assignment.accepted_at %}
-                    <small class="text-muted d-block mt-2">Chấp nhận lúc: {{ assignment.accepted_at | vn_datetime }}</small>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-muted">Chưa có người được gán.</p>
-            {% endif %}
+                    <div>
+                        <strong class="d-block">{{ completion_report.completer.full_name }}</strong>
+                        <small class="text-muted">{{ completion_report.completed_at | vn_datetime }}</small>
+                    </div>
+                </div>
+                {% if completion_report.completion_time %}
+                <p class="mb-2 small">
+                    <strong>Thời gian:</strong>
+                    {% set days = (completion_report.completion_time // 1440) %}
+                    {% set hours = ((completion_report.completion_time % 1440) // 60) %}
+                    {% set minutes = (completion_report.completion_time % 60) %}
+                    {% if days > 0 %}{{ days }}ng {% endif %}
+                    {% if hours > 0 %}{{ hours }}h {% endif %}{{ minutes }}ph
+                </p>
+                {% endif %}
+                {% if completion_report.completion_note %}
+                <p class="mb-0 small" style="white-space: pre-wrap;">{{ completion_report.completion_note }}</p>
+                {% endif %}
+                {% else %}
+                <p class="text-muted small mb-0">Hoàn thành trước khi có hệ thống báo cáo</p>
+                {% endif %}
+            </div>
+        </div>
 
-        <!-- Card: Trạng thái nhiệm vụ (nếu DONE) -->
-        {% if task.status == 'DONE' %}
-        <div class="card mt-3 ">
+        <!-- Trạng thái (DONE) -->
+        <div class="card mb-3">
             <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
                 <h6 class="mb-0">
                     <i class="bi bi-{% if current_user.role in ['director', 'manager'] %}unlock{% else %}lock{% endif %}-fill"></i>
-                    Trạng thái nhiệm vụ
+                    Trạng thái
                 </h6>
             </div>
             <div class="card-body">
                 {% if task.completed_overdue %}
-                <p class="text-warning mb-2">
-                    <i class="bi bi-exclamation-triangle-fill"></i> <strong>Nhiệm vụ này đã hoàn thành QUÁ HẠN!</strong>
-                </p>
-                <small class="text-muted">
-                    Nhiệm vụ được đánh dấu hoàn thành sau khi quá hạn. Điều này sẽ ảnh hưởng đến đánh giá hiệu suất.
-                </small>
+                <p class="text-warning mb-1"><strong>Hoàn thành QUÁ HẠN</strong></p>
+                <small class="text-muted">Ảnh hưởng đến đánh giá hiệu suất</small>
                 {% else %}
-                <p class="text-success mb-2">
-                    <i class="bi bi-check-circle-fill"></i> Nhiệm vụ này đã hoàn thành đúng hạn.
-                </p>
-                {% endif %}
-
-                {% if current_user.role in ['director', 'manager'] %}
-                <hr>
-                <small class="text-muted">
-                    <i class="bi bi-shield-check"></i> Bạn có quyền thay đổi trạng thái nhiệm vụ này.
-                </small>
-                {% else %}
-                <hr>
-                <small class="text-muted">
-                    <i class="bi bi-lock-fill"></i> Vui lòng liên hệ Giám đốc hoặc Trưởng phòng nếu cần thay đổi trạng thái.
-                </small>
+                <p class="text-success mb-0"><i class="bi bi-check-circle-fill"></i> Hoàn thành đúng hạn</p>
                 {% endif %}
             </div>
         </div>
-        {% endif %}
 
-        <!-- Card: Đánh giá hiệu suất (chỉ hiện khi DONE) -->
-        {% if task.status == 'DONE' %}
-        <div class="card mt-3">
+        <!-- Đánh giá hiệu suất -->
+        <div class="card mb-3">
             <div class="card-header {% if task.performance_rating == 'good' %}bg-success{% elif task.performance_rating == 'bad' %}bg-danger{% else %}bg-secondary{% endif %} text-white">
-                <h5 class="mb-0"><i class="bi bi-star-fill"></i> Đánh giá hiệu suất</h5>
+                <h6 class="mb-0"><i class="bi bi-star-fill"></i> Đánh giá</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body text-center">
                 {% if task.performance_rating %}
-                    <!-- Đã được đánh giá -->
-                    <div class="text-center py-3">
-                        {% if task.performance_rating == 'good' %}
-                        <div class="mb-3">
-                            <i class="bi bi-hand-thumbs-up-fill text-success" style="font-size: 4rem;"></i>
-                        </div>
-                        <h4 class="text-success">TỐT</h4>
-                        {% else %}
-                        <div class="mb-3">
-                            <i class="bi bi-hand-thumbs-down-fill text-danger" style="font-size: 4rem;"></i>
-                        </div>
-                        <h4 class="text-danger">CẦN CẢI THIỆN</h4>
-                        {% endif %}
-                        <small class="text-muted">
-                            Đánh giá bởi: <strong>{{ task.rater.full_name }}</strong><br>
-                            Vào lúc: {{ task.rated_at | vn_datetime }}
-                        </small>
-
-                        <!-- Cho phép Director/Manager thay đổi đánh giá -->
-                        {% if current_user.role in ['director', 'manager'] %}
-                        <hr>
-                        <small class="text-muted">Bạn có thể thay đổi đánh giá:</small>
-                        <div class="mt-2">
-                            <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" style="display: inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <input type="hidden" name="rating" value="good"/>
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="bi bi-hand-thumbs-up-fill"></i> Tốt
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" style="display: inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <input type="hidden" name="rating" value="bad"/>
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    <i class="bi bi-hand-thumbs-down-fill"></i> Cần cải thiện
-                                </button>
-                            </form>
-                        </div>
-                        {% endif %}
-                    </div>
-                {% else %}
-                    <!-- Chưa được đánh giá -->
-                    {% if current_user.role in ['director', 'manager'] %}
-                    <p class="text-center text-muted mb-3">
-                        <i class="bi bi-info-circle"></i> Nhiệm vụ này đã hoàn thành. Hãy đánh giá hiệu suất làm việc:
-                    </p>
-                    <div class="d-flex gap-2">
-                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <input type="hidden" name="rating" value="good"/>
-                            <button type="submit" class="btn btn-success btn-lg w-100">
-                                <i class="bi bi-hand-thumbs-up-fill"></i>
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <input type="hidden" name="rating" value="bad"/>
-                            <button type="submit" class="btn btn-danger btn-lg w-100">
-                                <i class="bi bi-hand-thumbs-down-fill"></i>
-                            </button>
-                        </form>
-                    </div>
+                <div class="mb-3">
+                    {% if task.performance_rating == 'good' %}
+                    <i class="bi bi-hand-thumbs-up-fill text-success" style="font-size: 3rem;"></i>
+                    <h5 class="text-success mt-2">TỐT</h5>
                     {% else %}
-                    <p class="text-center text-muted">
-                        <i class="bi bi-hourglass-split"></i> Chờ Giám đốc/Trưởng phòng đánh giá
-                    </p>
+                    <i class="bi bi-hand-thumbs-down-fill text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="text-danger mt-2">CẦN CẢI THIỆN</h5>
                     {% endif %}
+                </div>
+                <small class="text-muted">
+                    {{ task.rater.full_name }}<br>
+                    {{ task.rated_at | vn_datetime }}
+                </small>
+                {% if current_user.role in ['director', 'manager'] %}
+                <hr>
+                <div class="d-flex gap-2 mt-2">
+                    <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="rating" value="good"/>
+                        <button type="submit" class="btn btn-success btn-sm w-100">
+                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="rating" value="bad"/>
+                        <button type="submit" class="btn btn-danger btn-sm w-100">
+                            <i class="bi bi-hand-thumbs-down-fill"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                {% else %}
+                {% if current_user.role in ['director', 'manager'] %}
+                <p class="text-muted small mb-3">Hãy đánh giá hiệu suất:</p>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="rating" value="good"/>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('tasks.rate_task', task_id=task.id) }}" class="flex-fill">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="rating" value="bad"/>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-hand-thumbs-down-fill"></i>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-hourglass-split"></i> Chờ đánh giá
+                </p>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
         {% endif %}
     </div>
 </div>
+
+<!-- ===== FULL WIDTH: FILE ĐÍNH KÈM + TRAO ĐỔI ===== -->
+<div class="row mt-3">
+    <!-- File đính kèm -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-paperclip"></i> File đính kèm</h6>
+            </div>
+            <div class="card-body">
+                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+                <div class="upload-area mb-3" id="uploadArea">
+                    <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #0d6efd;"></i>
+                    <p class="mb-1">Kéo thả hoặc click để chọn</p>
+                    <small class="text-muted">Max 10MB</small>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                </div>
+                {% endif %}
+
+                <div id="attachmentsList">
+                    {% for attachment in task.attachments %}
+                    <div class="attachment-item" data-id="{{ attachment.id }}">
+                        <div class="d-flex align-items-center flex-1">
+                            <i class="bi bi-file-earmark attachment-icon text-primary"></i>
+                            <div class="attachment-info">
+                                <strong>{{ attachment.original_filename }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ (attachment.file_size / 1024) | round(1) }} KB •
+                                    {{ attachment.uploader.full_name }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="attachment-actions">
+                            <a href="{{ url_for('tasks.download_attachment', task_id=task.id, attachment_id=attachment.id) }}"
+                               class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            {% if attachment.uploaded_by == current_user.id or current_user.role in ['director', 'manager'] %}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ attachment.id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0" id="noAttachments">Chưa có file</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trao đổi -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Trao đổi</h6>
+            </div>
+            <div class="card-body">
+                <div class="comments-section" id="commentsList">
+                    {% for comment in sorted_comments %}
+                    <div class="comment-item" data-id="{{ comment.id }}">
+                        <div class="comment-avatar">
+                            {% if comment.user.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=comment.user.avatar) }}" alt="">
+                            {% else %}
+                            {{ comment.user.full_name[0].upper() }}
+                            {% endif %}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <div>
+                                    <span class="comment-author">{{ comment.user.full_name }}</span>
+                                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ comment.user.role | role_vn }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="comment-time">{{ comment.created_at | vn_datetime }}</span>
+                                    {% if comment.user_id == current_user.id or current_user.role == 'director' %}
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment({{ comment.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="comment-text">{{ comment.content }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center" id="noComments">Chưa có bình luận</p>
+                    {% endfor %}
+                </div>
+
+                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+                <div class="comment-input-wrapper">
+                    <textarea class="form-control" id="commentInput" rows="2" placeholder="Nhập bình luận..."></textarea>
+                    <button class="btn btn-primary" onclick="addComment()" id="btnAddComment">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
-</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TASK_ID = {{ task.id }};
+const CONFIG = {
+    TASK_ID: {{ task.id }},
+    CURRENT_USER_ID: {{ current_user.id }},
+    CURRENT_USER_ROLE: '{{ current_user.role }}',
+    CSRF_TOKEN: '{{ csrf_token() }}'
+};
+
+const ROLE_MAP = {
+    'director': 'Giám đốc',
+    'manager': 'Trưởng phòng',
+    'accountant': 'Kế toán',
+    'hr': 'Nhân sự'
+};
+
+let lastTimestamp = 0;
+let knownCommentIds = new Set();
+let isFirstPoll = true;
+
+// DOM elements
+const commentsList = document.getElementById('commentsList');
+const commentInput = document.getElementById('commentInput');
+const btnAddComment = document.getElementById('btnAddComment');
+
+// Initialize known comment IDs
+document.querySelectorAll('.comment-item[data-id]').forEach(el => {
+    const id = parseInt(el.getAttribute('data-id'));
+    knownCommentIds.add(id);
+});
+
+// ============================================
+// FILE UPLOAD
+// ============================================
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+
+if (uploadArea) {
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+}
+
+function handleFiles(files) {
+    Array.from(files).forEach(file => uploadFile(file));
+}
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch(`/tasks/${TASK_ID}/upload-attachment`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addAttachmentToList(data.attachment);
+            showToast('Upload thành công', 'success');
+        } else {
+            showToast(data.error || 'Lỗi upload', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showToast('Có lỗi xảy ra', 'danger');
+    });
+}
+
+function addAttachmentToList(attachment) {
+    const noAttachments = document.getElementById('noAttachments');
+    if (noAttachments) noAttachments.remove();
+
+    const item = document.createElement('div');
+    item.className = 'attachment-item';
+    item.dataset.id = attachment.id;
+    item.innerHTML = `
+        <div class="d-flex align-items-center flex-1">
+            <i class="bi bi-file-earmark attachment-icon text-primary"></i>
+            <div class="attachment-info">
+                <strong>${attachment.filename}</strong>
+                <br>
+                <small class="text-muted">
+                    ${(attachment.file_size / 1024).toFixed(1)} KB •
+                    ${attachment.uploaded_by} •
+                    Vừa xong
+                </small>
+            </div>
+        </div>
+        <div class="attachment-actions">
+            <a href="/tasks/${TASK_ID}/attachments/${attachment.id}/download"
+               class="btn btn-sm btn-outline-primary" target="_blank">
+                <i class="bi bi-download"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment(${attachment.id})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+
+    document.getElementById('attachmentsList').appendChild(item);
+}
+
+function deleteAttachment(attachmentId) {
+    if (!confirm('Xóa file này?')) return;
+
+    fetch(`/tasks/${TASK_ID}/attachments/${attachmentId}/delete`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`.attachment-item[data-id="${attachmentId}"]`).remove();
+            showToast('Đã xóa file', 'success');
+        } else {
+            showToast(data.error || 'Lỗi xóa file', 'danger');
+        }
+    });
+}
+
+// ============================================
+// COMMENTS REAL-TIME
+// ============================================
+function startRealtimeComments() {
+    console.log('🚀 Starting real-time comments for task', TASK_ID);
+
+    if (typeof window.sseManager === 'undefined') {
+        console.warn('⚠️ SSE Manager not loaded, using polling fallback');
+        startPollingFallback();
+        return;
+    }
+
+    window.sseManager.connect(
+        'task-comments',
+        `/sse/tasks/${TASK_ID}/comments?last_timestamp=${lastTimestamp}`,
+        {
+            onOpen: () => {
+                console.log('✅ SSE Task Comments connected');
+            },
+            onError: (error, attempts) => {
+                console.error('❌ SSE Task Comments error:', error, 'attempts:', attempts);
+            },
+            events: {
+                'new_comments': (data) => {
+                    console.log('[SSE] New comments:', data);
+                    handleNewComments(data);
+                },
+                'comments_sync': (data) => {
+                    console.log('[SSE] Comments sync:', data);
+                    handleCommentsSync(data);
+                },
+                'heartbeat': () => {
+                    console.log('💓 SSE comments heartbeat');
+                }
+            }
+        },
+        {
+            url: `/tasks/${TASK_ID}/comments?_t=${Date.now()}`,
+            interval: 3000,
+            onData: (data) => {
+                console.log('[POLLING] Fallback data:', data);
+                if (data.success && data.comments && data.comments.length > 0) {
+                    handleNewComments(data);
+                }
+            }
+        }
+    );
+}
+
+function startPollingFallback() {
+    console.log('🔄 Starting polling fallback (3s interval)');
+    pollComments();
+    setInterval(pollComments, 3000);
+}
+
+async function pollComments() {
+    try {
+        const response = await fetch(`/tasks/${TASK_ID}/comments?_t=${Date.now()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (isFirstPoll && data.comments && data.comments.length > 0) {
+                let maxTimestamp = lastTimestamp;
+                data.comments.forEach(c => {
+                    if (c.created_at_timestamp) {
+                        maxTimestamp = Math.max(maxTimestamp, c.created_at_timestamp);
+                    }
+                });
+                lastTimestamp = maxTimestamp;
+                isFirstPoll = false;
+                return;
+            }
+
+            isFirstPoll = false;
+
+            const newComments = data.comments.filter(c =>
+                !knownCommentIds.has(c.id) && c.created_at_timestamp > lastTimestamp
+            );
+
+            if (newComments.length > 0) {
+                handleNewComments({ comments: newComments, total: data.total });
+            }
+
+            const serverIds = new Set(data.comments.map(c => c.id));
+            handleCommentsSync({ existing_ids: Array.from(serverIds), total_count: data.total });
+        }
+    } catch (error) {
+        console.error('[POLLING] Error:', error);
+    }
+}
+
+function handleNewComments(data) {
+    console.log('[HANDLER] Processing', data.comments.length, 'new comments');
+
+    data.comments.forEach(comment => {
+        if (!knownCommentIds.has(comment.id)) {
+            console.log('[HANDLER] Adding new comment ID:', comment.id);
+            addCommentToList(comment);
+            knownCommentIds.add(comment.id);
+
+            if (comment.created_at_timestamp) {
+                lastTimestamp = Math.max(lastTimestamp, comment.created_at_timestamp);
+            }
+        }
+    });
+}
+
+function handleCommentsSync(data) {
+    const existingIds = new Set(data.existing_ids);
+
+    knownCommentIds.forEach(id => {
+        if (!existingIds.has(id)) {
+            console.log('[HANDLER] Comment deleted:', id);
+            const element = document.querySelector(`.comment-item[data-id="${id}"]`);
+            if (element) {
+                element.style.transition = 'opacity 0.3s';
+                element.style.opacity = '0';
+
+                setTimeout(() => {
+                    element.remove();
+                    knownCommentIds.delete(id);
+                }, 300);
+            } else {
+                knownCommentIds.delete(id);
+            }
+        }
+    });
+}
+
+function addComment() {
+    const content = commentInput.value.trim();
+
+    if (!content) {
+        showToast('Vui lòng nhập nội dung', 'warning');
+        return;
+    }
+
+    btnAddComment.disabled = true;
+    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+
+    fetch(`/tasks/${TASK_ID}/comments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({ content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            commentInput.value = '';
+
+            addCommentToList(data.comment);
+            knownCommentIds.add(data.comment.id);
+
+            if (data.comment.created_at_timestamp) {
+                lastTimestamp = Math.max(lastTimestamp, data.comment.created_at_timestamp);
+            }
+
+            showToast('Đã gửi bình luận', 'success');
+        } else {
+            showToast(data.error || 'Lỗi gửi bình luận', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showToast('Có lỗi xảy ra', 'danger');
+    })
+    .finally(() => {
+        btnAddComment.disabled = false;
+        btnAddComment.innerHTML = '<i class="bi bi-send"></i>';
+    });
+}
+
+function addCommentToList(comment) {
+    if (document.querySelector(`.comment-item[data-id="${comment.id}"]`)) {
+        return;
+    }
+
+    const noComments = document.getElementById('noComments');
+    if (noComments) noComments.remove();
+
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.dataset.id = comment.id;
+    item.style.opacity = '0';
+
+    const avatarHTML = comment.user.avatar
+        ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
+        : comment.user.avatar_letter;
+
+    const deleteBtn = comment.can_delete
+        ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
+               <i class="bi bi-trash"></i>
+           </button>`
+        : '';
+
+    item.innerHTML = `
+        <div class="comment-avatar">${avatarHTML}</div>
+        <div class="comment-content">
+            <div class="comment-header">
+                <div>
+                    <span class="comment-author">${escapeHtml(comment.user.full_name)}</span>
+                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">${ROLE_MAP[comment.user.role] || comment.user.role}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="comment-time">${comment.created_at_display}</span>
+                    ${deleteBtn}
+                </div>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.content)}</div>
+        </div>
+    `;
+
+    commentsList.appendChild(item);
+
+    setTimeout(() => {
+        item.style.transition = 'opacity 0.3s';
+        item.style.opacity = '1';
+    }, 10);
+
+    const commentsSection = document.querySelector('.comments-section');
+    if (commentsSection) {
+        commentsSection.scrollTop = commentsSection.scrollHeight;
+    }
+}
+
+function deleteComment(commentId) {
+    if (!confirm('Xóa bình luận này?')) return;
+
+    fetch(`/tasks/${TASK_ID}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+            if (item) {
+                item.style.transition = 'opacity 0.3s';
+                item.style.opacity = '0';
+
+                setTimeout(() => {
+                    item.remove();
+                    knownCommentIds.delete(commentId);
+                }, 300);
+            }
+            showToast('Đã xóa bình luận', 'success');
+        } else {
+            showToast(data.error || 'Lỗi xóa bình luận', 'danger');
+        }
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// ============================================
+// CLEANUP ON PAGE UNLOAD
+// ============================================
+window.addEventListener('beforeunload', () => {
+    console.log('🚪 Task detail unloading - disconnecting SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnect('task-comments');
+    }
+});
+
+window.addEventListener('pagehide', () => {
+    console.log('🚪 Task detail hiding - disconnecting SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnect('task-comments');
+    }
+});
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Task Detail Page Loaded');
+
+    startRealtimeComments();
+
+    if (commentInput) {
+        commentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addComment();
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
