@@ -513,8 +513,8 @@
                     {% set days = (completion_report.completion_time // 1440) %}
                     {% set hours = ((completion_report.completion_time % 1440) // 60) %}
                     {% set minutes = (completion_report.completion_time % 60) %}
-                    {% if days > 0 %}{{ days }}ng {% endif %}
-                    {% if hours > 0 %}{{ hours }}h {% endif %}{{ minutes }}ph
+                    {% if days > 0 %}{{ days }}ngày {% endif %}
+                    {% if hours > 0 %}{{ hours }}giờ {% endif %}{{ minutes }}phút
                 </p>
                 {% endif %}
                 {% if completion_report.completion_note %}
