@@ -1086,7 +1086,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 
     .performance-logo img {
-        height: 35px;
+        height: 25px;
     }
 
     .performance-title {
@@ -1103,9 +1103,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 
     .filter-date-btn {
-        padding: 8px 10px;
-        min-height: 40px;
-        border-radius: 8px;
+        padding: 6px 8px;
+        min-height: 34px;
+        border-radius: 6px;
     }
 
     .filter-date-btn i {
@@ -1114,10 +1114,10 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 
     .top-user,
     .bottom-user {
-        padding: 6px 8px;
-        min-height: 40px;
-        border-radius: 8px;
-        gap: 4px;
+        padding: 4px 6px;
+        min-height: 34px;
+        border-radius: 6px;
+        gap: 3px;
     }
 
     .user-badge-avatar {
