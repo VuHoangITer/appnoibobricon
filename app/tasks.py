@@ -1318,7 +1318,7 @@ def priority_detail():
     if tag == 'urgent':
         query = query.filter(Task.is_urgent == True, Task.status != 'DONE')
         priority_type = 'KHẨN CẤP'
-        priority_icon = '🔴'
+        priority_icon = '🔥'
         priority_color = 'danger'
     elif tag == 'important':
         query = query.filter(Task.is_important == True, Task.status != 'DONE')
@@ -1371,7 +1371,7 @@ def priority_detail():
             else:
                 overdue_count += 1
 
-    # ✅ TÍNH UNREAD COMMENT COUNT CHO MỖI TASK
+    #  TÍNH UNREAD COMMENT COUNT CHO MỖI TASK
     for task in all_tasks:
         task.unread_comment_count = get_task_unread_comment_count(task.id, current_user.id)
 
