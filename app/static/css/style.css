@@ -957,3 +957,41 @@ body::-webkit-scrollbar {
         50% { transform: scale(1.2); }
     }
 }
+/* ==========================================
+   ẨN MENU BUTTON KHI KHÔNG Ở HUB 9:56 27/11
+   ========================================== */
+
+/* Mặc định ẨN menu button */
+#mobileModuleMenuBtn,
+#moduleMenuBtn {
+    display: none !important;
+}
+
+/* CHỈ HIỆN khi ở Hub (có module sidebar) */
+body.has-module-sidebar #mobileModuleMenuBtn,
+body.has-module-sidebar #moduleMenuBtn {
+    display: flex !important;
+}
+
+/* Desktop - Top navbar menu button */
+@media (min-width: 769px) {
+    body.has-module-sidebar #moduleMenuBtn {
+        display: block !important;
+    }
+}
+
+/* Mobile - Bottom nav menu button */
+@media (max-width: 768px) {
+    body.has-module-sidebar #mobileModuleMenuBtn {
+        display: flex !important;
+    }
+
+    /* Căn giữa lại bottom nav khi ẩn menu */
+    body:not(.has-module-sidebar) .mobile-bottom-nav {
+        grid-template-columns: 1fr 1.2fr 1fr 1fr;
+    }
+
+    body.has-module-sidebar .mobile-bottom-nav {
+        grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+    }
+}
