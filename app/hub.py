@@ -190,7 +190,6 @@ def get_top_bottom_users_data(date_from=None, date_to=None):
 def workflow_hub():
     """Trang Hub - Quy trình công việc tổng quan"""
 
-    global tasks_need_approval
     now = datetime.utcnow()
 
     # ========================================
@@ -231,6 +230,7 @@ def workflow_hub():
     # ========================================
     tasks_need_rating = 0
     my_tasks_need_rating = 0
+    tasks_need_approval = 0  # ✅ KHỞI TẠO BIẾN NGAY TỪ ĐẦU
 
     if current_user.role in ['director', 'manager']:
         tasks_need_rating = Task.query.filter(
@@ -244,20 +244,19 @@ def workflow_hub():
             Task.performance_rating == None
         ).count()
 
-        tasks_need_approval = 0
-        if current_user.role in ['director', 'manager']:
-            query = Task.query.filter(
-                Task.requires_approval == True,
-                Task.approved == None  # Chỉ đếm task CHỜ DUYỆT
+        # ✅ GÁN GIÁ TRỊ CHO tasks_need_approval
+        query = Task.query.filter(
+            Task.requires_approval == True,
+            Task.approved == None  # Chỉ đếm task CHỜ DUYỆT
+        )
+
+        # Manager chỉ thấy tasks của HR
+        if current_user.role == 'manager':
+            query = query.join(User, Task.creator_id == User.id).filter(
+                User.role == 'hr'
             )
 
-            # Manager chỉ thấy tasks của HR
-            if current_user.role == 'manager':
-                query = query.join(User, Task.creator_id == User.id).filter(
-                    User.role == 'hr'
-                )
-
-            tasks_need_approval = query.count()
+        tasks_need_approval = query.count()
 
     # ========================================
     # LƯƠNG (Director/Accountant)
