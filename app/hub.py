@@ -7,10 +7,11 @@ from app import db
 
 bp = Blueprint('hub', __name__, url_prefix='/hub')
 
+
 # ========================================
 def get_team_performance_data(date_from=None, date_to=None):
     """
-    Lấy performance data - dùng chung cho cả server render và API
+    Lấy performance data - filter theo role
     Returns: list of dict
     """
     # Xác định users theo role
@@ -94,7 +95,7 @@ def get_team_performance_data(date_from=None, date_to=None):
     # Sort by done_count
     results.sort(key=lambda x: x['done_count'], reverse=True)
 
-    # Đánh dấu rank
+    # Đánh dấu rank (chỉ dùng cho table display)
     if len(results) > 1:
         max_done = results[0]['done_count']
         min_done = results[-1]['done_count']
@@ -112,6 +113,78 @@ def get_team_performance_data(date_from=None, date_to=None):
 
     return results
 
+
+# ========================================
+def get_top_bottom_users_data(date_from=None, date_to=None):
+    """
+    Lấy top & bottom users từ TOÀN BỘ team - KHÔNG filter theo role
+    Returns: dict { 'top_user': {...}, 'bottom_user': {...} }
+    """
+    users = User.query.filter_by(is_active=True).filter(User.role != 'director').all()
+    results = []
+
+    for user in users:
+        base_query = db.session.query(Task).join(
+            TaskAssignment, Task.id == TaskAssignment.task_id
+        ).filter(
+            TaskAssignment.user_id == user.id
+        )
+
+        # Apply date filters
+        if date_from:
+            try:
+                from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+                from_utc = vn_to_utc(from_dt)
+                base_query = base_query.filter(Task.created_at >= from_utc)
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+                to_dt = to_dt.replace(hour=23, minute=59, second=59)
+                to_utc = vn_to_utc(to_dt)
+                base_query = base_query.filter(Task.created_at <= to_utc)
+            except ValueError:
+                pass
+
+        done_count = base_query.filter(Task.status == 'DONE').count()
+
+        results.append({
+            'user_id': user.id,
+            'full_name': user.full_name,
+            'avatar': user.avatar,
+            'done_count': done_count
+        })
+
+    # Sort by done_count
+    results.sort(key=lambda x: x['done_count'], reverse=True)
+
+    response = {}
+
+    if len(results) > 1:
+        top = results[0]
+        bottom = results[-1]
+
+        # Chỉ trả về nếu có sự khác biệt
+        if top['done_count'] > bottom['done_count']:
+            response['top_user'] = top
+            response['bottom_user'] = bottom
+        else:
+            response['top_user'] = None
+            response['bottom_user'] = None
+    elif len(results) == 1:
+        # Chỉ có 1 user
+        response['top_user'] = results[0]
+        response['bottom_user'] = None
+    else:
+        response['top_user'] = None
+        response['bottom_user'] = None
+
+    return response
+
+
+# ========================================
 @bp.route('/')
 @login_required
 def workflow_hub():
@@ -208,7 +281,11 @@ def workflow_hub():
         total_users = User.query.count()
         active_users = User.query.filter_by(is_active=True).count()
 
+    # ✅ Performance table - filter theo role
     initial_performance = get_team_performance_data()
+
+    # ✅ Top & Bottom users - lấy từ toàn bộ team
+    initial_top_bottom = get_top_bottom_users_data()
 
     return render_template('hub.html',
                            my_pending_tasks=my_pending_tasks,
@@ -225,7 +302,8 @@ def workflow_hub():
                            unconfirmed_news=unconfirmed_news,
                            total_users=total_users,
                            active_users=active_users,
-                           initial_performance=initial_performance
+                           initial_performance=initial_performance,
+                           initial_top_bottom=initial_top_bottom
                            )
 
 
@@ -347,14 +425,14 @@ def get_realtime_stats():
 @login_required
 def get_team_performance():
     """
-    API trả về performance của team members
+    API trả về performance của team members - filter theo role
     Dùng cho filters và SSE real-time update
     """
     try:
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
 
-        results = get_team_performance_data(date_from, date_to)  # ✅ Dùng helper function
+        results = get_team_performance_data(date_from, date_to)
 
         return jsonify({
             'success': True,
@@ -363,6 +441,37 @@ def get_team_performance():
 
     except Exception as e:
         print(f"❌ Error in team-performance: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ========================================
+# API: TOP & BOTTOM USERS (CHO TẤT CẢ ROLES)
+# ========================================
+@bp.route('/api/top-bottom-users')
+@login_required
+def get_top_bottom_users():
+    """
+    Lấy top & bottom users từ TOÀN BỘ team - không filter theo role
+    Returns: { top_user: {...}, bottom_user: {...} }
+    """
+    try:
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+
+        response = get_top_bottom_users_data(date_from, date_to)
+
+        return jsonify({
+            'success': True,
+            'data': response
+        })
+
+    except Exception as e:
+        print(f"❌ Error in top-bottom-users: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({

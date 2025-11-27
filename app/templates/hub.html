@@ -117,36 +117,35 @@
 
                     <!-- Top & Bottom Users -->
                     <div class="top-bottom-users" id="topBottomUsers">
-                        {% if initial_performance %}
-                            {% set top_user = initial_performance|selectattr('rank', 'equalto', 1)|first %}
-                            {% set bottom_user = initial_performance|selectattr('rank', 'equalto', -1)|first %}
-
-                            {% if top_user %}
-                            <div class="top-user" title="Làm nhiều nhất: {{ top_user.full_name }}">
-                                <img src="{% if top_user.avatar %}/profile/avatar/{{ top_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ top_user.full_name|urlencode }}&background=00ff89&color=000&size=128{% endif %}"
-                                     alt="{{ top_user.full_name }}"
+                        {% if initial_top_bottom %}
+                            {% if initial_top_bottom.top_user %}
+                            <div class="top-user" title="Làm nhiều nhất: {{ initial_top_bottom.top_user.full_name }}">
+                                <img src="{% if initial_top_bottom.top_user.avatar %}/profile/avatar/{{ initial_top_bottom.top_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ initial_top_bottom.top_user.full_name|urlencode }}&background=00ff89&color=000&size=128{% endif %}"
+                                     alt="{{ initial_top_bottom.top_user.full_name }}"
                                      class="user-badge-avatar"
-                                     onerror="this.src='https://ui-avatars.com/api/?name={{ top_user.full_name|urlencode }}&background=00ff89&color=000&size=128'">
-                                <span class="user-badge-name">{{ top_user.full_name }}</span>
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ initial_top_bottom.top_user.full_name|urlencode }}&background=00ff89&color=000&size=128'">
+                                <span class="user-badge-name">{{ initial_top_bottom.top_user.full_name }}</span>
                             </div>
                             {% endif %}
 
-                            {% if bottom_user %}
-                            <div class="bottom-user" title="Cần cố gắng thêm: {{ bottom_user.full_name }}">
-                                <img src="{% if bottom_user.avatar %}/profile/avatar/{{ bottom_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128{% endif %}"
-                                     alt="{{ bottom_user.full_name }}"
+                            {% if initial_top_bottom.bottom_user %}
+                            <div class="bottom-user" title="Cần cố gắng thêm: {{ initial_top_bottom.bottom_user.full_name }}">
+                                <img src="{% if initial_top_bottom.bottom_user.avatar %}/profile/avatar/{{ initial_top_bottom.bottom_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ initial_top_bottom.bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128{% endif %}"
+                                     alt="{{ initial_top_bottom.bottom_user.full_name }}"
                                      class="user-badge-avatar"
-                                     onerror="this.src='https://ui-avatars.com/api/?name={{ bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128'">
-                                <span class="user-badge-name">{{ bottom_user.full_name }}</span>
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ initial_top_bottom.bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128'">
+                                <span class="user-badge-name">{{ initial_top_bottom.bottom_user.full_name }}</span>
                             </div>
                             {% endif %}
+                        {% else %}
+                            <p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>
                         {% endif %}
                     </div>
                 </div>
                 </div>
             </div>
 
-            <!-- ✅ GIỮ NGUYÊN PERFORMANCE SECTION + TABLE -->
+            <!-- PERFORMANCE SECTION + TABLE -->
             <div class="performance-section">
                 <div class="performance-table-container">
                     <table class="performance-table">
@@ -513,6 +512,7 @@ function showModule(moduleName) {
         setTimeout(() => {
             console.log('📊 Entering Tasks module - refreshing performance');
             refreshPerformanceNow();
+            loadTopBottomUsers();
         }, 500);
     }
 }
@@ -624,9 +624,6 @@ let sseStatsConnected = false;
 
 function startRealtimeUpdates() {
     console.log('🚀 Starting real-time stats updates...');
-
-    // ✅ KHÔNG gọi updateRealtimeData() ở đây
-    // SSE sẽ tự động update khi connected
 
     if (typeof window.sseManager === 'undefined') {
         console.warn('⚠️ SSE Manager not loaded, using polling');
@@ -811,9 +808,6 @@ let animationTimeouts = {};
 function startSmartPerformancePolling() {
     console.log('🔄 Starting smart performance polling (60s interval)');
 
-    // ✅ KHÔNG load performance ở đây
-    // Sẽ được gọi trong showModule('tasks')
-
     stopSmartPerformancePolling();
 
     performancePollingInterval = setInterval(() => {
@@ -829,6 +823,7 @@ function startSmartPerformancePolling() {
         if (shouldPoll) {
             console.log(`🔄 Smart polling: Refreshing performance data (${Math.round(timeSinceLastUpdate/1000)}s since last update)`);
             loadPerformance();
+            loadTopBottomUsers();
             lastPerformanceUpdate = now;
         } else {
             if (!isTaskModule) {
@@ -853,6 +848,7 @@ function stopSmartPerformancePolling() {
 function refreshPerformanceNow() {
     console.log('✅ Manual refresh: Updating performance immediately');
     loadPerformance();
+    loadTopBottomUsers();
     lastPerformanceUpdate = Date.now();
 }
 
@@ -881,7 +877,6 @@ function autoCenterIcons() {
 let performanceLoadTimeout = null;
 
 function loadPerformance() {
-    //  Debounce - tránh gọi duplicate khi load trang
     if (performanceLoadTimeout) {
         clearTimeout(performanceLoadTimeout);
     }
@@ -925,6 +920,30 @@ function loadPerformance() {
 }
 
 // ========================================
+// TOP & BOTTOM USERS - LOAD SEPARATELY
+// ========================================
+function loadTopBottomUsers() {
+    const params = new URLSearchParams();
+    if (currentFilterFrom) params.append('date_from', currentFilterFrom);
+    if (currentFilterTo) params.append('date_to', currentFilterTo);
+
+    const url = '/hub/api/top-bottom-users?' + params.toString();
+
+    fetch(url)
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                renderTopBottomUsers(response.data);
+            } else {
+                console.error('Error loading top/bottom users:', response.error);
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching top/bottom users:', err);
+        });
+}
+
+// ========================================
 // FUNCTION 1: UPDATE TABLE ROWS (CHỈ UPDATE THAY ĐỔI)
 // ========================================
 function updateTableRows(newData) {
@@ -942,14 +961,12 @@ function updateTableRows(newData) {
         return;
     }
 
-    // Map existing rows by user_id
     const existingRows = {};
     tbody.querySelectorAll('tr[data-user-id]').forEach(row => {
         const userId = row.getAttribute('data-user-id');
         existingRows[userId] = row;
     });
 
-    // Track which users we've seen
     const seenUsers = new Set();
 
     newData.forEach((user, index) => {
@@ -957,19 +974,16 @@ function updateTableRows(newData) {
         const existingRow = existingRows[user.user_id];
 
         if (existingRow) {
-            // ✅ UPDATE existing row - CHỈ UPDATE CHANGED CELLS
             updateCellIfChanged(existingRow, 'urgent', user.urgent_count, user.user_id);
             updateCellIfChanged(existingRow, 'important', user.important_count, user.user_id);
             updateCellIfChanged(existingRow, 'recurring', user.recurring_count, user.user_id);
             updateCellIfChanged(existingRow, 'done', user.done_count, user.user_id);
 
-            // Reorder if needed
             const currentIndex = Array.from(tbody.children).indexOf(existingRow);
             if (currentIndex !== index) {
                 tbody.insertBefore(existingRow, tbody.children[index]);
             }
         } else {
-            // ✅ ADD new row
             const newRow = createTableRow(user);
             if (tbody.children[index]) {
                 tbody.insertBefore(newRow, tbody.children[index]);
@@ -979,48 +993,34 @@ function updateTableRows(newData) {
         }
     });
 
-    // ✅ REMOVE rows that are no longer in data
     Object.keys(existingRows).forEach(userId => {
         if (!seenUsers.has(userId)) {
             existingRows[userId].remove();
         }
     });
-
-    // Update top/bottom users
-    renderTopBottomUsers(newData);
 }
 
 // ========================================
-// FUNCTION 2: UPDATE MỘT CELL NÊU CÓ THAY ĐỔI
+// FUNCTION 2: UPDATE MỘT CELL NẾU CÓ THAY ĐỔI
 // ========================================
 function updateCellIfChanged(row, type, newCount, userId) {
-    // Tìm cell cần update
     const cell = row.querySelector(`td[data-type="${type}"]`);
     if (!cell) return;
 
-    // Lấy giá trị hiện tại
     const link = cell.querySelector('a.task-count-link');
     const currentCount = link ? parseInt(link.textContent) : parseInt(cell.textContent);
 
-    // CHỈ update nếu giá trị thay đổi
     if (currentCount !== newCount) {
-
-        // Tạo key unique cho cell này (VD: "5-urgent")
         const cellKey = `${userId}-${type}`;
 
-        // ✅ NẾU ĐANG CÓ ANIMATION CŨ → HUỶ NÓ
         if (animationTimeouts[cellKey]) {
             clearTimeout(animationTimeouts[cellKey]);
             cell.classList.remove('cell-updating', 'cell-updated');
         }
 
-        // Bắt đầu animation mới
         cell.classList.add('cell-updating');
 
-        // Lưu timeout vào object
         animationTimeouts[cellKey] = setTimeout(() => {
-
-            // Build URL cho link
             const filterParams = new URLSearchParams();
             if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
             if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
@@ -1037,21 +1037,18 @@ function updateCellIfChanged(row, type, newCount, userId) {
 
             const url = baseUrl + '?' + filterParams.toString();
 
-            // Update nội dung cell
             if (newCount > 0) {
                 cell.innerHTML = `<a href="${url}" class="task-count-link">${newCount}</a>`;
             } else {
                 cell.textContent = newCount;
             }
 
-            // Kết thúc animation
             cell.classList.remove('cell-updating');
             cell.classList.add('cell-updated');
 
-            // Sau 1s thì cleanup
             setTimeout(() => {
                 cell.classList.remove('cell-updated');
-                delete animationTimeouts[cellKey]; // Giải phóng memory
+                delete animationTimeouts[cellKey];
             }, 1000);
 
         }, 300);
@@ -1075,7 +1072,6 @@ function createTableRow(user) {
 
     const baseUrl = '/tasks/priority-detail';
 
-    // Build URLs cho từng loại
     const urgentParams = new URLSearchParams(filterParams);
     urgentParams.append('assigned_user', user.user_id);
     urgentParams.append('tag', 'urgent');
@@ -1129,64 +1125,47 @@ function createTableRow(user) {
     return row;
 }
 
+// ========================================
+// RENDER TOP & BOTTOM USERS
+// ========================================
 function renderTopBottomUsers(data) {
     const container = document.getElementById('topBottomUsers');
 
-    if (data.length === 0) {
+    if (!data || (!data.top_user && !data.bottom_user)) {
         container.innerHTML = '<p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>';
         return;
     }
 
     let html = '';
 
-    const topUser = data.find(u => u.rank === 1);
-    if (topUser) {
-        const avatarUrl = topUser.avatar
-            ? `/profile/avatar/${topUser.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(topUser.full_name)}&background=0dcaf0&color=fff&size=128`;
+    if (data.top_user) {
+        const avatarUrl = data.top_user.avatar
+            ? `/profile/avatar/${data.top_user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.top_user.full_name)}&background=00ff89&color=000&size=128`;
 
         html += `
-            <div class="top-user" title="Làm nhiều nhất">
+            <div class="top-user" title="Làm nhiều nhất: ${data.top_user.full_name}">
                 <img src="${avatarUrl}"
-                     alt="${topUser.full_name}"
+                     alt="${data.top_user.full_name}"
                      class="user-badge-avatar"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(topUser.full_name)}&background=0dcaf0&color=fff&size=128'">
-                <span class="user-badge-name">${topUser.full_name}</span>
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(data.top_user.full_name)}&background=00ff89&color=000&size=128'">
+                <span class="user-badge-name">${data.top_user.full_name}</span>
             </div>
         `;
     }
 
-    const bottomUser = data.find(u => u.rank === -1);
-    if (bottomUser) {
-        const avatarUrl = bottomUser.avatar
-            ? `/profile/avatar/${bottomUser.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(bottomUser.full_name)}&background=0dcaf0&color=fff&size=128`;
+    if (data.bottom_user) {
+        const avatarUrl = data.bottom_user.avatar
+            ? `/profile/avatar/${data.bottom_user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.bottom_user.full_name)}&background=dc3545&color=fff&size=128`;
 
         html += `
-            <div class="bottom-user" title="Cần cố gắng thêm">
+            <div class="bottom-user" title="Cần cố gắng thêm: ${data.bottom_user.full_name}">
                 <img src="${avatarUrl}"
-                     alt="${bottomUser.full_name}"
+                     alt="${data.bottom_user.full_name}"
                      class="user-badge-avatar"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(bottomUser.full_name)}&background=0dcaf0&color=fff&size=128'">
-                <span class="user-badge-name">${bottomUser.full_name}</span>
-            </div>
-        `;
-    }
-
-    if (data.length === 1 && data[0].rank === 0) {
-        const user = data[0];
-        const avatarUrl = user.avatar
-            ? `/profile/avatar/${user.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128`;
-
-        html = `
-            <div class="top-user" title="Duy nhất">
-                <i class="bi bi-person-circle" style="color: #0d6efd; font-size: 1.3rem;"></i>
-                <img src="${avatarUrl}"
-                     alt="${user.full_name}"
-                     class="user-badge-avatar"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=0dcaf0&color=fff&size=128'">
-                <span class="user-badge-name">${user.full_name}</span>
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(data.bottom_user.full_name)}&background=dc3545&color=fff&size=128'">
+                <span class="user-badge-name">${data.bottom_user.full_name}</span>
             </div>
         `;
     }
@@ -1236,6 +1215,7 @@ function applyFilter() {
     }
 
     loadPerformance();
+    loadTopBottomUsers();
 }
 
 function resetFilter() {
@@ -1249,6 +1229,7 @@ function resetFilter() {
     filterModalInstance.hide();
 
     loadPerformance();
+    loadTopBottomUsers();
 }
 
 function formatDate(dateString) {
@@ -1329,10 +1310,6 @@ document.addEventListener('DOMContentLoaded', function() {
     autoCenterIcons();
     updateModuleMenuButton();
     startRealtimeUpdates();
-
-    // ✅ CHỈ load performance khi vào module tasks
-    // Không load ngay khi vào hub
-    // Sẽ được gọi trong showModule('tasks')
 
     console.log('📊 Bandwidth estimate for 50 users:');
     console.log('- SSE (dashboard-stats): ~6.5GB/month');
