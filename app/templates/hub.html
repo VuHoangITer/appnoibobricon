@@ -83,6 +83,15 @@
                     <span>Tóm Tắt CV</span>
                 </a>
                 {% if current_user.role in ['director', 'manager'] %}
+                <a href="{{ url_for('tasks.pending_approvals') }}" class="sidebar-menu-item" data-badge-id="tasks_need_approval">
+                    <i class="bi bi-hourglass-split" style="color: #ff9800;"></i>
+                    <span>Chờ Phê Duyệt</span>
+                    {% if tasks_need_approval > 0 %}
+                    <span class="badge bg-warning text-dark">{{ tasks_need_approval }}</span>
+                    {% endif %}
+                </a>
+                {% endif %}
+                {% if current_user.role in ['director', 'manager'] %}
                 <a href="{{ url_for('performance.performance_review') }}" class="sidebar-menu-item">
                     <i class="bi bi-graph-up-arrow" style="color: #30cfd0;"></i>
                     <span>Hiệu Suất NV</span>
@@ -154,7 +163,7 @@
                             <th style="width: 80px; text-align: center;">
                                 <i class="bi bi-person-circle"></i>
                             </th>
-                            <th>Tên NV</th>
+                            <th>Nhân Viên</th>
                             <th style="width: 100px; text-align: center;">
                                 <span class="d-none d-md-inline">🔥 Khẩn Cấp</span>
                                 <span class="d-md-none">🔥</span>
@@ -728,6 +737,7 @@ function updateUIWithStats(data) {
 
     updateInfoModuleStats(data);
     updateSalaryModuleStats(data);
+    updateTasksModuleBadges(data);
 
     if (data.my_overdue > 0) {
         console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
@@ -761,6 +771,22 @@ function updateSalaryModuleStats(data) {
         updateSidebarBadge(salaryModule, 'advances', data.pending_advances);
     }
 }
+
+function updateTasksModuleBadges(data) {
+    const tasksModule = document.getElementById('module-tasks');
+    if (tasksModule) {
+        // Cập nhật badge "Chờ Phê Duyệt"
+        if (data.tasks_need_approval !== undefined) {
+            updateSidebarBadge(tasksModule, 'tasks_need_approval', data.tasks_need_approval);
+        }
+
+        // Cập nhật badge "CV Chưa Đánh Giá"
+        if (data.my_tasks_need_rating !== undefined) {
+            updateSidebarBadge(tasksModule, 'my_tasks_need_rating', data.my_tasks_need_rating);
+        }
+    }
+}
+
 
 function updateSidebarBadge(module, badgeType, count) {
     const sidebar = module.querySelector('.module-sidebar');

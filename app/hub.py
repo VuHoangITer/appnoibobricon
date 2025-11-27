@@ -117,7 +117,7 @@ def get_team_performance_data(date_from=None, date_to=None):
 # ========================================
 def get_top_bottom_users_data(date_from=None, date_to=None):
     """
-    Lấy top & bottom users từ TOÀN BỘ team - KHÔNG filter theo role
+    Lấy top & bottom users từ TOÀN BỘ team ngoại trừ giam doc - KHÔNG filter theo role
     Returns: dict { 'top_user': {...}, 'bottom_user': {...} }
     """
     users = User.query.filter_by(is_active=True).filter(User.role != 'director').all()
@@ -190,6 +190,7 @@ def get_top_bottom_users_data(date_from=None, date_to=None):
 def workflow_hub():
     """Trang Hub - Quy trình công việc tổng quan"""
 
+    global tasks_need_approval
     now = datetime.utcnow()
 
     # ========================================
@@ -243,6 +244,21 @@ def workflow_hub():
             Task.performance_rating == None
         ).count()
 
+        tasks_need_approval = 0
+        if current_user.role in ['director', 'manager']:
+            query = Task.query.filter(
+                Task.requires_approval == True,
+                Task.approved == None  # Chỉ đếm task CHỜ DUYỆT
+            )
+
+            # Manager chỉ thấy tasks của HR
+            if current_user.role == 'manager':
+                query = query.join(User, Task.creator_id == User.id).filter(
+                    User.role == 'hr'
+                )
+
+            tasks_need_approval = query.count()
+
     # ========================================
     # LƯƠNG (Director/Accountant)
     # ========================================
@@ -294,6 +310,7 @@ def workflow_hub():
                            my_overdue=my_overdue,
                            tasks_need_rating=tasks_need_rating,
                            my_tasks_need_rating=my_tasks_need_rating,
+                           tasks_need_approval=tasks_need_approval,
                            total_salaries=total_salaries,
                            total_employees=total_employees,
                            pending_penalties=pending_penalties,
@@ -381,6 +398,20 @@ def get_realtime_stats():
                 Task.performance_rating == None
             ).count()
 
+        tasks_need_approval = 0
+        if current_user.role in ['director', 'manager']:
+            query = Task.query.filter(
+                Task.requires_approval == True,
+                Task.approved == None
+            )
+
+            if current_user.role == 'manager':
+                query = query.join(User, Task.creator_id == User.id).filter(
+                    User.role == 'hr'
+                )
+
+            tasks_need_approval = query.count()
+
         # Stats lương
         pending_penalties = 0
         pending_advances = 0
@@ -405,6 +436,7 @@ def get_realtime_stats():
             'team_pending': team_pending,
             'tasks_need_rating': tasks_need_rating,
             'my_tasks_need_rating': my_tasks_need_rating,
+            'tasks_need_approval': tasks_need_approval,
             'pending_penalties': pending_penalties,
             'pending_advances': pending_advances,
             'work_badge': work_badge,

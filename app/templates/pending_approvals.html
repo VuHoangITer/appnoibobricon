@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Công việc chờ phê duyệt{% endblock %}
+{% block page_title %}Công việc chờ phê duyệt{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-primary-soft: #e7f1ff;
+    --ed-success: #198754;
+    --ed-success-soft: #e8f5e9;
+    --ed-danger: #dc3545;
+    --ed-danger-soft: #ffebee;
+    --ed-info-soft: #e3f2fd;
+    --ed-radius-lg: 12px;
+    --ed-radius-md: 8px;
+    --ed-radius-pill: 999px;
+}
+
+/* Nền tổng thể giống trang priority */
+body {
+    background: var(--ed-bg);
+}
+
+/* HEADER TRÊN CÙNG – giống priority-header nhưng text riêng */
+.approval-header {
+    background: var(--ed-card-bg);
+    border: 1px solid var(--ed-border);
+    padding: 18px 22px;
+    border-radius: var(--ed-radius-lg);
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.approval-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.approval-subtitle {
+    font-size: 0.9rem;
+    color: var(--ed-muted);
+    margin-top: 4px;
+}
+
+.approval-count-label {
+    font-size: 0.8rem;
+    color: var(--ed-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.approval-count-number {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--ed-text);
+}
+
+/* Lưới card giống task-cards-container */
+.task-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+/* CARD NHIỆM VỤ – reuse style enterprise */
+.task-card {
+    border: 1px solid var(--ed-border);
+    border-radius: 24px;
+    background: var(--ed-card-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    cursor: pointer;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+    border-color: var(--ed-primary);
+}
+
+.task-card-header {
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.98rem;
+    border-bottom: 1px solid var(--ed-border);
+    text-align: center;
+    color: var(--ed-text);
+    background: #f9fafb;
+}
+
+.task-card-body {
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* Layout nội dung trong card */
+.task-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+/* Hàng trên: avatar + info bên trái, hạn bên phải */
+.task-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* Người tạo */
+.task-creator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-creator-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.task-creator-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.task-creator-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-creator-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ed-text);
+}
+
+.task-creator-meta {
+    font-size: 0.78rem;
+    color: var(--ed-muted);
+}
+
+/* Badge vai trò nhỏ gọn */
+.task-role-badge {
+    border-radius: var(--ed-radius-pill);
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    margin-right: 4px;
+}
+
+/* Hạn xử lý */
+.task-due-pill {
+    padding: 6px 10px;
+    border-radius: var(--ed-radius-pill);
+    background: #f9fafb;
+    border: 1px solid #e2e8f0;
+    font-size: 0.78rem;
+    color: var(--ed-muted);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-due-pill i {
+    font-size: 0.9rem;
+}
+
+/* Mô tả */
+.task-description {
+    font-size: 0.84rem;
+    color: var(--ed-muted);
+    max-height: 60px;
+    overflow: hidden;
+}
+
+/* Tags (Khẩn cấp / Quan trọng / Lặp lại) */
+.task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.task-tag {
+    border-radius: var(--ed-radius-pill);
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Style từng loại tag */
+.task-tag-urgent {
+    background: var(--ed-danger-soft);
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.task-tag-important {
+    background: var(--ed-primary-soft);
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.task-tag-recurring {
+    background: var(--ed-info-soft);
+    color: #075985;
+    border: 1px solid #bae6fd;
+}
+
+/* Empty state enterprise */
+.empty-state {
+    background: var(--ed-card-bg);
+    border-radius: 24px;
+    border: 1px dashed var(--ed-border);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ed-muted);
+}
+
+.empty-state i {
+    font-size: 3.2rem;
+    color: #cbd5e1;
+}
+
+.empty-state h5 {
+    margin-top: 14px;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--ed-text);
+}
+
+.empty-state p {
+    font-size: 0.9rem;
+}
+
+/* Responsive giống priority */
+@media (max-width: 1024px) {
+    .task-cards-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .task-cards-container {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .approval-header {
+        padding: 14px 16px;
+    }
+
+    .approval-title {
+        font-size: 1.05rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- HEADER THEO STYLE PRIORITY -->
+    <div class="approval-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="approval-title">
+                    <i class="bi bi-hourglass-split text-warning"></i>
+                    <span>Công việc chờ phê duyệt</span>
+                </div>
+                <div class="approval-subtitle">
+                    {% if current_user.role == 'director' %}
+                        Tất cả công việc tự tạo đang chờ bạn phê duyệt
+                    {% else %}
+                        Công việc của Nhân sự chờ bạn phê duyệt
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="approval-count-label">TỔNG SỐ</div>
+                <div class="approval-count-number">{{ total_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DANH SÁCH TASKS – GRID 3 CỘT GIỐNG TRANG PRIORITY -->
+    {% if tasks %}
+    <div class="task-cards-container">
+        {% for task in tasks %}
+        <div class="task-card"
+             onclick="location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
+            <!-- Header -->
+            <div class="task-card-header">
+                {{ task.title }}
+            </div>
+
+            <!-- Body -->
+            <div class="task-card-body">
+                <div class="task-card-content">
+                    <!-- Hàng 1: Người tạo + hạn -->
+                    <div class="task-top-row">
+                        <div class="task-creator">
+                            <div class="task-creator-avatar">
+                                {% if task.creator.avatar %}
+                                    <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
+                                         alt="{{ task.creator.full_name }}">
+                                {% else %}
+                                    {{ task.creator.full_name[0].upper() }}
+                                {% endif %}
+                            </div>
+                            <div class="task-creator-info">
+                                <div class="task-creator-name">
+                                    {{ task.creator.full_name }}
+                                </div>
+                                <div class="task-creator-meta">
+                                    <span class="badge bg-info task-role-badge">
+                                        {{ task.creator.role | role_vn }}
+                                    </span>
+                                    Tạo lúc {{ task.created_at | vn_datetime }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if task.due_date %}
+                        <div class="task-due-pill">
+                            <i class="bi bi-calendar-event"></i>
+                            <span>Hạn: {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mô tả -->
+                    {% if task.description %}
+                    <p class="task-description mb-1">
+                        {{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+
+                    <!-- Tags -->
+                    <div class="task-tags">
+                        {% if task.is_urgent %}
+                        <span class="task-tag task-tag-urgent">🔥 Khẩn cấp</span>
+                        {% endif %}
+                        {% if task.is_important %}
+                        <span class="task-tag task-tag-important">⭐ Quan trọng</span>
+                        {% endif %}
+                        {% if task.is_recurring %}
+                        <span class="task-tag task-tag-recurring">🔁 Lặp lại</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty state enterprise -->
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h5>Không có công việc chờ phê duyệt</h5>
+        <p>Tất cả công việc tự tạo đã được xử lý.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

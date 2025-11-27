@@ -130,6 +130,13 @@ class Task(db.Model):
     last_recurrence_date = db.Column(db.DateTime, nullable=True)
     parent_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
 
+    # ===== HỆ THỐNG PHÊ DUYỆT =====
+    requires_approval = db.Column(db.Boolean, default=False)  # Task có cần phê duyệt không?
+    approved = db.Column(db.Boolean, default=None)  # None = chờ duyệt, True = đã duyệt, False = từ chối
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Người duyệt
+    approved_at = db.Column(db.DateTime, nullable=True)  # Thời gian duyệt
+    approval_note = db.Column(db.Text, nullable=True)  # Ghi chú khi duyệt/từ chối
+
     # Quan hệ đệ quy (task cha – task con)
     child_tasks = db.relationship(
         'Task',
@@ -151,6 +158,11 @@ class Task(db.Model):
     rater = db.relationship(
         'User',
         foreign_keys=[rated_by]
+    )
+
+    approver = db.relationship(
+        'User',
+        foreign_keys=[approved_by]
     )
 
     assignments = db.relationship(

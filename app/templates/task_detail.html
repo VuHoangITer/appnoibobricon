@@ -5,119 +5,215 @@
 
 {% block extra_css %}
 <style>
-/* Assignment Avatar */
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-primary-soft: #e7f1ff;
+    --ed-danger-soft: #ffebee;
+    --ed-radius-lg: 16px;
+    --ed-radius-md: 10px;
+    --ed-radius-pill: 999px;
+}
+
+/* Nền trang kiểu enterprise */
+body {
+    background: var(--ed-bg);
+}
+
+/* Card chung – mềm, tối giản hơn */
+.card {
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    background-color: var(--ed-card-bg);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+.card + .card {
+    margin-top: 0.75rem;
+}
+
+/* Header card */
+.card-header {
+    border-bottom: 1px solid var(--ed-border);
+    background: #4ba5ff;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.card-header h4,
+.card-header h5,
+.card-header h6 {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--ed-text);
+}
+
+/* Badge trạng thái nhỏ gọn hơn */
+.badge {
+    border-radius: var(--ed-radius-pill);
+    font-weight: 500;
+}
+
+/* ====== OVERRIDE MÀU XANH LÁ → XANH DƯƠNG SOFT ====== */
+
+/* Header dùng bg-success (Báo cáo hoàn thành, Đánh giá...) → header xanh dương nhạt */
+.card-header.bg-success {
+    background-color: var(--ed-primary-soft) !important;
+    color: var(--ed-primary) !important;
+    border-bottom-color: transparent;
+}
+
+/* Badge success (Đã nhận, Tốt, Hoàn thành đúng hạn...) → soft blue */
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+/* Nút success (chấp nhận, đánh giá tốt...) → xanh dương */
+.btn-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+    background-color: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
+    color: #ffffff !important;
+}
+
+/* (Giữ warning/vàng nguyên, chỉ bỏ viền dưới) */
+.card-header.bg-warning {
+    border-bottom-color: transparent;
+}
+
+/* Avatar người giao / được giao / người hoàn thành / comment */
+.assignment-avatar,
+.completer-avatar,
+.comment-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #e9edf7;
+    color: #4b5563;
+    font-weight: 600;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+}
+
 .assignment-avatar {
     width: 45px;
     height: 45px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 600;
-    flex-shrink: 0;
-    border: 2px solid #e9ecef;
+    font-size: 0.95rem;
 }
 
-.assignment-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-/* Completer Avatar */
 .completer-avatar {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    flex-shrink: 0;
-    border: 2px solid #e9ecef;
-}
-
-.completer-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-/* Attachments */
-.attachment-item {
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f8f9fa;
-}
-
-.attachment-icon {
-    font-size: 1.5rem;
-    margin-right: 10px;
-}
-
-.attachment-info {
-    flex: 1;
-}
-
-.attachment-actions {
-    display: flex;
-    gap: 5px;
-}
-
-/* Comments */
-.comments-section {
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
-.comment-item {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.comment-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
+    font-size: 0.9rem;
 }
 
 .comment-avatar {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    flex-shrink: 0;
+    font-size: 0.9rem;
 }
 
+.assignment-avatar img,
+.completer-avatar img,
 .comment-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+}
+
+/* Thẻ đính kèm – làm phẳng, bo tròn hơn */
+.attachment-item {
+    padding: 10px 12px;
+    border: 1px solid var(--ed-border);
+    border-radius: var(--ed-radius-md);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafb;
+}
+
+.attachment-icon {
+    font-size: 1.4rem;
+    margin-right: 10px;
+}
+
+.attachment-info strong {
+    font-size: 0.9rem;
+    color: var(--ed-text);
+}
+
+.attachment-info small {
+    font-size: 0.78rem;
+    color: var(--ed-muted);
+}
+
+.attachment-actions .btn {
+    border-radius: var(--ed-radius-pill);
+    padding-inline: 10px;
+}
+
+/* Khu vực upload file – minimal */
+.upload-area {
+    border: 2px dashed var(--ed-border);
+    border-radius: var(--ed-radius-md);
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+}
+
+.upload-area:hover {
+    border-color: var(--ed-primary);
+    background: var(--ed-primary-soft);
+}
+
+/* Drag-over: cũng soft blue giống header */
+.upload-area.drag-over {
+    border-color: var(--ed-primary);
+    background: var(--ed-primary-soft);
+}
+
+/* Khu vực comments */
+.comments-section {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 14px;
+    background: #f9fafb;
+    border-radius: var(--ed-radius-md);
+    border: 1px solid var(--ed-border);
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.comment-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
 .comment-content {
@@ -128,63 +224,86 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .comment-author {
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--ed-text);
+    font-size: 0.9rem;
 }
 
 .comment-time {
-    font-size: 0.85rem;
-    color: #6c757d;
+    font-size: 0.75rem;
+    color: var(--ed-muted);
 }
 
 .comment-text {
-    color: #495057;
+    color: #4b5563;
     white-space: pre-wrap;
     word-wrap: break-word;
+    font-size: 0.88rem;
 }
 
-.comment-actions {
-    display: flex;
-    gap: 5px;
+.comment-actions .btn {
+    border-radius: var(--ed-radius-pill);
 }
 
+/* Ô nhập comment */
 .comment-input-wrapper {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 .comment-input-wrapper textarea {
     flex: 1;
     resize: none;
+    border-radius: var(--ed-radius-md);
 }
 
-/* Upload area */
-.upload-area {
-    border: 2px dashed #dee2e6;
-    border-radius: 4px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: #f8f9fa;
+.comment-input-wrapper .btn {
+    border-radius: var(--ed-radius-pill);
 }
 
-.upload-area:hover {
-    border-color: #0d6efd;
-    background: #e7f1ff;
+/* Alert */
+.alert {
+    border-radius: var(--ed-radius-md);
 }
 
-.upload-area.drag-over {
-    border-color: #198754;
-    background: #d1e7dd;
+/* Thẻ đánh dấu (KHẨN CẤP / QUAN TRỌNG / LẶP LẠI) */
+.mb-3 .badge.bg-danger,
+.mb-3 .badge.bg-warning,
+.mb-3 .badge.bg-info {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+}
+
+/* Thẻ trạng thái hạn hoàn thành */
+.badge.bg-danger,
+.badge.bg-secondary {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+}
+
+/* Nút nhỏ */
+.btn-sm.rounded-circle {
+    border-radius: 50% !important;
+}
+
+/* Responsive nhẹ cho 2 cột cuối (attachments + comments) */
+@media (max-width: 768px) {
+    .comments-section {
+        max-height: 350px;
+    }
+
+    .comment-input-wrapper {
+        flex-direction: row;
+    }
 }
 </style>
 {% endblock %}
+
 
 {% block content %}
 <div class="row">
@@ -221,6 +340,57 @@
                 </div>
             </div>
             <div class="card-body">
+                {% if task.requires_approval %}
+                <div class="alert {% if task.approved == None %}alert-warning{% elif task.approved %}alert-success{% else %}alert-danger{% endif %} mb-3">
+                    <div class="d-flex align-items-center">
+                        <!-- ===== TRẠNG THÁI: ĐANG CHỜ DUYỆT ===== -->
+                        {% if task.approved == None %}
+                            <i class="bi bi-hourglass-split fs-4 me-3"></i>
+                            <div class="flex-grow-1">
+                                <strong>Chờ phê duyệt</strong>
+                            </div>
+                            <!-- NÚT PHÊ DUYỆT - CHỈ HIỆN CHO NGƯỜI CÓ QUYỀN -->
+                            {% if current_user.role in ['manager', 'director'] %}
+                                {% if current_user.role == 'director' or (current_user.role == 'manager' and task.creator.role == 'hr') %}
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-success" onclick="approveSelfTask({{ task.id }})">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectSelfTask({{ task.id }})">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+
+                        {% elif task.approved %}
+                            <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
+                            <div>
+                                <p class="mb-0 small">
+                                    Bởi <strong>{{ task.approver.full_name }}</strong>
+                                    lúc {{ task.approved_at | vn_datetime }}
+                                    {% if task.approval_note %}
+                                    <br><em class="text-muted">Ghi chú: {{ task.approval_note }}</em>
+                                    {% endif %}
+                                </p>
+                            </div>
+
+                        <!-- ===== TRẠNG THÁI: ĐÃ TỪ CHỐI ===== -->
+                        {% else %}
+                            <i class="bi bi-x-circle-fill fs-4 me-3 text-danger"></i>
+                            <div>
+                                <p class="mb-0 small">
+                                    Bởi <strong>{{ task.approver.full_name }}</strong>
+                                    lúc {{ task.approved_at | vn_datetime }}
+                                    {% if task.approval_note %}
+                                    <br><em class="text-danger">Lý do: {{ task.approval_note }}</em>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
                 <!-- Thẻ đánh dấu -->
                 <div class="mb-3">
                     <h6><i class="bi bi-tags-fill"></i> Thẻ đánh dấu:</h6>
@@ -353,7 +523,8 @@
         </div>
 
         <!-- FORM CẬP NHẬT TRẠNG THÁI -->
-        {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+        {% if (user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'])
+              and (not task.requires_approval or task.approved == True or current_user.role in ['director', 'manager']) %}
         <div class="card mb-3">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Cập nhật trạng thái</h5>
@@ -1159,6 +1330,70 @@ window.addEventListener('pagehide', () => {
         window.sseManager.disconnect('task-comments');
     }
 });
+
+// ============================================
+// TASK APPROVAL FUNCTIONS
+// ============================================
+
+function approveSelfTask(taskId) {
+    // Hiển thị hộp thoại xác nhận
+    if (!confirm('Xác nhận phê duyệt công việc này?')) {
+        return;
+    }
+
+    // Gửi request (KHÔNG CÓ BODY)
+    fetch(`/tasks/${taskId}/approve-self-task`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+        // ❌ BỎ: body: JSON.stringify({ note: ... })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã phê duyệt công việc', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Lỗi phê duyệt'), 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+    });
+}
+
+function rejectSelfTask(taskId) {
+    // Hiển thị hộp thoại xác nhận với cảnh báo
+    if (!confirm('Xác nhận từ chối công việc này?\n\n⚠️ Công việc sẽ bị HỦY và không thể khôi phục!')) {
+        return;
+    }
+
+    // Gửi request (KHÔNG CÓ BODY)
+    fetch(`/tasks/${taskId}/reject-self-task`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+        // ❌ BỎ: body: JSON.stringify({ reason: ... })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã từ chối công việc', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Lỗi từ chối'), 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+    });
+}
 
 // ============================================
 // INIT

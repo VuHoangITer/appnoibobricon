@@ -619,7 +619,7 @@ def create_task():
         assign_type = request.form.get('assign_type')
         assign_to_user_id = request.form.get('assign_to_user')
         assign_to_group = request.form.get('assign_to_group')
-        assign_to_multiple = request.form.getlist('assign_to_multiple[]')  # ← MỚI: Lấy nhiều người
+        assign_to_multiple = request.form.getlist('assign_to_multiple[]')
         is_urgent = request.form.get('is_urgent') == 'on'
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
@@ -645,6 +645,18 @@ def create_task():
                     flash('Định dạng ngày giờ không hợp lệ.', 'danger')
                     return redirect(url_for('tasks.create_task'))
 
+        # ===== ✅ KIỂM TRA CẦN PHÊ DUYỆT =====
+        # Chỉ task tự giao cho mình MỚI cần phê duyệt
+        requires_approval = False
+
+        if assign_type == 'self':  # Nếu user tự giao cho mình
+            # HR, Accountant, Manager tự tạo task => cần duyệt
+            if current_user.role in ['hr', 'accountant', 'manager']:
+                requires_approval = True
+        # Director tự tạo task => KHÔNG cần duyệt
+        # Task được cấp trên giao => KHÔNG cần duyệt
+        # ===== KẾT THÚC KIỂM TRA =====
+
         # Create task
         task = Task(
             title=title,
@@ -655,12 +667,19 @@ def create_task():
             is_urgent=is_urgent,
             is_important=is_important,
             is_recurring=is_recurring,
+            # ===== ✅ THÊM 2 FIELD PHÊ DUYỆT =====
+            requires_approval=requires_approval,  # Đánh dấu cần duyệt
+            approved=None if requires_approval else True,  # None = chờ duyệt, True = không cần duyệt
+            # ===== KẾT THÚC =====
             recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
             recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
             last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
         )
         db.session.add(task)
         db.session.flush()
+
+        # ===== ✅ BIẾN ĐỂ KIỂM TRA ĐÃ FLASH MESSAGE CHƯA =====
+        has_flashed = False
 
         # Handle assignments
         if assign_type == 'self':
@@ -672,6 +691,48 @@ def create_task():
                 accepted_at=datetime.utcnow()
             )
             db.session.add(assignment)
+
+            # ===== ✅ GỬI THÔNG BÁO CHO NGƯỜI PHÊ DUYỆT =====
+            if requires_approval:  # Nếu task cần phê duyệt
+                approvers = []  # Danh sách người được quyền duyệt
+
+                # ===== XÁC ĐỊNH AI ĐƯỢC QUYỀN DUYỆT =====
+                if current_user.role == 'hr':
+                    # HR tự tạo => Manager HOẶC Director duyệt
+                    approvers = User.query.filter(
+                        User.role.in_(['manager', 'director']),
+                        User.is_active == True
+                    ).all()
+
+                elif current_user.role == 'accountant':
+                    # Accountant tự tạo => CHỈ Director duyệt
+                    approvers = User.query.filter(
+                        User.role == 'director',
+                        User.is_active == True
+                    ).all()
+
+                elif current_user.role == 'manager':
+                    # Manager tự tạo => CHỈ Director duyệt
+                    approvers = User.query.filter(
+                        User.role == 'director',
+                        User.is_active == True
+                    ).all()
+
+                # ===== GỬI THÔNG BÁO CHO TẤT CẢ NGƯỜI DUYỆT =====
+                for approver in approvers:
+                    notif = Notification(
+                        user_id=approver.id,
+                        type='task_approval_request',
+                        title='🔔 Yêu cầu phê duyệt công việc',
+                        body=f'{current_user.full_name} đã tạo công việc "{title}" và cần phê duyệt.',
+                        link=f'/tasks/{task.id}'
+                    )
+                    db.session.add(notif)
+
+                # Flash message cho user biết đang chờ duyệt
+                flash('Công việc đã được tạo và đang chờ phê duyệt.', 'info')
+                has_flashed = True
+            # ===== KẾT THÚC LOGIC THÔNG BÁO =====
 
         elif assign_type == 'user' and assign_to_user_id:
             if current_user.can_assign_tasks():
@@ -726,7 +787,6 @@ def create_task():
                 db.session.rollback()
                 return redirect(url_for('tasks.list_tasks'))
 
-        # ========== MỚI: GIAO CHO NHIỀU NGƯỜI TÙY CHỌN ==========
         elif assign_type == 'multiple' and assign_to_multiple:
             if current_user.can_assign_tasks():
                 if len(assign_to_multiple) == 0:
@@ -759,14 +819,20 @@ def create_task():
                     db.session.add(notif)
 
                 flash(f'Đã giao nhiệm vụ cho {len(assign_to_multiple)} người.', 'success')
+                has_flashed = True
+
             else:
                 flash('Bạn không có quyền giao nhiệm vụ cho nhiều người.', 'danger')
                 db.session.rollback()
                 return redirect(url_for('tasks.list_tasks'))
-        # ========== END MỚI ==========
 
+        # ===== ✅ COMMIT DATABASE =====
         db.session.commit()
-        flash('Tạo nhiệm vụ thành công.', 'success')
+
+        # ===== ✅ FLASH MESSAGE NẾU CHƯA FLASH =====
+        if not has_flashed:
+            flash('Tạo nhiệm vụ thành công.', 'success')
+
         return redirect(url_for('tasks.task_detail', task_id=task.id))
 
     # GET request
@@ -849,6 +915,19 @@ def update_status(task_id):
 
     now = datetime.utcnow()
     is_overdue = task.due_date and task.due_date < now and task.status in ['PENDING', 'IN_PROGRESS']
+
+    # =====  CHECK PHÊ DUYỆT =====
+    # Nếu task cần phê duyệt và chưa được duyệt => KHÔNG cho phép thay đổi status
+    if task.requires_approval and task.approved is None:
+        # CHỈ Director/Manager mới được thay đổi (để họ có thể cancel nếu cần)
+        if current_user.role not in ['director', 'manager']:
+            flash('❌ Công việc chưa được phê duyệt. Vui lòng chờ phê duyệt trước khi bắt đầu.', 'warning')
+            return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+    # Nếu task bị TỪ CHỐI => KHÔNG cho phép thay đổi (đã bị cancel rồi)
+    if task.requires_approval and task.approved is False:
+        flash('❌ Công việc đã bị từ chối. Không thể thay đổi trạng thái.', 'danger')
+        return redirect(url_for('tasks.task_detail', task_id=task_id))
 
     # Check permission
     if current_user.role in ['director', 'manager']:
@@ -1145,6 +1224,153 @@ def rate_task(task_id):
 
 
 # ============================================
+#  TASK APPROVAL
+# ============================================
+
+@bp.route('/<int:task_id>/approve-self-task', methods=['POST'])
+@login_required
+@role_required(['director', 'manager'])
+def approve_self_task(task_id):
+    """
+    Phê duyệt công việc tự tạo
+
+    Logic:
+    - Director: Duyệt được TẤT CẢ
+    - Manager: CHỈ duyệt được task của HR
+    """
+    task = Task.query.get_or_404(task_id)
+
+    # ===== KIỂM TRA CƠ BẢN =====
+    if not task.requires_approval:
+        return jsonify({'success': False, 'error': 'Công việc này không cần phê duyệt'}), 400
+
+    if task.approved is not None:
+        return jsonify({'success': False, 'error': 'Công việc đã được xử lý rồi'}), 400
+
+    # ===== KIỂM TRA QUYỀN PHÊ DUYỆT =====
+    can_approve = False
+
+    if current_user.role == 'director':
+        # Director duyệt được tất cả
+        can_approve = True
+    elif current_user.role == 'manager':
+        # Manager CHỈ duyệt được task của HR
+        if task.creator.role == 'hr':
+            can_approve = True
+
+    if not can_approve:
+        return jsonify({'success': False, 'error': 'Bạn không có quyền phê duyệt công việc này'}), 403
+
+
+    # ===== CẬP NHẬT TRẠNG THÁI PHÊ DUYỆT =====
+    task.approved = True
+    task.approved_by = current_user.id
+    task.approved_at = datetime.utcnow()
+
+
+    # ===== GỬI THÔNG BÁO CHO NGƯỜI TẠO TASK =====
+    notif = Notification(
+        user_id=task.creator_id,
+        type='task_approved',
+        title='✅ Công việc đã được phê duyệt',
+        body=f'{current_user.full_name} đã phê duyệt công việc "{task.title}"',
+        link=f'/tasks/{task.id}'
+    )
+    db.session.add(notif)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã phê duyệt công việc'
+    })
+
+
+@bp.route('/<int:task_id>/reject-self-task', methods=['POST'])
+@login_required
+@role_required(['director', 'manager'])
+def reject_self_task(task_id):
+    """
+    Từ chối công việc tự tạo
+
+    Logic tương tự approve_self_task
+    """
+    task = Task.query.get_or_404(task_id)
+
+    # ===== KIỂM TRA CƠ BẢN =====
+    if not task.requires_approval:
+        return jsonify({'success': False, 'error': 'Công việc này không cần phê duyệt'}), 400
+
+    if task.approved is not None:
+        return jsonify({'success': False, 'error': 'Công việc đã được xử lý rồi'}), 400
+
+    # ===== KIỂM TRA QUYỀN TỪ CHỐI =====
+    can_reject = False
+
+    if current_user.role == 'director':
+        can_reject = True
+    elif current_user.role == 'manager':
+        if task.creator.role == 'hr':
+            can_reject = True
+
+    if not can_reject:
+        return jsonify({'success': False, 'error': 'Bạn không có quyền từ chối công việc này'}), 403
+
+    # ===== CẬP NHẬT TRẠNG THÁI TỪ CHỐI =====
+    task.approved = False
+    task.approved_by = current_user.id
+    task.approved_at = datetime.utcnow()
+    task.status = 'CANCELLED'  # Đổi status thành CANCELLED
+
+    # ===== GỬI THÔNG BÁO CHO NGƯỜI TẠO TASK =====
+    notif = Notification(
+        user_id=task.creator_id,
+        type='task_rejected',
+        title='❌ Công việc không được phê duyệt',
+        body=f'{current_user.full_name} đã từ chối công việc "{task.title}".',
+        link=f'/tasks/{task.id}'
+    )
+    db.session.add(notif)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã từ chối công việc'
+    })
+
+
+@bp.route('/pending-approvals')
+@login_required
+@role_required(['director', 'manager'])
+def pending_approvals():
+    """
+    Trang danh sách công việc chờ phê duyệt
+
+    Logic:
+    - Director: Thấy TẤT CẢ tasks chờ duyệt
+    - Manager: CHỈ thấy tasks của HR chờ duyệt
+    """
+    # Base query: Lấy tasks cần phê duyệt và đang chờ
+    query = Task.query.filter(
+        Task.requires_approval == True,
+        Task.approved == None  # None = chờ duyệt
+    ).join(
+        User, Task.creator_id == User.id  # Join để lấy thông tin người tạo
+    )
+
+    # Manager chỉ thấy tasks của HR
+    if current_user.role == 'manager':
+        query = query.filter(User.role == 'hr')
+
+    # Sắp xếp: Task cũ nhất lên đầu (chờ lâu nhất)
+    tasks = query.order_by(Task.created_at.asc()).all()
+
+    return render_template('pending_approvals.html',
+                           tasks=tasks,
+                           total_count=len(tasks))
+
+# ============================================
 #  KANBAN BOARD ROUTES
 # ============================================
 
@@ -1398,6 +1624,22 @@ def quick_update_status(task_id):
 
     if new_status not in ['IN_PROGRESS', 'DONE']:
         return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
+
+    # ===== CHECK PHÊ DUYỆT =====
+    # Nếu task cần phê duyệt và chưa được duyệt => KHÔNG cho phép
+    if task.requires_approval and task.approved is None:
+        if current_user.role not in ['director', 'manager']:
+            return jsonify({
+                'success': False,
+                'error': 'Công việc chưa được phê duyệt. Vui lòng chờ phê duyệt.'
+            }), 403
+
+    # Nếu task bị TỪ CHỐI => KHÔNG cho phép
+    if task.requires_approval and task.approved is False:
+        return jsonify({
+            'success': False,
+            'error': 'Công việc đã bị từ chối.'
+        }), 403
 
     # Check permission
     assignment = TaskAssignment.query.filter_by(
