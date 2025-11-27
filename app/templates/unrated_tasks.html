@@ -236,16 +236,6 @@
                         data-href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
                         <td data-label="Nhiệm Vụ">
                             <strong>{{ task.title }}</strong>
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-calendar-plus"></i> Tạo: {{ task.created_at | vn_datetime('%d/%m/%Y') }}
-                            </small>
-                            {% if task.due_date %}
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-alarm"></i> Hạn: {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
-                            </small>
-                            {% endif %}
                         </td>
 
                         <td data-label="Người Làm">
@@ -266,12 +256,8 @@
 
                         <td data-label="Ngày Hoàn Thành">
                             <span class="badge bg-success">
-                                {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
+                                {{ task.updated_at | vn_datetime('%H:%M') }} {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
                             </span>
-                            <br>
-                            <small class="text-muted">
-                                {{ task.updated_at | vn_datetime('%H:%M') }}
-                            </small>
                         </td>
 
                         <td data-label="Trạng Thái">
