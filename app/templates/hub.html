@@ -7,7 +7,6 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}">
 {% endblock %}
-
 {% block content %}
 <div class="hub-main-container">
     <!-- MAIN HUB - 4 ICONS -->
@@ -153,7 +152,9 @@
                     <table class="performance-table">
                        <thead>
                         <tr>
-                            <th style="width: 80px;">Avatar</th>
+                            <th style="width: 80px; text-align: center;">
+                                <i class="bi bi-person-circle"></i>
+                            </th>
                             <th>Tên NV</th>
                             <th style="width: 100px; text-align: center;">
                                 <span class="d-none d-md-inline">🔥 Khẩn Cấp</span>

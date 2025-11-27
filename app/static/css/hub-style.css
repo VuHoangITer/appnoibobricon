@@ -2,7 +2,7 @@
    BASE STYLES
    ============================================ */
 body {
-    background-color: transparent !important;  /* ← Thêm dòng này */
+    background-color: transparent !important;
     background-image: url('/static/images/hinh-nen.webp') !important;
     background-size: cover;
     background-position: center;
@@ -678,6 +678,11 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     white-space: nowrap;
 }
 
+.performance-table thead th i {
+    font-size: 2rem;
+    margin-left: 0.2rem
+}
+
 .performance-table tbody td {
     padding: 15px;
     border-bottom: 1px solid #f0f0f0;
@@ -1020,6 +1025,8 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     .performance-table thead th {
         padding: 8px 4px;
         font-size: 1rem;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .performance-table thead th:nth-child(2) {
@@ -1029,6 +1036,8 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     .performance-table tbody td {
         padding: 8px 4px;
         font-size: 1.5rem;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .performance-table tbody td:nth-child(2) {
@@ -1038,6 +1047,8 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     .user-avatar-cell {
         width: 35px;
         height: 35px;
+        display: block;
+        margin: 0 auto;
     }
 
     .user-name-cell {
@@ -1132,15 +1143,21 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     .performance-table thead th {
         padding: 6px 2px;
         font-size: 1.1rem;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .performance-table tbody td {
         padding: 6px 2px;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .user-avatar-cell {
         width: 30px;
         height: 30px;
+        display: block;
+        margin: 0 auto;
     }
 
     .user-name-cell {
@@ -1150,6 +1167,10 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 
     .count-cell {
         font-size: 0.8rem;
+    }
+    .performance-table thead th i {
+        font-size: 1.3rem;
+        margin-left: 0.2rem
     }
 }
 
@@ -1273,16 +1294,22 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     .performance-table thead th {
         padding: 5px 1px;
         font-size: 0.6rem;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .performance-table tbody td {
         padding: 5px 1px;
         font-size: 1.2rem;
+        text-align: center;
+        vertical-align: middle;
     }
 
     .user-avatar-cell {
         width: 26px;
         height: 26px;
+        display: block;
+        margin: 0 auto;
     }
 
     .user-name-cell {

@@ -482,6 +482,20 @@
         })();
         {% endif %}
 
+        {% if current_user.is_authenticated %}
+        (function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('🔔 Loading notification count...');
+
+                setTimeout(function() {
+                    if (typeof updateNotifCount === 'function') {
+                        updateNotifCount();
+                    }
+                }, 200);
+            });
+        })();
+        {% endif %}
+
         // ==========================================
         // FLASH MESSAGES AUTO DISMISS
         // ==========================================
@@ -514,7 +528,239 @@
             });
         });
     </script>
+    <!-- Lỗi thì xóa -->
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    {% if current_user.is_authenticated %}
+    <nav class="mobile-bottom-nav">
+        <!-- 1. HOME -->
+        <a href="{{ url_for('hub.workflow_hub') }}"
+           class="bottom-nav-item"
+           title="Trang Chủ">
+            <i class="bi bi-house-door-fill"></i>
+        </a>
 
+        <!-- 2. MODULE MENU -->
+        <button class="bottom-nav-item"
+                id="mobileModuleMenuBtn"
+                title="Menu Module">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- 3. TẠO NHIỆM VỤ - NÚT MỚI -->
+        <a href="{{ url_for('tasks.create_task') }}"
+           class="bottom-nav-item bottom-nav-create"
+           title="Tạo Nhiệm Vụ">
+            <div class="create-task-circle">
+                <i class="bi bi-plus-circle"></i>
+            </div>
+        </a>
+
+        <!-- 4. THÔNG BÁO -->
+        <a href="{{ url_for('notifications.list_notifications') }}"
+           class="bottom-nav-item"
+           title="Thông Báo">
+            <i class="bi bi-bell-fill"></i>
+            <span class="bottom-nav-badge"
+                  id="mobile-notif-count"
+                  style="display: none;"></span>
+        </a>
+
+        <!-- 5. TÀI KHOẢN -->
+        <button class="bottom-nav-item"
+                id="mobileUserBtn"
+                title="Tài Khoản">
+            <div class="bottom-nav-avatar">
+                {% if current_user.avatar %}
+                    <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
+                         alt="Avatar">
+                {% else %}
+                    {{ current_user.full_name[0].upper() }}
+                {% endif %}
+            </div>
+        </button>
+    </nav>
+
+    <!-- MOBILE USER DROPDOWN -->
+    <div class="mobile-dropdown-overlay" id="mobileDropdownOverlay"></div>
+    <div class="mobile-user-dropdown" id="mobileUserDropdown">
+        <div class="user-dropdown-header">
+            <div class="user-dropdown-avatar">
+                {% if current_user.avatar %}
+                    <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
+                         alt="Avatar"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                {% else %}
+                    {{ current_user.full_name[0].upper() }}
+                {% endif %}
+            </div>
+            <div class="user-dropdown-name">{{ current_user.full_name }}</div>
+            <div class="user-dropdown-role">{{ current_user.role | role_vn }}</div>
+        </div>
+        <div class="user-dropdown-body">
+            <button class="user-dropdown-item notification-settings-btn" onclick="if(window.notificationManager) window.notificationManager.openSettings()">
+                <i class="bi bi-volume-up-fill"></i>
+                <span>Cài đặt thông báo</span>
+            </button>
+            <a href="{{ url_for('profile.settings') }}" class="user-dropdown-item">
+                <i class="bi bi-gear"></i>
+                <span>Cài đặt tài khoản</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="user-dropdown-item logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================
+    // ✅ MOBILE BOTTOM NAV - FINAL VERSION
+    // ==========================================
+    (function() {
+        'use strict';
+
+        if (window.mobileBottomNavInitialized) {
+            console.log('⚠️ Mobile bottom nav already initialized');
+            return;
+        }
+        window.mobileBottomNavInitialized = true;
+
+        console.log('📱 Initializing mobile bottom nav...');
+
+        // ==========================================
+        // 1. MOBILE USER DROPDOWN
+        // ==========================================
+        const mobileUserBtn = document.getElementById('mobileUserBtn');
+        const mobileUserDropdown = document.getElementById('mobileUserDropdown');
+        const mobileDropdownOverlay = document.getElementById('mobileDropdownOverlay');
+
+        if (mobileUserBtn && mobileUserDropdown && mobileDropdownOverlay) {
+            mobileUserBtn.addEventListener('click', function() {
+                mobileUserDropdown.classList.toggle('active');
+                mobileDropdownOverlay.classList.toggle('active');
+            });
+
+            mobileDropdownOverlay.addEventListener('click', function() {
+                mobileUserDropdown.classList.remove('active');
+                mobileDropdownOverlay.classList.remove('active');
+            });
+        }
+
+        // ==========================================
+        // 2. MOBILE MODULE MENU BUTTON
+        // ==========================================
+        const mobileModuleMenuBtn = document.getElementById('mobileModuleMenuBtn');
+        if (mobileModuleMenuBtn) {
+            mobileModuleMenuBtn.addEventListener('click', function() {
+                const activeModule = document.querySelector('.module-container.active');
+                if (activeModule) {
+                    const moduleName = activeModule.id.replace('module-', '');
+                    if (typeof toggleSidebar === 'function') {
+                        toggleSidebar(moduleName);
+                    }
+                } else {
+                    console.log('📍 Currently at hub, no sidebar to toggle');
+                }
+            });
+        }
+
+        // ==========================================
+        // 3. SYNC MOBILE NOTIFICATION BADGE
+        // ==========================================
+        function syncMobileNotificationBadge() {
+            const desktopBadge = document.getElementById('notif-count');
+            const mobileBadge = document.getElementById('mobile-notif-count');
+
+            if (!desktopBadge || !mobileBadge) {
+                console.log('⚠️ Badge elements not found');
+                return;
+            }
+
+            const count = desktopBadge.textContent.trim();
+            const isVisible = desktopBadge.style.display !== 'none';
+
+            console.log('🔔 Desktop badge:', { count, isVisible, display: desktopBadge.style.display });
+
+            if (isVisible && count && count !== '0') {
+                mobileBadge.textContent = count;
+                mobileBadge.style.display = 'inline-block';
+                console.log('✅ Mobile badge updated:', count);
+            } else {
+                mobileBadge.style.display = 'none';
+                console.log('❌ Mobile badge hidden');
+            }
+        }
+
+        // ==========================================
+        // 4. HOOK INTO updateNotifCount
+        // ==========================================
+        const originalUpdateNotifCount = window.updateNotifCount;
+
+        window.updateNotifCount = function() {
+            console.log('🎯 updateNotifCount called');
+
+            if (originalUpdateNotifCount) {
+                originalUpdateNotifCount();
+            }
+
+            // Sync sau khi desktop badge đã update
+            setTimeout(function() {
+                syncMobileNotificationBadge();
+            }, 100);
+        };
+
+        // ==========================================
+        // 5. HIGHLIGHT ACTIVE PAGE
+        // ==========================================
+        function highlightActivePage() {
+            const currentPath = window.location.pathname;
+            const navItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
+
+            navItems.forEach(function(item) {
+                const href = item.getAttribute('href');
+                if (href && currentPath === href) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // ==========================================
+        // 6. INITIALIZATION & SYNC
+        // ==========================================
+
+        // Initial sync
+        console.log('🔄 Initial sync...');
+        highlightActivePage();
+
+        // Wait for DOM to be fully ready
+        setTimeout(function() {
+            syncMobileNotificationBadge();
+        }, 300);
+
+        // Sync again after 1 second (ensure desktop badge loaded)
+        setTimeout(function() {
+            console.log('🔄 Second sync (1s delay)...');
+            syncMobileNotificationBadge();
+        }, 1000);
+
+        // Sync when tab becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('👁️ Tab visible - syncing badges');
+                setTimeout(syncMobileNotificationBadge, 200);
+            }
+        });
+
+        // Expose globally for debugging
+        window.syncMobileNotificationBadge = syncMobileNotificationBadge;
+
+        console.log('✅ Mobile bottom nav initialized');
+
+    })();
+    </script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>
