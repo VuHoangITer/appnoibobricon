@@ -961,26 +961,20 @@ body::-webkit-scrollbar {
    ẨN MENU BUTTON KHI KHÔNG Ở HUB 9:56 27/11
    ========================================== */
 
-/* Mặc định ẨN menu button */
+/* Mặc định ẨN menu button trên MỌI THIẾT BỊ */
 #mobileModuleMenuBtn,
 #moduleMenuBtn {
     display: none !important;
 }
 
-/* CHỈ HIỆN khi ở Hub (có module sidebar) */
-body.has-module-sidebar #mobileModuleMenuBtn,
-body.has-module-sidebar #moduleMenuBtn {
-    display: flex !important;
-}
-
-/* Desktop - Top navbar menu button */
+/* Desktop (>768px) - LUÔN ẨN nút menu */
 @media (min-width: 769px) {
-    body.has-module-sidebar #moduleMenuBtn {
-        display: block !important;
+    #moduleMenuBtn {
+        display: none !important;
     }
 }
 
-/* Mobile - Bottom nav menu button */
+/* Mobile (≤768px) - CHỈ HIỆN khi ở Hub */
 @media (max-width: 768px) {
     body.has-module-sidebar #mobileModuleMenuBtn {
         display: flex !important;
