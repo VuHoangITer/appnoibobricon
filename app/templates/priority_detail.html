@@ -23,107 +23,234 @@
     --ed-radius-pill: 999px;
 }
 
-/* --------------------------------------------
-   Section 1: Priority Header
-   -------------------------------------------- */
-
+/* Priority Header – giống layout hình PC & dùng chung cho mobile */
 .priority-header {
-    background: var(--ed-card-bg);
-    border: 1px solid var(--ed-border);
-    padding: 20px 24px;
+    background: #ffffff;
     border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 12px 18px;
     margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
 }
 
-.priority-badge {
-    font-size: 1.5rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 15px;
-    color: var(--ed-text);
+/* Cột trái: trạng thái chính */
+.priority-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-/* Màu theo từng loại priority */
-.priority-badge.urgent {
+.priority-status-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+/* HOÀN THÀNH – xanh lá */
+.priority-status-box.status-box-done {
+    border: 2px solid #22c55e;
+    background: rgba(34, 197, 94, 0.08);
+    color: #22c55e;
+}
+
+/* KHẨN CẤP – đỏ */
+.priority-status-box.status-box-urgent {
+    border: 2px solid #dc3545;
+    background: rgba(220, 53, 69, 0.08);
     color: #dc3545;
 }
 
-.priority-badge.important {
-    color: #ffc107;
+/* QUAN TRỌNG – vàng */
+.priority-status-box.status-box-important {
+    border: 2px solid #eab308; /* hoặc #ffc107 */
+    background: rgba(234, 179, 8, 0.08);
+    color: #eab308;
 }
 
-.priority-badge.recurring {
-    color: #0dcaf0;
+/* LẶP LẠI – xanh dương */
+.priority-status-box.status-box-recurring {
+    border: 2px solid #0d6efd;
+    background: rgba(13, 110, 253, 0.08);
+    color: #0d6efd;
 }
 
-.priority-badge.done {
-    color: #198754;
+.priority-status-text {
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Hoàn thành – xanh lá */
+.priority-status-text.status-done {
+    color: #22c55e;
+}
+
+/* Khẩn cấp – đỏ */
+.priority-status-text.status-urgent {
+    color: #dc3545;
+}
+
+/* Quan trọng – vàng */
+.priority-status-text.status-important {
+    color: #eab308; /* hoặc #ffc107 nếu anh thích vàng tươi hơn */
+}
+
+/* Lặp lại – xanh dương */
+.priority-status-text.status-recurring {
+    color: #0d6efd;
+}
+
+/* Cột giữa: icon Tốt / Chưa tốt */
+.priority-header-center {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Reset kiểu button */
+.rating-icon {
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Hình tròn gradient */
+.rating-icon-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rating-icon-circle i {
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+.rating-icon-circle.good {
+    background: radial-gradient(circle at 30% 20%, #bbffd1, #22c55e);
+}
+
+.rating-icon-circle.bad {
+    background: radial-gradient(circle at 30% 20%, #ffd0d0, #f97373);
+}
+
+.rating-icon-circle.active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+/* Cột phải: ĐÚNG HẠN / QUÁ HẠN */
+.priority-header-right {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
 }
 
 .priority-stats {
     display: flex;
-    justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 40px;
 }
 
 .priority-stat-item {
     text-align: center;
-    padding: 10px 22px;
-    background: #f8f9fb;
-    border-radius: var(--ed-radius-pill);
-    border: 1px solid var(--ed-border);
     cursor: pointer;
 }
 
-/* Màu nền cho CÒN HẠN và QUÁ HẠN */
-.priority-stat-item[data-filter="on-time"] {
-    background: var(--ed-success);
-    border-color: var(--ed-success);
+.priority-stat-label-top {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 4px;
 }
 
-.priority-stat-item[data-filter="overdue"] {
-    background: var(--ed-danger);
-    border-color: var(--ed-danger);
+.priority-stat-label-top.on-time {
+    color: #16a34a;
 }
 
-.priority-stat-item[data-filter="on-time"] .priority-stat-number {
-    color: var(--ed-bg);
+.priority-stat-label-top.overdue {
+    color: #ef4444;
 }
 
-.priority-stat-item[data-filter="overdue"] .priority-stat-number {
-    color: var(--ed-bg);
+.priority-stat-number-big {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #22c55e;
 }
 
-.priority-stat-item.active {
-    background: var(--ed-primary);
-    border-color: var(--ed-primary);
+.priority-stat-number-big.overdue {
+    color: #dc2626;
 }
 
-.priority-stat-item.active .priority-stat-number,
-.priority-stat-item.active .priority-stat-label {
-    color: #ffffff;
+.priority-stat-item.active .priority-stat-number-big {
+    transform: scale(1.05);
+    text-shadow: 0 0 16px rgba(37, 99, 235, 0.25);
 }
 
-.priority-stat-number {
-    font-size: 1.8rem;
-    font-weight: 700;
-    display: block;
-    color: var(--ed-text);
+/* ====== Responsive: GIỮ NGUYÊN LAYOUT, CHỈ THU NHỎ ====== */
+@media (max-width: 768px) {
+    .priority-header {
+        padding: 8px 10px;
+        gap: 10px;
+    }
+
+    .priority-status-text {
+        font-size: 0.85rem;
+        letter-spacing: 0.06em;
+    }
+
+    .priority-status-box {
+        width: 18px;
+        height: 18px;
+        font-size: 0.8rem;
+    }
+
+    .rating-icon-circle {
+        width: 28px;
+        height: 28px;
+    }
+
+    .rating-icon-circle i {
+        font-size: 1rem;
+    }
+
+    .priority-stats {
+        gap: 18px;
+    }
+
+    .priority-stat-number-big {
+        font-size: 1.6rem;
+    }
+
+    .priority-stat-label-top {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+    }
 }
 
-.priority-stat-label {
-    font-size: 0.85rem;
-    color: var(--ed-bg);
-    margin-top: 4px;
-    font-weight: 500;
-}
 
-/* --------------------------------------------
-   Floating "Create Task" Button
-   -------------------------------------------- */
 
+/* Floating Create Task Button */
 .create-task-btn {
     position: fixed;
     bottom: 30px;
@@ -149,23 +276,7 @@
     line-height: 1;
 }
 
-@media (max-width: 768px) {
-    .create-task-btn {
-        bottom: 70px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-    }
-
-    .create-task-btn i {
-        font-size: 1.4rem;
-    }
-}
-
-/* --------------------------------------------
-   Section 2: Task Cards Container
-   -------------------------------------------- */
-
+/* Task Cards Container */
 .task-cards-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -173,10 +284,7 @@
     margin-bottom: 20px;
 }
 
-/* --------------------------------------------
-   Task Card – Enterprise Style
-   -------------------------------------------- */
-
+/* Task Card */
 .task-card {
     border: 1px solid var(--ed-border);
     border-radius: 24px;
@@ -193,17 +301,15 @@
     font-size: 1rem;
     border-bottom: 1px solid var(--ed-border);
     text-align: center;
+    color: #ffffff;
 }
 
-/* Header theo trạng thái */
 .task-card-header.on-time {
     background: var(--ed-success);
-    color: #155724;
 }
 
 .task-card-header.overdue {
     background: var(--ed-danger);
-    color: #842029;
 }
 
 .task-card-header.completed {
@@ -218,10 +324,7 @@
     flex: 1;
 }
 
-/* --------------------------------------------
-   Layout nội dung trên card
-   -------------------------------------------- */
-
+/* Task Content Layout */
 .task-card-content {
     display: flex;
     flex-direction: column;
@@ -249,7 +352,7 @@
     justify-content: flex-end;
 }
 
-/* Người giao → Người làm (layout ngang, chỉ avatar) */
+/* Task Flow (Avatar) */
 .task-flow {
     display: flex;
     align-items: center;
@@ -261,7 +364,6 @@
     align-items: center;
 }
 
-/* Avatar dạng enterprise */
 .task-user-avatar {
     width: 32px;
     height: 32px;
@@ -283,20 +385,13 @@
     border-radius: 50%;
 }
 
-.task-user-info {
-    display: none;
-}
-
 .task-arrow {
     font-size: 1rem;
-    color: var(--ed-mute);
+    color: var(--ed-muted);
     margin: 0 4px;
 }
 
-/* --------------------------------------------
-   Requirement Box
-   -------------------------------------------- */
-
+/* Requirement Box */
 .task-requirement {
     margin-top: 4px;
     padding: 12px;
@@ -304,8 +399,6 @@
     border-radius: var(--ed-radius-md);
     font-size: 0.9rem;
     word-break: break-word;
-
-    /* khung nét đứt quanh ô YÊU CẦU */
     border: 1px dashed var(--ed-primary);
 }
 
@@ -316,10 +409,7 @@
     font-size: 0.85rem;
 }
 
-/* --------------------------------------------
-   Countdown
-   -------------------------------------------- */
-
+/* Countdown */
 .task-countdown,
 .task-countdown-static {
     text-align: center;
@@ -328,10 +418,6 @@
     border: 1px solid #e2e8f0;
     border-radius: var(--ed-radius-pill);
     white-space: nowrap;
-}
-
-.countdown-label {
-    display: none;
 }
 
 .countdown-timer {
@@ -350,10 +436,24 @@
     color: var(--ed-success);
 }
 
-/* --------------------------------------------
-   Task Actions & Buttons
-   -------------------------------------------- */
+/* Rating Badge trong countdown static */
+.task-rating-badge {
+    display: inline-block;
+    font-size: 1.2rem;
+    margin-top: 0;
+    border-radius: 0;
+    background: transparent;
+}
 
+.task-rating-badge.good {
+    color: var(--ed-success);
+}
+
+.task-rating-badge.bad {
+    color: var(--ed-danger);
+}
+
+/* Task Actions */
 .task-actions {
     display: flex;
     justify-content: center;
@@ -374,14 +474,18 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.2s;
+}
+
+.task-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .task-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
-
-/* Nút theo trạng thái */
 
 .task-btn-start {
     border-color: var(--ed-primary);
@@ -397,29 +501,59 @@
 .task-btn-complete {
     border-color: var(--ed-success);
     background: var(--ed-success);
-    color: var(--ed-success);
-}
-
-.task-btn-complete:hover {
-    background: var(--ed-success);
     color: #ffffff;
 }
 
 .task-btn-discuss {
-    border-color: var(--ed-bg);
+    border-color: #ffc700;
     background: #ffc700;
     color: var(--ed-text);
 }
 
 .task-btn-discuss:hover {
-    background: #ffc700;
+    background: #ffb700;
+}
+
+/* Rating Buttons cho DONE tasks */
+.task-btn-rate-good {
+    border-color: var(--ed-success);
+    background: var(--ed-success);
     color: #ffffff;
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+.task-btn-rate-good:hover {
+    background: #157347;
+}
 
+.task-btn-rate-bad {
+    border-color: var(--ed-danger);
+    background: var(--ed-danger);
+    color: #ffffff;
+}
+
+.task-btn-rate-bad:hover {
+    background: #bb2d3b;
+}
+
+/* Unread badge */
+.unread-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--ed-danger);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+    border: 2px solid white;
+    line-height: 1.2;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
     .task-cards-container {
         grid-template-columns: repeat(2, 1fr);
@@ -454,83 +588,116 @@
     }
 
     .task-actions {
-        flex-direction: row;
-        justify-content: space-between;
+        flex-wrap: wrap;
     }
 
     .task-btn {
-        width: 48%;
+        flex: 1;
+        min-width: 48%;
         justify-content: center;
     }
-}
 
-/* --------------------------------------------
-   Unread badge – rõ ràng nhưng gọn
-   -------------------------------------------- */
+    .create-task-btn {
+        bottom: 70px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+    }
 
-.unread-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--ed-danger);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 10px;
-    min-width: 18px;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
-    border: 2px solid white;
-    line-height: 1.2;
-}
-.task-card-header.on-time,
-.task-card-header.overdue,
-.task-card-header.completed {
-    color: #ffffff;
+    .create-task-btn i {
+        font-size: 1.4rem;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Section 1: Priority Header -->
+<!-- Priority Header -->
 <div class="priority-header">
-    <!-- TIÊU ĐỀ LOẠI ƯU TIÊN -->
-    <div class="priority-badge
-        {% if tag == 'urgent' %}urgent
-        {% elif tag == 'important' %}important
-        {% elif tag == 'recurring' %}recurring
-        {% elif status == 'DONE' %}done{% endif %}">
-        {{ priority_icon }} {{ priority_type }}
+    <!-- BÊN TRÁI: trạng thái chính -->
+    <div class="priority-header-left">
+        <div class="priority-status-box
+            {% if status == 'DONE' %}
+                status-box-done
+            {% elif tag == 'urgent' %}
+                status-box-urgent
+            {% elif tag == 'important' %}
+                status-box-important
+            {% elif tag == 'recurring' %}
+                status-box-recurring
+            {% endif %}
+        ">
+            {% if status == 'DONE' %}
+                <i class="bi bi-check-lg"></i>
+            {% else %}
+                {{ priority_icon }}
+            {% endif %}
+        </div>
+        <div class="priority-status-text
+            {% if status == 'DONE' %}
+                status-done
+            {% elif tag == 'urgent' %}
+                status-urgent
+            {% elif tag == 'important' %}
+                status-important
+            {% elif tag == 'recurring' %}
+                status-recurring
+            {% endif %}
+        ">
+            {{ priority_type }}
+        </div>
     </div>
 
-    <div class="priority-stats">
-        {% if status != 'DONE' %}
-        <div class="priority-stat-item" data-filter="on-time" onclick="toggleFilter('on-time')">
-            <span class="priority-stat-number">{{ on_time_count }}</span>
-            <div class="priority-stat-label">CÒN HẠN</div>
+    <!-- GIỮA: Tốt / Chưa tốt (chỉ dùng khi DONE) -->
+    {% if status == 'DONE' %}
+    <div class="priority-header-center">
+        <button class="rating-icon" type="button" data-filter="rated-good" onclick="toggleFilter('rated-good')">
+            <div class="rating-icon-circle good">
+                <i class="bi bi-check-lg"></i>
+            </div>
+        </button>
+
+        <button class="rating-icon" type="button" data-filter="rated-bad" onclick="toggleFilter('rated-bad')">
+            <div class="rating-icon-circle bad">
+                <i class="bi bi-check-lg"></i>
+            </div>
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- BÊN PHẢI: Đúng hạn / Quá hạn -->
+    <div class="priority-header-right">
+        <div class="priority-stats">
+            <div class="priority-stat-item" data-filter="on-time" onclick="toggleFilter('on-time')">
+                <div class="priority-stat-label-top on-time">
+                    {% if status == 'DONE' %}ĐÚNG HẠN{% else %}CÒN HẠN{% endif %}
+                </div>
+                <div class="priority-stat-number-big">{{ on_time_count }}</div>
+            </div>
+
+            <div class="priority-stat-item" data-filter="overdue" onclick="toggleFilter('overdue')">
+                <div class="priority-stat-label-top overdue">QUÁ HẠN</div>
+                <div class="priority-stat-number-big overdue">{{ overdue_count }}</div>
+            </div>
         </div>
-        <div class="priority-stat-item" data-filter="overdue" onclick="toggleFilter('overdue')">
-            <span class="priority-stat-number">{{ overdue_count }}</span>
-            <div class="priority-stat-label">QUÁ HẠN</div>
-        </div>
-        {% else %}
-        <div class="priority-stat-item">
-            <span class="priority-stat-number">{{ tasks|length }}</span>
-            <div class="priority-stat-label">TỔNG SỐ</div>
-        </div>
-        {% endif %}
     </div>
 </div>
 
-<!-- Section 2: Task Cards Grid -->
+
+
+<!-- Task Cards Grid -->
 {% if tasks %}
 <div class="task-cards-container">
     {% for task in tasks %}
-    <div class="task-card" data-task-id="{{ task.id }}">
+    <div class="task-card"
+         data-task-id="{{ task.id }}"
+         data-status="{% if task.status == 'DONE' %}completed{% elif task | is_overdue %}overdue{% else %}on-time{% endif %}"
+         data-rating="{{ task.performance_rating or 'none' }}">
+
         <!-- Header -->
         <div class="task-card-header
-            {% if task.status == 'DONE' %}completed
+            {% if task.status == 'DONE' %}
+                {% if task.completed_overdue %}overdue{% else %}on-time{% endif %}
             {% elif task | is_overdue %}overdue
             {% else %}on-time{% endif %}">
             {{ task.title }}
@@ -538,12 +705,10 @@
 
         <!-- Body -->
         <div class="task-card-body">
-            <!-- Content -->
             <div class="task-card-content">
-                <!-- Hàng 1: Avatar → Avatar | Countdown -->
+                <!-- Hàng 1: Avatar → Avatar | Countdown/Rating -->
                 <div class="task-top-row">
                     <div class="task-left-section">
-                        <!-- Người giao → Người làm (chỉ avatar) -->
                         <div class="task-flow">
                             <!-- Avatar người giao -->
                             <div class="task-user">
@@ -571,32 +736,22 @@
                         </div>
                     </div>
 
-                    <!-- Countdown -->
+                    <!-- Countdown hoặc Rating -->
                     <div class="task-right-section">
                         {% if task.due_date %}
                             {% if task.status == 'DONE' %}
-                                <!-- Task hoàn thành: Hiện QUÁ HẠN hoặc ĐÚNG HẠN (không đếm) -->
-                                <div class="task-countdown-static">
-                                    {% if task.completed_overdue %}
-                                        <div class="countdown-timer overdue">QUÁ HẠN</div>
-                                    {% else %}
-                                        <div class="countdown-timer on-time-done">ĐÚNG HẠN</div>
+                                <!-- Task hoàn thành: Hiện trạng thái + rating -->
+                            {% if task.performance_rating %}
+                            <div class="task-countdown-static">
+                                <div class="task-rating-badge {{ task.performance_rating }}">
+                                    {% if task.performance_rating == 'good' %}
+                                        <i class="bi bi-hand-thumbs-up-fill"></i>
+                                    {% elif task.performance_rating == 'bad' %}
+                                        <i class="bi bi-hand-thumbs-down-fill"></i>
                                     {% endif %}
-                                    {% if task.performance_rating %}
-                                    <div class="task-rating mt-2 text-center">
-                                        <span class="badge
-                                            {% if task.performance_rating == 'good' %}bg-success
-                                            {% else %}bg-danger{% endif %}">
-                                            {% if task.performance_rating == 'good' %}👍
-                                            {% else %}👎{% endif %}
-                                        </span>
-                                    </div>
-                                {% else %}
-                                    <div class="task-rating mt-2 text-center">
-                                        <span class="badge bg-secondary">Chưa đánh giá</span>
-                                    </div>
-                                {% endif %}
                                 </div>
+                            </div>
+                            {% endif %}
                             {% else %}
                                 <!-- Task chưa hoàn thành: Đếm ngược -->
                                 <div class="task-countdown" data-due-date="{{ task.vn_due_date.strftime('%Y-%m-%dT%H:%M:%S') }}+07:00">
@@ -607,29 +762,47 @@
                     </div>
                 </div>
 
-                <!-- Hàng 2: Yêu cầu full width -->
+                <!-- Hàng 2: Yêu cầu -->
                 <div class="task-requirement">
                     <div class="task-requirement-label">YÊU CẦU:</div>
                     <div>{{ task.description or 'Không có mô tả' }}</div>
                 </div>
             </div>
 
-            <!-- Nút hành động (dưới cùng) -->
+            <!-- Actions -->
             <div class="task-actions">
                 {% if task.status == 'PENDING' %}
                     <button class="task-btn task-btn-start" onclick="quickUpdateStatus({{ task.id }}, 'IN_PROGRESS')">
                         <i class="bi bi-play"></i>
                         <span>Nhận Việc</span>
                     </button>
+
                 {% elif task.status == 'IN_PROGRESS' %}
                     <button class="task-btn task-btn-complete" onclick="quickUpdateStatus({{ task.id }}, 'DONE')">
                         <i class="bi bi-check-circle"></i>
                         <span>Hoàn thành</span>
                     </button>
+
+                {% elif task.status == 'DONE' %}
+                    <!-- Nút đánh giá cho Director/Manager -->
+                    {% if current_user.role in ['director', 'manager'] %}
+                        <button class="task-btn task-btn-rate-good"
+                                onclick="quickRateTask({{ task.id }}, 'good')"
+                                {% if task.performance_rating == 'good' %}disabled{% endif %}>
+                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                        </button>
+                        <button class="task-btn task-btn-rate-bad"
+                                onclick="quickRateTask({{ task.id }}, 'bad')"
+                                {% if task.performance_rating == 'bad' %}disabled{% endif %}>
+                            <i class="bi bi-hand-thumbs-down-fill"></i>
+                        </button>
+                    {% endif %}
                 {% endif %}
 
                 <!-- Nút Trao đổi - luôn hiển thị -->
-                <button class="task-btn task-btn-discuss" onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'" style="position: relative;">
+                <button class="task-btn task-btn-discuss"
+                        onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'"
+                        style="position: relative;">
                     <i class="bi bi-chat-dots"></i>
                     <span>Trao đổi</span>
                     {% if task.unread_comment_count > 0 %}
@@ -680,15 +853,12 @@ function startCountdowns() {
                 return;
             }
 
-            // Tính toán ngày, giờ, phút, giây
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            // Format hiển thị
             let timeString = '';
-
             if (days > 0) {
                 timeString = `${days}d:${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(seconds).padStart(2, '0')}s`;
             } else {
@@ -709,7 +879,7 @@ function startCountdowns() {
 let currentFilter = null;
 
 function toggleFilter(filterType) {
-    const buttons = document.querySelectorAll('.priority-stat-item[data-filter]');
+    const buttons = document.querySelectorAll('[data-filter]'); // gồm cả icon & số
     const cards = document.querySelectorAll('.task-card');
 
     if (currentFilter === filterType) {
@@ -729,20 +899,20 @@ function toggleFilter(filterType) {
 
         cards.forEach(card => {
             const header = card.querySelector('.task-card-header');
+            const cardRating = card.dataset.rating;
+            let shouldShow = false;
 
             if (filterType === 'overdue') {
-                if (header.classList.contains('overdue')) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                shouldShow = header.classList.contains('overdue');
             } else if (filterType === 'on-time') {
-                if (header.classList.contains('on-time')) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                shouldShow = header.classList.contains('on-time');
+            } else if (filterType === 'rated-good') {
+                shouldShow = (cardRating === 'good');
+            } else if (filterType === 'rated-bad') {
+                shouldShow = (cardRating === 'bad');
             }
+
+            card.style.display = shouldShow ? 'flex' : 'none';
         });
     }
 }
@@ -771,6 +941,43 @@ function quickUpdateStatus(taskId, newStatus) {
             location.reload();
         } else {
             alert('Lỗi: ' + (data.error || 'Không thể cập nhật'));
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+// ========================================
+// QUICK RATE TASK
+// ========================================
+function quickRateTask(taskId, rating) {
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+    fetch(`/tasks/${taskId}/quick-rate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ rating: rating })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload để cập nhật UI
+            location.reload();
+        } else {
+            alert('Lỗi: ' + (data.error || 'Không thể đánh giá'));
             btn.disabled = false;
             btn.innerHTML = originalHTML;
         }

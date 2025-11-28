@@ -1510,11 +1510,6 @@ def kanban():
 def priority_detail():
     """
     Trang chi tiết công việc theo loại ưu tiên
-    Params:
-    - assigned_user: ID người được giao
-    - tag: urgent/important/recurring
-    - status: DONE (cho hoàn thành)
-    - date_from, date_to: filter theo ngày (optional)
     """
     assigned_user_id = request.args.get('assigned_user', type=int)
     tag = request.args.get('tag', '')
@@ -1526,7 +1521,6 @@ def priority_detail():
         flash('Thiếu thông tin người dùng.', 'danger')
         return redirect(url_for('hub.workflow_hub'))
 
-    # Lấy thông tin user
     user = User.query.get_or_404(assigned_user_id)
 
     # Base query
@@ -1584,39 +1578,53 @@ def priority_detail():
         flash('Loại công việc không hợp lệ.', 'danger')
         return redirect(url_for('hub.workflow_hub'))
 
+    # Sort và lấy tasks
     if status == 'DONE':
         all_tasks = query.order_by(Task.updated_at.desc()).all()
     else:
         from sqlalchemy import case, func
-
         priority_order = case(
-            (Task.due_date.is_(None), 3),  # Không có hạn → xuống dưới cùng
-            (Task.due_date < func.now(), 1),  # QUÁ HẠN → lên đầu
-            else_=2  # CÒN HẠN
+            (Task.due_date.is_(None), 3),
+            (Task.due_date < func.now(), 1),
+            else_=2
         )
-
         all_tasks = query.order_by(
-            priority_order.asc(),  # 1 → 2 → 3
-            Task.due_date.asc().nulls_last()  # Trong cùng nhóm: hạn gần nhất trước, nulls xuống dưới
+            priority_order.asc(),
+            Task.due_date.asc().nulls_last()
         ).all()
 
-    # Đếm còn hạn và quá hạn
+    # Đếm số liệu
     now = datetime.utcnow()
     on_time_count = 0
     overdue_count = 0
+    rated_good_count = 0
+    rated_bad_count = 0
 
     for task in all_tasks:
         if task.due_date:
             task.vn_due_date = utc_to_vn(task.due_date)
 
-        # Đếm on-time và overdue
+        # Đếm cho tasks chưa hoàn thành
         if task.status != 'DONE' and task.due_date:
             if task.due_date >= now:
                 on_time_count += 1
             else:
                 overdue_count += 1
 
-    #  TÍNH UNREAD COMMENT COUNT CHO MỖI TASK
+        # Đếm cho tasks đã hoàn thành
+        if task.status == 'DONE':
+            if task.completed_overdue:
+                overdue_count += 1
+            else:
+                on_time_count += 1
+
+            # Đếm rating
+            if task.performance_rating == 'good':
+                rated_good_count += 1
+            elif task.performance_rating == 'bad':
+                rated_bad_count += 1
+
+    # Tính unread comment count
     for task in all_tasks:
         task.unread_comment_count = get_task_unread_comment_count(task.id, current_user.id)
 
@@ -1628,6 +1636,8 @@ def priority_detail():
                            priority_color=priority_color,
                            on_time_count=on_time_count,
                            overdue_count=overdue_count,
+                           rated_good_count=rated_good_count,
+                           rated_bad_count=rated_bad_count,
                            tag=tag,
                            status=status)
 
@@ -2015,3 +2025,57 @@ def download_comment_attachment(task_id, comment_id):
     directory = os.path.dirname(comment.attachment_file_path)
     return send_from_directory(directory, comment.attachment_filename, as_attachment=True,
                                download_name=comment.attachment_original_filename)
+
+
+# Thêm route này vào cuối file task.py, trước phần TASK COMMENTS
+
+@bp.route('/<int:task_id>/quick-rate', methods=['POST'])
+@login_required
+@role_required(['director', 'manager'])
+def quick_rate_task(task_id):
+    """
+    API đánh giá nhanh task (cho nút đánh giá trên priority_detail)
+    """
+    task = Task.query.get_or_404(task_id)
+
+    # Kiểm tra task đã hoàn thành chưa
+    if task.status != 'DONE':
+        return jsonify({'success': False, 'error': 'Chỉ có thể đánh giá nhiệm vụ đã hoàn thành'}), 400
+
+    rating = request.json.get('rating')
+
+    if rating not in ['good', 'bad']:
+        return jsonify({'success': False, 'error': 'Đánh giá không hợp lệ'}), 400
+
+    # Cập nhật đánh giá
+    task.performance_rating = rating
+    task.rated_by = current_user.id
+    task.rated_at = datetime.utcnow()
+
+    db.session.commit()
+
+    # Gửi thông báo cho người làm task
+    assigned_users = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        accepted=True
+    ).all()
+
+    rating_text = "TỐT 👍" if rating == 'good' else "CẦN CẢI THIỆN 👎"
+
+    for assignment in assigned_users:
+        notif = Notification(
+            user_id=assignment.user_id,
+            type='task_rated',
+            title=f'Đánh giá nhiệm vụ của bạn',
+            body=f'{current_user.full_name} đã đánh giá nhiệm vụ "{task.title}" là {rating_text}',
+            link=f'/tasks/{task.id}'
+        )
+        db.session.add(notif)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'rating': rating,
+        'message': f'Đã đánh giá: {rating_text}'
+    })
