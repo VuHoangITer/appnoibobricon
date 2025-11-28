@@ -1,6 +1,6 @@
 {
-  "name": "No Thing",
-  "short_name": "NoThing",
+  "name": "Bricon Task",
+  "short_name": "Bricon",
   "icons": [
     {
       "src": "//static/favicon/android-chrome-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#f0e512",
+  "background_color": "#ffffff",
   "display": "standalone"
 }

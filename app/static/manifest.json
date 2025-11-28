@@ -1,11 +1,11 @@
 {
-  "name": "No Thing",
-  "short_name": "NoThing",
+  "name": "Bricon Task Manager",
+  "short_name": "Bricon",
   "description": "Ứng dụng quản lý công việc",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "theme_color": "#f0e512",
   "orientation": "portrait-primary",
   "icons": [
     {
