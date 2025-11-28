@@ -815,7 +815,7 @@ body {
                         </div>
 
                         <button type="submit" class="btn btn-primary" id="btnAddComment">
-                            <i class="bi bi-send"></i> Gửi
+                            <i class="bi bi-send"></i>
                         </button>
                     </div>
 
@@ -1152,14 +1152,14 @@ function addCommentToList(comment) {
            </button>`
         : '';
 
-    // ✅ THÊM: Build attachment HTML
+    // ✅ BUILD ATTACHMENT HTML - FIX: Check nested structure
     let attachmentHTML = '';
     if (comment.has_attachment && comment.attachment) {
         const att = comment.attachment;
 
         // Image preview
         if (att.file_type === 'image') {
-            attachmentHTML += `
+            attachmentHTML = `
                 <div class="comment-attachment mt-2">
                     <div class="attachment-image-preview">
                         <img src="${att.download_url}"
@@ -1168,17 +1168,21 @@ function addCommentToList(comment) {
                              style="max-width: 300px; max-height: 300px; cursor: pointer;"
                              onclick="window.open(this.src, '_blank')">
                     </div>
+                    <div class="attachment-info mt-2">
+                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-image"></i>
+                            ${escapeHtml(att.filename)}
+                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
+                        </a>
+                    </div>
+                </div>
             `;
         } else {
-            attachmentHTML += `<div class="comment-attachment mt-2">`;
-        }
-
-        // Download link
-        const icon = att.file_type === 'image' ? 'image' :
-                    att.file_type === 'pdf' ? 'file-pdf' : 'file-earmark';
-
-        attachmentHTML += `
-                    <div class="attachment-info mt-2">
+            // Non-image files
+            const icon = att.file_type === 'pdf' ? 'file-pdf' : 'file-earmark';
+            attachmentHTML = `
+                <div class="comment-attachment mt-2">
+                    <div class="attachment-info">
                         <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
                             <i class="bi bi-${icon}"></i>
                             ${escapeHtml(att.filename)}
@@ -1186,7 +1190,8 @@ function addCommentToList(comment) {
                         </a>
                     </div>
                 </div>
-        `;
+            `;
+        }
     }
 
     item.innerHTML = `

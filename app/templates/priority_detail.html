@@ -44,6 +44,23 @@
     color: var(--ed-text);
 }
 
+/* Màu theo từng loại priority */
+.priority-badge.urgent {
+    color: #dc3545;
+}
+
+.priority-badge.important {
+    color: #ffc107;
+}
+
+.priority-badge.recurring {
+    color: #0dcaf0;
+}
+
+.priority-badge.done {
+    color: #198754;
+}
+
 .priority-stats {
     display: flex;
     justify-content: center;
@@ -58,6 +75,25 @@
     border-radius: var(--ed-radius-pill);
     border: 1px solid var(--ed-border);
     cursor: pointer;
+}
+
+/* Màu nền cho CÒN HẠN và QUÁ HẠN */
+.priority-stat-item[data-filter="on-time"] {
+    background: var(--ed-success);
+    border-color: var(--ed-success);
+}
+
+.priority-stat-item[data-filter="overdue"] {
+    background: var(--ed-danger);
+    border-color: var(--ed-danger);
+}
+
+.priority-stat-item[data-filter="on-time"] .priority-stat-number {
+    color: var(--ed-bg);
+}
+
+.priority-stat-item[data-filter="overdue"] .priority-stat-number {
+    color: var(--ed-bg);
 }
 
 .priority-stat-item.active {
@@ -79,7 +115,7 @@
 
 .priority-stat-label {
     font-size: 0.85rem;
-    color: var(--ed-muted);
+    color: var(--ed-bg);
     margin-top: 4px;
     font-weight: 500;
 }
@@ -115,7 +151,7 @@
 
 @media (max-width: 768px) {
     .create-task-btn {
-        bottom: 20px;
+        bottom: 70px;
         right: 20px;
         width: 50px;
         height: 50px;
@@ -161,12 +197,12 @@
 
 /* Header theo trạng thái */
 .task-card-header.on-time {
-    background: var(--ed-success-soft);
+    background: var(--ed-success);
     color: #155724;
 }
 
 .task-card-header.overdue {
-    background: var(--ed-danger-soft);
+    background: var(--ed-danger);
     color: #842029;
 }
 
@@ -180,15 +216,6 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-}
-/* Nếu task quá hạn → tô soft đỏ cho body */
-.task-card-header.overdue + .task-card-body {
-    background: var(--ed-danger-soft);
-}
-
-/* Hoàn thành → soft xanh dương nhạt */
-.task-card-header.completed + .task-card-body {
-    background: var(--ed-info-soft);
 }
 
 /* --------------------------------------------
@@ -262,7 +289,7 @@
 
 .task-arrow {
     font-size: 1rem;
-    color: var(--ed-muted);
+    color: var(--ed-mute);
     margin: 0 4px;
 }
 
@@ -369,7 +396,7 @@
 
 .task-btn-complete {
     border-color: var(--ed-success);
-    background: var(--ed-success-soft);
+    background: var(--ed-success);
     color: var(--ed-success);
 }
 
@@ -379,7 +406,7 @@
 }
 
 .task-btn-discuss {
-    border-color: var(--ed-muted);
+    border-color: var(--ed-bg);
     background: #ffc700;
     color: var(--ed-text);
 }
@@ -457,12 +484,26 @@
     border: 2px solid white;
     line-height: 1.2;
 }
+.task-card-header.on-time,
+.task-card-header.overdue,
+.task-card-header.completed {
+    color: #ffffff;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Section 1: Priority Header -->
 <div class="priority-header">
+    <!-- TIÊU ĐỀ LOẠI ƯU TIÊN -->
+    <div class="priority-badge
+        {% if tag == 'urgent' %}urgent
+        {% elif tag == 'important' %}important
+        {% elif tag == 'recurring' %}recurring
+        {% elif status == 'DONE' %}done{% endif %}">
+        {{ priority_icon }} {{ priority_type }}
+    </div>
+
     <div class="priority-stats">
         {% if status != 'DONE' %}
         <div class="priority-stat-item" data-filter="on-time" onclick="toggleFilter('on-time')">

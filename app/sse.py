@@ -420,7 +420,6 @@ def get_dashboard_stats_fast(user_id: int, user_role: str) -> dict:
     }
 
 
-
 @bp.route('/tasks/<int:task_id>/comments')
 @login_required
 def task_comments_stream(task_id):
@@ -434,6 +433,7 @@ def task_comments_stream(task_id):
     def generate():
         from app.utils import utc_to_vn
         from app.models import TaskComment, Task, TaskAssignment
+        from flask import url_for  # ✅ THÊM IMPORT
 
         # Check permission
         task = Task.query.get(task_id)
@@ -488,7 +488,9 @@ def task_comments_stream(task_id):
                         for comment in new_comments:
                             if comment.id not in last_comment_ids:
                                 vn_time = utc_to_vn(comment.created_at)
-                                comments_data.append({
+
+                                # ✅ BUILD COMMENT DATA WITH ATTACHMENT
+                                comment_dict = {
                                     'id': comment.id,
                                     'content': comment.content,
                                     'created_at': comment.created_at.isoformat(),
@@ -501,8 +503,23 @@ def task_comments_stream(task_id):
                                         'avatar': comment.user.avatar,
                                         'avatar_letter': comment.user.full_name[0].upper()
                                     },
-                                    'can_delete': comment.user_id == user_id or user_role == 'director'
-                                })
+                                    'can_delete': comment.user_id == user_id or user_role == 'director',
+                                    'has_attachment': comment.has_attachment  # ✅ THÊM
+                                }
+
+                                # ✅ THÊM THÔNG TIN FILE NẾU CÓ
+                                if comment.has_attachment:
+                                    comment_dict['attachment'] = {
+                                        'filename': comment.attachment_original_filename,
+                                        'file_type': comment.attachment_file_type,
+                                        'file_size': comment.attachment_file_size,
+                                        'download_url': url_for('tasks.download_comment_attachment',
+                                                                task_id=task_id,
+                                                                comment_id=comment.id,
+                                                                _external=False)
+                                    }
+
+                                comments_data.append(comment_dict)
                                 last_comment_ids.add(comment.id)
 
                         if comments_data:
