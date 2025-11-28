@@ -18,19 +18,10 @@ def get_team_performance_data(date_from=None, date_to=None):
     if current_user.role == 'director':
         users = User.query.filter_by(is_active=True).all()
     elif current_user.role == 'manager':
-        created_tasks = db.session.query(Task.id).filter_by(
-            creator_id=current_user.id
-        ).all()
-        created_task_ids = [t[0] for t in created_tasks]
-
-        assigned_user_ids = db.session.query(TaskAssignment.user_id).filter(
-            TaskAssignment.task_id.in_(created_task_ids)
-        ).distinct().all()
-
-        user_ids = [current_user.id] + [uid[0] for uid in assigned_user_ids]
+        # MANAGER CHỈ THẤY CHÍNH MÌNH VÀ HR
         users = User.query.filter(
-            User.id.in_(user_ids),
-            User.is_active == True
+            User.is_active == True,
+            User.role.in_(['manager', 'hr'])
         ).all()
     else:
         users = [current_user]

@@ -139,60 +139,6 @@ body {
     border-radius: 50%;
 }
 
-/* Thẻ đính kèm – làm phẳng, bo tròn hơn */
-.attachment-item {
-    padding: 10px 12px;
-    border: 1px solid var(--ed-border);
-    border-radius: var(--ed-radius-md);
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f9fafb;
-}
-
-.attachment-icon {
-    font-size: 1.4rem;
-    margin-right: 10px;
-}
-
-.attachment-info strong {
-    font-size: 0.9rem;
-    color: var(--ed-text);
-}
-
-.attachment-info small {
-    font-size: 0.78rem;
-    color: var(--ed-muted);
-}
-
-.attachment-actions .btn {
-    border-radius: var(--ed-radius-pill);
-    padding-inline: 10px;
-}
-
-/* Khu vực upload file – minimal */
-.upload-area {
-    border: 2px dashed var(--ed-border);
-    border-radius: var(--ed-radius-md);
-    padding: 18px 14px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: #f9fafb;
-}
-
-.upload-area:hover {
-    border-color: var(--ed-primary);
-    background: var(--ed-primary-soft);
-}
-
-/* Drag-over: cũng soft blue giống header */
-.upload-area.drag-over {
-    border-color: var(--ed-primary);
-    background: var(--ed-primary-soft);
-}
-
 /* Khu vực comments */
 .comments-section {
     max-height: 500px;
@@ -249,21 +195,23 @@ body {
     border-radius: var(--ed-radius-pill);
 }
 
-/* Ô nhập comment */
-.comment-input-wrapper {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-}
-
-.comment-input-wrapper textarea {
-    flex: 1;
+/* Form comment */
+#commentForm textarea {
     resize: none;
     border-radius: var(--ed-radius-md);
 }
 
-.comment-input-wrapper .btn {
+#commentForm .btn {
     border-radius: var(--ed-radius-pill);
+}
+
+#filePreview {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Alert */
@@ -301,6 +249,33 @@ body {
         flex-direction: row;
     }
 }
+    /* Comment attachment styles */
+.comment-attachment {
+    margin-top: 8px;
+}
+
+.attachment-image-preview img {
+    border-radius: var(--ed-radius-md);
+    transition: transform 0.2s ease;
+}
+
+.attachment-image-preview img:hover {
+    transform: scale(1.02);
+}
+
+.attachment-info .btn {
+    border-radius: var(--ed-radius-pill);
+    font-size: 0.85rem;
+}
+
+#filePreview {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
 {% endblock %}
 
@@ -317,8 +292,8 @@ body {
                     <span class="badge bg-danger ms-2">QUÁ HẠN</span>
                     {% endif %}
                     {% if task.status == 'DONE' and task.completed_overdue %}
-                    <span class="badge bg-danger text-dark ms-2">
-                        <i class="bi bi-exclamation-triangle-fill"></i> HOÀN THÀNH QUÁ HẠN
+                    <span class="badge bg-danger text-dark ms-1">
+                        <i class="bi bi-exclamation-triangle-fill"></i>Quá hạn
                     </span>
                     {% endif %}
                 </h4>
@@ -464,15 +439,15 @@ body {
 
                 <!-- Thông tin cơ bản -->
                 <div class="row">
-                    <div class="col-md-6 mb-2">
+                    <div class="col-6 mb-2">
                         <p class="mb-1"><strong>Người tạo:</strong></p>
                         <p class="mb-0">{{ task.creator.full_name }}</p>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-6 mb-2">
                         <p class="mb-1"><strong>Ngày tạo:</strong></p>
                         <p class="mb-0">{{ task.created_at | vn_datetime }}</p>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-6 mb-2">
                         <p class="mb-1"><strong>Hạn hoàn thành:</strong></p>
                         {% if task.due_date %}
                         <span class="badge bg-{{ 'danger' if (task | is_overdue and task.status != 'DONE') else 'secondary' }}">
@@ -482,7 +457,7 @@ body {
                         <span class="text-muted">Chưa có</span>
                         {% endif %}
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-6 mb-2">
                         <p class="mb-1"><strong>Cập nhật cuối:</strong></p>
                         <p class="mb-0">{{ task.updated_at | vn_datetime }}</p>
                     </div>
@@ -558,26 +533,25 @@ body {
                 </div>
                 {% endif %}
 
-                <!-- Khóa DONE -->
-                {% if task.status == 'DONE' and current_user.role not in ['director', 'manager'] %}
-                <div class="alert alert-success">
-                    <i class="bi bi-lock-fill"></i> <strong>Nhiệm vụ đã hoàn thành</strong><br>
-                    Chỉ Giám đốc/Trưởng phòng mới có thể thay đổi.
-                </div>
-                {% endif %}
-
                 <!-- Form -->
                 <form method="POST" action="{{ url_for('tasks.update_status', task_id=task.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
                     <div class="mb-3">
                         <label for="status" class="form-label"><strong>Trạng thái:</strong></label>
-                        <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
-                            <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
-                            <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
-                            <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
-                            <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
-                        </select>
+                        <div class="d-flex gap-2">
+                            <select class="form-select" id="status" name="status" onchange="handleStatusChange()">
+                                <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Chưa Làm</option>
+                                <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
+                                <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                                <option value="CANCELLED" {% if task.status == 'CANCELLED' %}selected{% endif %}>Đã hủy</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary" style="min-width: 120px;">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </div>
                     </div>
+
                     <div class="mb-3" id="completionNoteDiv" style="display: none;">
                         <label for="completion_note" class="form-label">
                             <strong><i class="bi bi-chat-left-text"></i> Nội dung báo cáo:</strong>
@@ -585,9 +559,6 @@ body {
                         <textarea class="form-control" id="completion_note" name="completion_note" rows="3"
                                   placeholder="Nhập báo cáo..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Cập nhật
-                    </button>
                 </form>
 
                 <script>
@@ -611,7 +582,7 @@ body {
     <!-- ===== CỘT PHẢI: NGƯỜI ĐƯỢC GIAO + CARDS PHỤ ===== -->
     <div class="col-md-4">
         <!-- Người được giao -->
-        <div class="card mb-3">
+        <div class="card mb-3 {% if current_user.role in ['hr', 'accountant'] %}d-none d-md-block{% endif %}">
             <div class="card-header">
                 <h6 class="mb-0"><i class="bi bi-people"></i> Người được giao</h6>
             </div>
@@ -657,7 +628,7 @@ body {
 
         <!-- Báo cáo hoàn thành -->
         {% if task.status == 'DONE' %}
-        <div class="card mb-3">
+        <div class="card mb-3 {% if current_user.role in ['hr', 'accountant'] %}d-none d-md-block{% endif %}">
             <div class="card-header bg-success text-white">
                 <h6 class="mb-0"><i class="bi bi-clipboard-check-fill"></i> Báo cáo hoàn thành</h6>
             </div>
@@ -697,24 +668,6 @@ body {
             </div>
         </div>
 
-        <!-- Trạng thái (DONE) -->
-        <div class="card mb-3">
-            <div class="card-header bg-{% if task.completed_overdue %}warning{% else %}success{% endif %} text-{% if task.completed_overdue %}dark{% else %}white{% endif %}">
-                <h6 class="mb-0">
-                    <i class="bi bi-{% if current_user.role in ['director', 'manager'] %}unlock{% else %}lock{% endif %}-fill"></i>
-                    Trạng thái
-                </h6>
-            </div>
-            <div class="card-body">
-                {% if task.completed_overdue %}
-                <p class="text-warning mb-1"><strong>Hoàn thành QUÁ HẠN</strong></p>
-                <small class="text-muted">Ảnh hưởng đến đánh giá hiệu suất</small>
-                {% else %}
-                <p class="text-success mb-0"><i class="bi bi-check-circle-fill"></i> Hoàn thành đúng hạn</p>
-                {% endif %}
-            </div>
-        </div>
-
         <!-- Đánh giá hiệu suất -->
         <div class="card mb-3">
             <div class="card-header {% if task.performance_rating == 'good' %}bg-success{% elif task.performance_rating == 'bad' %}bg-danger{% else %}bg-secondary{% endif %} text-white">
@@ -724,17 +677,12 @@ body {
                 {% if task.performance_rating %}
                 <div class="mb-3">
                     {% if task.performance_rating == 'good' %}
-                    <i class="bi bi-hand-thumbs-up-fill text-success" style="font-size: 3rem;"></i>
-                    <h5 class="text-success mt-2">TỐT</h5>
+                    <i class="bi bi-hand-thumbs-up-fill text-success" style="font-size: 2.5rem;"></i>
                     {% else %}
-                    <i class="bi bi-hand-thumbs-down-fill text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="text-danger mt-2">CẦN CẢI THIỆN</h5>
+                    <i class="bi bi-hand-thumbs-down-fill text-danger" style="font-size: 2.5rem;"></i>
                     {% endif %}
                 </div>
-                <small class="text-muted">
-                    {{ task.rater.full_name }}<br>
-                    {{ task.rated_at | vn_datetime }}
-                </small>
+                <small class="text-muted">{{ task.rated_at | vn_datetime }} - {{ task.rater.full_name }}</small>
                 {% if current_user.role in ['director', 'manager'] %}
                 <hr>
                 <div class="d-flex gap-2 mt-2">
@@ -785,60 +733,10 @@ body {
     </div>
 </div>
 
-<!-- ===== FULL WIDTH: FILE ĐÍNH KÈM + TRAO ĐỔI ===== -->
+<!-- ===== FULL WIDTH: TRAO ĐỔI (BỎ PHẦN FILE ĐÍNH KÈM) ===== -->
 <div class="row mt-3">
-    <!-- File đính kèm -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-paperclip"></i> File đính kèm</h6>
-            </div>
-            <div class="card-body">
-                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
-                <div class="upload-area mb-3" id="uploadArea">
-                    <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #0d6efd;"></i>
-                    <p class="mb-1">Kéo thả hoặc click để chọn</p>
-                    <small class="text-muted">Max 10MB</small>
-                    <input type="file" id="fileInput" style="display: none;" multiple>
-                </div>
-                {% endif %}
-
-                <div id="attachmentsList">
-                    {% for attachment in task.attachments %}
-                    <div class="attachment-item" data-id="{{ attachment.id }}">
-                        <div class="d-flex align-items-center flex-1">
-                            <i class="bi bi-file-earmark attachment-icon text-primary"></i>
-                            <div class="attachment-info">
-                                <strong>{{ attachment.original_filename }}</strong>
-                                <br>
-                                <small class="text-muted">
-                                    {{ (attachment.file_size / 1024) | round(1) }} KB •
-                                    {{ attachment.uploader.full_name }}
-                                </small>
-                            </div>
-                        </div>
-                        <div class="attachment-actions">
-                            <a href="{{ url_for('tasks.download_attachment', task_id=task.id, attachment_id=attachment.id) }}"
-                               class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="bi bi-download"></i>
-                            </a>
-                            {% if attachment.uploaded_by == current_user.id or current_user.role in ['director', 'manager'] %}
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ attachment.id }})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                    <p class="text-muted text-center mb-0" id="noAttachments">Chưa có file</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trao đổi -->
-    <div class="col-md-6">
+    <!-- Trao đổi - FULL WIDTH -->
+    <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Trao đổi</h6>
@@ -870,6 +768,32 @@ body {
                                 </div>
                             </div>
                             <div class="comment-text">{{ comment.content }}</div>
+
+                            <!--  HIỂN THỊ FILE ĐÍNH KÈM NẾU CÓ -->
+                            {% if comment.has_attachment %}
+                            <div class="comment-attachment mt-2">
+                                {% if comment.attachment_file_type == 'image' %}
+                                <!-- Preview ảnh -->
+                                <div class="attachment-image-preview">
+                                    <img src="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
+                                         alt="{{ comment.attachment_original_filename }}"
+                                         class="img-thumbnail"
+                                         style="max-width: 300px; max-height: 300px; cursor: pointer;"
+                                         onclick="window.open(this.src, '_blank')">
+                                </div>
+                                {% endif %}
+
+                                <!-- Link download cho tất cả file -->
+                                <div class="attachment-info mt-2">
+                                    <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
+                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="bi bi-{% if comment.attachment_file_type == 'image' %}image{% elif comment.attachment_file_type == 'pdf' %}file-pdf{% else %}file-earmark{% endif %}"></i>
+                                        {{ comment.attachment_original_filename }}
+                                        <small class="text-muted">({{ (comment.attachment_file_size / 1024) | round(1) }} KB)</small>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% else %}
@@ -878,12 +802,39 @@ body {
                 </div>
 
                 {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
-                <div class="comment-input-wrapper">
-                    <textarea class="form-control" id="commentInput" rows="2" placeholder="Nhập bình luận..."></textarea>
-                    <button class="btn btn-primary" onclick="addComment()" id="btnAddComment">
-                        <i class="bi bi-send"></i>
-                    </button>
-                </div>
+                <form id="commentForm" enctype="multipart/form-data" class="mt-3">
+                    <textarea class="form-control mb-2" id="commentInput" name="content" rows="2" placeholder="Nhập bình luận..."></textarea>
+
+                    <!-- File attachment input + preview -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <label for="commentFileInput" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-paperclip"></i> Đính kèm file
+                            </label>
+                            <input type="file" id="commentFileInput" name="file" style="display: none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="btnAddComment">
+                            <i class="bi bi-send"></i> Gửi
+                        </button>
+                    </div>
+
+                    <!-- Preview area -->
+                    <div id="filePreview" class="mt-2" style="display: none;">
+                        <div class="alert alert-info d-flex align-items-center justify-content-between p-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark"></i>
+                                <span id="filePreviewName"></span>
+                                <small class="text-muted" id="filePreviewSize"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFileInput()">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        <!-- Image preview -->
+                        <img id="imagePreview" style="max-width: 200px; max-height: 200px; display: none;" class="img-thumbnail">
+                    </div>
+                </form>
                 {% endif %}
             </div>
         </div>
@@ -924,117 +875,71 @@ document.querySelectorAll('.comment-item[data-id]').forEach(el => {
 });
 
 // ============================================
-// FILE UPLOAD
+// FILE PREVIEW FOR COMMENT
 // ============================================
-const uploadArea = document.getElementById('uploadArea');
-const fileInput = document.getElementById('fileInput');
+const commentFileInput = document.getElementById('commentFileInput');
+const filePreview = document.getElementById('filePreview');
+const filePreviewName = document.getElementById('filePreviewName');
+const filePreviewSize = document.getElementById('filePreviewSize');
+const imagePreview = document.getElementById('imagePreview');
 
-if (uploadArea) {
-    uploadArea.addEventListener('click', () => fileInput.click());
+if (commentFileInput) {
+    commentFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file
+            if (!validateFile(file)) {
+                clearFileInput();
+                return;
+            }
 
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('drag-over');
-    });
+            // Show preview
+            filePreviewName.textContent = file.name;
+            filePreviewSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+            filePreview.style.display = 'block';
 
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('drag-over');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('drag-over');
-        const files = e.dataTransfer.files;
-        handleFiles(files);
-    });
-
-    fileInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
+            // Show image preview if it's an image
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        }
     });
 }
 
-function handleFiles(files) {
-    Array.from(files).forEach(file => uploadFile(file));
+function validateFile(file) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+                         'application/pdf', 'application/msword',
+                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                         'application/vnd.ms-excel',
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         'text/plain'];
+
+    if (!allowedTypes.includes(file.type)) {
+        showToast('Loại file không được phép', 'danger');
+        return false;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        showToast('File quá lớn (tối đa 10MB)', 'danger');
+        return false;
+    }
+
+    return true;
 }
 
-function uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    fetch(`/tasks/${TASK_ID}/upload-attachment`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': CONFIG.CSRF_TOKEN
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            addAttachmentToList(data.attachment);
-            showToast('Upload thành công', 'success');
-        } else {
-            showToast(data.error || 'Lỗi upload', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error:', error);
-        showToast('Có lỗi xảy ra', 'danger');
-    });
-}
-
-function addAttachmentToList(attachment) {
-    const noAttachments = document.getElementById('noAttachments');
-    if (noAttachments) noAttachments.remove();
-
-    const item = document.createElement('div');
-    item.className = 'attachment-item';
-    item.dataset.id = attachment.id;
-    item.innerHTML = `
-        <div class="d-flex align-items-center flex-1">
-            <i class="bi bi-file-earmark attachment-icon text-primary"></i>
-            <div class="attachment-info">
-                <strong>${attachment.filename}</strong>
-                <br>
-                <small class="text-muted">
-                    ${(attachment.file_size / 1024).toFixed(1)} KB •
-                    ${attachment.uploaded_by} •
-                    Vừa xong
-                </small>
-            </div>
-        </div>
-        <div class="attachment-actions">
-            <a href="/tasks/${TASK_ID}/attachments/${attachment.id}/download"
-               class="btn btn-sm btn-outline-primary" target="_blank">
-                <i class="bi bi-download"></i>
-            </a>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment(${attachment.id})">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
-
-    document.getElementById('attachmentsList').appendChild(item);
-}
-
-function deleteAttachment(attachmentId) {
-    if (!confirm('Xóa file này?')) return;
-
-    fetch(`/tasks/${TASK_ID}/attachments/${attachmentId}/delete`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': CONFIG.CSRF_TOKEN
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.querySelector(`.attachment-item[data-id="${attachmentId}"]`).remove();
-            showToast('Đã xóa file', 'success');
-        } else {
-            showToast(data.error || 'Lỗi xóa file', 'danger');
-        }
-    });
+function clearFileInput() {
+    if (commentFileInput) {
+        commentFileInput.value = '';
+        filePreview.style.display = 'none';
+        imagePreview.style.display = 'none';
+    }
 }
 
 // ============================================
@@ -1177,20 +1082,30 @@ function addComment() {
     }
 
     btnAddComment.disabled = true;
-    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+    // ✅ THAY ĐỔI: Dùng FormData thay vì JSON
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('csrf_token', CONFIG.CSRF_TOKEN);
+
+    // ✅ THÊM: Add file if selected
+    if (commentFileInput && commentFileInput.files.length > 0) {
+        formData.append('file', commentFileInput.files[0]);
+    }
 
     fetch(`/tasks/${TASK_ID}/comments`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             'X-CSRFToken': CONFIG.CSRF_TOKEN
         },
-        body: JSON.stringify({ content })
+        body: formData  // ✅ THAY ĐỔI: formData thay vì JSON
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             commentInput.value = '';
+            clearFileInput();  // ✅ THÊM: Clear file input
 
             addCommentToList(data.comment);
             knownCommentIds.add(data.comment.id);
@@ -1237,6 +1152,43 @@ function addCommentToList(comment) {
            </button>`
         : '';
 
+    // ✅ THÊM: Build attachment HTML
+    let attachmentHTML = '';
+    if (comment.has_attachment && comment.attachment) {
+        const att = comment.attachment;
+
+        // Image preview
+        if (att.file_type === 'image') {
+            attachmentHTML += `
+                <div class="comment-attachment mt-2">
+                    <div class="attachment-image-preview">
+                        <img src="${att.download_url}"
+                             alt="${escapeHtml(att.filename)}"
+                             class="img-thumbnail"
+                             style="max-width: 300px; max-height: 300px; cursor: pointer;"
+                             onclick="window.open(this.src, '_blank')">
+                    </div>
+            `;
+        } else {
+            attachmentHTML += `<div class="comment-attachment mt-2">`;
+        }
+
+        // Download link
+        const icon = att.file_type === 'image' ? 'image' :
+                    att.file_type === 'pdf' ? 'file-pdf' : 'file-earmark';
+
+        attachmentHTML += `
+                    <div class="attachment-info mt-2">
+                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-${icon}"></i>
+                            ${escapeHtml(att.filename)}
+                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
+                        </a>
+                    </div>
+                </div>
+        `;
+    }
+
     item.innerHTML = `
         <div class="comment-avatar">${avatarHTML}</div>
         <div class="comment-content">
@@ -1251,6 +1203,7 @@ function addCommentToList(comment) {
                 </div>
             </div>
             <div class="comment-text">${escapeHtml(comment.content)}</div>
+            ${attachmentHTML}
         </div>
     `;
 
@@ -1403,12 +1356,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startRealtimeComments();
 
+    //  Handle Enter key
     if (commentInput) {
         commentInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 addComment();
             }
+        });
+    }
+
+    //  Handle form submit
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addComment();
         });
     }
 });

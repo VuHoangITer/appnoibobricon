@@ -14,10 +14,15 @@
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Tiêu đề *</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
+            <div class="mb-3">
+                <label for="title" class="form-label">Tiêu đề *</label>
+                <div style="position: relative;">
+                    <input type="text" class="form-control" id="title" name="title" required maxlength="35" style="padding-right: 50px;">
+                    <small class="text-muted" style="position: absolute; right: 10px; top: 35%; transform: translateY(-50%); pointer-events: none; font-size: 0.8rem; font-weight: 200;">
+                        <span id="char_count">35</span>
+                    </small>
+                </div>
+            </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Mô tả</label>
@@ -34,7 +39,7 @@
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
-                            <i class="bi bi-tags"></i> Gắn thẻ cho nhiệm vụ
+                            <i class="bi bi-tags"></i> Phân Loại Nhiệm Vụ
                         </label>
                         <div class="border rounded p-3 bg-light">
                             <div class="form-check mb-2">
@@ -185,6 +190,16 @@
     // Recurrence toggle
     document.getElementById('recurrence_enabled').addEventListener('change', function() {
         document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Character counter for title
+    const titleInput = document.getElementById('title');
+    const charCount = document.getElementById('char_count');
+
+    titleInput.addEventListener('input', function() {
+        const remaining = 35 - this.value.length;
+        charCount.textContent = remaining;
+        charCount.style.color = remaining < 20 ? 'red' : '';
     });
 
     // Assignment type toggle

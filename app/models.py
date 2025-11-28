@@ -179,12 +179,6 @@ class Task(db.Model):
         lazy='dynamic',
         cascade='all, delete-orphan'
     )
-    attachments = db.relationship(
-        'TaskAttachment',
-        back_populates='task',
-        lazy='dynamic',
-        cascade='all, delete-orphan'
-    )
 
     comments = db.relationship(
         'TaskComment',
@@ -782,31 +776,6 @@ class Advance(db.Model):
         self.deducted_in_salary_id = salary_id
         self.deducted_at = datetime.utcnow()
 
-
-class TaskAttachment(db.Model):
-    """File đính kèm khi hoàn thành task"""
-    __tablename__ = 'task_attachments'
-
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-    filename = db.Column(db.String(255), nullable=False)
-    original_filename = db.Column(db.String(255), nullable=False)
-    file_path = db.Column(db.String(500), nullable=False)
-    file_size = db.Column(db.Integer)
-    file_type = db.Column(db.String(50))
-
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # SỬA: Dùng back_populates thay vì backref
-    task = db.relationship('Task', back_populates='attachments')
-    uploader = db.relationship('User', foreign_keys=[uploaded_by])
-
-    def __repr__(self):
-        return f'<TaskAttachment {self.original_filename}>'
-
-
 class TaskComment(db.Model):
     """Trao đổi giữa sếp và nhân viên về task"""
     __tablename__ = 'task_comments'
@@ -816,6 +785,14 @@ class TaskComment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     content = db.Column(db.Text, nullable=False)
+
+    has_attachment = db.Column(db.Boolean, default=False)
+    attachment_filename = db.Column(db.String(255), nullable=True)
+    attachment_original_filename = db.Column(db.String(255), nullable=True)
+    attachment_file_path = db.Column(db.String(500), nullable=True)
+    attachment_file_size = db.Column(db.Integer, nullable=True)
+    attachment_file_type = db.Column(db.String(50), nullable=True)  # image, pdf, document, other
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

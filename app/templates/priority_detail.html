@@ -578,7 +578,7 @@
                 {% if task.status == 'PENDING' %}
                     <button class="task-btn task-btn-start" onclick="quickUpdateStatus({{ task.id }}, 'IN_PROGRESS')">
                         <i class="bi bi-play"></i>
-                        <span>Bắt đầu</span>
+                        <span>Nhận Việc</span>
                     </button>
                 {% elif task.status == 'IN_PROGRESS' %}
                     <button class="task-btn task-btn-complete" onclick="quickUpdateStatus({{ task.id }}, 'DONE')">

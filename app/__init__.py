@@ -171,6 +171,26 @@ def create_app(config_class=Config):
             return redirect(url_for('hub.workflow_hub'))
         return redirect(url_for('auth.login'))
 
+    @app.route('/sw.js')
+    def service_worker():
+        """Serve service worker from root"""
+        from flask import send_from_directory
+        return send_from_directory(
+            os.path.join(app.root_path, 'static'),
+            'sw.js',
+            mimetype='application/javascript'
+        )
+
+    @app.route('/manifest.json')
+    def manifest():
+        """Serve manifest from root"""
+        from flask import send_from_directory
+        return send_from_directory(
+            os.path.join(app.root_path, 'static'),
+            'manifest.json',
+            mimetype='application/json'
+        )
+
     # Khởi động scheduler (chỉ chạy khi không phải debug mode hoặc reloader)
     if os.environ.get('ENABLE_SCHEDULER') == 'true':
         global scheduler
