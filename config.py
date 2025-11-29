@@ -33,4 +33,4 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_FILE_SIZE', 15728640))
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'pdf,docx,xlsx,png,jpg,jpeg').split(','))
     WTF_CSRF_ENABLED = True
-    VERSION = '1.3'
+    VERSION = '1.4'
