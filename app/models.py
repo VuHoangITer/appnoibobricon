@@ -815,6 +815,18 @@ class TaskComment(db.Model):
     task = db.relationship('Task', back_populates='comments')
     user = db.relationship('User', foreign_keys=[user_id])
 
+    attachments = db.relationship(
+        'TaskCommentAttachment',
+        back_populates='comment',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='TaskCommentAttachment.uploaded_at.asc()'
+    )
+
+    def get_attachments_list(self):
+        """Trả về list attachments (tương thích với code cũ)"""
+        return list(self.attachments.all())
+
     __table_args__ = (
         db.Index('idx_comment_task_user', 'task_id', 'user_id'),
         db.Index('idx_comment_created_at', 'created_at'),
@@ -823,6 +835,26 @@ class TaskComment(db.Model):
     def __repr__(self):
         return f'<TaskComment task={self.task_id} user={self.user_id}>'
 
+
+class TaskCommentAttachment(db.Model):
+    """File đính kèm của comment - hỗ trợ nhiều file"""
+    __tablename__ = 'task_comment_attachments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('task_comments.id', ondelete='CASCADE'), nullable=False)
+
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)
+    file_type = db.Column(db.String(50), nullable=False)  # image, pdf, document, other
+
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    comment = db.relationship('TaskComment', back_populates='attachments')
+
+    def __repr__(self):
+        return f'<TaskCommentAttachment {self.original_filename}>'
 
 class TaskCommentRead(db.Model):
     __tablename__ = 'task_comment_reads'

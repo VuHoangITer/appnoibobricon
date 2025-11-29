@@ -483,13 +483,13 @@ def task_comments_stream(task_id):
                         TaskComment.created_at > last_check
                     ).order_by(TaskComment.created_at.asc()).all()
 
+                    # Trong phần xử lý new_comments
                     if new_comments:
                         comments_data = []
                         for comment in new_comments:
                             if comment.id not in last_comment_ids:
                                 vn_time = utc_to_vn(comment.created_at)
 
-                                # ✅ BUILD COMMENT DATA WITH ATTACHMENT
                                 comment_dict = {
                                     'id': comment.id,
                                     'user_id': comment.user_id,
@@ -505,20 +505,23 @@ def task_comments_stream(task_id):
                                         'avatar_letter': comment.user.full_name[0].upper()
                                     },
                                     'can_delete': comment.user_id == user_id or user_role == 'director',
-                                    'has_attachment': comment.has_attachment  # ✅ THÊM
+                                    'has_attachment': comment.has_attachment,
+                                    'attachments': []
                                 }
 
-                                # ✅ THÊM THÔNG TIN FILE NẾU CÓ
                                 if comment.has_attachment:
-                                    comment_dict['attachment'] = {
-                                        'filename': comment.attachment_original_filename,
-                                        'file_type': comment.attachment_file_type,
-                                        'file_size': comment.attachment_file_size,
-                                        'download_url': url_for('tasks.download_comment_attachment',
-                                                                task_id=task_id,
-                                                                comment_id=comment.id,
-                                                                _external=False)
-                                    }
+                                    for att in comment.attachments.all():
+                                        comment_dict['attachments'].append({
+                                            'id': att.id,
+                                            'filename': att.original_filename,
+                                            'file_type': att.file_type,
+                                            'file_size': att.file_size,
+                                            'download_url': url_for('tasks.download_comment_attachment',
+                                                                    task_id=task_id,
+                                                                    comment_id=comment.id,
+                                                                    attachment_id=att.id,
+                                                                    _external=False)
+                                        })
 
                                 comments_data.append(comment_dict)
                                 last_comment_ids.add(comment.id)

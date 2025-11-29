@@ -1,0 +1,839 @@
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-radius-lg: 16px;
+    --ed-radius-md: 10px;
+    --ed-radius-pill: 999px;
+    --ed-success: #198754;
+    --ed-danger: #dc3545;
+}
+
+body {
+    background: var(--ed-bg);
+}
+
+/* Discussion Container */
+.discussion-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Task Info Card - Compact */
+.task-info-card {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+.task-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.task-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    margin: 0;
+}
+
+/* Participants */
+.participants-section {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.participants-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e9edf7;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+    position: relative;
+}
+
+.participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Comments Section */
+.comments-container {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 320px);
+    min-height: 500px;
+}
+
+.comments-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ed-border);
+    background: #f8f9fb;
+    border-radius: var(--ed-radius-lg) var(--ed-radius-lg) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comments-count {
+    font-size: 0.9rem;
+    color: var(--ed-muted);
+}
+
+.comments-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    background: #f9fafb;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+.comment-item.other {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.comment-item.mine {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.comment-item:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9edf7;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.comment-content {
+    flex: 0 1 auto;
+    max-width: 70%;
+    min-width: 0;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.comment-item.other .comment-header {
+    flex-direction: row;
+}
+
+.comment-item.mine .comment-header {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    width: auto;
+    margin-bottom: 4px;
+}
+
+/* Ẩn avatar của chính mình */
+.comment-item.mine .comment-avatar {
+    display: none;
+}
+
+.comment-item.mine .comment-author {
+    display: none;
+}
+
+/* Bong bóng mình gọn hơn, canh phải */
+.comment-item.mine .comment-content {
+    max-width: 65%;   /* muốn rộng hơn thì tăng lên 70–80% */
+    text-align: right;
+}
+
+
+
+.comment-author {
+    font-weight: 600;
+    color: var(--ed-text);
+    font-size: 0.9rem;
+}
+
+.comment-time {
+    font-size: 0.75rem;
+    color: var(--ed-muted);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.comment-time.show {
+    display: inline-block;
+    opacity: 1;
+}
+
+.comment-text {
+    color: #1f2933;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding: 10px 14px;
+    border-radius: 16px;
+    display: inline-block;
+    max-width: 100%;
+    cursor: pointer;
+    user-select: none;
+}
+
+.comment-item.other .comment-text {
+    background: #f0f2f5;
+    border-bottom-left-radius: 4px;
+}
+
+.comment-item.mine .comment-text {
+    background: #0d6efd;
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+
+/* Comment Attachment */
+.comment-attachment {
+    margin-top: 10px;
+}
+
+.attachment-image-preview img {
+    border-radius: var(--ed-radius-md);
+    transition: transform 0.2s ease;
+    max-width: 100%;
+}
+
+.attachment-image-preview img:hover {
+    transform: scale(1.02);
+}
+
+.attachment-info .btn {
+    border-radius: var(--ed-radius-pill);
+    font-size: 0.85rem;
+}
+
+/* Comment Input */
+.comments-footer {
+    border-top: 1px solid var(--ed-border);
+    padding: 14px 18px;
+    background: var(--ed-card-bg);
+    border-radius: 0 0 var(--ed-radius-lg) var(--ed-radius-lg);
+}
+
+#commentInput {
+    resize: none;
+    border-radius: var(--ed-radius-md);
+    border: 1px solid var(--ed-border);
+    font-size: 0.9rem;
+}
+
+#commentInput:focus {
+    border-color: var(--ed-primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.input-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.btn-send {
+    border-radius: var(--ed-radius-pill);
+    padding: 8px 24px;
+    font-weight: 600;
+}
+
+/* File Preview */
+#filePreview {
+    margin-top: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+#imagePreview {
+    border-radius: var(--ed-radius-md);
+}
+
+/* Empty State */
+.empty-comments {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ed-muted);
+}
+
+.empty-comments i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .discussion-container {
+        padding: 0 10px;
+    }
+
+    .comments-container {
+        height: calc(100vh - 280px);
+        min-height: 400px;
+    }
+
+    .task-info-card {
+        padding: 12px 14px;
+    }
+}
+
+/* ============================================
+   TASK CARD COMPACT - GIỐNG PRIORITY DETAIL
+   ============================================ */
+.task-card-compact {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--ed-border);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.task-card-title-row {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ed-border);
+}
+
+.task-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    margin: 0;
+}
+
+.task-card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+/* Avatar Flow */
+.task-flow-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-avatar-compact {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+}
+
+.task-avatar-compact img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.task-arrow-compact {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+/* Priority Badge */
+.task-priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.task-priority-badge.urgent {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1.5px solid #dc3545;
+}
+
+.task-priority-badge.important {
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+    border: 1.5px solid #eab308;
+}
+
+.task-priority-badge.recurring {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    border: 1.5px solid #0d6efd;
+}
+
+/* Requirement Box */
+.task-requirement-compact {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border: 1px dashed #0d6efd;
+    margin-bottom: 12px;
+}
+
+.task-requirement-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+/* Rating Buttons */
+.task-rating-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rating-btn-compact {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.task-rating-display {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.rating-icon-display {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Màu thumb up */
+.rating-icon-display.good {
+    background: linear-gradient(135deg, #bbffd1, #22c55e);
+    color: #ffffff;
+}
+
+/* Màu thumb down */
+.rating-icon-display.bad {
+    background: linear-gradient(135deg, #ffd0d0, #f97373);
+    color: #ffffff;
+}
+
+.rating-btn-compact.good {
+    background: linear-gradient(135deg, #bbffd1, #22c55e);
+    color: white;
+}
+
+.rating-btn-compact.bad {
+    background: linear-gradient(135deg, #ffd0d0, #f97373);
+    color: white;
+}
+
+.rating-btn-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.rating-btn-compact:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+@media (max-width: 768px) {
+    .task-card-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Bên trái: avatar flow chiếm phần rộng hơn */
+    .task-flow-compact {
+        justify-content: flex-start;
+        flex: 1 1 auto;
+    }
+
+    /* Bên phải: cụm đánh giá/priority dính sát phải */
+    .task-rating-compact,
+    .task-rating-display {
+        flex: 0 0 auto;
+        justify-content: flex-end;
+    }
+    .comment-item .btn-outline-danger {
+        display: none !important;
+    }
+}
+/* ============================================
+   TASK CARD VỚI HEADER MÀU
+   ============================================ */
+.task-card {
+    border: 1px solid var(--ed-border);
+    border-radius: 24px;
+    background: var(--ed-card-bg);
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    margin-bottom: 20px;
+}
+
+.task-card-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    color: #ffffff;
+}
+
+.task-card-header.on-time {
+    background: var(--ed-success);
+}
+
+.task-card-header.overdue {
+    background: var(--ed-danger);
+}
+
+.task-card-header.completed {
+    background: var(--ed-info-soft);
+    color: #0d47a1;
+}
+.task-card-body {
+    padding: 16px 20px 20px;
+    background: var(--ed-card-bg);
+    border-top: 1px solid var(--ed-border);
+}
+/* ============================================
+   DELETE MODAL FOR MOBILE
+   ============================================ */
+.delete-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+}
+
+.delete-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.delete-modal-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.delete-modal-header i {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 12px;
+}
+
+.delete-modal-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2933;
+    margin: 0;
+}
+
+.delete-modal-body {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.delete-modal-btn {
+    flex: 1;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-modal-btn-cancel {
+    background: #f0f2f5;
+    color: #1f2933;
+}
+
+.delete-modal-btn-cancel:hover {
+    background: #e1e5ee;
+}
+
+.delete-modal-btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-modal-btn-delete:hover {
+    background: #bb2d3b;
+}
+
+/* Long press visual feedback */
+.comment-item.long-pressing {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+}
+
+/* ============================================
+   MULTIPLE IMAGE PREVIEW GRID - CẢI TIẾN
+   ============================================ */
+#multipleImagePreview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.preview-image-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.preview-image-wrapper img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e1e5ee;
+}
+
+.preview-remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.9);
+    border: 2px solid white;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.preview-remove-btn:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: scale(1.1);
+}
+
+/* ============================================
+   IMAGE LIGHTBOX - FULL SCREEN VIEWER
+   ============================================ */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    cursor: zoom-out;
+}
+
+.lightbox-overlay.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+}
+
+.lightbox-image {
+    max-width: 100%;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    transition: all 0.2s ease;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.lightbox-download {
+    position: absolute;
+    bottom: -50px;
+    right: 0;
+    background: rgba(13, 110, 253, 0.9);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+}
+
+.lightbox-info {
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    color: white;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+    .lightbox-close {
+        top: 10px;
+        right: 10px;
+    }
+    .lightbox-download, .lightbox-info {
+        bottom: 10px;
+    }
+}

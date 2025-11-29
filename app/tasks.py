@@ -1711,7 +1711,7 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
 # Config upload
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'rar'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif','webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'rar'}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
@@ -1818,11 +1818,19 @@ def add_comment(task_id):
     # Lấy nội dung từ form (vì có file upload)
     content = request.form.get('content', '').strip()
 
-    if not content:
-        return jsonify({'success': False, 'error': 'Nội dung không được để trống'}), 400
+    has_files = 'file' in request.files and request.files.getlist('file')
+
+    if not content and not has_files:
+        return jsonify({
+            'success': False,
+            'error': 'Vui lòng nhập nội dung hoặc đính kèm file'
+        }), 400
+
+    if not content and has_files:
+        content = '[Đã gửi file đính kèm]'
 
     try:
-        from app.models import TaskComment
+        from app.models import TaskComment, TaskCommentAttachment
         from app.utils import utc_to_vn
 
         comment = TaskComment(
@@ -1831,44 +1839,72 @@ def add_comment(task_id):
             content=content
         )
 
-        # ===== XỬ LÝ FILE ĐÍNH KÈM =====
+        # =====  XỬ LÝ NHIỀU FILE =====
+        uploaded_files = []
+
         if 'file' in request.files:
-            file = request.files['file']
+            files = request.files.getlist('file')  # Lấy nhiều files
 
-            if file and file.filename != '':
-                if not allowed_file(file.filename):
-                    return jsonify({'success': False, 'error': 'Loại file không được phép'}), 400
+            for file in files:
+                if file and file.filename != '':
+                    if not allowed_file(file.filename):
+                        return jsonify({'success': False, 'error': f'File {file.filename} không được phép'}), 400
 
-                # Check file size
-                file.seek(0, os.SEEK_END)
-                file_size = file.tell()
-                file.seek(0)
+                    # Check file size
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)
 
-                if file_size > MAX_FILE_SIZE:
-                    return jsonify({'success': False, 'error': 'File quá lớn (tối đa 10MB)'}), 400
+                    if file_size > MAX_FILE_SIZE:
+                        return jsonify({'success': False, 'error': f'File {file.filename} quá lớn (max 10MB)'}), 400
 
-                # Save file
-                filename = secure_filename(file.filename)
-                unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
+                    # Save file
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
 
-                upload_folder = os.path.join(current_app.root_path, 'uploads', 'comment_attachments')
-                os.makedirs(upload_folder, exist_ok=True)
+                    upload_folder = os.path.join(current_app.root_path, 'uploads', 'comment_attachments')
+                    os.makedirs(upload_folder, exist_ok=True)
 
-                file_path = os.path.join(upload_folder, unique_filename)
-                file.save(file_path)
+                    file_path = os.path.join(upload_folder, unique_filename)
+                    file.save(file_path)
 
-                # Lưu thông tin file vào comment
-                comment.has_attachment = True
-                comment.attachment_filename = unique_filename
-                comment.attachment_original_filename = filename
-                comment.attachment_file_path = file_path
-                comment.attachment_file_size = file_size
-                comment.attachment_file_type = get_file_type(filename)
+                    uploaded_files.append({
+                        'filename': unique_filename,
+                        'original_filename': filename,
+                        'file_path': file_path,
+                        'file_size': file_size,
+                        'file_type': get_file_type(filename)
+                    })
+
+        # Đánh dấu comment có attachment (tương thích ngược)
+        if uploaded_files:
+            comment.has_attachment = True
+            # Giữ nguyên field cũ cho file đầu tiên (backward compatibility)
+            first_file = uploaded_files[0]
+            comment.attachment_filename = first_file['filename']
+            comment.attachment_original_filename = first_file['original_filename']
+            comment.attachment_file_path = first_file['file_path']
+            comment.attachment_file_size = first_file['file_size']
+            comment.attachment_file_type = first_file['file_type']
 
         db.session.add(comment)
-        db.session.commit()
+        db.session.flush()
 
-        # Gửi thông báo cho người liên quan
+        #Tạo records trong bảng attachments
+        attachment_objects = []
+        for file_info in uploaded_files:
+            attachment = TaskCommentAttachment(
+                comment_id=comment.id,
+                filename=file_info['filename'],
+                original_filename=file_info['original_filename'],
+                file_path=file_info['file_path'],
+                file_size=file_info['file_size'],
+                file_type=file_info['file_type']
+            )
+            db.session.add(attachment)
+            attachment_objects.append(attachment)
+
+        # ===== GỬI THÔNG BÁO =====
         if current_user.id != task.creator_id:
             notif = Notification(
                 user_id=task.creator_id,
@@ -1895,7 +1931,7 @@ def add_comment(task_id):
 
         vn_time = utc_to_vn(comment.created_at)
 
-        # Tạo response data
+        # Tạo response với DANH SÁCH attachments
         comment_data = {
             'id': comment.id,
             'user_id': current_user.id,
@@ -1911,19 +1947,23 @@ def add_comment(task_id):
                 'avatar_letter': current_user.full_name[0].upper()
             },
             'can_delete': True,
-            'has_attachment': comment.has_attachment
+            'has_attachment': comment.has_attachment,
+            'attachments': []
         }
 
-        # Thêm thông tin file nếu có
+        # Thêm thông tin TẤT CẢ files
         if comment.has_attachment:
-            comment_data['attachment'] = {
-                'filename': comment.attachment_original_filename,
-                'file_type': comment.attachment_file_type,
-                'file_size': comment.attachment_file_size,
-                'download_url': url_for('tasks.download_comment_attachment',
-                                        task_id=task_id,
-                                        comment_id=comment.id)
-            }
+            for att in attachment_objects:
+                comment_data['attachments'].append({
+                    'id': att.id,
+                    'filename': att.original_filename,
+                    'file_type': att.file_type,
+                    'file_size': att.file_size,
+                    'download_url': url_for('tasks.download_comment_attachment',
+                                            task_id=task_id,
+                                            comment_id=comment.id,
+                                            attachment_id=att.id)
+                })
 
         return jsonify({
             'success': True,
@@ -1941,8 +1981,9 @@ def add_comment(task_id):
 @bp.route('/<int:task_id>/comments/<int:comment_id>', methods=['DELETE'])
 @login_required
 def delete_comment(task_id, comment_id):
-    """Xóa comment (và file đính kèm nếu có)"""
-    from app.models import TaskComment
+    """Xóa comment (và TẤT CẢ file đính kèm)"""
+    from app.models import TaskComment, TaskCommentAttachment
+
     comment = TaskComment.query.get_or_404(comment_id)
 
     if comment.task_id != task_id:
@@ -1953,36 +1994,88 @@ def delete_comment(task_id, comment_id):
         return jsonify({'success': False, 'error': 'Không có quyền xóa'}), 403
 
     try:
+        # ===== XÓA TẤT CẢ FILES =====
+
+        # 1. Xóa file cũ (backward compatibility)
         if comment.has_attachment and comment.attachment_file_path:
             try:
                 if os.path.exists(comment.attachment_file_path):
                     os.remove(comment.attachment_file_path)
-                    print(f"✅ Deleted file: {comment.attachment_file_path}")
+                    print(f"✅ Deleted old file: {comment.attachment_file_path}")
             except Exception as e:
-                print(f"⚠️ Could not delete file: {e}")
+                print(f"⚠️ Could not delete old file: {e}")
 
-        # Xóa comment trong database
+        # 2. Xóa TẤT CẢ files trong bảng attachments
+        attachments = TaskCommentAttachment.query.filter_by(comment_id=comment_id).all()
+
+        for attachment in attachments:
+            try:
+                if os.path.exists(attachment.file_path):
+                    os.remove(attachment.file_path)
+                    print(f"✅ Deleted attachment file: {attachment.file_path}")
+            except Exception as e:
+                print(f"⚠️ Could not delete attachment file: {e}")
+
+            # Xóa record trong database
+            db.session.delete(attachment)
+
+        # 3. Xóa comment trong database (cascade sẽ tự động xóa attachments)
         db.session.delete(comment)
         db.session.commit()
 
         return jsonify({'success': True})
+
     except Exception as e:
         db.session.rollback()
+        print(f"❌ Error deleting comment: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/<int:task_id>/comments/<int:comment_id>/download-attachment')
-@login_required
-def download_comment_attachment(task_id, comment_id):
-    """Download file đính kèm từ comment"""
-    from app.models import TaskComment
-    comment = TaskComment.query.get_or_404(comment_id)
 
-    if comment.task_id != task_id:
+@bp.route('/<int:task_id>/comments/<int:comment_id>/attachments/<int:attachment_id>/download')
+@login_required
+def download_comment_attachment(task_id, comment_id, attachment_id):
+    """Download 1 file cụ thể từ comment"""
+    from app.models import TaskComment, TaskCommentAttachment
+
+    # ✅ THÊM: Handle fallback cho attachment_id=0 (dữ liệu cũ)
+    if attachment_id == 0:
+        comment = TaskComment.query.get_or_404(comment_id)
+        if comment.task_id != task_id:
+            flash('File không tồn tại', 'danger')
+            return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+        if not comment.has_attachment or not comment.attachment_file_path:
+            flash('Không có file đính kèm', 'danger')
+            return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+        # Check permission
+        task = Task.query.get_or_404(task_id)
+        assignment = TaskAssignment.query.filter_by(
+            task_id=task_id,
+            user_id=current_user.id,
+            accepted=True
+        ).first()
+
+        if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
+            flash('Bạn không có quyền tải file này', 'danger')
+            return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+        directory = os.path.dirname(comment.attachment_file_path)
+        return send_from_directory(directory, comment.attachment_filename, as_attachment=True,
+                                   download_name=comment.attachment_original_filename)
+
+    # ✅ XỬ LÝ BÌNH THƯỜNG cho dữ liệu mới
+    attachment = TaskCommentAttachment.query.get_or_404(attachment_id)
+
+    if attachment.comment_id != comment_id:
         flash('File không tồn tại', 'danger')
         return redirect(url_for('tasks.task_detail', task_id=task_id))
 
-    if not comment.has_attachment:
-        flash('Comment này không có file đính kèm', 'danger')
+    comment = attachment.comment
+    if comment.task_id != task_id:
+        flash('File không tồn tại', 'danger')
         return redirect(url_for('tasks.task_detail', task_id=task_id))
 
     # Check permission
@@ -1997,12 +2090,9 @@ def download_comment_attachment(task_id, comment_id):
         flash('Bạn không có quyền tải file này', 'danger')
         return redirect(url_for('tasks.task_detail', task_id=task_id))
 
-    directory = os.path.dirname(comment.attachment_file_path)
-    return send_from_directory(directory, comment.attachment_filename, as_attachment=True,
-                               download_name=comment.attachment_original_filename)
-
-
-# Thêm route này vào cuối file task.py, trước phần TASK COMMENTS
+    directory = os.path.dirname(attachment.file_path)
+    return send_from_directory(directory, attachment.filename, as_attachment=True,
+                               download_name=attachment.original_filename)
 
 @bp.route('/<int:task_id>/quick-rate', methods=['POST'])
 @login_required
