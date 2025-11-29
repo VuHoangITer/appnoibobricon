@@ -146,32 +146,26 @@ const SeasonalEffects = {
                     active: false,
                     duration: 0,
                     frequency: 1500,
+                    intensity: 50,
                     colors: ['#ff0000', '#ffd700', '#00ff00', '#0000ff', '#ff00ff'],
                     pages: ['all']
                 },
                 noel: {
                     active: false,
                     duration: 0,
+                    intensity: 50,
                     pages: ['all']
                 },
                 tet: {
                     active: false,
                     duration: 0,
-                    pages: ['all']
-                },
-                midautumn: {
-                    active: false,
-                    duration: 0,
+                    intensity: 50,
                     pages: ['all']
                 },
                 flags: {
                     active: false,
                     duration: 0,
-                    pages: ['all']
-                },
-                halloween: {
-                    active: false,
-                    duration: 0,
+                    intensity: 50,
                     pages: ['all']
                 },
                 santa: {
@@ -419,13 +413,16 @@ const SeasonalEffects = {
                 const self = SeasonalEffects;
 
                 const frequency = config.frequency || 1500;
+                const intensity = config.intensity || 50;
                 const colors = config.colors || ['#ff0000', '#ffd700', '#00ff00', '#0000ff'];
 
                 const launchFirework = () => {
                     const x = Math.random() * 80 + 10;
                     const y = Math.random() * 30 + 20;
                     const color = colors[Math.floor(Math.random() * colors.length)];
-                    const particleCount = Math.floor(Math.random() * 20) + 20;
+
+                    // Particle count dựa vào intensity
+                    const particleCount = Math.floor((intensity / 50) * 20) + 10;
 
                     for (let i = 0; i < particleCount; i++) {
                         const particle = document.createElement('div');
@@ -468,6 +465,7 @@ const SeasonalEffects = {
                 console.log('🎄 Starting noel with config:', config);
                 const self = SeasonalEffects;
 
+                const intensity = config.intensity || 50;
                 const symbols = ['🎄', '🎁'];
 
                 const createElement = () => {
@@ -492,9 +490,13 @@ const SeasonalEffects = {
                     }, duration);
                 };
 
-                self.intervals.noel = setInterval(createElement, 450);
+                // Spawn rate dựa vào intensity
+                const spawnRate = Math.max(200, 600 - intensity * 4);
+                self.intervals.noel = setInterval(createElement, spawnRate);
 
-                for (let i = 0; i < 10; i++) {
+                // Initial count dựa vào intensity
+                const initialCount = Math.floor(intensity * 0.2);
+                for (let i = 0; i < initialCount; i++) {
                     setTimeout(createElement, i * 200);
                 }
             }
@@ -508,14 +510,23 @@ const SeasonalEffects = {
                 console.log('🧧 Starting tet with config:', config);
                 const self = SeasonalEffects;
 
-                const symbols = ['🪙', '🧧'];
+                const intensity = config.intensity || 50;
+                const images = [
+                    '/static/images/200-dong.png',
+                    '/static/images/500-dong.png'
+                ];
 
                 const createElement = () => {
                     const element = document.createElement('div');
                     element.className = 'tet';
-                    element.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+                    const img = document.createElement('img');
+                    img.src = images[Math.floor(Math.random() * images.length)];
+                    img.alt = 'Tiền Tết';
+                    img.style.pointerEvents = 'none';
+
+                    element.appendChild(img);
                     element.style.left = Math.random() * 100 + '%';
-                    element.style.fontSize = (Math.random() * 1 + 1.5) + 'em';
                     element.style.animationDuration = (Math.random() * 4 + 7) + 's';
                     element.style.animationDelay = '0s';
 
@@ -532,48 +543,14 @@ const SeasonalEffects = {
                     }, duration);
                 };
 
-                self.intervals.tet = setInterval(createElement, 400);
+                // Spawn rate dựa vào intensity
+                const spawnRate = Math.max(180, 580 - intensity * 4);
+                self.intervals.tet = setInterval(createElement, spawnRate);
 
-                for (let i = 0; i < 12; i++) {
+                // Initial count dựa vào intensity
+                const initialCount = Math.floor(intensity * 0.24);
+                for (let i = 0; i < initialCount; i++) {
                     setTimeout(createElement, i * 180);
-                }
-            }
-        },
-
-        // ====================================
-        // TRUNG THU
-        // ====================================
-        midautumn: {
-            start(config) {
-                console.log('🏮 Starting mid-autumn with config:', config);
-                const self = SeasonalEffects;
-
-                const createElement = () => {
-                    const element = document.createElement('div');
-                    element.className = 'midautumn';
-                    element.textContent = '🏮';
-                    element.style.left = Math.random() * 100 + '%';
-                    element.style.fontSize = (Math.random() * 1 + 1.8) + 'em';
-                    element.style.animationDuration = (Math.random() * 5 + 9) + 's';
-                    element.style.animationDelay = '0s';
-
-                    self.container.appendChild(element);
-                    self.elements.push(element);
-
-                    const duration = parseFloat(element.style.animationDuration) * 1000;
-                    setTimeout(() => {
-                        if (element.parentNode) {
-                            element.parentNode.removeChild(element);
-                            const index = self.elements.indexOf(element);
-                            if (index > -1) self.elements.splice(index, 1);
-                        }
-                    }, duration);
-                };
-
-                self.intervals.midautumn = setInterval(createElement, 500);
-
-                for (let i = 0; i < 8; i++) {
-                    setTimeout(createElement, i * 250);
                 }
             }
         },
@@ -585,6 +562,8 @@ const SeasonalEffects = {
             start(config) {
                 console.log('🇻🇳 Starting flags with config:', config);
                 const self = SeasonalEffects;
+
+                const intensity = config.intensity || 50;
 
                 const createFlag = () => {
                     const flag = document.createElement('div');
@@ -615,49 +594,14 @@ const SeasonalEffects = {
                     }, duration);
                 };
 
-                self.intervals.flags = setInterval(createFlag, 500);
+                // Spawn rate dựa vào intensity
+                const spawnRate = Math.max(250, 650 - intensity * 4);
+                self.intervals.flags = setInterval(createFlag, spawnRate);
 
-                for (let i = 0; i < 8; i++) {
+                // Initial count dựa vào intensity
+                const initialCount = Math.floor(intensity * 0.16);
+                for (let i = 0; i < initialCount; i++) {
                     setTimeout(createFlag, i * 250);
-                }
-            }
-        },
-
-        // ====================================
-        // HALLOWEEN
-        // ====================================
-        halloween: {
-            start(config) {
-                console.log('🎃 Starting halloween with config:', config);
-                const self = SeasonalEffects;
-
-                const symbols = ['🎃', '👻', '🦇', '🕷️', '🕸️'];
-
-                const createElement = () => {
-                    const element = document.createElement('div');
-                    element.className = 'halloween';
-                    element.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-                    element.style.left = Math.random() * 100 + '%';
-                    element.style.animationDuration = (Math.random() * 6 + 8) + 's';
-                    element.style.animationDelay = '0s';
-
-                    self.container.appendChild(element);
-                    self.elements.push(element);
-
-                    const duration = parseFloat(element.style.animationDuration) * 1000;
-                    setTimeout(() => {
-                        if (element.parentNode) {
-                            element.parentNode.removeChild(element);
-                            const index = self.elements.indexOf(element);
-                            if (index > -1) self.elements.splice(index, 1);
-                        }
-                    }, duration);
-                };
-
-                self.intervals.halloween = setInterval(createElement, 450);
-
-                for (let i = 0; i < 10; i++) {
-                    setTimeout(createElement, i * 200);
                 }
             }
         },

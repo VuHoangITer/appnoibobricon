@@ -815,16 +815,16 @@
     </script>
     {% endif %}
     {% block scripts %}{% endblock %}
-{% if current_user.is_authenticated %}
-    <!-- Seasonal Effects -->
-    <script src="{{ url_for('static', filename='js/santa-effect.js') }}?v={{ config.VERSION }}"></script>
-    <script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }}"></script>
-    <script>
-        // Auto-init seasonal effects
-        if (window.SeasonalEffects) {
-            SeasonalEffects.init();
-        }
-    </script>
-{% endif %}
+    {% if current_user.is_authenticated %}
+        <!-- Seasonal Effects -->
+        <script src="{{ url_for('static', filename='js/santa-effect.js') }}?v={{ config.VERSION }}"></script>
+        <script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }}"></script>
+        <script>
+            // Auto-init seasonal effects
+            if (window.SeasonalEffects) {
+                SeasonalEffects.init();
+            }
+        </script>
+    {% endif %}
 </body>
 </html>

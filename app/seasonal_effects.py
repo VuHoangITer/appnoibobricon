@@ -57,32 +57,26 @@ def get_config():
                     'active': False,
                     'duration': 0,
                     'frequency': 1500,
+                    'intensity': 50,
                     'colors': ['#ff0000', '#ffd700', '#00ff00', '#0000ff', '#ff00ff'],
                     'pages': ['all']
                 },
                 'noel': {
                     'active': False,
                     'duration': 0,
+                    'intensity': 50,
                     'pages': ['all']
                 },
                 'tet': {
                     'active': False,
                     'duration': 0,
-                    'pages': ['all']
-                },
-                'midautumn': {
-                    'active': False,
-                    'duration': 0,
+                    'intensity': 50,
                     'pages': ['all']
                 },
                 'flags': {
                     'active': False,
                     'duration': 0,
-                    'pages': ['all']
-                },
-                'halloween': {
-                    'active': False,
-                    'duration': 0,
+                    'intensity': 50,
                     'pages': ['all']
                 },
                 'santa': {
@@ -195,64 +189,6 @@ def check_should_show(effect_name):
         })
     except Exception as e:
         print(f"❌ Error checking should_show: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@bp.route('/api/preview/<effect_name>')
-@login_required
-@role_required(['director'])
-def preview_effect(effect_name):
-    """Xem trước hiệu ứng"""
-    try:
-        preview_configs = {
-            'snowfall': {
-                'duration': 10,
-                'intensity': 50,
-                'speed': 'medium'
-            },
-            'fireworks': {
-                'duration': 10,
-                'frequency': 1500,
-                'colors': ['#ff0000', '#ffd700', '#00ff00', '#0000ff']
-            },
-            'noel': {
-                'duration': 10
-            },
-            'tet': {
-                'duration': 10
-            },
-            'midautumn': {
-                'duration': 10
-            },
-            'flags': {
-                'duration': 10
-            },
-            'halloween': {
-                'duration': 10
-            },
-            'santa': {
-                'message': 'Chúc Mừng Giáng Sinh! 🎄',
-                'delay': 1000,
-                'sparkles': True
-            }
-        }
-
-        if effect_name not in preview_configs:
-            return jsonify({
-                'success': False,
-                'error': 'Unknown effect'
-            }), 404
-
-        return jsonify({
-            'success': True,
-            'effect': effect_name,
-            'config': preview_configs[effect_name]
-        })
-
-    except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)

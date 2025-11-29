@@ -32,7 +32,7 @@ const SantaEffect = {
 
         setTimeout(() => {
             this.hide();
-        }, 8000);
+        }, 10000);
     },
 
     addSparkles() {
