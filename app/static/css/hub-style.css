@@ -76,13 +76,11 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     align-items: center;
     gap: 8px;
     padding: 15px 10px;
-    background: white;
-    backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    border: none;
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     text-decoration: none;
     color: inherit;
 }
@@ -120,9 +118,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 }
 
 .hub-icon-label {
-    font-size: 0.85rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: dark;
+    color: #ffffff;
     text-align: center;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     line-height: 1.2;
@@ -1125,7 +1123,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 
     .hub-icon-label {
-        font-size: 0.75rem;
+        font-size: 0.95rem;
     }
 
     .performance-header {
