@@ -139,81 +139,6 @@ body {
     border-radius: 50%;
 }
 
-/* Khu vực comments */
-.comments-section {
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 14px;
-    background: #f9fafb;
-    border-radius: var(--ed-radius-md);
-    border: 1px solid var(--ed-border);
-}
-
-.comment-item {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.comment-item:last-child {
-    margin-bottom: 0;
-    border-bottom: none;
-}
-
-.comment-content {
-    flex: 1;
-}
-
-.comment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.comment-author {
-    font-weight: 600;
-    color: var(--ed-text);
-    font-size: 0.9rem;
-}
-
-.comment-time {
-    font-size: 0.75rem;
-    color: var(--ed-muted);
-}
-
-.comment-text {
-    color: #4b5563;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-size: 0.88rem;
-}
-
-.comment-actions .btn {
-    border-radius: var(--ed-radius-pill);
-}
-
-/* Form comment */
-#commentForm textarea {
-    resize: none;
-    border-radius: var(--ed-radius-md);
-}
-
-#commentForm .btn {
-    border-radius: var(--ed-radius-pill);
-}
-
-#filePreview {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 /* Alert */
 .alert {
     border-radius: var(--ed-radius-md);
@@ -248,33 +173,6 @@ body {
     .comment-input-wrapper {
         flex-direction: row;
     }
-}
-    /* Comment attachment styles */
-.comment-attachment {
-    margin-top: 8px;
-}
-
-.attachment-image-preview img {
-    border-radius: var(--ed-radius-md);
-    transition: transform 0.2s ease;
-}
-
-.attachment-image-preview img:hover {
-    transform: scale(1.02);
-}
-
-.attachment-info .btn {
-    border-radius: var(--ed-radius-pill);
-    font-size: 0.85rem;
-}
-
-#filePreview {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 </style>
 {% endblock %}
@@ -732,110 +630,22 @@ body {
         {% endif %}
     </div>
 </div>
-
-<!-- ===== FULL WIDTH: TRAO ĐỔI (BỎ PHẦN FILE ĐÍNH KÈM) ===== -->
+<!-- ===== FULL WIDTH: NÚT MỞ TRANG THẢO LUẬN ===== -->
 <div class="row mt-3">
-    <!-- Trao đổi - FULL WIDTH -->
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header">
                 <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Trao đổi</h6>
             </div>
-            <div class="card-body">
-                <div class="comments-section" id="commentsList">
-                    {% for comment in sorted_comments %}
-                    <div class="comment-item" data-id="{{ comment.id }}">
-                        <div class="comment-avatar">
-                            {% if comment.user.avatar %}
-                            <img src="{{ url_for('profile.get_avatar', filename=comment.user.avatar) }}" alt="">
-                            {% else %}
-                            {{ comment.user.full_name[0].upper() }}
-                            {% endif %}
-                        </div>
-                        <div class="comment-content">
-                            <div class="comment-header">
-                                <div>
-                                    <span class="comment-author">{{ comment.user.full_name }}</span>
-                                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ comment.user.role | role_vn }}</span>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="comment-time">{{ comment.created_at | vn_datetime }}</span>
-                                    {% if comment.user_id == current_user.id or current_user.role == 'director' %}
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment({{ comment.id }})">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="comment-text">{{ comment.content }}</div>
-
-                            <!--  HIỂN THỊ FILE ĐÍNH KÈM NẾU CÓ -->
-                            {% if comment.has_attachment %}
-                            <div class="comment-attachment mt-2">
-                                {% if comment.attachment_file_type == 'image' %}
-                                <!-- Preview ảnh -->
-                                <div class="attachment-image-preview">
-                                    <img src="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
-                                         alt="{{ comment.attachment_original_filename }}"
-                                         class="img-thumbnail"
-                                         style="max-width: 300px; max-height: 300px; cursor: pointer;"
-                                         onclick="window.open(this.src, '_blank')">
-                                </div>
-                                {% endif %}
-
-                                <!-- Link download cho tất cả file -->
-                                <div class="attachment-info mt-2">
-                                    <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
-                                       class="btn btn-sm btn-outline-primary" target="_blank">
-                                        <i class="bi bi-{% if comment.attachment_file_type == 'image' %}image{% elif comment.attachment_file_type == 'pdf' %}file-pdf{% else %}file-earmark{% endif %}"></i>
-                                        {{ comment.attachment_original_filename }}
-                                        <small class="text-muted">({{ (comment.attachment_file_size / 1024) | round(1) }} KB)</small>
-                                    </a>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                    <p class="text-muted text-center" id="noComments">Chưa có bình luận</p>
-                    {% endfor %}
-                </div>
-
-                {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
-                <form id="commentForm" enctype="multipart/form-data" class="mt-3">
-                    <textarea class="form-control mb-2" id="commentInput" name="content" rows="2" placeholder="Nhập bình luận..."></textarea>
-
-                    <!-- File attachment input + preview -->
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <label for="commentFileInput" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-paperclip"></i> Đính kèm file
-                            </label>
-                            <input type="file" id="commentFileInput" name="file" style="display: none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" id="btnAddComment">
-                            <i class="bi bi-send"></i>
-                        </button>
-                    </div>
-
-                    <!-- Preview area -->
-                    <div id="filePreview" class="mt-2" style="display: none;">
-                        <div class="alert alert-info d-flex align-items-center justify-content-between p-2 mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-file-earmark"></i>
-                                <span id="filePreviewName"></span>
-                                <small class="text-muted" id="filePreviewSize"></small>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFileInput()">
-                                <i class="bi bi-x"></i>
-                            </button>
-                        </div>
-                        <!-- Image preview -->
-                        <img id="imagePreview" style="max-width: 200px; max-height: 200px; display: none;" class="img-thumbnail">
-                    </div>
-                </form>
-                {% endif %}
+            <div class="card-body text-center py-5">
+                <i class="bi bi-chat-dots" style="font-size: 3rem; color: #ccc;"></i>
+                <p class="mt-3 mb-3 text-muted">Nhấn vào nút bên dưới để xem và tham gia thảo luận</p>
+                <a href="{{ url_for('tasks.task_discussion', task_id=task.id) }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-chat-dots"></i> Mở trang thảo luận
+                    {% if task.unread_comment_count > 0 %}
+                    <span class="badge bg-danger ms-2">{{ task.unread_comment_count }}</span>
+                    {% endif %}
+                </a>
             </div>
         </div>
     </div>
@@ -844,7 +654,9 @@ body {
 
 {% block scripts %}
 <script>
-const TASK_ID = {{ task.id }};
+// ============================================
+// CONFIGURATION
+// ============================================
 const CONFIG = {
     TASK_ID: {{ task.id }},
     CURRENT_USER_ID: {{ current_user.id }},
@@ -852,414 +664,9 @@ const CONFIG = {
     CSRF_TOKEN: '{{ csrf_token() }}'
 };
 
-const ROLE_MAP = {
-    'director': 'Giám đốc',
-    'manager': 'Trưởng phòng',
-    'accountant': 'Kế toán',
-    'hr': 'Nhân sự'
-};
-
-let lastTimestamp = 0;
-let knownCommentIds = new Set();
-let isFirstPoll = true;
-
-// DOM elements
-const commentsList = document.getElementById('commentsList');
-const commentInput = document.getElementById('commentInput');
-const btnAddComment = document.getElementById('btnAddComment');
-
-// Initialize known comment IDs
-document.querySelectorAll('.comment-item[data-id]').forEach(el => {
-    const id = parseInt(el.getAttribute('data-id'));
-    knownCommentIds.add(id);
-});
-
 // ============================================
-// FILE PREVIEW FOR COMMENT
+// UTILITY FUNCTIONS
 // ============================================
-const commentFileInput = document.getElementById('commentFileInput');
-const filePreview = document.getElementById('filePreview');
-const filePreviewName = document.getElementById('filePreviewName');
-const filePreviewSize = document.getElementById('filePreviewSize');
-const imagePreview = document.getElementById('imagePreview');
-
-if (commentFileInput) {
-    commentFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate file
-            if (!validateFile(file)) {
-                clearFileInput();
-                return;
-            }
-
-            // Show preview
-            filePreviewName.textContent = file.name;
-            filePreviewSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
-            filePreview.style.display = 'block';
-
-            // Show image preview if it's an image
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                imagePreview.style.display = 'none';
-            }
-        }
-    });
-}
-
-function validateFile(file) {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-                         'application/pdf', 'application/msword',
-                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                         'application/vnd.ms-excel',
-                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                         'text/plain'];
-
-    if (!allowedTypes.includes(file.type)) {
-        showToast('Loại file không được phép', 'danger');
-        return false;
-    }
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-        showToast('File quá lớn (tối đa 10MB)', 'danger');
-        return false;
-    }
-
-    return true;
-}
-
-function clearFileInput() {
-    if (commentFileInput) {
-        commentFileInput.value = '';
-        filePreview.style.display = 'none';
-        imagePreview.style.display = 'none';
-    }
-}
-
-// ============================================
-// COMMENTS REAL-TIME
-// ============================================
-function startRealtimeComments() {
-    console.log('🚀 Starting real-time comments for task', TASK_ID);
-
-    if (typeof window.sseManager === 'undefined') {
-        console.warn('⚠️ SSE Manager not loaded, using polling fallback');
-        startPollingFallback();
-        return;
-    }
-
-    window.sseManager.connect(
-        'task-comments',
-        `/sse/tasks/${TASK_ID}/comments?last_timestamp=${lastTimestamp}`,
-        {
-            onOpen: () => {
-                console.log('✅ SSE Task Comments connected');
-            },
-            onError: (error, attempts) => {
-                console.error('❌ SSE Task Comments error:', error, 'attempts:', attempts);
-            },
-            events: {
-                'new_comments': (data) => {
-                    console.log('[SSE] New comments:', data);
-                    handleNewComments(data);
-                },
-                'comments_sync': (data) => {
-                    console.log('[SSE] Comments sync:', data);
-                    handleCommentsSync(data);
-                },
-                'heartbeat': () => {
-                    console.log('💓 SSE comments heartbeat');
-                }
-            }
-        },
-        {
-            url: `/tasks/${TASK_ID}/comments?_t=${Date.now()}`,
-            interval: 3000,
-            onData: (data) => {
-                console.log('[POLLING] Fallback data:', data);
-                if (data.success && data.comments && data.comments.length > 0) {
-                    handleNewComments(data);
-                }
-            }
-        }
-    );
-}
-
-function startPollingFallback() {
-    console.log('🔄 Starting polling fallback (3s interval)');
-    pollComments();
-    setInterval(pollComments, 3000);
-}
-
-async function pollComments() {
-    try {
-        const response = await fetch(`/tasks/${TASK_ID}/comments?_t=${Date.now()}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-
-        if (data.success) {
-            if (isFirstPoll && data.comments && data.comments.length > 0) {
-                let maxTimestamp = lastTimestamp;
-                data.comments.forEach(c => {
-                    if (c.created_at_timestamp) {
-                        maxTimestamp = Math.max(maxTimestamp, c.created_at_timestamp);
-                    }
-                });
-                lastTimestamp = maxTimestamp;
-                isFirstPoll = false;
-                return;
-            }
-
-            isFirstPoll = false;
-
-            const newComments = data.comments.filter(c =>
-                !knownCommentIds.has(c.id) && c.created_at_timestamp > lastTimestamp
-            );
-
-            if (newComments.length > 0) {
-                handleNewComments({ comments: newComments, total: data.total });
-            }
-
-            const serverIds = new Set(data.comments.map(c => c.id));
-            handleCommentsSync({ existing_ids: Array.from(serverIds), total_count: data.total });
-        }
-    } catch (error) {
-        console.error('[POLLING] Error:', error);
-    }
-}
-
-function handleNewComments(data) {
-    console.log('[HANDLER] Processing', data.comments.length, 'new comments');
-
-    data.comments.forEach(comment => {
-        if (!knownCommentIds.has(comment.id)) {
-            console.log('[HANDLER] Adding new comment ID:', comment.id);
-            addCommentToList(comment);
-            knownCommentIds.add(comment.id);
-
-            if (comment.created_at_timestamp) {
-                lastTimestamp = Math.max(lastTimestamp, comment.created_at_timestamp);
-            }
-        }
-    });
-}
-
-function handleCommentsSync(data) {
-    const existingIds = new Set(data.existing_ids);
-
-    knownCommentIds.forEach(id => {
-        if (!existingIds.has(id)) {
-            console.log('[HANDLER] Comment deleted:', id);
-            const element = document.querySelector(`.comment-item[data-id="${id}"]`);
-            if (element) {
-                element.style.transition = 'opacity 0.3s';
-                element.style.opacity = '0';
-
-                setTimeout(() => {
-                    element.remove();
-                    knownCommentIds.delete(id);
-                }, 300);
-            } else {
-                knownCommentIds.delete(id);
-            }
-        }
-    });
-}
-
-function addComment() {
-    const content = commentInput.value.trim();
-
-    if (!content) {
-        showToast('Vui lòng nhập nội dung', 'warning');
-        return;
-    }
-
-    btnAddComment.disabled = true;
-    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-    // ✅ THAY ĐỔI: Dùng FormData thay vì JSON
-    const formData = new FormData();
-    formData.append('content', content);
-    formData.append('csrf_token', CONFIG.CSRF_TOKEN);
-
-    // ✅ THÊM: Add file if selected
-    if (commentFileInput && commentFileInput.files.length > 0) {
-        formData.append('file', commentFileInput.files[0]);
-    }
-
-    fetch(`/tasks/${TASK_ID}/comments`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': CONFIG.CSRF_TOKEN
-        },
-        body: formData  // ✅ THAY ĐỔI: formData thay vì JSON
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            commentInput.value = '';
-            clearFileInput();  // ✅ THÊM: Clear file input
-
-            addCommentToList(data.comment);
-            knownCommentIds.add(data.comment.id);
-
-            if (data.comment.created_at_timestamp) {
-                lastTimestamp = Math.max(lastTimestamp, data.comment.created_at_timestamp);
-            }
-
-            showToast('Đã gửi bình luận', 'success');
-        } else {
-            showToast(data.error || 'Lỗi gửi bình luận', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error:', error);
-        showToast('Có lỗi xảy ra', 'danger');
-    })
-    .finally(() => {
-        btnAddComment.disabled = false;
-        btnAddComment.innerHTML = '<i class="bi bi-send"></i>';
-    });
-}
-
-function addCommentToList(comment) {
-    if (document.querySelector(`.comment-item[data-id="${comment.id}"]`)) {
-        return;
-    }
-
-    const noComments = document.getElementById('noComments');
-    if (noComments) noComments.remove();
-
-    const item = document.createElement('div');
-    item.className = 'comment-item';
-    item.dataset.id = comment.id;
-    item.style.opacity = '0';
-
-    const avatarHTML = comment.user.avatar
-        ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
-        : comment.user.avatar_letter;
-
-    const deleteBtn = comment.can_delete
-        ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
-               <i class="bi bi-trash"></i>
-           </button>`
-        : '';
-
-    // ✅ BUILD ATTACHMENT HTML - FIX: Check nested structure
-    let attachmentHTML = '';
-    if (comment.has_attachment && comment.attachment) {
-        const att = comment.attachment;
-
-        // Image preview
-        if (att.file_type === 'image') {
-            attachmentHTML = `
-                <div class="comment-attachment mt-2">
-                    <div class="attachment-image-preview">
-                        <img src="${att.download_url}"
-                             alt="${escapeHtml(att.filename)}"
-                             class="img-thumbnail"
-                             style="max-width: 300px; max-height: 300px; cursor: pointer;"
-                             onclick="window.open(this.src, '_blank')">
-                    </div>
-                    <div class="attachment-info mt-2">
-                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
-                            <i class="bi bi-image"></i>
-                            ${escapeHtml(att.filename)}
-                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
-                        </a>
-                    </div>
-                </div>
-            `;
-        } else {
-            // Non-image files
-            const icon = att.file_type === 'pdf' ? 'file-pdf' : 'file-earmark';
-            attachmentHTML = `
-                <div class="comment-attachment mt-2">
-                    <div class="attachment-info">
-                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
-                            <i class="bi bi-${icon}"></i>
-                            ${escapeHtml(att.filename)}
-                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    item.innerHTML = `
-        <div class="comment-avatar">${avatarHTML}</div>
-        <div class="comment-content">
-            <div class="comment-header">
-                <div>
-                    <span class="comment-author">${escapeHtml(comment.user.full_name)}</span>
-                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">${ROLE_MAP[comment.user.role] || comment.user.role}</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="comment-time">${comment.created_at_display}</span>
-                    ${deleteBtn}
-                </div>
-            </div>
-            <div class="comment-text">${escapeHtml(comment.content)}</div>
-            ${attachmentHTML}
-        </div>
-    `;
-
-    commentsList.appendChild(item);
-
-    setTimeout(() => {
-        item.style.transition = 'opacity 0.3s';
-        item.style.opacity = '1';
-    }, 10);
-
-    const commentsSection = document.querySelector('.comments-section');
-    if (commentsSection) {
-        commentsSection.scrollTop = commentsSection.scrollHeight;
-    }
-}
-
-function deleteComment(commentId) {
-    if (!confirm('Xóa bình luận này?')) return;
-
-    fetch(`/tasks/${TASK_ID}/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRFToken': CONFIG.CSRF_TOKEN
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const item = document.querySelector(`.comment-item[data-id="${commentId}"]`);
-            if (item) {
-                item.style.transition = 'opacity 0.3s';
-                item.style.opacity = '0';
-
-                setTimeout(() => {
-                    item.remove();
-                    knownCommentIds.delete(commentId);
-                }, 300);
-            }
-            showToast('Đã xóa bình luận', 'success');
-        } else {
-            showToast(data.error || 'Lỗi xóa bình luận', 'danger');
-        }
-    });
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
@@ -1273,40 +680,19 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================
-// CLEANUP ON PAGE UNLOAD
-// ============================================
-window.addEventListener('beforeunload', () => {
-    console.log('🚪 Task detail unloading - disconnecting SSE');
-    if (window.sseManager) {
-        window.sseManager.disconnect('task-comments');
-    }
-});
-
-window.addEventListener('pagehide', () => {
-    console.log('🚪 Task detail hiding - disconnecting SSE');
-    if (window.sseManager) {
-        window.sseManager.disconnect('task-comments');
-    }
-});
-
-// ============================================
 // TASK APPROVAL FUNCTIONS
 // ============================================
-
 function approveSelfTask(taskId) {
-    // Hiển thị hộp thoại xác nhận
     if (!confirm('Xác nhận phê duyệt công việc này?')) {
         return;
     }
 
-    // Gửi request (KHÔNG CÓ BODY)
     fetch(`/tasks/${taskId}/approve-self-task`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': CONFIG.CSRF_TOKEN
         }
-        // ❌ BỎ: body: JSON.stringify({ note: ... })
     })
     .then(res => res.json())
     .then(data => {
@@ -1324,19 +710,16 @@ function approveSelfTask(taskId) {
 }
 
 function rejectSelfTask(taskId) {
-    // Hiển thị hộp thoại xác nhận với cảnh báo
     if (!confirm('Xác nhận từ chối công việc này?\n\n⚠️ Công việc sẽ bị HỦY và không thể khôi phục!')) {
         return;
     }
 
-    // Gửi request (KHÔNG CÓ BODY)
     fetch(`/tasks/${taskId}/reject-self-task`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': CONFIG.CSRF_TOKEN
         }
-        // ❌ BỎ: body: JSON.stringify({ reason: ... })
     })
     .then(res => res.json())
     .then(data => {
@@ -1357,28 +740,7 @@ function rejectSelfTask(taskId) {
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Task Detail Page Loaded');
-
-    startRealtimeComments();
-
-    //  Handle Enter key
-    if (commentInput) {
-        commentInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                addComment();
-            }
-        });
-    }
-
-    //  Handle form submit
-    const commentForm = document.getElementById('commentForm');
-    if (commentForm) {
-        commentForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            addComment();
-        });
-    }
+    console.log('📄 Task Detail Page Loaded');
 });
 </script>
 {% endblock %}

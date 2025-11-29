@@ -207,15 +207,23 @@
     text-shadow: 0 0 16px rgba(37, 99, 235, 0.25);
 }
 
-/* ====== Responsive: GIỮ NGUYÊN LAYOUT, CHỈ THU NHỎ ====== */
+/* ====== Responsive: MOBILE - LAYOUT DỌC ====== */
 @media (max-width: 768px) {
     .priority-header {
-        padding: 8px 10px;
-        gap: 10px;
+        padding: 12px 14px;
+        gap: 12px;
+        /* ✅ THÊM 2 DÒNG NÀY - Chuyển sang layout dọc */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Dòng 1: HOÀN THÀNH - Căn giữa */
+    .priority-header-left {
+        justify-content: center;
     }
 
     .priority-status-text {
-        font-size: 0.85rem;
+        font-size: 1.9rem;
         letter-spacing: 0.06em;
     }
 
@@ -225,21 +233,32 @@
         font-size: 0.8rem;
     }
 
+    /* Dòng 2: 2 icon rating - Căn giữa */
+    .priority-header-center {
+        justify-content: center;
+        gap: 20px;
+    }
+
     .rating-icon-circle {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
     }
 
     .rating-icon-circle i {
-        font-size: 1rem;
+        font-size: 1.1rem;
+    }
+
+    /* Dòng 3: Đúng hạn / Quá hạn - Căn giữa */
+    .priority-header-right {
+        justify-content: center;
     }
 
     .priority-stats {
-        gap: 18px;
+        gap: 30px;
     }
 
     .priority-stat-number-big {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
     }
 
     .priority-stat-label-top {
@@ -247,7 +266,6 @@
         letter-spacing: 0.12em;
     }
 }
-
 
 
 /* Floating Create Task Button */
@@ -295,6 +313,7 @@
     overflow: hidden;
 }
 
+/* Task Card Header với View Detail Icon */
 .task-card-header {
     padding: 12px 16px;
     font-weight: 600;
@@ -302,6 +321,50 @@
     border-bottom: 1px solid var(--ed-border);
     text-align: center;
     color: #ffffff;
+    position: relative;
+}
+
+/* Icon View Detail */
+.view-detail-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.view-detail-icon:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.view-detail-icon i {
+    font-size: 0.95rem;
+    color: #ffffff;
+}
+
+/* Responsive cho icon */
+@media (max-width: 768px) {
+    .view-detail-icon {
+        width: 24px;
+        height: 24px;
+        right: 8px;
+    }
+
+    .view-detail-icon i {
+        font-size: 0.85rem;
+    }
 }
 
 .task-card-header.on-time {
@@ -608,6 +671,81 @@
         font-size: 1.4rem;
     }
 }
+/* ====== PAGINATION STYLES ====== */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.pagination-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 8px;
+}
+
+.page-item {
+    display: inline-block;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    color: #495057;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.page-link:hover {
+    background: #f8f9fa;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    transform: translateY(-1px);
+}
+
+.page-item.active .page-link {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .page-link {
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -701,6 +839,14 @@
             {% elif task | is_overdue %}overdue
             {% else %}on-time{% endif %}">
             {{ task.title }}
+
+            <!-- View Detail Icon -->
+            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}"
+               class="view-detail-icon"
+               title="Xem chi tiết"
+               onclick="event.stopPropagation();">
+                <i class="bi bi-eye"></i>
+            </a>
         </div>
 
         <!-- Body -->
@@ -740,20 +886,18 @@
                     <div class="task-right-section">
                         {% if task.due_date %}
                             {% if task.status == 'DONE' %}
-                                <!-- Task hoàn thành: Hiện trạng thái + rating -->
-                            {% if task.performance_rating %}
-                            <div class="task-countdown-static">
-                                <div class="task-rating-badge {{ task.performance_rating }}">
-                                    {% if task.performance_rating == 'good' %}
-                                        <i class="bi bi-hand-thumbs-up-fill"></i>
-                                    {% elif task.performance_rating == 'bad' %}
-                                        <i class="bi bi-hand-thumbs-down-fill"></i>
-                                    {% endif %}
+                                {% if task.performance_rating %}
+                                <div class="task-countdown-static">
+                                    <div class="task-rating-badge {{ task.performance_rating }}">
+                                        {% if task.performance_rating == 'good' %}
+                                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                                        {% elif task.performance_rating == 'bad' %}
+                                            <i class="bi bi-hand-thumbs-down-fill"></i>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
-                            {% endif %}
+                                {% endif %}
                             {% else %}
-                                <!-- Task chưa hoàn thành: Đếm ngược -->
                                 <div class="task-countdown" data-due-date="{{ task.vn_due_date.strftime('%Y-%m-%dT%H:%M:%S') }}+07:00">
                                     <div class="countdown-timer">--:--:--</div>
                                 </div>
@@ -784,7 +928,6 @@
                     </button>
 
                 {% elif task.status == 'DONE' %}
-                    <!-- Nút đánh giá cho Director/Manager -->
                     {% if current_user.role in ['director', 'manager'] %}
                         <button class="task-btn task-btn-rate-good"
                                 onclick="quickRateTask({{ task.id }}, 'good')"
@@ -799,9 +942,9 @@
                     {% endif %}
                 {% endif %}
 
-                <!-- Nút Trao đổi - luôn hiển thị -->
+                <!-- Nút Trao đổi -->
                 <button class="task-btn task-btn-discuss"
-                        onclick="window.location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'"
+                        onclick="window.location.href='{{ url_for('tasks.task_discussion', task_id=task.id) }}'"
                         style="position: relative;">
                     <i class="bi bi-chat-dots"></i>
                     <span>Trao đổi</span>
@@ -814,6 +957,82 @@
     </div>
     {% endfor %}
 </div>
+
+<!-- ========== PAGINATION ========== -->
+{% if pagination.pages > 1 %}
+<div class="pagination-container">
+    <div class="pagination-info">
+        Trang {{ pagination.page }} / {{ pagination.pages }}
+        ({{ pagination.total }} nhiệm vụ)
+    </div>
+
+    <ul class="pagination">
+        <!-- Nút Trang đầu -->
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tasks.priority_detail',
+                assigned_user=request.args.get('assigned_user'),
+                tag=tag,
+                status=status,
+                page=1) }}">
+                <i class="bi bi-chevron-double-left"></i>
+            </a>
+        </li>
+
+        <!-- Nút Trang trước -->
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tasks.priority_detail',
+                assigned_user=request.args.get('assigned_user'),
+                tag=tag,
+                status=status,
+                page=pagination.prev_num) if pagination.has_prev else '#' }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+
+        <!-- Các số trang -->
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('tasks.priority_detail',
+                        assigned_user=request.args.get('assigned_user'),
+                        tag=tag,
+                        status=status,
+                        page=page_num) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Nút Trang sau -->
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tasks.priority_detail',
+                assigned_user=request.args.get('assigned_user'),
+                tag=tag,
+                status=status,
+                page=pagination.next_num) if pagination.has_next else '#' }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+
+        <!-- Nút Trang cuối -->
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tasks.priority_detail',
+                assigned_user=request.args.get('assigned_user'),
+                tag=tag,
+                status=status,
+                page=pagination.pages) }}">
+                <i class="bi bi-chevron-double-right"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endif %}
+
 {% else %}
 <div class="text-center py-5">
     <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
@@ -845,14 +1064,30 @@ function startCountdowns() {
             const now = new Date();
             const diff = dueDate - now;
 
+            // ===== XỬ LÝ KHI QUÁ HẠN: HIỂN THỊ THỜI GIAN ÂM =====
             if (diff <= 0) {
-                timerDisplay.textContent = 'QUÁ HẠN';
+                const overdueDiff = Math.abs(diff); // Lấy giá trị tuyệt đối
+
+                const days = Math.floor(overdueDiff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((overdueDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((overdueDiff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((overdueDiff % (1000 * 60)) / 1000);
+
+                let timeString = '-'; // Thêm dấu trừ
+                if (days > 0) {
+                    timeString += `${days}d:${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(seconds).padStart(2, '0')}s`;
+                } else {
+                    timeString += `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(seconds).padStart(2, '0')}s`;
+                }
+
+                timerDisplay.textContent = timeString;
                 timerDisplay.classList.add('overdue');
                 element.style.background = '#f8d7da';
                 element.style.borderColor = '#f5c2c7';
                 return;
             }
 
+            // ===== XỬ LÝ KHI CÒN HẠN: HIỂN THỊ BÌNH THƯỜNG =====
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));

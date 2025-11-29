@@ -117,8 +117,7 @@
 
                 <div class="filter-bar">
                     <button class="filter-date-btn" onclick="openFilterModal()">
-                        <i class="bi bi-calendar-range"></i>
-                        <span class="d-none d-sm-inline">Lọc</span>
+                        <span class="current-day" id="currentDay">...</span>
                         <span class="filter-indicator" id="filterIndicator" style="display: none;">
                             <i class="bi bi-check-circle-fill"></i>
                         </span>
@@ -497,6 +496,46 @@
 {% block scripts %}
 <script>
 // ========================================
+// GLOBAL STATE & CONFIGURATION
+// ========================================
+let sseStatsConnected = false;
+let performancePollingInterval = null;
+let lastPerformanceUpdate = 0;
+let performanceLoadTimeout = null;
+let animationTimeouts = {};
+let filterModalInstance = null;
+let currentFilterFrom = '';
+let currentFilterTo = '';
+let backdropClickHandler = null;
+let backdropClickEnabled = false;
+
+const CONFIG = {
+    PERFORMANCE_POLL_INTERVAL: 60000,  // 60s
+    STATS_POLL_INTERVAL: 30000,        // 30s
+    DEBOUNCE_DELAY: 500,               // 500ms
+    ANIMATION_DURATION: 300,           // 300ms
+    MAX_ANIMATION_TIMEOUTS: 50         // Giới hạn số timeout đồng thời
+};
+
+// ========================================
+// DEBOUNCE HELPER - IMPROVED
+// ========================================
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+const debouncedLoadPerformance = debounce(loadPerformance, CONFIG.DEBOUNCE_DELAY);
+const debouncedLoadTopBottom = debounce(loadTopBottomUsers, CONFIG.DEBOUNCE_DELAY);
+
+// ========================================
 // MODULE NAVIGATION
 // ========================================
 function showModule(moduleName) {
@@ -518,11 +557,10 @@ function showModule(moduleName) {
     }, 100);
 
     if (moduleName === 'tasks') {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             console.log('📊 Entering Tasks module - refreshing performance');
             refreshPerformanceNow();
-            loadTopBottomUsers();
-        }, 500);
+        });
     }
 }
 
@@ -548,7 +586,7 @@ function toggleSidebar(moduleName) {
     if (sidebar) {
         sidebar.classList.toggle('active');
         const module = document.getElementById('module-' + moduleName);
-        const overlay = module.querySelector('.sidebar-overlay');
+        const overlay = module?.querySelector('.sidebar-overlay');
         if (overlay) {
             overlay.classList.toggle('active');
         }
@@ -572,32 +610,33 @@ function updateModuleMenuButton() {
     const isInModule = document.querySelector('.module-container.active');
 
     if (menuBtn) {
-        if (isInModule && window.innerWidth <= 992) {
-            menuBtn.style.display = 'block';
-        } else {
-            menuBtn.style.display = 'none';
-        }
+        menuBtn.style.display = (isInModule && window.innerWidth <= 992) ? 'block' : 'none';
     }
 }
 
 // ========================================
 // CLICK BACKDROP TO GO BACK TO HUB
 // ========================================
-let backdropClickEnabled = false;
-
 function enableBackdropClick() {
     if (backdropClickEnabled) return;
     backdropClickEnabled = true;
 
-    document.addEventListener('click', handleBackdropClick);
+    backdropClickHandler = handleBackdropClick;
+    document.addEventListener('click', backdropClickHandler);
 }
 
 function disableBackdropClick() {
     backdropClickEnabled = false;
-    document.removeEventListener('click', handleBackdropClick);
+
+    if (backdropClickHandler) {
+        document.removeEventListener('click', backdropClickHandler);
+        backdropClickHandler = null;
+    }
 }
 
 function handleBackdropClick(e) {
+    if (!backdropClickEnabled) return;
+
     const activeModule = document.querySelector('.module-container.active');
     if (!activeModule) {
         disableBackdropClick();
@@ -607,12 +646,15 @@ function handleBackdropClick(e) {
     const moduleContent = activeModule.querySelector('.module-content');
     const moduleSidebar = activeModule.querySelector('.module-sidebar');
 
-    if (e.target.closest('.hub-icon-card')) return;
-    if (e.target.closest('.top-navbar')) return;
-    if (e.target.closest('.modal')) return;
-    if (e.target.classList.contains('modal')) return;
-    if (document.querySelector('.modal.show')) return;
-    if (e.target.classList.contains('modal-backdrop')) return;
+    // Skip if clicking on specific elements
+    if (e.target.closest('.hub-icon-card') ||
+        e.target.closest('.top-navbar') ||
+        e.target.closest('.modal') ||
+        e.target.classList.contains('modal') ||
+        document.querySelector('.modal.show') ||
+        e.target.classList.contains('modal-backdrop')) {
+        return;
+    }
 
     if (window.innerWidth > 992) {
         if (!moduleContent.contains(e.target) && !moduleSidebar.contains(e.target)) {
@@ -627,20 +669,28 @@ function handleBackdropClick(e) {
 }
 
 // ========================================
-// REAL-TIME UPDATES: SSE + FALLBACK POLLING
+// REAL-TIME UPDATES: SSE + FALLBACK - OPTIMIZED
 // ========================================
-let sseStatsConnected = false;
-
 function startRealtimeUpdates() {
+    stopRealtimeUpdates();
+
     console.log('🚀 Starting real-time stats updates...');
 
     if (typeof window.sseManager === 'undefined') {
-        console.warn('⚠️ SSE Manager not loaded, using polling');
-        startPollingFallback();
+        console.warn('⚠️ SSE Manager not loaded, using polling only');
+        startStatsPolling();
         startSmartPerformancePolling();
         return;
     }
 
+    // Check if already connected
+    if (window.sseManager.isConnected('dashboard-stats')) {
+        console.log('✅ Already connected to dashboard-stats');
+        startSmartPerformancePolling();
+        return;
+    }
+
+    // SSE connection với fallback polling được tích hợp
     window.sseManager.connect(
         'dashboard-stats',
         '/sse/dashboard-stats',
@@ -652,28 +702,36 @@ function startRealtimeUpdates() {
             onError: (error, attempts) => {
                 console.error('❌ SSE Stats error:', error, 'attempts:', attempts);
                 sseStatsConnected = false;
+
+                // Nếu SSE fail nhiều lần, chuyển sang polling
+                if (attempts > 3) {
+                    console.warn('⚠️ SSE failed multiple times, switching to polling');
+                    startStatsPolling();
+                }
             },
             events: {
                 'stats_update': (data) => {
-                    console.log('📊 SSE stats update:', data);
+                    console.log('📊 SSE stats update');
                     updateUIWithStats(data);
                 },
-                'heartbeat': (data) => {
-                    console.log('💓 SSE stats heartbeat');
+                'heartbeat': () => {
+                    console.log('💓 SSE heartbeat');
                 },
                 'error': (data) => {
-                    console.error('❌ SSE stats error event:', data);
+                    console.error('❌ SSE error event:', data);
                 },
-                'close': (data) => {
-                    console.log('🔌 SSE stats closed by server');
+                'close': () => {
+                    console.log('🔌 SSE closed by server');
                 }
             }
         },
         {
             url: '/hub/api/realtime-stats',
-            interval: 30000,
+            interval: CONFIG.STATS_POLL_INTERVAL,
             onData: (data) => {
-                console.log('📊 Polling stats:', data);
+                if (!sseStatsConnected) {  // Chỉ log khi đang dùng fallback
+                    console.log('📊 Polling stats (SSE fallback)');
+                }
                 updateUIWithStats(data);
             }
         }
@@ -682,9 +740,25 @@ function startRealtimeUpdates() {
     startSmartPerformancePolling();
 }
 
-function startPollingFallback() {
-    console.log('🔄 Starting polling fallback for stats (30s interval)');
-    setInterval(updateRealtimeData, 30000);
+function startStatsPolling() {
+    // Polling thuần túy khi SSE không khả dụng
+    if (!window.statsPollingInterval) {
+        console.log('🔄 Starting stats polling (no SSE available)');
+        updateRealtimeData(); // Load ngay lập tức
+
+        window.statsPollingInterval = setInterval(() => {
+            if (!document.hidden) {
+                updateRealtimeData();
+            }
+        }, CONFIG.STATS_POLL_INTERVAL);
+    }
+}
+
+function stopStatsPolling() {
+    if (window.statsPollingInterval) {
+        clearInterval(window.statsPollingInterval);
+        window.statsPollingInterval = null;
+    }
 }
 
 function stopRealtimeUpdates() {
@@ -692,6 +766,7 @@ function stopRealtimeUpdates() {
         window.sseManager.disconnect('dashboard-stats');
     }
 
+    stopStatsPolling();
     stopSmartPerformancePolling();
 }
 
@@ -702,7 +777,6 @@ function updateRealtimeData() {
             return res.json();
         })
         .then(data => {
-            console.log('📊 Real-time update:', data);
             updateUIWithStats(data);
         })
         .catch(err => {
@@ -715,29 +789,29 @@ function updateUIWithStats(data) {
         updateNotifCount();
     }
 
-    const infoBadge = document.getElementById('info-badge');
-    if (infoBadge) {
-        if (data.info_badge > 0) {
-            infoBadge.textContent = data.info_badge;
-            infoBadge.style.display = 'inline-block';
-        } else {
-            infoBadge.style.display = 'none';
-        }
-    }
+    // Batch DOM updates
+    requestAnimationFrame(() => {
+        const updates = [
+            { id: 'info-badge', value: data.info_badge },
+            { id: 'salary-badge', value: data.salary_badge }
+        ];
 
-    const salaryBadge = document.getElementById('salary-badge');
-    if (salaryBadge && data.salary_badge !== undefined) {
-        if (data.salary_badge > 0) {
-            salaryBadge.textContent = data.salary_badge;
-            salaryBadge.style.display = 'inline-block';
-        } else {
-            salaryBadge.style.display = 'none';
-        }
-    }
+        updates.forEach(({ id, value }) => {
+            const badge = document.getElementById(id);
+            if (badge) {
+                if (value > 0) {
+                    badge.textContent = value;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        });
 
-    updateInfoModuleStats(data);
-    updateSalaryModuleStats(data);
-    updateTasksModuleBadges(data);
+        updateInfoModuleStats(data);
+        updateSalaryModuleStats(data);
+        updateTasksModuleBadges(data);
+    });
 
     if (data.my_overdue > 0) {
         console.warn(`⚠️ Bạn có ${data.my_overdue} công việc quá hạn!`);
@@ -746,61 +820,51 @@ function updateUIWithStats(data) {
 
 function updateInfoModuleStats(data) {
     const infoModule = document.getElementById('module-info');
-    if (infoModule) {
-        const unconfirmedCard = infoModule.querySelector('.stat-info h3');
-        if (unconfirmedCard) unconfirmedCard.textContent = data.unconfirmed_news;
+    if (!infoModule) return;
 
-        const unreadCard = infoModule.querySelector('.stat-warning h3');
-        if (unreadCard) unreadCard.textContent = data.unread_notifications;
+    const unconfirmedCard = infoModule.querySelector('.stat-info h3');
+    if (unconfirmedCard) unconfirmedCard.textContent = data.unconfirmed_news || 0;
 
-        updateSidebarBadge(infoModule, 'unconfirmed_news', data.unconfirmed_news);
-        updateSidebarBadge(infoModule, 'unread_notifications', data.unread_notifications);
-    }
+    const unreadCard = infoModule.querySelector('.stat-warning h3');
+    if (unreadCard) unreadCard.textContent = data.unread_notifications || 0;
+
+    updateSidebarBadge(infoModule, 'unconfirmed_news', data.unconfirmed_news);
+    updateSidebarBadge(infoModule, 'unread_notifications', data.unread_notifications);
 }
 
 function updateSalaryModuleStats(data) {
     const salaryModule = document.getElementById('module-salary');
-    if (salaryModule) {
-        const penaltyCard = salaryModule.querySelector('.stat-danger h3');
-        if (penaltyCard) penaltyCard.textContent = data.pending_penalties;
+    if (!salaryModule) return;
 
-        const advanceCard = salaryModule.querySelector('.stat-warning h3');
-        if (advanceCard) advanceCard.textContent = data.pending_advances;
+    const penaltyCard = salaryModule.querySelector('.stat-danger h3');
+    if (penaltyCard) penaltyCard.textContent = data.pending_penalties || 0;
 
-        updateSidebarBadge(salaryModule, 'penalties', data.pending_penalties);
-        updateSidebarBadge(salaryModule, 'advances', data.pending_advances);
-    }
+    const advanceCard = salaryModule.querySelector('.stat-warning h3');
+    if (advanceCard) advanceCard.textContent = data.pending_advances || 0;
+
+    updateSidebarBadge(salaryModule, 'penalties', data.pending_penalties);
+    updateSidebarBadge(salaryModule, 'advances', data.pending_advances);
 }
 
 function updateTasksModuleBadges(data) {
     const tasksModule = document.getElementById('module-tasks');
-    if (tasksModule) {
-        // Cập nhật badge "Chờ Phê Duyệt"
-        if (data.tasks_need_approval !== undefined) {
-            updateSidebarBadge(tasksModule, 'tasks_need_approval', data.tasks_need_approval);
-        }
+    if (!tasksModule) return;
 
-        // Cập nhật badge "CV Chưa Đánh Giá"
-        if (data.my_tasks_need_rating !== undefined) {
-            updateSidebarBadge(tasksModule, 'my_tasks_need_rating', data.my_tasks_need_rating);
-        }
+    if (data.tasks_need_approval !== undefined) {
+        updateSidebarBadge(tasksModule, 'tasks_need_approval', data.tasks_need_approval);
+    }
+
+    if (data.my_tasks_need_rating !== undefined) {
+        updateSidebarBadge(tasksModule, 'my_tasks_need_rating', data.my_tasks_need_rating);
     }
 }
 
-
 function updateSidebarBadge(module, badgeType, count) {
     const sidebar = module.querySelector('.module-sidebar');
-    if (!sidebar) {
-        console.warn('[Badge] Sidebar not found for module:', module.id);
-        return;
-    }
+    if (!sidebar) return;
 
     const targetLink = sidebar.querySelector(`a[data-badge-id="${badgeType}"]`);
-
-    if (!targetLink) {
-        console.warn(`[Badge] Link not found for badge type: ${badgeType}`);
-        return;
-    }
+    if (!targetLink) return;
 
     let badge = targetLink.querySelector('.badge');
 
@@ -809,58 +873,39 @@ function updateSidebarBadge(module, badgeType, count) {
             badge = document.createElement('span');
             badge.className = 'badge bg-danger';
             targetLink.appendChild(badge);
-            console.log(`[Badge] Created badge for ${badgeType}: ${count}`);
-        } else {
-            console.log(`[Badge] Updated badge for ${badgeType}: ${count}`);
         }
         badge.textContent = count;
         badge.style.display = 'inline-block';
     } else {
-        if (badge) {
-            badge.remove();
-            console.log(`[Badge] Removed badge for ${badgeType}`);
-        }
+        badge?.remove();
     }
 }
 
 // ========================================
-// SMART PERFORMANCE POLLING
+// SMART PERFORMANCE POLLING - OPTIMIZED
 // ========================================
-let performancePollingInterval = null;
-let lastPerformanceUpdate = 0;
-const PERFORMANCE_POLL_INTERVAL = 60000;
-let animationTimeouts = {};
-
 function startSmartPerformancePolling() {
-    console.log('🔄 Starting smart performance polling (60s interval)');
+    console.log('🔄 Starting smart performance polling');
 
     stopSmartPerformancePolling();
 
     performancePollingInterval = setInterval(() => {
         const activeModule = document.querySelector('.module-container.active');
-        const isTaskModule = activeModule && activeModule.id === 'module-tasks';
+        const isTaskModule = activeModule?.id === 'module-tasks';
 
         const now = Date.now();
         const timeSinceLastUpdate = now - lastPerformanceUpdate;
         const shouldPoll = isTaskModule &&
                           !document.hidden &&
-                          timeSinceLastUpdate >= PERFORMANCE_POLL_INTERVAL;
+                          timeSinceLastUpdate >= CONFIG.PERFORMANCE_POLL_INTERVAL;
 
         if (shouldPoll) {
-            console.log(`🔄 Smart polling: Refreshing performance data (${Math.round(timeSinceLastUpdate/1000)}s since last update)`);
+            console.log(`🔄 Refreshing performance (${Math.round(timeSinceLastUpdate/1000)}s elapsed)`);
             loadPerformance();
             loadTopBottomUsers();
             lastPerformanceUpdate = now;
-        } else {
-            if (!isTaskModule) {
-                console.log('⏸️ Skipping poll: Not in Tasks module');
-            } else if (document.hidden) {
-                console.log('⏸️ Skipping poll: Tab hidden');
-            } else {
-                console.log(`⏸️ Skipping poll: Too soon (${Math.round(timeSinceLastUpdate/1000)}s < 60s)`);
-            }
         }
-    }, PERFORMANCE_POLL_INTERVAL);
+    }, CONFIG.PERFORMANCE_POLL_INTERVAL);
 }
 
 function stopSmartPerformancePolling() {
@@ -898,10 +943,8 @@ function autoCenterIcons() {
 }
 
 // ========================================
-// PERFORMANCE TABLE - LOAD DATA
+// PERFORMANCE TABLE - LOAD DATA - OPTIMIZED
 // ========================================
-let performanceLoadTimeout = null;
-
 function loadPerformance() {
     if (performanceLoadTimeout) {
         clearTimeout(performanceLoadTimeout);
@@ -912,37 +955,32 @@ function loadPerformance() {
         if (currentFilterFrom) params.append('date_from', currentFilterFrom);
         if (currentFilterTo) params.append('date_to', currentFilterTo);
 
-        const url = '/hub/api/team-performance?' + params.toString();
-
-        fetch(url)
+        fetch('/hub/api/team-performance?' + params.toString())
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     updateTableRows(data.data);
                 } else {
-                    console.error('Error loading performance:', data.error);
-                    document.getElementById('performanceTableBody').innerHTML = `
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                                <p class="text-danger mt-3">Không thể tải dữ liệu. Vui lòng thử lại.</p>
-                            </td>
-                        </tr>
-                    `;
+                    showTableError('Không thể tải dữ liệu. Vui lòng thử lại.');
                 }
             })
             .catch(err => {
                 console.error('Error fetching performance:', err);
-                document.getElementById('performanceTableBody').innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px;">
-                            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                            <p class="text-danger mt-3">Lỗi kết nối. Vui lòng thử lại.</p>
-                        </td>
-                    </tr>
-                `;
+                showTableError('Lỗi kết nối. Vui lòng thử lại.');
             });
     }, 100);
+}
+
+function showTableError(message) {
+    const tbody = document.getElementById('performanceTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 40px;">
+                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                <p class="text-danger mt-3">${message}</p>
+            </td>
+        </tr>
+    `;
 }
 
 // ========================================
@@ -953,15 +991,11 @@ function loadTopBottomUsers() {
     if (currentFilterFrom) params.append('date_from', currentFilterFrom);
     if (currentFilterTo) params.append('date_to', currentFilterTo);
 
-    const url = '/hub/api/top-bottom-users?' + params.toString();
-
-    fetch(url)
+    fetch('/hub/api/top-bottom-users?' + params.toString())
         .then(res => res.json())
         .then(response => {
             if (response.success) {
                 renderTopBottomUsers(response.data);
-            } else {
-                console.error('Error loading top/bottom users:', response.error);
             }
         })
         .catch(err => {
@@ -970,7 +1004,7 @@ function loadTopBottomUsers() {
 }
 
 // ========================================
-// FUNCTION 1: UPDATE TABLE ROWS (CHỈ UPDATE THAY ĐỔI)
+// UPDATE TABLE ROWS - OPTIMIZED
 // ========================================
 function updateTableRows(newData) {
     const tbody = document.getElementById('performanceTableBody');
@@ -987,17 +1021,19 @@ function updateTableRows(newData) {
         return;
     }
 
-    const existingRows = {};
+    const existingRows = new Map();
     tbody.querySelectorAll('tr[data-user-id]').forEach(row => {
         const userId = row.getAttribute('data-user-id');
-        existingRows[userId] = row;
+        existingRows.set(userId, row);
     });
 
     const seenUsers = new Set();
+    const fragment = document.createDocumentFragment();
 
     newData.forEach((user, index) => {
-        seenUsers.add(user.user_id.toString());
-        const existingRow = existingRows[user.user_id];
+        const userId = user.user_id.toString();
+        seenUsers.add(userId);
+        const existingRow = existingRows.get(userId);
 
         if (existingRow) {
             updateCellIfChanged(existingRow, 'urgent', user.urgent_count, user.user_id);
@@ -1005,29 +1041,26 @@ function updateTableRows(newData) {
             updateCellIfChanged(existingRow, 'recurring', user.recurring_count, user.user_id);
             updateCellIfChanged(existingRow, 'done', user.done_count, user.user_id);
 
-            const currentIndex = Array.from(tbody.children).indexOf(existingRow);
-            if (currentIndex !== index) {
-                tbody.insertBefore(existingRow, tbody.children[index]);
-            }
+            fragment.appendChild(existingRow);
         } else {
-            const newRow = createTableRow(user);
-            if (tbody.children[index]) {
-                tbody.insertBefore(newRow, tbody.children[index]);
-            } else {
-                tbody.appendChild(newRow);
-            }
+            fragment.appendChild(createTableRow(user));
         }
     });
 
-    Object.keys(existingRows).forEach(userId => {
+    // Remove users that no longer exist
+    existingRows.forEach((row, userId) => {
         if (!seenUsers.has(userId)) {
-            existingRows[userId].remove();
+            row.remove();
         }
     });
+
+    // Replace tbody content in one operation
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
 }
 
 // ========================================
-// FUNCTION 2: UPDATE MỘT CELL NẾU CÓ THAY ĐỔI
+// UPDATE CELL IF CHANGED - OPTIMIZED WITH LIMIT
 // ========================================
 function updateCellIfChanged(row, type, newCount, userId) {
     const cell = row.querySelector(`td[data-type="${type}"]`);
@@ -1036,53 +1069,63 @@ function updateCellIfChanged(row, type, newCount, userId) {
     const link = cell.querySelector('a.task-count-link');
     const currentCount = link ? parseInt(link.textContent) : parseInt(cell.textContent);
 
-    if (currentCount !== newCount) {
-        const cellKey = `${userId}-${type}`;
+    if (currentCount === newCount) return;
 
-        if (animationTimeouts[cellKey]) {
-            clearTimeout(animationTimeouts[cellKey]);
-            cell.classList.remove('cell-updating', 'cell-updated');
+    const cellKey = `${userId}-${type}`;
+
+    // Clear existing timeout for this cell
+    if (animationTimeouts[cellKey]) {
+        clearTimeout(animationTimeouts[cellKey]);
+        cell.classList.remove('cell-updating', 'cell-updated');
+        delete animationTimeouts[cellKey];
+    }
+
+    // Limit number of concurrent animations
+    if (Object.keys(animationTimeouts).length >= CONFIG.MAX_ANIMATION_TIMEOUTS) {
+        console.warn('⚠️ Too many animations, clearing oldest');
+        const oldestKey = Object.keys(animationTimeouts)[0];
+        clearTimeout(animationTimeouts[oldestKey]);
+        delete animationTimeouts[oldestKey];
+    }
+
+    cell.classList.add('cell-updating');
+
+    animationTimeouts[cellKey] = setTimeout(() => {
+        const filterParams = new URLSearchParams();
+        if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
+        if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
+
+        const baseUrl = '/tasks/priority-detail';
+
+        if (type === 'done') {
+            filterParams.append('assigned_user', userId);
+            filterParams.append('status', 'DONE');
+        } else {
+            filterParams.append('assigned_user', userId);
+            filterParams.append('tag', type);
         }
 
-        cell.classList.add('cell-updating');
+        const url = baseUrl + '?' + filterParams.toString();
 
-        animationTimeouts[cellKey] = setTimeout(() => {
-            const filterParams = new URLSearchParams();
-            if (currentFilterFrom) filterParams.append('date_from', currentFilterFrom);
-            if (currentFilterTo) filterParams.append('date_to', currentFilterTo);
+        if (newCount > 0) {
+            cell.innerHTML = `<a href="${url}" class="task-count-link">${newCount}</a>`;
+        } else {
+            cell.textContent = newCount;
+        }
 
-            const baseUrl = '/tasks/priority-detail';
+        cell.classList.remove('cell-updating');
+        cell.classList.add('cell-updated');
 
-            if (type === 'done') {
-                filterParams.append('assigned_user', userId);
-                filterParams.append('status', 'DONE');
-            } else {
-                filterParams.append('assigned_user', userId);
-                filterParams.append('tag', type);
-            }
+        setTimeout(() => {
+            cell.classList.remove('cell-updated');
+            delete animationTimeouts[cellKey];
+        }, 1000);
 
-            const url = baseUrl + '?' + filterParams.toString();
-
-            if (newCount > 0) {
-                cell.innerHTML = `<a href="${url}" class="task-count-link">${newCount}</a>`;
-            } else {
-                cell.textContent = newCount;
-            }
-
-            cell.classList.remove('cell-updating');
-            cell.classList.add('cell-updated');
-
-            setTimeout(() => {
-                cell.classList.remove('cell-updated');
-                delete animationTimeouts[cellKey];
-            }, 1000);
-
-        }, 300);
-    }
+    }, CONFIG.ANIMATION_DURATION);
 }
 
 // ========================================
-// FUNCTION 3: TẠO ROW MỚI CHO USER MỚI
+// CREATE TABLE ROW - OPTIMIZED
 // ========================================
 function createTableRow(user) {
     const row = document.createElement('tr');
@@ -1098,25 +1141,17 @@ function createTableRow(user) {
 
     const baseUrl = '/tasks/priority-detail';
 
-    const urgentParams = new URLSearchParams(filterParams);
-    urgentParams.append('assigned_user', user.user_id);
-    urgentParams.append('tag', 'urgent');
-    const urgentUrl = baseUrl + '?' + urgentParams.toString();
-
-    const importantParams = new URLSearchParams(filterParams);
-    importantParams.append('assigned_user', user.user_id);
-    importantParams.append('tag', 'important');
-    const importantUrl = baseUrl + '?' + importantParams.toString();
-
-    const recurringParams = new URLSearchParams(filterParams);
-    recurringParams.append('assigned_user', user.user_id);
-    recurringParams.append('tag', 'recurring');
-    const recurringUrl = baseUrl + '?' + recurringParams.toString();
-
-    const doneParams = new URLSearchParams(filterParams);
-    doneParams.append('assigned_user', user.user_id);
-    doneParams.append('status', 'DONE');
-    const doneUrl = baseUrl + '?' + doneParams.toString();
+    const createLink = (tag, count, isStatus = false) => {
+        const params = new URLSearchParams(filterParams);
+        params.append('assigned_user', user.user_id);
+        if (isStatus) {
+            params.append('status', tag);
+        } else {
+            params.append('tag', tag);
+        }
+        const url = `${baseUrl}?${params.toString()}`;
+        return count > 0 ? `<a href="${url}" class="task-count-link">${count}</a>` : count;
+    };
 
     row.innerHTML = `
         <td>
@@ -1127,24 +1162,16 @@ function createTableRow(user) {
         </td>
         <td class="user-name-cell">${user.full_name}</td>
         <td class="count-cell urgent" data-type="urgent">
-            ${user.urgent_count > 0
-                ? `<a href="${urgentUrl}" class="task-count-link">${user.urgent_count}</a>`
-                : user.urgent_count}
+            ${createLink('urgent', user.urgent_count)}
         </td>
         <td class="count-cell important" data-type="important">
-            ${user.important_count > 0
-                ? `<a href="${importantUrl}" class="task-count-link">${user.important_count}</a>`
-                : user.important_count}
+            ${createLink('important', user.important_count)}
         </td>
         <td class="count-cell recurring" data-type="recurring">
-            ${user.recurring_count > 0
-                ? `<a href="${recurringUrl}" class="task-count-link">${user.recurring_count}</a>`
-                : user.recurring_count}
+            ${createLink('recurring', user.recurring_count)}
         </td>
         <td class="count-cell done" data-type="done">
-            ${user.done_count > 0
-                ? `<a href="${doneUrl}" class="task-count-link">${user.done_count}</a>`
-                : user.done_count}
+            ${createLink('DONE', user.done_count, true)}
         </td>
     `;
 
@@ -1152,7 +1179,7 @@ function createTableRow(user) {
 }
 
 // ========================================
-// RENDER TOP & BOTTOM USERS
+// RENDER TOP & BOTTOM USERS - OPTIMIZED
 // ========================================
 function renderTopBottomUsers(data) {
     const container = document.getElementById('topBottomUsers');
@@ -1162,50 +1189,36 @@ function renderTopBottomUsers(data) {
         return;
     }
 
-    let html = '';
+    const createUserBadge = (user, type) => {
+        if (!user) return '';
 
-    if (data.top_user) {
-        const avatarUrl = data.top_user.avatar
-            ? `/profile/avatar/${data.top_user.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.top_user.full_name)}&background=00ff89&color=000&size=128`;
+        const bgColor = type === 'top' ? '00ff89' : 'dc3545';
+        const textColor = type === 'top' ? '000' : 'fff';
+        const label = type === 'top' ? 'Làm nhiều nhất' : 'Cần cố gắng thêm';
 
-        html += `
-            <div class="top-user" title="Làm nhiều nhất: ${data.top_user.full_name}">
+        const avatarUrl = user.avatar
+            ? `/profile/avatar/${user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=${bgColor}&color=${textColor}&size=128`;
+
+        return `
+            <div class="${type}-user" title="${label}: ${user.full_name}">
                 <img src="${avatarUrl}"
-                     alt="${data.top_user.full_name}"
+                     alt="${user.full_name}"
                      class="user-badge-avatar"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(data.top_user.full_name)}&background=00ff89&color=000&size=128'">
-                <span class="user-badge-name">${data.top_user.full_name}</span>
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=${bgColor}&color=${textColor}&size=128'">
+                <span class="user-badge-name">${user.full_name}</span>
             </div>
         `;
-    }
+    };
 
-    if (data.bottom_user) {
-        const avatarUrl = data.bottom_user.avatar
-            ? `/profile/avatar/${data.bottom_user.avatar}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.bottom_user.full_name)}&background=dc3545&color=fff&size=128`;
-
-        html += `
-            <div class="bottom-user" title="Cần cố gắng thêm: ${data.bottom_user.full_name}">
-                <img src="${avatarUrl}"
-                     alt="${data.bottom_user.full_name}"
-                     class="user-badge-avatar"
-                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(data.bottom_user.full_name)}&background=dc3545&color=fff&size=128'">
-                <span class="user-badge-name">${data.bottom_user.full_name}</span>
-            </div>
-        `;
-    }
-
-    container.innerHTML = html || '<p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>';
+    container.innerHTML =
+        createUserBadge(data.top_user, 'top') +
+        createUserBadge(data.bottom_user, 'bottom');
 }
 
 // ========================================
 // FILTER MODAL FUNCTIONS
 // ========================================
-let filterModalInstance = null;
-let currentFilterFrom = '';
-let currentFilterTo = '';
-
 function openFilterModal() {
     if (!filterModalInstance) {
         filterModalInstance = new bootstrap.Modal(document.getElementById('filterDateModal'));
@@ -1240,8 +1253,8 @@ function applyFilter() {
         indicator.style.display = 'none';
     }
 
-    loadPerformance();
-    loadTopBottomUsers();
+    debouncedLoadPerformance();
+    debouncedLoadTopBottom();
 }
 
 function resetFilter() {
@@ -1254,8 +1267,8 @@ function resetFilter() {
 
     filterModalInstance.hide();
 
-    loadPerformance();
-    loadTopBottomUsers();
+    debouncedLoadPerformance();
+    debouncedLoadTopBottom();
 }
 
 function formatDate(dateString) {
@@ -1265,6 +1278,66 @@ function formatDate(dateString) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     return `${day}/${month}`;
 }
+
+// ========================================
+// CLEANUP - COMPREHENSIVE
+// ========================================
+(function setupCleanup() {
+    let cleanupExecuted = false;
+
+    function performCleanup() {
+        if (cleanupExecuted) return;
+        cleanupExecuted = true;
+
+        console.log('🧹 Cleaning up resources...');
+
+        // 1. Stop all SSE connections
+        if (window.sseManager) {
+            window.sseManager.disconnectAll();
+        }
+
+        // 2. Stop all polling
+        stopSmartPerformancePolling();
+        stopStatsPolling();
+        stopRealtimeUpdates();
+
+        // 3. Clear all timeouts
+        if (performanceLoadTimeout) {
+            clearTimeout(performanceLoadTimeout);
+            performanceLoadTimeout = null;
+        }
+
+        // 4. Clear animation timeouts
+        Object.values(animationTimeouts).forEach(timeout => clearTimeout(timeout));
+        animationTimeouts = {};  // ✅ FIXED: Removed space
+
+        // 5. Close modal if open
+        if (filterModalInstance) {
+            try {
+                filterModalInstance.hide();
+            } catch (e) {
+                // Ignore if modal not initialized
+            }
+        }
+
+        // 6. Remove backdrop click handler
+        disableBackdropClick();
+
+        console.log('✅ Cleanup completed');
+    }
+
+    // Execute cleanup on page unload
+    window.addEventListener('beforeunload', performCleanup);
+    window.addEventListener('pagehide', performCleanup);
+
+    // Cleanup when page is restored from bfcache
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            console.log('🔄 Page restored from cache, reloading...');
+            location.reload();
+        }
+    });
+})();
 
 // ========================================
 // EVENT LISTENERS
@@ -1277,31 +1350,19 @@ document.getElementById('moduleMenuBtn')?.addEventListener('click', function() {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.innerWidth <= 992) {
-        document.querySelectorAll('.sidebar-menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                closeSidebarOnMobile();
-            });
-        });
-    }
-});
-
-window.addEventListener('resize', updateModuleMenuButton);
+window.addEventListener('resize', debounce(updateModuleMenuButton, 250));
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const activeModule = document.querySelector('.module-container.active');
-        if (activeModule) {
+        if (activeModule && !document.querySelector('.modal.show')) {
             backToHub();
         }
     }
 });
 
 document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        console.log('📴 Tab hidden - connections remain open');
-    } else {
+    if (!document.hidden) {
         console.log('📳 Tab visible - checking connections');
         if (window.sseManager) {
             for (const [name, conn] of window.sseManager.connections) {
@@ -1314,37 +1375,73 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-window.addEventListener('beforeunload', function() {
-    console.log('🚪 Page unloading - disconnecting all SSE');
-    if (window.sseManager) {
-        window.sseManager.disconnectAll();
-    }
-    stopSmartPerformancePolling();
-});
-
-window.addEventListener('pagehide', function() {
-    console.log('🚪 Page hiding - disconnecting all SSE');
-    if (window.sseManager) {
-        window.sseManager.disconnectAll();
-    }
-});
-
 // ========================================
 // INITIALIZATION
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Setup sidebar menu items for mobile
+    if (window.innerWidth <= 992) {
+        document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+            item.addEventListener('click', closeSidebarOnMobile);
+        });
+    }
+
+    // Initialize UI
     autoCenterIcons();
     updateModuleMenuButton();
+
+    // Start real-time updates
     startRealtimeUpdates();
 
-    console.log('📊 Bandwidth estimate for 50 users:');
-    console.log('- SSE (dashboard-stats): ~6.5GB/month');
-    console.log('- SSE (notifications): ~2GB/month');
-    console.log('- Polling (performance): ~2GB/month');
-    console.log('- Total: ~10.5GB/month');
-    console.log('✅ Optimized with smart polling!');
-});
-//==========9:56 27/11=================
+    // Add body class for styling
     document.body.classList.add('has-module-sidebar');
+
+    console.log('✅ Hub initialized successfully');
+
+    // ========================================
+    // UPDATE CURRENT DAY DISPLAY
+    // ========================================
+    (function setupCurrentDayDisplay() {
+        function updateCurrentDay() {
+            const currentDayElement = document.getElementById('currentDay');
+            if (!currentDayElement) return;
+
+            const today = new Date();
+            const day = today.getDate();
+            currentDayElement.textContent = day;
+        }
+
+        // Update immediately
+        updateCurrentDay();
+
+        // Schedule update at midnight
+        function scheduleNextDayUpdate() {
+            const now = new Date();
+            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const timeUntilMidnight = tomorrow - now;
+
+            setTimeout(() => {
+                updateCurrentDay();
+                scheduleNextDayUpdate();
+            }, timeUntilMidnight);
+        }
+
+        scheduleNextDayUpdate();
+    })();
+
+    // Resource monitoring (development only)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setInterval(() => {
+            const status = {
+                sseConnections: window.sseManager ? window.sseManager.connections.size : 0,
+                statsPolling: window.statsPollingInterval ? 'active' : 'inactive',
+                performancePolling: performancePollingInterval ? 'active' : 'inactive',
+                animationTimeouts: Object.keys(animationTimeouts).length,
+                backdropHandler: backdropClickHandler ? 'active' : 'inactive'
+            };
+            console.log('📊 Resource status:', status);
+        }, 60000);
+    }
+});
 </script>
 {% endblock %}

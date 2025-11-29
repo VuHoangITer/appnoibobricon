@@ -514,15 +514,10 @@ td[data-label="Đ.Giá"] i {
                             </td>
                             <td data-label="Người được giao">
                                 <small>
-                                    {% if task.assignments.count() > 0 %}
-                                        {% set assigned_names = [] %}
-                                        {% for assignment in task.assignments %}
-                                            {% if assignment.accepted %}
-                                                {% set _ = assigned_names.append(assignment.user.full_name) %}
-                                            {% endif %}
-                                        {% endfor %}
-                                        {% if assigned_names %}
-                                            {{ assigned_names|join(', ') }}
+                                    {% if task._cached_assignments %}
+                                        {% set accepted_assignments = task._cached_assignments | selectattr('accepted', 'equalto', True) | list %}
+                                        {% if accepted_assignments %}
+                                            {{ accepted_assignments | map(attribute='user.full_name') | join(', ') }}
                                         {% else %}
                                             <span class="text-warning">Chờ chấp nhận</span>
                                         {% endif %}

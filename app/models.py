@@ -188,6 +188,17 @@ class Task(db.Model):
         order_by='TaskComment.created_at.desc()'
     )
 
+    __table_args__ = (
+        db.Index('idx_task_status', 'status'),
+        db.Index('idx_task_due_date', 'due_date'),
+        db.Index('idx_task_status_urgent', 'status', 'is_urgent'),
+        db.Index('idx_task_status_important', 'status', 'is_important'),
+        db.Index('idx_task_status_recurring', 'status', 'is_recurring'),
+        db.Index('idx_task_created_at', 'created_at'),
+        db.Index('idx_task_updated_at', 'updated_at'),
+        db.Index('idx_task_completed_overdue', 'completed_overdue'),
+    )
+
     def __repr__(self):
         return f'<Task {self.title}>'
 
@@ -222,6 +233,11 @@ class TaskAssignment(db.Model):
         'User',
         foreign_keys=[assigned_by],
         back_populates='assigned_tasks'
+    )
+
+    __table_args__ = (
+        db.Index('idx_assignment_user_accepted', 'user_id', 'accepted'),
+        db.Index('idx_assignment_task_user', 'task_id', 'user_id'),
     )
 
     def __repr__(self):
@@ -798,6 +814,11 @@ class TaskComment(db.Model):
 
     task = db.relationship('Task', back_populates='comments')
     user = db.relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (
+        db.Index('idx_comment_task_user', 'task_id', 'user_id'),
+        db.Index('idx_comment_created_at', 'created_at'),
+    )
 
     def __repr__(self):
         return f'<TaskComment task={self.task_id} user={self.user_id}>'

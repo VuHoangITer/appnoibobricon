@@ -557,6 +557,15 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     font-size: 1.3rem;
 }
 
+.filter-date-btn .current-day {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: white;
+    min-width: 30px;
+    text-align: center;
+    line-height: 1;
+}
+
 .filter-indicator {
     display: inline-flex;
     align-items: center;
@@ -896,6 +905,29 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
         padding: 20px 10px;
     }
 
+    /* Full screen module on mobile */
+    .module-container.active {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        margin: 0;
+        padding: 0;
+        z-index: 1000;
+        background: transparent;
+    }
+
+    .module-content {
+        padding: 15px;
+        border-radius: 0;
+        height: 100%;
+        overflow-y: auto;
+    }
+
     .hub-icon-grid {
         gap: 15px;
         padding: 20px 10px;
@@ -977,9 +1009,14 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
         font-size: 1.1rem;
     }
 
-    /* Hide text "Lọc ngày" on mobile */
-    .filter-date-btn span:not(.filter-indicator) {
-        display: none;
+    .filter-date-btn span:not(.filter-indicator):not(.current-day) {
+        display: none !important;
+    }
+
+    .filter-date-btn .current-day {
+        display: inline-block !important;
+        font-size: 1.5rem;
+        font-weight: 900;
     }
 
     .filter-indicator {
@@ -1097,7 +1134,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 
     .performance-logo img {
-        height: 25px;
+        height: 40px;
     }
 
     .performance-title {
@@ -1115,7 +1152,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 
     .filter-date-btn {
         padding: 6px 8px;
-        min-height: 34px;
+        min-height: 33px;
         border-radius: 6px;
     }
 

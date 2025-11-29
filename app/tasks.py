@@ -4,7 +4,7 @@ from app import db
 from app.models import Task, TaskAssignment, User, Notification, TaskComment
 from app.decorators import role_required
 from datetime import datetime, timedelta
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, case, func
 from app.utils import vn_to_utc, utc_to_vn, vn_now
 
 bp = Blueprint('tasks', __name__)
@@ -74,6 +74,7 @@ def mark_task_comments_as_read(task_id, user_id):
     except:
         db.session.rollback()
 
+
 @bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -83,20 +84,20 @@ def dashboard():
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     assigned_user = request.args.get('assigned_user', '')
-    chart_date_from = request.args.get('chart_date_from', '')
-    chart_date_to = request.args.get('chart_date_to', '')
 
     # Statistics for director and manager
     if current_user.role in ['director', 'manager']:
-        # Base query for stats
-        stats_query = Task.query
+        # ===== ✅ TỐI ƯU: SỬ DỤNG 1 QUERY DUY NHẤT CHO TẤT CẢ STATS =====
+        from sqlalchemy import func, case
 
-        # Apply date filters for stats
+        # Base query with filters
+        base_conditions = []
+
         if date_from:
             try:
                 date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
                 date_from_utc = vn_to_utc(date_from_dt)
-                stats_query = stats_query.filter(Task.created_at >= date_from_utc)
+                base_conditions.append(Task.created_at >= date_from_utc)
             except:
                 pass
 
@@ -105,205 +106,79 @@ def dashboard():
                 date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
                 date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
                 date_to_utc = vn_to_utc(date_to_dt)
-                stats_query = stats_query.filter(Task.created_at <= date_to_utc)
+                base_conditions.append(Task.created_at <= date_to_utc)
             except:
                 pass
 
-        # Apply assigned user filter for stats
+        # Apply assigned user filter
         if assigned_user:
             task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
                 user_id=int(assigned_user),
                 accepted=True
             ).all()]
-            stats_query = stats_query.filter(Task.id.in_(task_ids))
+            base_conditions.append(Task.id.in_(task_ids))
 
-        # Calculate statistics with filters
-        total_tasks = stats_query.count()
-        pending = stats_query.filter_by(status='PENDING').count()
-        in_progress = stats_query.filter_by(status='IN_PROGRESS').count()
-        done = stats_query.filter_by(status='DONE').count()
-
-        # Count badges for each status
-        pending_urgent = stats_query.filter_by(status='PENDING', is_urgent=True).count()
-        pending_important = stats_query.filter_by(status='PENDING', is_important=True).count()
-        pending_recurring = stats_query.filter_by(status='PENDING', is_recurring=True).count()
-
-        in_progress_urgent = stats_query.filter_by(status='IN_PROGRESS', is_urgent=True).count()
-        in_progress_important = stats_query.filter_by(status='IN_PROGRESS', is_important=True).count()
-        in_progress_recurring = stats_query.filter_by(status='IN_PROGRESS', is_recurring=True).count()
-
-        done_urgent = stats_query.filter_by(status='DONE', is_urgent=True).count()
-        done_important = stats_query.filter_by(status='DONE', is_important=True).count()
-        done_recurring = stats_query.filter_by(status='DONE', is_recurring=True).count()
-
-        total_urgent = stats_query.filter_by(is_urgent=True).count()
-        total_important = stats_query.filter_by(is_important=True).count()
-        total_recurring = stats_query.filter_by(is_recurring=True).count()
-
-        # ===== ĐẾM NHIỆM VỤ QUÁ HẠN (chỉ count, không query all) =====
-        overdue_query = Task.query.filter(
-            Task.due_date < now,
-            Task.status.in_(['PENDING', 'IN_PROGRESS'])
+        # ✅ 1 QUERY DUY NHẤT để lấy tất cả statistics
+        stats = db.session.query(
+            func.count(Task.id).label('total_tasks'),
+            func.sum(case((Task.status == 'PENDING', 1), else_=0)).label('pending'),
+            func.sum(case((Task.status == 'IN_PROGRESS', 1), else_=0)).label('in_progress'),
+            func.sum(case((Task.status == 'DONE', 1), else_=0)).label('done'),
+            # Badge counts - PENDING (✅ SỬA CÚ PHÁP: dùng AND)
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_urgent == True), 1), else_=0)).label('pending_urgent'),
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_important == True), 1), else_=0)).label(
+                'pending_important'),
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_recurring == True), 1), else_=0)).label(
+                'pending_recurring'),
+            # Badge counts - IN_PROGRESS
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_urgent == True), 1), else_=0)).label(
+                'in_progress_urgent'),
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_important == True), 1), else_=0)).label(
+                'in_progress_important'),
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_recurring == True), 1), else_=0)).label(
+                'in_progress_recurring'),
+            # Badge counts - DONE
+            func.sum(case(((Task.status == 'DONE') & (Task.is_urgent == True), 1), else_=0)).label('done_urgent'),
+            func.sum(case(((Task.status == 'DONE') & (Task.is_important == True), 1), else_=0)).label('done_important'),
+            func.sum(case(((Task.status == 'DONE') & (Task.is_recurring == True), 1), else_=0)).label('done_recurring'),
+            # Badge counts - TOTAL
+            func.sum(case((Task.is_urgent == True, 1), else_=0)).label('total_urgent'),
+            func.sum(case((Task.is_important == True, 1), else_=0)).label('total_important'),
+            func.sum(case((Task.is_recurring == True, 1), else_=0)).label('total_recurring'),
         )
 
         # Apply filters
-        if date_from:
-            try:
-                date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                date_from_utc = vn_to_utc(date_from_dt)
-                overdue_query = overdue_query.filter(Task.due_date >= date_from_utc)
-            except:
-                pass
+        if base_conditions:
+            stats = stats.filter(*base_conditions)
 
-        if date_to:
-            try:
-                date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-                date_to_utc = vn_to_utc(date_to_dt)
-                overdue_query = overdue_query.filter(Task.due_date <= date_to_utc)
-            except:
-                pass
+        stats = stats.first()
 
-        if assigned_user:
-            task_ids = [a.task_id for a in TaskAssignment.query.filter_by(
-                user_id=int(assigned_user),
-                accepted=True
-            ).all()]
-            overdue_query = overdue_query.filter(Task.id.in_(task_ids))
-
-        overdue_count = overdue_query.count()  # CHỈ COUNT, KHÔNG QUERY ALL
-        # ===== END =====
+        # Extract values
+        total_tasks = stats.total_tasks or 0
+        pending = stats.pending or 0
+        in_progress = stats.in_progress or 0
+        done = stats.done or 0
+        pending_urgent = stats.pending_urgent or 0
+        pending_important = stats.pending_important or 0
+        pending_recurring = stats.pending_recurring or 0
+        in_progress_urgent = stats.in_progress_urgent or 0
+        in_progress_important = stats.in_progress_important or 0
+        in_progress_recurring = stats.in_progress_recurring or 0
+        done_urgent = stats.done_urgent or 0
+        done_important = stats.done_important or 0
+        done_recurring = stats.done_recurring or 0
+        total_urgent = stats.total_urgent or 0
+        total_important = stats.total_important or 0
+        total_recurring = stats.total_recurring or 0
 
         # Get all users for filter dropdown
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
-
-        # ===== DỮ LIỆU CHO BIỂU ĐỒ =====
-
-        # 1. PIE CHART DATA - Phân bổ trạng thái
-        pie_chart_data = {
-            'labels': ['Chưa làm', 'Đang làm', 'Hoàn thành'],
-            'data': [pending, in_progress, done],
-            'colors': ['#ffc107', '#0dcaf0', '#198754']
-        }
-
-        # 2. BAR CHART DATA - Hiệu suất nhân viên
-        bar_chart_data = {'labels': [], 'done_on_time': [], 'done_overdue': [], 'overdue': []}
-
-        # Lấy danh sách nhân viên có nhiệm vụ
-        users_with_tasks = User.query.filter(
-            User.is_active == True,
-            User.role.in_(['hr', 'accountant', 'manager'])
-        ).all()
-
-        for user in users_with_tasks:
-            # Lấy tất cả nhiệm vụ của user này
-            user_assignments = TaskAssignment.query.filter_by(
-                user_id=user.id,
-                accepted=True
-            ).all()
-            user_task_ids = [a.task_id for a in user_assignments]
-
-            if not user_task_ids:
-                continue
-
-            user_tasks_query = stats_query.filter(Task.id.in_(user_task_ids))
-
-            # Đếm số nhiệm vụ theo loại
-            done_on_time = user_tasks_query.filter_by(
-                status='DONE',
-                completed_overdue=False
-            ).count()
-
-            done_late = user_tasks_query.filter_by(
-                status='DONE',
-                completed_overdue=True
-            ).count()
-
-            overdue = user_tasks_query.filter(
-                Task.due_date < now,
-                Task.status.in_(['PENDING', 'IN_PROGRESS'])
-            ).count()
-
-            # Chỉ thêm nếu user có ít nhất 1 nhiệm vụ
-            if done_on_time > 0 or done_late > 0 or overdue > 0:
-                bar_chart_data['labels'].append(user.full_name)
-                bar_chart_data['done_on_time'].append(done_on_time)
-                bar_chart_data['done_overdue'].append(done_late)
-                bar_chart_data['overdue'].append(overdue)
-
-        # 3. LINE CHART DATA - Xu hướng theo khoảng thời gian tùy chọn
-        line_chart_data = {
-            'labels': [],
-            'completed_on_time': [],
-            'completed_overdue': [],
-            'overdue': [],
-            'created': []
-        }
-
-        # Xác định khoảng thời gian
-        if chart_date_from and chart_date_to:
-            try:
-                start_date = datetime.strptime(chart_date_from, '%Y-%m-%d').replace(hour=0, minute=0, second=0)
-                end_date = datetime.strptime(chart_date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
-
-                if (end_date - start_date).days > 90:
-                    end_date = start_date + timedelta(days=90)
-                    flash('Chỉ hiển thị tối đa 90 ngày. Đã điều chỉnh khoảng thời gian.', 'warning')
-            except:
-                end_date = datetime.utcnow().replace(hour=23, minute=59, second=59)
-                start_date = end_date - timedelta(days=29)
-        else:
-            end_date = datetime.utcnow().replace(hour=23, minute=59, second=59)
-            start_date = end_date - timedelta(days=29)
-
-        total_days = (end_date - start_date).days + 1
-
-        # Lấy dữ liệu từng ngày
-        for i in range(total_days):
-            day = start_date + timedelta(days=i)
-            day_start = day.replace(hour=0, minute=0, second=0)
-            day_end = day.replace(hour=23, minute=59, second=59)
-
-            line_chart_data['labels'].append(day.strftime('%d/%m'))
-
-            # Hoàn thành ĐÚNG HẠN trong ngày
-            completed_on_time = stats_query.filter(
-                Task.status == 'DONE',
-                Task.completed_overdue == False,
-                Task.updated_at >= day_start,
-                Task.updated_at <= day_end
-            ).count()
-            line_chart_data['completed_on_time'].append(completed_on_time)
-
-            # Hoàn thành QUÁ HẠN trong ngày
-            completed_late = stats_query.filter(
-                Task.status == 'DONE',
-                Task.completed_overdue == True,
-                Task.updated_at >= day_start,
-                Task.updated_at <= day_end
-            ).count()
-            line_chart_data['completed_overdue'].append(completed_late)
-
-            # Nhiệm vụ quá hạn tính đến cuối ngày (chưa hoàn thành)
-            overdue_count_day = stats_query.filter(
-                Task.due_date < day_end,
-                Task.status.in_(['PENDING', 'IN_PROGRESS'])
-            ).count()
-            line_chart_data['overdue'].append(overdue_count_day)
-
-            # Nhiệm vụ tạo mới trong ngày
-            created_count = stats_query.filter(
-                Task.created_at >= day_start,
-                Task.created_at <= day_end
-            ).count()
-            line_chart_data['created'].append(created_count)
 
         return render_template('dashboard.html',
                                total_tasks=total_tasks,
                                pending=pending,
                                in_progress=in_progress,
                                done=done,
-                               # Badge counts
                                total_urgent=total_urgent,
                                total_important=total_important,
                                total_recurring=total_recurring,
@@ -319,13 +194,7 @@ def dashboard():
                                all_users=all_users,
                                date_from=date_from,
                                date_to=date_to,
-                               assigned_user=assigned_user,
-                               pie_chart_data=pie_chart_data,
-                               bar_chart_data=bar_chart_data,
-                               line_chart_data=line_chart_data,
-                               chart_date_from=chart_date_from,
-                               chart_date_to=chart_date_to
-                               )
+                               assigned_user=assigned_user)
     else:
         # ===== ACCOUNTANT/HR: Tasks của họ =====
         my_assignments = TaskAssignment.query.filter_by(
@@ -334,15 +203,17 @@ def dashboard():
         ).all()
         my_task_ids = [a.task_id for a in my_assignments]
 
-        # Tính toán statistics cho HR/Accountant
-        my_tasks_query = Task.query.filter(Task.id.in_(my_task_ids))
+        # ✅ TỐI ƯU: 1 QUERY cho tất cả stats
+        from sqlalchemy import func, case
+
+        base_conditions = [Task.id.in_(my_task_ids)]
 
         # Apply date filters
         if date_from:
             try:
                 date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
                 date_from_utc = vn_to_utc(date_from_dt)
-                my_tasks_query = my_tasks_query.filter(Task.created_at >= date_from_utc)
+                base_conditions.append(Task.created_at >= date_from_utc)
             except:
                 pass
 
@@ -351,62 +222,53 @@ def dashboard():
                 date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
                 date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
                 date_to_utc = vn_to_utc(date_to_dt)
-                my_tasks_query = my_tasks_query.filter(Task.created_at <= date_to_utc)
+                base_conditions.append(Task.created_at <= date_to_utc)
             except:
                 pass
 
-        # Statistics
-        total_tasks = my_tasks_query.count()
-        pending = my_tasks_query.filter_by(status='PENDING').count()
-        in_progress = my_tasks_query.filter_by(status='IN_PROGRESS').count()
-        done = my_tasks_query.filter_by(status='DONE').count()
+        # ✅ 1 QUERY DUY NHẤT (✅ SỬA CÚ PHÁP: dùng &)
+        stats = db.session.query(
+            func.count(Task.id).label('total_tasks'),
+            func.sum(case((Task.status == 'PENDING', 1), else_=0)).label('pending'),
+            func.sum(case((Task.status == 'IN_PROGRESS', 1), else_=0)).label('in_progress'),
+            func.sum(case((Task.status == 'DONE', 1), else_=0)).label('done'),
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_urgent == True), 1), else_=0)).label('pending_urgent'),
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_important == True), 1), else_=0)).label(
+                'pending_important'),
+            func.sum(case(((Task.status == 'PENDING') & (Task.is_recurring == True), 1), else_=0)).label(
+                'pending_recurring'),
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_urgent == True), 1), else_=0)).label(
+                'in_progress_urgent'),
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_important == True), 1), else_=0)).label(
+                'in_progress_important'),
+            func.sum(case(((Task.status == 'IN_PROGRESS') & (Task.is_recurring == True), 1), else_=0)).label(
+                'in_progress_recurring'),
+            func.sum(case(((Task.status == 'DONE') & (Task.is_urgent == True), 1), else_=0)).label('done_urgent'),
+            func.sum(case(((Task.status == 'DONE') & (Task.is_important == True), 1), else_=0)).label('done_important'),
+            func.sum(case(((Task.status == 'DONE') & (Task.is_recurring == True), 1), else_=0)).label('done_recurring'),
+            func.sum(case((Task.is_urgent == True, 1), else_=0)).label('total_urgent'),
+            func.sum(case((Task.is_important == True, 1), else_=0)).label('total_important'),
+            func.sum(case((Task.is_recurring == True, 1), else_=0)).label('total_recurring'),
+        ).filter(*base_conditions).first()
 
-        # Badge counts
-        pending_urgent = my_tasks_query.filter_by(status='PENDING', is_urgent=True).count()
-        pending_important = my_tasks_query.filter_by(status='PENDING', is_important=True).count()
-        pending_recurring = my_tasks_query.filter_by(status='PENDING', is_recurring=True).count()
-
-        in_progress_urgent = my_tasks_query.filter_by(status='IN_PROGRESS', is_urgent=True).count()
-        in_progress_important = my_tasks_query.filter_by(status='IN_PROGRESS', is_important=True).count()
-        in_progress_recurring = my_tasks_query.filter_by(status='IN_PROGRESS', is_recurring=True).count()
-
-        done_urgent = my_tasks_query.filter_by(status='DONE', is_urgent=True).count()
-        done_important = my_tasks_query.filter_by(status='DONE', is_important=True).count()
-        done_recurring = my_tasks_query.filter_by(status='DONE', is_recurring=True).count()
-
-        total_urgent = my_tasks_query.filter_by(is_urgent=True).count()
-        total_important = my_tasks_query.filter_by(is_important=True).count()
-        total_recurring = my_tasks_query.filter_by(is_recurring=True).count()
-
-        # ===== ĐẾM NHIỆM VỤ QUÁ HẠN của user này (chỉ count) =====
-        overdue_query = Task.query.filter(
-            Task.id.in_(my_task_ids),
-            Task.due_date < now,
-            Task.status.in_(['PENDING', 'IN_PROGRESS'])
-        )
-
-        # Apply date filters
-        if date_from:
-            try:
-                date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                date_from_utc = vn_to_utc(date_from_dt)
-                overdue_query = overdue_query.filter(Task.due_date >= date_from_utc)
-            except:
-                pass
-
-        if date_to:
-            try:
-                date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
-                date_to_utc = vn_to_utc(date_to_dt)
-                overdue_query = overdue_query.filter(Task.due_date <= date_to_utc)
-            except:
-                pass
-
-        overdue_count = overdue_query.count()  # CHỈ COUNT, KHÔNG QUERY ALL
+        total_tasks = stats.total_tasks or 0
+        pending = stats.pending or 0
+        in_progress = stats.in_progress or 0
+        done = stats.done or 0
+        pending_urgent = stats.pending_urgent or 0
+        pending_important = stats.pending_important or 0
+        pending_recurring = stats.pending_recurring or 0
+        in_progress_urgent = stats.in_progress_urgent or 0
+        in_progress_important = stats.in_progress_important or 0
+        in_progress_recurring = stats.in_progress_recurring or 0
+        done_urgent = stats.done_urgent or 0
+        done_important = stats.done_important or 0
+        done_recurring = stats.done_recurring or 0
+        total_urgent = stats.total_urgent or 0
+        total_important = stats.total_important or 0
+        total_recurring = stats.total_recurring or 0
 
         return render_template('dashboard.html',
-                               # Stats cho HR/Accountant
                                total_tasks=total_tasks,
                                pending=pending,
                                in_progress=in_progress,
@@ -446,10 +308,16 @@ def list_tasks(status=None):
     assigned_user = request.args.get('assigned_user', '')
     tag_filter = request.args.get('tag', '')
     page = request.args.get('page', 1, type=int)
-    per_page = 20
+    per_page = 10
+
+    # ===== ✅ IMPORT EAGER LOADING =====
+    from sqlalchemy.orm import joinedload
 
     if current_user.role in ['director', 'manager']:
-        query = Task.query
+        # ===== ✅ EAGER LOAD CHỈ CREATOR =====
+        query = Task.query.options(
+            joinedload(Task.creator)  # Chỉ load creator
+        )
 
         if status:
             query = query.filter_by(status=status)
@@ -493,6 +361,29 @@ def list_tasks(status=None):
         )
         tasks = pagination.items
 
+        # ===== ✅ BATCH LOAD ASSIGNMENTS CHO TẤT CẢ TASKS =====
+        if tasks:
+            task_ids = [task.id for task in tasks]
+
+            # Load tất cả assignments + users trong 1 query
+            from sqlalchemy.orm import joinedload
+            all_assignments = db.session.query(TaskAssignment).options(
+                joinedload(TaskAssignment.user)
+            ).filter(
+                TaskAssignment.task_id.in_(task_ids)
+            ).all()
+
+            # Tạo dictionary: task_id -> list of assignments
+            assignments_by_task = {}
+            for assignment in all_assignments:
+                if assignment.task_id not in assignments_by_task:
+                    assignments_by_task[assignment.task_id] = []
+                assignments_by_task[assignment.task_id].append(assignment)
+
+            # Gán vào tasks
+            for task in tasks:
+                task._cached_assignments = assignments_by_task.get(task.id, [])
+
         all_users = User.query.filter_by(is_active=True).order_by(User.full_name).all()
     else:
         # Only see assigned tasks
@@ -502,7 +393,10 @@ def list_tasks(status=None):
         ).all()
         assigned_task_ids = [a.task_id for a in accepted_assignments]
 
-        query = Task.query.filter(
+        # ===== ✅ EAGER LOAD CHỈ CREATOR =====
+        query = Task.query.options(
+            joinedload(Task.creator)
+        ).filter(
             or_(
                 Task.id.in_(assigned_task_ids),
                 Task.creator_id == current_user.id
@@ -541,6 +435,26 @@ def list_tasks(status=None):
             page=page, per_page=per_page, error_out=False
         )
         tasks = pagination.items
+
+        # ===== ✅ BATCH LOAD ASSIGNMENTS =====
+        if tasks:
+            task_ids = [task.id for task in tasks]
+
+            all_assignments = db.session.query(TaskAssignment).options(
+                joinedload(TaskAssignment.user)
+            ).filter(
+                TaskAssignment.task_id.in_(task_ids)
+            ).all()
+
+            assignments_by_task = {}
+            for assignment in all_assignments:
+                if assignment.task_id not in assignments_by_task:
+                    assignments_by_task[assignment.task_id] = []
+                assignments_by_task[assignment.task_id].append(assignment)
+
+            for task in tasks:
+                task._cached_assignments = assignments_by_task.get(task.id, [])
+
         all_users = None
 
     status_names = {
@@ -595,7 +509,7 @@ def task_detail(task_id):
         user_assignment.seen = True
         db.session.commit()
 
-    mark_task_comments_as_read(task_id, current_user.id)
+    task.unread_comment_count = get_task_unread_comment_count(task_id, current_user.id)
 
     # Get all assignments
     assignments = TaskAssignment.query.filter_by(task_id=task_id).all()
@@ -1406,9 +1320,16 @@ def kanban():
 
     now = datetime.utcnow()
 
+    # ===== ✅ IMPORT EAGER LOADING =====
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy import case, func
+
     # Base query theo role
     if current_user.role in ['director', 'manager']:
-        query = Task.query
+        # ===== ✅ EAGER LOAD CREATOR =====
+        query = Task.query.options(
+            joinedload(Task.creator)
+        )
     else:
         # HR/Accountant: only their tasks
         accepted_assignments = TaskAssignment.query.filter_by(
@@ -1416,7 +1337,9 @@ def kanban():
             accepted=True
         ).all()
         assigned_task_ids = [a.task_id for a in accepted_assignments]
-        query = Task.query.filter(
+        query = Task.query.options(
+            joinedload(Task.creator)
+        ).filter(
             or_(
                 Task.id.in_(assigned_task_ids),
                 Task.creator_id == current_user.id
@@ -1461,31 +1384,54 @@ def kanban():
     if search:
         query = query.filter(Task.title.ilike(f'%{search}%'))
 
-    # Get all tasks
-    all_tasks = query.all()
+    # ===== ✅ TỐI ƯU: SORT BẰNG SQL THAY VÌ PYTHON =====
+    # Sort priority cho PENDING và IN_PROGRESS
+    priority_order = case(
+        (Task.due_date < func.now(), 1),  # Overdue first
+        (Task.is_urgent == True, 2),
+        (Task.is_important == True, 3),
+        (Task.is_recurring == True, 4),
+        else_=5
+    )
 
-    # Custom sort function
-    def sort_tasks(task):
-        # Priority 1: Quá hạn (cao nhất)
-        is_overdue = task.due_date and task.due_date < now and task.status != 'DONE'
+    # Query cho từng status với sorting SQL
+    pending_tasks = query.filter(Task.status == 'PENDING').order_by(
+        priority_order.asc(),
+        Task.created_at.desc()
+    ).all()
 
-        # Return tuple for sorting (False comes before True, so negate for priority)
-        return (
-            not is_overdue,  # Quá hạn lên đầu
-            not task.is_urgent,  # Khẩn cấp thứ 2
-            not task.is_important,  # Quan trọng thứ 3
-            not task.is_recurring,  # Lặp lại thứ 4
-            task.created_at.timestamp() * -1  # Mới nhất lên đầu (negate để reverse)
-        )
+    in_progress_tasks = query.filter(Task.status == 'IN_PROGRESS').order_by(
+        priority_order.asc(),
+        Task.created_at.desc()
+    ).all()
 
-    def sort_done_tasks(task):
-        """DONE tasks: Sắp xếp theo ngày hoàn thành (updated_at), mới nhất lên đầu"""
-        return task.updated_at.timestamp() * -1
+    done_tasks = query.filter(Task.status == 'DONE').order_by(
+        Task.updated_at.desc()
+    ).all()
 
-    # Phân loại tasks theo status và sắp xếp
-    pending_tasks = sorted([t for t in all_tasks if t.status == 'PENDING'], key=sort_tasks)
-    in_progress_tasks = sorted([t for t in all_tasks if t.status == 'IN_PROGRESS'], key=sort_tasks)
-    done_tasks = sorted([t for t in all_tasks if t.status == 'DONE'], key=sort_done_tasks)
+    # ===== ✅ BATCH LOAD ASSIGNMENTS CHO TẤT CẢ TASKS =====
+    all_tasks = pending_tasks + in_progress_tasks + done_tasks
+
+    if all_tasks:
+        task_ids = [task.id for task in all_tasks]
+
+        # Load tất cả assignments + users trong 1 query
+        all_assignments = db.session.query(TaskAssignment).options(
+            joinedload(TaskAssignment.user)
+        ).filter(
+            TaskAssignment.task_id.in_(task_ids)
+        ).all()
+
+        # Tạo dictionary: task_id -> list of assignments
+        assignments_by_task = {}
+        for assignment in all_assignments:
+            if assignment.task_id not in assignments_by_task:
+                assignments_by_task[assignment.task_id] = []
+            assignments_by_task[assignment.task_id].append(assignment)
+
+        # Gán vào tasks
+        for task in all_tasks:
+            task._cached_assignments = assignments_by_task.get(task.id, [])
 
     # Get all users for filter
     all_users = None
@@ -1504,18 +1450,22 @@ def kanban():
                            date_to=date_to,
                            now=now)
 
-
+# ============================================
+#  Priority ROUTES
+# ============================================
 @bp.route('/priority-detail')
 @login_required
 def priority_detail():
     """
-    Trang chi tiết công việc theo loại ưu tiên
+    Trang chi tiết công việc theo loại ưu tiên - OPTIMIZED
     """
     assigned_user_id = request.args.get('assigned_user', type=int)
     tag = request.args.get('tag', '')
     status = request.args.get('status', '')
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 6
 
     if not assigned_user_id:
         flash('Thiếu thông tin người dùng.', 'danger')
@@ -1523,20 +1473,26 @@ def priority_detail():
 
     user = User.query.get_or_404(assigned_user_id)
 
-    # Base query
-    query = db.session.query(Task).join(
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy import case, func
+    from app.models import TaskComment, TaskCommentRead
+
+    # ===== ✅ EAGER LOAD CREATOR =====
+    base_query = db.session.query(Task).options(
+        joinedload(Task.creator)  # Giảm query N+1
+    ).join(
         TaskAssignment, Task.id == TaskAssignment.task_id
     ).filter(
         TaskAssignment.user_id == assigned_user_id,
         TaskAssignment.accepted == True
     )
 
-    # Apply filters
+    # Apply date filters
     if date_from:
         try:
             date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
             date_from_utc = vn_to_utc(date_from_dt)
-            query = query.filter(Task.created_at >= date_from_utc)
+            base_query = base_query.filter(Task.created_at >= date_from_utc)
         except:
             pass
 
@@ -1545,99 +1501,116 @@ def priority_detail():
             date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
             date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59)
             date_to_utc = vn_to_utc(date_to_dt)
-            query = query.filter(Task.created_at <= date_to_utc)
+            base_query = base_query.filter(Task.created_at <= date_to_utc)
         except:
             pass
 
     # Xác định loại và filter
     priority_type = ''
     priority_icon = ''
-    priority_color = ''
 
     if tag == 'urgent':
-        query = query.filter(Task.is_urgent == True, Task.status != 'DONE')
+        base_query = base_query.filter(Task.is_urgent == True, Task.status != 'DONE')
         priority_type = 'KHẨN CẤP'
         priority_icon = '🔥'
-        priority_color = 'danger'
     elif tag == 'important':
-        query = query.filter(Task.is_important == True, Task.status != 'DONE')
+        base_query = base_query.filter(Task.is_important == True, Task.status != 'DONE')
         priority_type = 'QUAN TRỌNG'
         priority_icon = '⭐'
-        priority_color = 'warning'
     elif tag == 'recurring':
-        query = query.filter(Task.is_recurring == True, Task.status != 'DONE')
+        base_query = base_query.filter(Task.is_recurring == True, Task.status != 'DONE')
         priority_type = 'LẶP LẠI'
         priority_icon = '🔁'
-        priority_color = 'info'
     elif status == 'DONE':
-        query = query.filter(Task.status == 'DONE')
+        base_query = base_query.filter(Task.status == 'DONE')
         priority_type = 'HOÀN THÀNH'
         priority_icon = '✅'
-        priority_color = 'success'
     else:
         flash('Loại công việc không hợp lệ.', 'danger')
         return redirect(url_for('hub.workflow_hub'))
 
-    # Sort và lấy tasks
+    # ===== ĐẾM TỔNG SỐ (TỐI ƯU) =====
+    now = datetime.utcnow()
+
     if status == 'DONE':
-        all_tasks = query.order_by(Task.updated_at.desc()).all()
+        on_time_count = base_query.filter(Task.completed_overdue == False).count()
+        overdue_count = base_query.filter(Task.completed_overdue == True).count()
     else:
-        from sqlalchemy import case, func
+        on_time_count = base_query.filter(Task.due_date >= now).count()
+        overdue_count = base_query.filter(Task.due_date < now).count()
+
+    # ===== SORTING =====
+    if status == 'DONE':
+        base_query = base_query.order_by(Task.updated_at.desc())
+    else:
         priority_order = case(
             (Task.due_date.is_(None), 3),
             (Task.due_date < func.now(), 1),
             else_=2
         )
-        all_tasks = query.order_by(
+        base_query = base_query.order_by(
             priority_order.asc(),
-            Task.due_date.asc().nulls_last()
+            Task.due_date.asc().nullslast()
+        )
+
+    # ===== PAGINATION =====
+    pagination = base_query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    tasks = pagination.items
+    task_ids = [task.id for task in tasks]
+
+    # ===== ✅ BATCH LOAD UNREAD COUNTS =====
+    unread_counts = {}
+
+    if task_ids:
+        # Tổng comment (trừ comment của chính user)
+        total_comments_subq = db.session.query(
+            TaskComment.task_id,
+            func.count(TaskComment.id).label('total')
+        ).filter(
+            TaskComment.task_id.in_(task_ids),
+            TaskComment.user_id != current_user.id
+        ).group_by(TaskComment.task_id).subquery()
+
+        # Comment đã đọc
+        read_comments_subq = db.session.query(
+            TaskCommentRead.task_id,
+            func.count(TaskCommentRead.comment_id).label('read')
+        ).filter(
+            TaskCommentRead.task_id.in_(task_ids),
+            TaskCommentRead.user_id == current_user.id
+        ).group_by(TaskCommentRead.task_id).subquery()
+
+        # Tính unread
+        results = db.session.query(
+            total_comments_subq.c.task_id,
+            (func.coalesce(total_comments_subq.c.total, 0) -
+             func.coalesce(read_comments_subq.c.read, 0)).label('unread')
+        ).outerjoin(
+            read_comments_subq,
+            total_comments_subq.c.task_id == read_comments_subq.c.task_id
         ).all()
 
-    # Đếm số liệu
-    now = datetime.utcnow()
-    on_time_count = 0
-    overdue_count = 0
-    rated_good_count = 0
-    rated_bad_count = 0
+        unread_counts = {task_id: max(0, unread) for task_id, unread in results}
 
-    for task in all_tasks:
+    # ===== GÁN DATA CHO TASKS =====
+    for task in tasks:
         if task.due_date:
             task.vn_due_date = utc_to_vn(task.due_date)
-
-        # Đếm cho tasks chưa hoàn thành
-        if task.status != 'DONE' and task.due_date:
-            if task.due_date >= now:
-                on_time_count += 1
-            else:
-                overdue_count += 1
-
-        # Đếm cho tasks đã hoàn thành
-        if task.status == 'DONE':
-            if task.completed_overdue:
-                overdue_count += 1
-            else:
-                on_time_count += 1
-
-            # Đếm rating
-            if task.performance_rating == 'good':
-                rated_good_count += 1
-            elif task.performance_rating == 'bad':
-                rated_bad_count += 1
-
-    # Tính unread comment count
-    for task in all_tasks:
-        task.unread_comment_count = get_task_unread_comment_count(task.id, current_user.id)
+        task.unread_comment_count = unread_counts.get(task.id, 0)
 
     return render_template('priority_detail.html',
                            user=user,
-                           tasks=all_tasks,
+                           tasks=tasks,
+                           pagination=pagination,
                            priority_type=priority_type,
                            priority_icon=priority_icon,
-                           priority_color=priority_color,
                            on_time_count=on_time_count,
                            overdue_count=overdue_count,
-                           rated_good_count=rated_good_count,
-                           rated_bad_count=rated_bad_count,
                            tag=tag,
                            status=status)
 
@@ -2079,3 +2052,61 @@ def quick_rate_task(task_id):
         'rating': rating,
         'message': f'Đã đánh giá: {rating_text}'
     })
+
+@bp.route('/<int:task_id>/discussion')
+@login_required
+def task_discussion(task_id):
+    """Trang thảo luận riêng cho task"""
+    task = Task.query.get_or_404(task_id)
+
+    # Check permission
+    if current_user.role not in ['director', 'manager']:
+        assignment = TaskAssignment.query.filter_by(
+            task_id=task_id,
+            user_id=current_user.id
+        ).first()
+
+        if not assignment and task.creator_id != current_user.id:
+            flash('Bạn không có quyền xem nhiệm vụ này.', 'danger')
+            return redirect(url_for('tasks.list_tasks'))
+
+    # Get assignment for current user
+    user_assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id
+    ).first()
+
+    # Mark comments as read when entering discussion page
+    mark_task_comments_as_read(task_id, current_user.id)
+
+    # Get all assignments (for showing participants)
+    assignments = TaskAssignment.query.filter_by(task_id=task_id).all()
+
+    # Get initial comments
+    sorted_comments = TaskComment.query.filter_by(task_id=task_id).order_by(TaskComment.created_at.asc()).all()
+
+    priority_icon = ''
+    priority_text = ''
+    priority_class = ''
+
+    if task.is_urgent:
+        priority_icon = '🔥'
+        priority_text = 'KHẨN CẤP'
+        priority_class = 'urgent'
+    elif task.is_important:
+        priority_icon = '⭐'
+        priority_text = 'QUAN TRỌNG'
+        priority_class = 'important'
+    elif task.is_recurring:
+        priority_icon = '🔁'
+        priority_text = 'LẶP LẠI'
+        priority_class = 'recurring'
+
+    return render_template('task_discussion.html',
+                           task=task,
+                           user_assignment=user_assignment,
+                           assignments=assignments,
+                           sorted_comments=sorted_comments,
+                           priority_icon=priority_icon,
+                           priority_text=priority_text,
+                           priority_class=priority_class)

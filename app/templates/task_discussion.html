@@ -1,0 +1,1185 @@
+{% extends "base.html" %}
+
+{% block title %}Thảo luận - {{ task.title }}{% endblock %}
+{% block page_title %}
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <span>Thảo luận: {{ task.title }}</span>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-radius-lg: 16px;
+    --ed-radius-md: 10px;
+    --ed-radius-pill: 999px;
+}
+
+body {
+    background: var(--ed-bg);
+}
+
+/* Discussion Container */
+.discussion-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Task Info Card - Compact */
+.task-info-card {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+.task-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.task-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    margin: 0;
+}
+
+/* Participants */
+.participants-section {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.participants-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e9edf7;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+    position: relative;
+}
+
+.participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Comments Section */
+.comments-container {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 320px);
+    min-height: 500px;
+}
+
+.comments-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ed-border);
+    background: #f8f9fb;
+    border-radius: var(--ed-radius-lg) var(--ed-radius-lg) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comments-count {
+    font-size: 0.9rem;
+    color: var(--ed-muted);
+}
+
+.comments-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    background: #f9fafb;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    animation: fadeIn 0.3s ease;
+}
+
+.comment-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9edf7;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.comment-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: var(--ed-text);
+    font-size: 0.9rem;
+}
+
+.comment-time {
+    font-size: 0.75rem;
+    color: var(--ed-muted);
+}
+
+.comment-text {
+    color: #4b5563;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Comment Attachment */
+.comment-attachment {
+    margin-top: 10px;
+}
+
+.attachment-image-preview img {
+    border-radius: var(--ed-radius-md);
+    transition: transform 0.2s ease;
+    max-width: 100%;
+}
+
+.attachment-image-preview img:hover {
+    transform: scale(1.02);
+}
+
+.attachment-info .btn {
+    border-radius: var(--ed-radius-pill);
+    font-size: 0.85rem;
+}
+
+/* Comment Input */
+.comments-footer {
+    border-top: 1px solid var(--ed-border);
+    padding: 14px 18px;
+    background: var(--ed-card-bg);
+    border-radius: 0 0 var(--ed-radius-lg) var(--ed-radius-lg);
+}
+
+#commentInput {
+    resize: none;
+    border-radius: var(--ed-radius-md);
+    border: 1px solid var(--ed-border);
+    font-size: 0.9rem;
+}
+
+#commentInput:focus {
+    border-color: var(--ed-primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.input-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.btn-send {
+    border-radius: var(--ed-radius-pill);
+    padding: 8px 24px;
+    font-weight: 600;
+}
+
+/* File Preview */
+#filePreview {
+    margin-top: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+#imagePreview {
+    border-radius: var(--ed-radius-md);
+}
+
+/* Empty State */
+.empty-comments {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ed-muted);
+}
+
+.empty-comments i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .discussion-container {
+        padding: 0 10px;
+    }
+
+    .comments-container {
+        height: calc(100vh - 280px);
+        min-height: 400px;
+    }
+
+    .task-info-card {
+        padding: 12px 14px;
+    }
+}
+
+/* ============================================
+   TASK CARD COMPACT - GIỐNG PRIORITY DETAIL
+   ============================================ */
+.task-card-compact {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--ed-border);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.task-card-title-row {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ed-border);
+}
+
+.task-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    margin: 0;
+}
+
+.task-card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+/* Avatar Flow */
+.task-flow-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-avatar-compact {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #d0d7e2;
+}
+
+.task-avatar-compact img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.task-arrow-compact {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+/* Priority Badge */
+.task-priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.task-priority-badge.urgent {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1.5px solid #dc3545;
+}
+
+.task-priority-badge.important {
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+    border: 1.5px solid #eab308;
+}
+
+.task-priority-badge.recurring {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    border: 1.5px solid #0d6efd;
+}
+
+/* Requirement Box */
+.task-requirement-compact {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border: 1px dashed #0d6efd;
+    margin-bottom: 12px;
+}
+
+.task-requirement-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+/* Rating Buttons */
+.task-rating-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rating-btn-compact {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.task-rating-display {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.rating-icon-display {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Màu thumb up */
+.rating-icon-display.good {
+    background: linear-gradient(135deg, #bbffd1, #22c55e);
+    color: #ffffff;
+}
+
+/* Màu thumb down */
+.rating-icon-display.bad {
+    background: linear-gradient(135deg, #ffd0d0, #f97373);
+    color: #ffffff;
+}
+
+.rating-btn-compact.good {
+    background: linear-gradient(135deg, #bbffd1, #22c55e);
+    color: white;
+}
+
+.rating-btn-compact.bad {
+    background: linear-gradient(135deg, #ffd0d0, #f97373);
+    color: white;
+}
+
+.rating-btn-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.rating-btn-compact:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+@media (max-width: 768px) {
+    .task-card-row {
+        flex-direction: row;              /* luôn nằm 1 hàng */
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Bên trái: avatar flow chiếm phần rộng hơn */
+    .task-flow-compact {
+        justify-content: flex-start;
+        flex: 1 1 auto;
+    }
+
+    /* Bên phải: cụm đánh giá/priority dính sát phải */
+    .task-rating-compact,
+    .task-rating-display {
+        flex: 0 0 auto;
+        justify-content: flex-end;
+    }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="discussion-container">
+    <!-- Task Info - Compact -->
+    <div class="task-card-compact">
+        <div class="task-card-title-row">
+            <h5 class="task-card-title">{{ task.title }}</h5>
+        </div>
+        <!-- Hàng 1: Avatar Flow + Priority Badge (hoặc Rating nếu DONE) -->
+        <div class="task-card-row">
+            <!-- Avatar người giao → người nhận -->
+            <div class="task-flow-compact">
+                <!-- Avatar người giao -->
+                <div class="task-avatar-compact">
+                    {% if task.creator.avatar %}
+                        <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
+                             alt="{{ task.creator.full_name }}">
+                    {% else %}
+                        {{ task.creator.full_name[0].upper() }}
+                    {% endif %}
+                </div>
+
+                <div class="task-arrow-compact">→</div>
+
+                <!-- Avatar người nhận (current user hoặc assigned user đầu tiên) -->
+                <div class="task-avatar-compact">
+                    {% if user_assignment %}
+                        {% if current_user.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
+                                 alt="{{ current_user.full_name }}">
+                        {% else %}
+                            {{ current_user.full_name[0].upper() }}
+                        {% endif %}
+                    {% elif assignments %}
+                        {% set first_assigned = assignments[0].user %}
+                        {% if first_assigned.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=first_assigned.avatar) }}"
+                                 alt="{{ first_assigned.full_name }}">
+                        {% else %}
+                            {{ first_assigned.full_name[0].upper() }}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Bên phải: Priority Badge HOẶC Rating (tùy status) -->
+            <div>
+                {% if task.status == 'DONE' and task.performance_rating %}
+                    <!-- Hiển thị KẾT QUẢ đánh giá (chỉ hiện icon được chọn) -->
+                    <div class="task-rating-display">
+                        {% if task.performance_rating == 'good' %}
+                            <div class="rating-icon-display good">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                            </div>
+                        {% elif task.performance_rating == 'bad' %}
+                            <div class="rating-icon-display bad">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif priority_text %}
+                    <!-- Hiển thị Priority Badge -->
+                    <span class="task-priority-badge {{ priority_class }}">
+                        <span>{{ priority_icon }}</span>
+                        <span>{{ priority_text }}</span>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Hàng 2: Yêu cầu -->
+        <div class="task-requirement-compact">
+            <div class="task-requirement-label">YÊU CẦU:</div>
+            <div>{{ task.description or 'Không có mô tả' }}</div>
+        </div>
+    </div>
+
+    <!-- Giữ lại phần Participants nếu muốn -->
+    <div class="participants-section">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-people text-muted"></i>
+            <small class="text-muted">Người Làm:</small>
+            <div class="participants-list">
+                {% for assignment in assignments %}
+                <div class="participant-avatar"
+                     title="{{ assignment.user.full_name }} - {{ assignment.user.role | role_vn }}">
+                    {% if assignment.user.avatar %}
+                    <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="">
+                    {% else %}
+                    {{ assignment.user.full_name[0].upper() }}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Container -->
+    <div class="comments-container">
+        <!-- Header -->
+        <div class="comments-header">
+            <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Thảo luận</h6>
+            <span class="comments-count" id="commentsCount">
+                {{ sorted_comments | length }} tin nhắn
+            </span>
+        </div>
+
+        <!-- Body -->
+        <div class="comments-body" id="commentsList">
+            {% for comment in sorted_comments %}
+            <div class="comment-item" data-id="{{ comment.id }}">
+                <div class="comment-avatar">
+                    {% if comment.user.avatar %}
+                    <img src="{{ url_for('profile.get_avatar', filename=comment.user.avatar) }}" alt="">
+                    {% else %}
+                    {{ comment.user.full_name[0].upper() }}
+                    {% endif %}
+                </div>
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <div>
+                            <span class="comment-author">{{ comment.user.full_name }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="comment-time">{{ comment.created_at | vn_datetime }}</span>
+                            {% if comment.user_id == current_user.id or current_user.role == 'director' %}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteComment({{ comment.id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="comment-text">{{ comment.content }}</div>
+
+                    <!-- Attachment -->
+                    {% if comment.has_attachment %}
+                    <div class="comment-attachment">
+                        {% if comment.attachment_file_type == 'image' %}
+                        <div class="attachment-image-preview">
+                            <img src="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
+                                 alt="{{ comment.attachment_original_filename }}"
+                                 class="img-thumbnail"
+                                 style="max-width: 400px; max-height: 400px; cursor: pointer;"
+                                 onclick="window.open(this.src, '_blank')">
+                        </div>
+                        {% endif %}
+                        <div class="attachment-info mt-2">
+                            <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id) }}"
+                               class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="bi bi-{% if comment.attachment_file_type == 'image' %}image{% elif comment.attachment_file_type == 'pdf' %}file-pdf{% else %}file-earmark{% endif %}"></i>
+                                {{ comment.attachment_original_filename }}
+                                <small class="text-muted">({{ (comment.attachment_file_size / 1024) | round(1) }} KB)</small>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-comments" id="noComments">
+                <i class="bi bi-chat-dots"></i>
+                <p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc thảo luận!</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer - Input -->
+        {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
+        <div class="comments-footer">
+            <form id="commentForm" enctype="multipart/form-data">
+                <textarea class="form-control" 
+                          id="commentInput" 
+                          name="content" 
+                          rows="2" 
+                          placeholder="Nhập tin nhắn..."></textarea>
+
+                <!-- File Preview -->
+                <div id="filePreview" style="display: none;">
+                    <div class="alert alert-info d-flex align-items-center justify-content-between p-2 mb-0 mt-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark"></i>
+                            <span id="filePreviewName"></span>
+                            <small class="text-muted" id="filePreviewSize"></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFileInput()">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <img id="imagePreview" style="max-width: 200px; max-height: 200px; display: none;" class="img-thumbnail mt-2">
+                </div>
+
+                <div class="input-actions">
+                    <label for="commentFileInput" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-paperclip"></i> Đính kèm
+                    </label>
+                    <input type="file" id="commentFileInput" name="file" style="display: none;" 
+                           accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+
+                    <button type="submit" class="btn btn-primary btn-send" id="btnAddComment">
+                        <i class="bi bi-send"></i> Gửi
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CONFIG = {
+    TASK_ID: {{ task.id }},
+    CURRENT_USER_ID: {{ current_user.id }},
+    CURRENT_USER_ROLE: '{{ current_user.role }}',
+    CSRF_TOKEN: '{{ csrf_token() }}'
+};
+
+const ROLE_MAP = {
+    'director': 'Giám đốc',
+    'manager': 'Trưởng phòng',
+    'accountant': 'Kế toán',
+    'hr': 'Nhân sự'
+};
+
+let lastTimestamp = 0;
+let knownCommentIds = new Set();
+let isFirstPoll = true;
+
+// DOM elements
+const commentsList = document.getElementById('commentsList');
+const commentInput = document.getElementById('commentInput');
+const btnAddComment = document.getElementById('btnAddComment');
+const commentsCount = document.getElementById('commentsCount');
+
+// Initialize known comment IDs
+document.querySelectorAll('.comment-item[data-id]').forEach(el => {
+    const id = parseInt(el.getAttribute('data-id'));
+    knownCommentIds.add(id);
+});
+
+// ============================================
+// FILE PREVIEW
+// ============================================
+const commentFileInput = document.getElementById('commentFileInput');
+const filePreview = document.getElementById('filePreview');
+const filePreviewName = document.getElementById('filePreviewName');
+const filePreviewSize = document.getElementById('filePreviewSize');
+const imagePreview = document.getElementById('imagePreview');
+
+if (commentFileInput) {
+    commentFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (!validateFile(file)) {
+                clearFileInput();
+                return;
+            }
+
+            filePreviewName.textContent = file.name;
+            filePreviewSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+            filePreview.style.display = 'block';
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        }
+    });
+}
+
+function validateFile(file) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+                         'application/pdf', 'application/msword',
+                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                         'application/vnd.ms-excel',
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         'text/plain'];
+
+    if (!allowedTypes.includes(file.type)) {
+        showToast('Loại file không được phép', 'danger');
+        return false;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('File quá lớn (tối đa 10MB)', 'danger');
+        return false;
+    }
+
+    return true;
+}
+
+function clearFileInput() {
+    if (commentFileInput) {
+        commentFileInput.value = '';
+        filePreview.style.display = 'none';
+        imagePreview.style.display = 'none';
+    }
+}
+
+// ============================================
+// REAL-TIME COMMENTS
+// ============================================
+function startRealtimeComments() {
+    console.log('🚀 Starting real-time comments for task', CONFIG.TASK_ID);
+
+    if (typeof window.sseManager === 'undefined') {
+        console.warn('⚠️ SSE Manager not loaded, using polling fallback');
+        startPollingFallback();
+        return;
+    }
+
+    window.sseManager.connect(
+        'task-comments',
+        `/sse/tasks/${CONFIG.TASK_ID}/comments?last_timestamp=${lastTimestamp}`,
+        {
+            onOpen: () => {
+                console.log('✅ SSE Task Comments connected');
+            },
+            onError: (error, attempts) => {
+                console.error('❌ SSE Task Comments error:', error, 'attempts:', attempts);
+            },
+            events: {
+                'new_comments': (data) => {
+                    console.log('[SSE] New comments:', data);
+                    handleNewComments(data);
+                },
+                'comments_sync': (data) => {
+                    console.log('[SSE] Comments sync:', data);
+                    handleCommentsSync(data);
+                },
+                'heartbeat': () => {
+                    console.log('💓 SSE comments heartbeat');
+                }
+            }
+        },
+        {
+            url: `/tasks/${CONFIG.TASK_ID}/comments?_t=${Date.now()}`,
+            interval: 3000,
+            onData: (data) => {
+                console.log('[POLLING] Fallback data:', data);
+                if (data.success && data.comments && data.comments.length > 0) {
+                    handleNewComments(data);
+                }
+            }
+        }
+    );
+}
+
+function startPollingFallback() {
+    console.log('🔄 Starting polling fallback (3s interval)');
+    pollComments();
+    setInterval(pollComments, 3000);
+}
+
+async function pollComments() {
+    try {
+        const response = await fetch(`/tasks/${CONFIG.TASK_ID}/comments?_t=${Date.now()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (isFirstPoll && data.comments && data.comments.length > 0) {
+                let maxTimestamp = lastTimestamp;
+                data.comments.forEach(c => {
+                    if (c.created_at_timestamp) {
+                        maxTimestamp = Math.max(maxTimestamp, c.created_at_timestamp);
+                    }
+                });
+                lastTimestamp = maxTimestamp;
+                isFirstPoll = false;
+                return;
+            }
+
+            isFirstPoll = false;
+
+            const newComments = data.comments.filter(c =>
+                !knownCommentIds.has(c.id) && c.created_at_timestamp > lastTimestamp
+            );
+
+            if (newComments.length > 0) {
+                handleNewComments({ comments: newComments, total_count: data.total });
+            }
+
+            const serverIds = new Set(data.comments.map(c => c.id));
+            handleCommentsSync({ existing_ids: Array.from(serverIds), total_count: data.total });
+        }
+    } catch (error) {
+        console.error('[POLLING] Error:', error);
+    }
+}
+
+function handleNewComments(data) {
+    console.log('[HANDLER] Processing', data.comments.length, 'new comments');
+
+    data.comments.forEach(comment => {
+        if (!knownCommentIds.has(comment.id)) {
+            console.log('[HANDLER] Adding new comment ID:', comment.id);
+            addCommentToList(comment);
+            knownCommentIds.add(comment.id);
+
+            if (comment.created_at_timestamp) {
+                lastTimestamp = Math.max(lastTimestamp, comment.created_at_timestamp);
+            }
+        }
+    });
+
+    updateCommentsCount(data.total_count || knownCommentIds.size);
+}
+
+function handleCommentsSync(data) {
+    const existingIds = new Set(data.existing_ids);
+
+    knownCommentIds.forEach(id => {
+        if (!existingIds.has(id)) {
+            console.log('[HANDLER] Comment deleted:', id);
+            const element = document.querySelector(`.comment-item[data-id="${id}"]`);
+            if (element) {
+                element.style.transition = 'opacity 0.3s';
+                element.style.opacity = '0';
+
+                setTimeout(() => {
+                    element.remove();
+                    knownCommentIds.delete(id);
+                    updateCommentsCount(data.total_count || knownCommentIds.size);
+                }, 300);
+            } else {
+                knownCommentIds.delete(id);
+            }
+        }
+    });
+}
+
+function updateCommentsCount(count) {
+    if (commentsCount) {
+        commentsCount.textContent = `${count} tin nhắn`;
+    }
+}
+
+function addComment() {
+    const content = commentInput.value.trim();
+
+    if (!content) {
+        showToast('Vui lòng nhập nội dung', 'warning');
+        return;
+    }
+
+    btnAddComment.disabled = true;
+    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('csrf_token', CONFIG.CSRF_TOKEN);
+
+    if (commentFileInput && commentFileInput.files.length > 0) {
+        formData.append('file', commentFileInput.files[0]);
+    }
+
+    fetch(`/tasks/${CONFIG.TASK_ID}/comments`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            commentInput.value = '';
+            clearFileInput();
+
+            addCommentToList(data.comment);
+            knownCommentIds.add(data.comment.id);
+
+            if (data.comment.created_at_timestamp) {
+                lastTimestamp = Math.max(lastTimestamp, data.comment.created_at_timestamp);
+            }
+
+            updateCommentsCount(knownCommentIds.size);
+            showToast('Đã gửi tin nhắn', 'success');
+        } else {
+            showToast(data.error || 'Lỗi gửi tin nhắn', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showToast('Có lỗi xảy ra', 'danger');
+    })
+    .finally(() => {
+        btnAddComment.disabled = false;
+        btnAddComment.innerHTML = '<i class="bi bi-send"></i> Gửi';
+    });
+}
+
+function addCommentToList(comment) {
+    if (document.querySelector(`.comment-item[data-id="${comment.id}"]`)) {
+        return;
+    }
+
+    const noComments = document.getElementById('noComments');
+    if (noComments) noComments.remove();
+
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.dataset.id = comment.id;
+
+    const avatarHTML = comment.user.avatar
+        ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
+        : comment.user.avatar_letter;
+
+    const deleteBtn = comment.can_delete
+        ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
+               <i class="bi bi-trash"></i>
+           </button>`
+        : '';
+
+    let attachmentHTML = '';
+    if (comment.has_attachment && comment.attachment) {
+        const att = comment.attachment;
+
+        if (att.file_type === 'image') {
+            attachmentHTML = `
+                <div class="comment-attachment">
+                    <div class="attachment-image-preview">
+                        <img src="${att.download_url}"
+                             alt="${escapeHtml(att.filename)}"
+                             class="img-thumbnail"
+                             style="max-width: 400px; max-height: 400px; cursor: pointer;"
+                             onclick="window.open(this.src, '_blank')">
+                    </div>
+                    <div class="attachment-info mt-2">
+                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-image"></i>
+                            ${escapeHtml(att.filename)}
+                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
+                        </a>
+                    </div>
+                </div>
+            `;
+        } else {
+            const icon = att.file_type === 'pdf' ? 'file-pdf' : 'file-earmark';
+            attachmentHTML = `
+                <div class="comment-attachment">
+                    <div class="attachment-info">
+                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-${icon}"></i>
+                            ${escapeHtml(att.filename)}
+                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    item.innerHTML = `
+        <div class="comment-avatar">${avatarHTML}</div>
+        <div class="comment-content">
+            <div class="comment-header">
+                <div>
+                    <span class="comment-author">${escapeHtml(comment.user.full_name)}</span>
+                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">${ROLE_MAP[comment.user.role] || comment.user.role}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="comment-time">${comment.created_at_display}</span>
+                    ${deleteBtn}
+                </div>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.content)}</div>
+            ${attachmentHTML}
+        </div>
+    `;
+
+    commentsList.appendChild(item);
+    commentsList.scrollTop = commentsList.scrollHeight;
+}
+
+function deleteComment(commentId) {
+    if (!confirm('Xóa tin nhắn này?')) return;
+
+    fetch(`/tasks/${CONFIG.TASK_ID}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+            if (item) {
+                item.style.transition = 'opacity 0.3s';
+                item.style.opacity = '0';
+
+                setTimeout(() => {
+                    item.remove();
+                    knownCommentIds.delete(commentId);
+                    updateCommentsCount(knownCommentIds.size);
+                }, 300);
+            }
+            showToast('Đã xóa tin nhắn', 'success');
+        } else {
+            showToast(data.error || 'Lỗi xóa tin nhắn', 'danger');
+        }
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// ============================================
+// CLEANUP
+// ============================================
+window.addEventListener('beforeunload', () => {
+    console.log('🚪 Discussion page unloading - disconnecting SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnect('task-comments');
+    }
+});
+
+window.addEventListener('pagehide', () => {
+    console.log('🚪 Discussion page hiding - disconnecting SSE');
+    if (window.sseManager) {
+        window.sseManager.disconnect('task-comments');
+    }
+});
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Task Discussion Page Loaded');
+
+    startRealtimeComments();
+
+    if (commentInput) {
+        commentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addComment();
+            }
+        });
+    }
+
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addComment();
+        });
+    }
+
+    // Auto scroll to bottom
+    commentsList.scrollTop = commentsList.scrollHeight;
+});
+</script>
+{% endblock %}
