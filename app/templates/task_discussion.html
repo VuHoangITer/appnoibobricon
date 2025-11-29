@@ -234,6 +234,14 @@ body {
 .comment-time {
     font-size: 0.75rem;
     color: var(--ed-muted);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.comment-time.show {
+    display: inline-block;
+    opacity: 1;
 }
 
 .comment-text {
@@ -246,6 +254,8 @@ body {
     border-radius: 16px;
     display: inline-block;
     max-width: 100%;
+    cursor: pointer;
+    user-select: none;
 }
 
 .comment-item.other .comment-text {
@@ -851,7 +861,7 @@ body {
                             {% endif %}
                         </div>
                     </div>
-                    <div class="comment-text">{{ comment.content }}</div>
+                    <div class="comment-text" onclick="toggleCommentTime({{ comment.id }})">{{ comment.content }}</div>
 
                     <!-- Attachment -->
                     {% if comment.has_attachment %}
@@ -1220,6 +1230,16 @@ function addComment() {
     });
 }
 
+function toggleCommentTime(commentId) {
+    const item = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+    if (!item) return;
+
+    const timeElement = item.querySelector('.comment-time');
+    if (timeElement) {
+        timeElement.classList.toggle('show');
+    }
+}
+
 function addCommentToList(comment) {
     if (document.querySelector(`.comment-item[data-id="${comment.id}"]`)) {
         return;
@@ -1294,7 +1314,7 @@ function addCommentToList(comment) {
                     ${deleteBtn}
                 </div>
             </div>
-            <div class="comment-text">${escapeHtml(comment.content)}</div>
+            <div class="comment-text" onclick="toggleCommentTime(${comment.id})">${escapeHtml(comment.content)}</div>
             ${attachmentHTML}
         </div>
     `;
