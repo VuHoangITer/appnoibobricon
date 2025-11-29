@@ -382,7 +382,7 @@ function addComment() {
     }
 
     btnAddComment.disabled = true;
-    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+    btnAddComment.innerHTML = '<i class="bi bi-hourglass-split"></i>'; // ✅ CHỈ ICON
 
     const formData = new FormData();
 
@@ -434,7 +434,7 @@ function addComment() {
     })
     .finally(() => {
         btnAddComment.disabled = false;
-        btnAddComment.innerHTML = '<i class="bi bi-send"></i> Gửi';
+        btnAddComment.innerHTML = '<i class="bi bi-send-fill"></i>'; // ✅ CHỈ ICON
     });
 }
 

@@ -13,9 +13,9 @@
     <div class="task-header-container">
         {% include 'components/task_header.html' %}
     </div>
+
     <!-- Task Info - Compact với Header màu -->
     <div class="task-card">
-        <!-- Header với màu sắc theo trạng thái -->
         <div class="task-card-header
             {% if task.status == 'DONE' %}
                 {% if task.completed_overdue %}overdue{% else %}on-time{% endif %}
@@ -24,13 +24,9 @@
             {{ task.title }}
         </div>
 
-        <!-- Body -->
         <div class="task-card-body">
-            <!-- Hàng 1: Avatar Flow + Priority Badge (hoặc Rating nếu DONE) -->
             <div class="task-card-row">
-                <!-- Avatar người giao → người nhận -->
                 <div class="task-flow-compact">
-                    <!-- Avatar người giao -->
                     <div class="task-avatar-compact">
                         {% if task.creator.avatar %}
                             <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
@@ -39,10 +35,7 @@
                             {{ task.creator.full_name[0].upper() }}
                         {% endif %}
                     </div>
-
                     <div class="task-arrow-compact">→</div>
-
-                    <!-- Avatar người nhận -->
                     <div class="task-avatar-compact">
                         {% if user_assignment %}
                             {% if current_user.avatar %}
@@ -63,10 +56,8 @@
                     </div>
                 </div>
 
-                <!-- Bên phải: Priority Badge HOẶC Rating (tùy status) -->
                 <div>
                     {% if task.status == 'DONE' and task.performance_rating %}
-                        <!-- Hiển thị KẾT QUẢ đánh giá -->
                         <div class="task-rating-display">
                             {% if task.performance_rating == 'good' %}
                                 <div class="rating-icon-display good">
@@ -79,7 +70,6 @@
                             {% endif %}
                         </div>
                     {% elif priority_text %}
-                        <!-- Hiển thị Priority Badge -->
                         <span class="task-priority-badge {{ priority_class }}">
                             <span>{{ priority_icon }}</span>
                             <span>{{ priority_text }}</span>
@@ -88,7 +78,6 @@
                 </div>
             </div>
 
-            <!-- Hàng 2: Yêu cầu -->
             <div class="task-requirement-compact">
                 <div class="task-requirement-label">YÊU CẦU:</div>
                 <div>{{ task.description or 'Không có mô tả' }}</div>
@@ -96,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Giữ lại phần Participants nếu muốn -->
+    <!-- Participants -->
     <div class="participants-section">
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-people text-muted"></i>
@@ -159,11 +148,9 @@
                         {% set attachments = comment.get_attachments_list() %}
 
                         {% if attachments %}
-                            <!-- Nhóm images vào grid -->
                             {% set images = attachments | selectattr('file_type', 'equalto', 'image') | list %}
                             {% set other_files = attachments | rejectattr('file_type', 'equalto', 'image') | list %}
 
-                            <!-- Hiển thị tất cả images -->
                             {% if images %}
                             <div class="attachment-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px;">
                                 {% for att in images %}
@@ -178,7 +165,6 @@
                             </div>
                             {% endif %}
 
-                            <!-- Hiển thị other files -->
                             {% if other_files %}
                                 {% for att in other_files %}
                                 <div class="attachment-info mt-2">
@@ -192,7 +178,6 @@
                                 {% endfor %}
                             {% endif %}
                         {% else %}
-                            <!-- Fallback: hiển thị theo cách cũ (nếu chưa có attachments table) -->
                             {% if comment.attachment_file_type == 'image' %}
                             <div class="attachment-image-preview">
                                 <img src="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id, attachment_id=0) }}"
@@ -223,17 +208,35 @@
             {% endfor %}
         </div>
 
-        <!-- Footer - Input -->
+        <!-- ✅ FOOTER - MESSENGER STYLE INPUT -->
         {% if user_assignment and user_assignment.accepted or task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
         <div class="comments-footer">
             <form id="commentForm" enctype="multipart/form-data">
-                <textarea class="form-control"
-                          id="commentInput"
-                          name="content"
-                          rows="2"
-                          placeholder="Nhập tin nhắn..."></textarea>
+                <!-- 1️⃣ TEXTAREA + NÚT BÊN TRONG (Trên cùng) -->
+                <div class="input-wrapper">
+                    <textarea class="form-control"
+                              id="commentInput"
+                              name="content"
+                              rows="1"
+                              placeholder="Nhập tin nhắn..."></textarea>
 
-                <!-- File Preview -->
+                    <!-- Nút bên trong textarea -->
+                    <div class="input-actions-inside">
+                        <!-- Đính kèm -->
+                        <label for="commentFileInput" class="btn-attach-icon" title="Đính kèm file">
+                            <i class="bi bi-paperclip"></i>
+                        </label>
+                        <input type="file" id="commentFileInput" name="file" style="display: none;"
+                               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple>
+
+                        <!-- Gửi -->
+                        <button type="submit" class="btn-send-icon" id="btnAddComment" title="Gửi">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2️⃣ FILE PREVIEW (Dưới textarea - như Messenger) -->
                 <div id="filePreview" style="display: none;">
                     <div class="alert alert-info d-flex align-items-center justify-content-between p-2 mb-0 mt-2">
                         <div class="d-flex align-items-center gap-2">
@@ -246,29 +249,18 @@
                         </button>
                     </div>
 
-                    <!--  Grid cho nhiều ảnh với nút xóa từng ảnh -->
+                    <!-- Grid cho nhiều ảnh -->
                     <div id="multipleImagePreview" style="display: none;"></div>
 
-                    <!-- Single image preview (backward compatibility) -->
+                    <!-- Single image preview -->
                     <img id="imagePreview" style="max-width: 200px; max-height: 200px; display: none;" class="img-thumbnail mt-2">
-                </div>
-
-                <div class="input-actions">
-                    <label for="commentFileInput" class="btn btn-sm btn-outline-secondary" id="attachButton">
-                        <i class="bi bi-paperclip"></i> <span id="attachButtonText">Đính kèm</span>
-                    </label>
-                    <input type="file" id="commentFileInput" name="file" style="display: none;"
-                           accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple>
-
-                    <button type="submit" class="btn btn-primary btn-send" id="btnAddComment">
-                        <i class="bi bi-send"></i> Gửi
-                    </button>
                 </div>
             </form>
         </div>
         {% endif %}
     </div>
 </div>
+
 <!-- Image Lightbox -->
 <div class="lightbox-overlay" id="imageLightbox">
     <div class="lightbox-content">
@@ -285,23 +277,14 @@
 {% block scripts %}
 <!-- ✅ CONFIG PHẢI Ở TRONG TEMPLATE (vì có Jinja2 variables) -->
 <script>
-// Global CONFIG object cho thao-luan.js sử dụng
 window.CONFIG = {
     TASK_ID: {{ task.id }},
     CURRENT_USER_ID: {{ current_user.id }},
     CURRENT_USER_ROLE: '{{ current_user.role }}',
     CSRF_TOKEN: '{{ csrf_token() }}'
 };
-
-// Optional: ROLE_MAP nếu cần
-window.ROLE_MAP = {
-    'director': 'Giám đốc',
-    'manager': 'Trưởng phòng',
-    'accountant': 'Kế toán',
-    'hr': 'Nhân sự'
-};
 </script>
 
-<!-- ✅ LOAD FILE JS THUẦN SAU KHI ĐÃ CÓ CONFIG -->
+<!-- ✅ LOAD FILE JS SAU KHI ĐÃ CÓ CONFIG -->
 <script src="{{ url_for('static', filename='js/thao-luan.js') }}"></script>
 {% endblock %}

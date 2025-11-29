@@ -1905,27 +1905,43 @@ def add_comment(task_id):
             attachment_objects.append(attachment)
 
         # ===== GỬI THÔNG BÁO =====
+        notification_recipients = set()
+
         if current_user.id != task.creator_id:
-            notif = Notification(
-                user_id=task.creator_id,
+            notification_recipients.add(task.creator_id)
+
+        assignments = TaskAssignment.query.filter_by(task_id=task_id, accepted=True).all()
+        for assignment in assignments:
+            if assignment.user_id != current_user.id:
+                notification_recipients.add(assignment.user_id)
+
+        for recipient_id in notification_recipients:
+            existing_notif = Notification.query.filter_by(
+                user_id=recipient_id,
                 type='task_comment',
-                title=f'💬 Bình luận mới từ {current_user.full_name}',
-                body=f'Trong nhiệm vụ: {task.title}',
-                link=f'/tasks/{task_id}'
-            )
-            db.session.add(notif)
-        else:
-            assignments = TaskAssignment.query.filter_by(task_id=task_id, accepted=True).all()
-            for assignment in assignments:
-                if assignment.user_id != current_user.id:
-                    notif = Notification(
-                        user_id=assignment.user_id,
-                        type='task_comment',
-                        title=f'💬 Bình luận mới từ {current_user.full_name}',
-                        body=f'Trong nhiệm vụ: {task.title}',
-                        link=f'/tasks/{task_id}'
-                    )
-                    db.session.add(notif)
+                link=f'/tasks/{task_id}/discussion',
+                read=False  # ← CHỈ TÌM NOTIFICATION CHƯA ĐỌC
+            ).order_by(Notification.created_at.desc()).first()
+
+            if existing_notif:
+                # Đếm comments sau notification
+                unread_count = TaskComment.query.filter(
+                    TaskComment.task_id == task_id,
+                    TaskComment.created_at > existing_notif.created_at
+                ).count()
+
+                existing_notif.title = f'💬 {unread_count} tin nhắn mới trong nhiệm vụ {task.title}'
+                existing_notif.body = f'{current_user.full_name} đã bình luận'
+                existing_notif.read = False
+            else:
+                notif = Notification(
+                    user_id=recipient_id,
+                    type='task_comment',
+                    title=f'💬 Tin nhắn mới trong nhiệm vụ {task.title}',
+                    body=f'{current_user.full_name} đã bình luận',
+                    link=f'/tasks/{task_id}/discussion'
+                )
+                db.session.add(notif)
 
         db.session.commit()
 

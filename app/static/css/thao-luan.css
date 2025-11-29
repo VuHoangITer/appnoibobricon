@@ -205,11 +205,9 @@ body {
 
 /* Bong bóng mình gọn hơn, canh phải */
 .comment-item.mine .comment-content {
-    max-width: 65%;   /* muốn rộng hơn thì tăng lên 70–80% */
+    max-width: 65%;
     text-align: right;
 }
-
-
 
 .comment-author {
     font-weight: 600;
@@ -275,7 +273,9 @@ body {
     font-size: 0.85rem;
 }
 
-/* Comment Input */
+/* ============================================
+   COMMENT INPUT - NÚT TRONG TEXTAREA (MESSENGER STYLE)
+   ============================================ */
 .comments-footer {
     border-top: 1px solid var(--ed-border);
     padding: 14px 18px;
@@ -283,34 +283,108 @@ body {
     border-radius: 0 0 var(--ed-radius-lg) var(--ed-radius-lg);
 }
 
+/* Container cho textarea + buttons */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
 #commentInput {
+    flex: 1;
     resize: none;
-    border-radius: var(--ed-radius-md);
+    border-radius: 24px;
     border: 1px solid var(--ed-border);
     font-size: 0.9rem;
+    padding: 12px 90px 12px 16px; /* Right padding cho 2 nút */
+    min-height: 44px;
+    max-height: 120px;
+    line-height: 1.4;
 }
 
 #commentInput:focus {
     border-color: var(--ed-primary);
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    outline: none;
 }
 
-.input-actions {
+/* Container cho 2 nút bên trong textarea */
+.input-actions-inside {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
     display: flex;
-    justify-content: space-between;
+    gap: 6px;
     align-items: center;
-    margin-top: 10px;
 }
 
-.btn-send {
-    border-radius: var(--ed-radius-pill);
-    padding: 8px 24px;
-    font-weight: 600;
+/* Nút đính kèm - ICON ONLY */
+.btn-attach-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--ed-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.2rem;
 }
 
-/* File Preview */
+.btn-attach-icon:hover {
+    background: rgba(13, 110, 253, 0.1);
+    color: var(--ed-primary);
+}
+
+.btn-attach-icon:active {
+    transform: scale(0.9);
+}
+
+/* Nút gửi - ICON ONLY */
+.btn-send-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--ed-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+}
+
+.btn-send-icon:hover {
+    background: #0a58ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.btn-send-icon:active {
+    transform: scale(0.9);
+}
+
+.btn-send-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ẨN input-actions cũ */
+.input-actions {
+    display: none !important;
+}
+
+/* File Preview - ĐỂ Ở DƯỚI textarea (như Messenger) */
 #filePreview {
-    margin-top: 10px;
+    margin-top: 10px; /* Margin top thay vì bottom */
     animation: fadeIn 0.3s ease;
 }
 
@@ -345,10 +419,30 @@ body {
     .task-info-card {
         padding: 12px 14px;
     }
+
+    /* Mobile - textarea nhỏ hơn, nút cũng nhỏ hơn */
+    #commentInput {
+        padding: 10px 80px 10px 14px;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+
+    .btn-attach-icon,
+    .btn-send-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .input-actions-inside {
+        right: 6px;
+        bottom: 6px;
+        gap: 4px;
+    }
 }
 
 /* ============================================
-   TASK CARD COMPACT - GIỐNG PRIORITY DETAIL
+   TASK CARD COMPACT
    ============================================ */
 .task-card-compact {
     background: #ffffff;
@@ -501,13 +595,11 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Màu thumb up */
 .rating-icon-display.good {
     background: linear-gradient(135deg, #bbffd1, #22c55e);
     color: #ffffff;
 }
 
-/* Màu thumb down */
 .rating-icon-display.bad {
     background: linear-gradient(135deg, #ffd0d0, #f97373);
     color: #ffffff;
@@ -533,6 +625,7 @@ body {
     cursor: not-allowed;
     transform: none;
 }
+
 @media (max-width: 768px) {
     .task-card-row {
         flex-direction: row;
@@ -540,22 +633,22 @@ body {
         justify-content: space-between;
     }
 
-    /* Bên trái: avatar flow chiếm phần rộng hơn */
     .task-flow-compact {
         justify-content: flex-start;
         flex: 1 1 auto;
     }
 
-    /* Bên phải: cụm đánh giá/priority dính sát phải */
     .task-rating-compact,
     .task-rating-display {
         flex: 0 0 auto;
         justify-content: flex-end;
     }
+
     .comment-item .btn-outline-danger {
         display: none !important;
     }
 }
+
 /* ============================================
    TASK CARD VỚI HEADER MÀU
    ============================================ */
@@ -588,11 +681,13 @@ body {
     background: var(--ed-info-soft);
     color: #0d47a1;
 }
+
 .task-card-body {
     padding: 16px 20px 20px;
     background: var(--ed-card-bg);
     border-top: 1px solid var(--ed-border);
 }
+
 /* ============================================
    DELETE MODAL FOR MOBILE
    ============================================ */
@@ -694,7 +789,6 @@ body {
     background: #bb2d3b;
 }
 
-/* Long press visual feedback */
 .comment-item.long-pressing {
     opacity: 0.7;
     transform: scale(0.98);
@@ -702,7 +796,7 @@ body {
 }
 
 /* ============================================
-   MULTIPLE IMAGE PREVIEW GRID - CẢI TIẾN
+   MULTIPLE IMAGE PREVIEW GRID
    ============================================ */
 #multipleImagePreview {
     display: grid;
@@ -750,7 +844,7 @@ body {
 }
 
 /* ============================================
-   IMAGE LIGHTBOX - FULL SCREEN VIEWER
+   IMAGE LIGHTBOX
    ============================================ */
 .lightbox-overlay {
     display: none;
