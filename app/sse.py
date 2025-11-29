@@ -492,6 +492,7 @@ def task_comments_stream(task_id):
                                 # ✅ BUILD COMMENT DATA WITH ATTACHMENT
                                 comment_dict = {
                                     'id': comment.id,
+                                    'user_id': comment.user_id,
                                     'content': comment.content,
                                     'created_at': comment.created_at.isoformat(),
                                     'created_at_timestamp': comment.created_at.timestamp(),

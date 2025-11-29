@@ -845,6 +845,69 @@ class TaskCommentRead(db.Model):
     def __repr__(self):
         return f'<TaskCommentRead user={self.user_id} comment={self.comment_id}>'
 
+
+class SeasonalEffectConfig(db.Model):
+    """Cấu hình hiệu ứng theo mùa - áp dụng cho toàn hệ thống"""
+    __tablename__ = 'seasonal_effect_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    config_data = db.Column(db.Text, nullable=False)  # JSON string
+
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    updater = db.relationship('User', foreign_keys=[updated_by])
+
+    def get_config(self):
+        """Parse JSON config"""
+        try:
+            return json.loads(self.config_data)
+        except:
+            return None
+
+    def set_config(self, config_dict):
+        """Set config from dict"""
+        self.config_data = json.dumps(config_dict)
+
+    @staticmethod
+    def get_active_config():
+        """Lấy config hiện tại (chỉ có 1 record duy nhất)"""
+        config = SeasonalEffectConfig.query.first()
+        if config:
+            return config.get_config()
+        return None
+
+    @classmethod
+    def get_pages_for_effect(cls, effect_name):
+        """Lấy danh sách trang cho một hiệu ứng"""
+        config = cls.query.first()
+        if not config:
+            return ['all']
+
+        data = config.get_config()
+        if not data or 'effects' not in data:
+            return ['all']
+
+        effect_config = data.get('effects', {}).get(effect_name, {})
+        pages = effect_config.get('pages', ['all'])
+
+        return pages if pages else ['all']
+
+    @classmethod
+    def should_show_effect(cls, effect_name, current_page):
+        """Kiểm tra xem có nên hiển thị effect trên trang hiện tại không"""
+        pages = cls.get_pages_for_effect(effect_name)
+
+        # Nếu có 'all' thì hiển thị trên tất cả trang
+        if 'all' in pages:
+            return True
+
+        # Nếu không có 'all', kiểm tra trang hiện tại có trong list không
+        return current_page in pages
+
+    def __repr__(self):
+        return f'<SeasonalEffectConfig updated_at={self.updated_at}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

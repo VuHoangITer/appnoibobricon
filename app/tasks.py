@@ -1764,6 +1764,7 @@ def get_comments(task_id):
         vn_time = utc_to_vn(comment.created_at)
         comment_dict = {
             'id': comment.id,
+            'user_id': comment.user_id,
             'content': comment.content,
             'created_at': comment.created_at.isoformat(),
             'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
@@ -1897,6 +1898,7 @@ def add_comment(task_id):
         # Tạo response data
         comment_data = {
             'id': comment.id,
+            'user_id': current_user.id,
             'content': comment.content,
             'created_at': comment.created_at.isoformat(),
             'created_at_display': vn_time.strftime('%d/%m/%Y %H:%M'),
@@ -2085,6 +2087,7 @@ def task_discussion(task_id):
     # Get initial comments
     sorted_comments = TaskComment.query.filter_by(task_id=task_id).order_by(TaskComment.created_at.asc()).all()
 
+    # ===== PRIORITY INFO =====
     priority_icon = ''
     priority_text = ''
     priority_class = ''

@@ -22,6 +22,8 @@
     --ed-radius-lg: 16px;
     --ed-radius-md: 10px;
     --ed-radius-pill: 999px;
+    --ed-success: #198754;
+    --ed-danger: #dc3545;
 }
 
 body {
@@ -134,14 +136,21 @@ body {
     display: flex;
     gap: 12px;
     margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #e5e7eb;
     animation: fadeIn 0.3s ease;
+}
+
+.comment-item.other {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.comment-item.mine {
+    flex-direction: row;
+    justify-content: flex-end;
 }
 
 .comment-item:last-child {
     margin-bottom: 0;
-    border-bottom: none;
 }
 
 @keyframes fadeIn {
@@ -173,7 +182,8 @@ body {
 }
 
 .comment-content {
-    flex: 1;
+    flex: 0 1 auto;
+    max-width: 70%;
     min-width: 0;
 }
 
@@ -183,6 +193,37 @@ body {
     align-items: center;
     margin-bottom: 6px;
 }
+
+.comment-item.other .comment-header {
+    flex-direction: row;
+}
+
+.comment-item.mine .comment-header {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    width: auto;
+    margin-bottom: 4px;
+}
+
+/* Ẩn avatar của chính mình */
+.comment-item.mine .comment-avatar {
+    display: none;
+}
+
+.comment-item.mine .comment-author {
+    display: none;
+}
+
+/* Bong bóng mình gọn hơn, canh phải */
+.comment-item.mine .comment-content {
+    max-width: 65%;   /* muốn rộng hơn thì tăng lên 70–80% */
+    text-align: right;
+}
+
+
 
 .comment-author {
     font-weight: 600;
@@ -196,11 +237,26 @@ body {
 }
 
 .comment-text {
-    color: #4b5563;
+    color: #1f2933;
     white-space: pre-wrap;
     word-wrap: break-word;
     font-size: 0.9rem;
     line-height: 1.5;
+    padding: 10px 14px;
+    border-radius: 16px;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.comment-item.other .comment-text {
+    background: #f0f2f5;
+    border-bottom-left-radius: 4px;
+}
+
+.comment-item.mine .comment-text {
+    background: #0d6efd;
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
 }
 
 /* Comment Attachment */
@@ -483,7 +539,7 @@ body {
 }
 @media (max-width: 768px) {
     .task-card-row {
-        flex-direction: row;              /* luôn nằm 1 hàng */
+        flex-direction: row;
         align-items: center;
         justify-content: space-between;
     }
@@ -500,8 +556,154 @@ body {
         flex: 0 0 auto;
         justify-content: flex-end;
     }
+    .comment-item .btn-outline-danger {
+        display: none !important;
+    }
+}
+/* ============================================
+   TASK CARD VỚI HEADER MÀU
+   ============================================ */
+.task-card {
+    border: 1px solid var(--ed-border);
+    border-radius: 24px;
+    background: var(--ed-card-bg);
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    margin-bottom: 20px;
 }
 
+.task-card-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    color: #ffffff;
+}
+
+.task-card-header.on-time {
+    background: var(--ed-success);
+}
+
+.task-card-header.overdue {
+    background: var(--ed-danger);
+}
+
+.task-card-header.completed {
+    background: var(--ed-info-soft);
+    color: #0d47a1;
+}
+.task-card-body {
+    padding: 16px 20px 20px;
+    background: var(--ed-card-bg);
+    border-top: 1px solid var(--ed-border);
+}
+/* ============================================
+   DELETE MODAL FOR MOBILE
+   ============================================ */
+.delete-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+}
+
+.delete-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.delete-modal-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.delete-modal-header i {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 12px;
+}
+
+.delete-modal-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2933;
+    margin: 0;
+}
+
+.delete-modal-body {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.delete-modal-btn {
+    flex: 1;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-modal-btn-cancel {
+    background: #f0f2f5;
+    color: #1f2933;
+}
+
+.delete-modal-btn-cancel:hover {
+    background: #e1e5ee;
+}
+
+.delete-modal-btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-modal-btn-delete:hover {
+    background: #bb2d3b;
+}
+
+/* Long press visual feedback */
+.comment-item.long-pressing {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+}
 </style>
 {% endblock %}
 
@@ -511,77 +713,86 @@ body {
     {% include 'components/task_header.html' %}
 </div>
 <div class="discussion-container">
-    <!-- Task Info - Compact -->
-    <div class="task-card-compact">
-        <div class="task-card-title-row">
-            <h5 class="task-card-title">{{ task.title }}</h5>
+    <!-- Task Info - Compact với Header màu -->
+    <div class="task-card">
+        <!-- Header với màu sắc theo trạng thái -->
+        <div class="task-card-header
+            {% if task.status == 'DONE' %}
+                {% if task.completed_overdue %}overdue{% else %}on-time{% endif %}
+            {% elif task | is_overdue %}overdue
+            {% else %}on-time{% endif %}">
+            {{ task.title }}
         </div>
-        <!-- Hàng 1: Avatar Flow + Priority Badge (hoặc Rating nếu DONE) -->
-        <div class="task-card-row">
-            <!-- Avatar người giao → người nhận -->
-            <div class="task-flow-compact">
-                <!-- Avatar người giao -->
-                <div class="task-avatar-compact">
-                    {% if task.creator.avatar %}
-                        <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
-                             alt="{{ task.creator.full_name }}">
-                    {% else %}
-                        {{ task.creator.full_name[0].upper() }}
-                    {% endif %}
-                </div>
 
-                <div class="task-arrow-compact">→</div>
-
-                <!-- Avatar người nhận (current user hoặc assigned user đầu tiên) -->
-                <div class="task-avatar-compact">
-                    {% if user_assignment %}
-                        {% if current_user.avatar %}
-                            <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
-                                 alt="{{ current_user.full_name }}">
+        <!-- Body -->
+        <div class="task-card-body">
+            <!-- Hàng 1: Avatar Flow + Priority Badge (hoặc Rating nếu DONE) -->
+            <div class="task-card-row">
+                <!-- Avatar người giao → người nhận -->
+                <div class="task-flow-compact">
+                    <!-- Avatar người giao -->
+                    <div class="task-avatar-compact">
+                        {% if task.creator.avatar %}
+                            <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
+                                 alt="{{ task.creator.full_name }}">
                         {% else %}
-                            {{ current_user.full_name[0].upper() }}
-                        {% endif %}
-                    {% elif assignments %}
-                        {% set first_assigned = assignments[0].user %}
-                        {% if first_assigned.avatar %}
-                            <img src="{{ url_for('profile.get_avatar', filename=first_assigned.avatar) }}"
-                                 alt="{{ first_assigned.full_name }}">
-                        {% else %}
-                            {{ first_assigned.full_name[0].upper() }}
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Bên phải: Priority Badge HOẶC Rating (tùy status) -->
-            <div>
-                {% if task.status == 'DONE' and task.performance_rating %}
-                    <!-- Hiển thị KẾT QUẢ đánh giá (chỉ hiện icon được chọn) -->
-                    <div class="task-rating-display">
-                        {% if task.performance_rating == 'good' %}
-                            <div class="rating-icon-display good">
-                                <i class="bi bi-hand-thumbs-up-fill"></i>
-                            </div>
-                        {% elif task.performance_rating == 'bad' %}
-                            <div class="rating-icon-display bad">
-                                <i class="bi bi-hand-thumbs-down-fill"></i>
-                            </div>
+                            {{ task.creator.full_name[0].upper() }}
                         {% endif %}
                     </div>
-                {% elif priority_text %}
-                    <!-- Hiển thị Priority Badge -->
-                    <span class="task-priority-badge {{ priority_class }}">
-                        <span>{{ priority_icon }}</span>
-                        <span>{{ priority_text }}</span>
-                    </span>
-                {% endif %}
-            </div>
-        </div>
 
-        <!-- Hàng 2: Yêu cầu -->
-        <div class="task-requirement-compact">
-            <div class="task-requirement-label">YÊU CẦU:</div>
-            <div>{{ task.description or 'Không có mô tả' }}</div>
+                    <div class="task-arrow-compact">→</div>
+
+                    <!-- Avatar người nhận -->
+                    <div class="task-avatar-compact">
+                        {% if user_assignment %}
+                            {% if current_user.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
+                                     alt="{{ current_user.full_name }}">
+                            {% else %}
+                                {{ current_user.full_name[0].upper() }}
+                            {% endif %}
+                        {% elif assignments %}
+                            {% set first_assigned = assignments[0].user %}
+                            {% if first_assigned.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=first_assigned.avatar) }}"
+                                     alt="{{ first_assigned.full_name }}">
+                            {% else %}
+                                {{ first_assigned.full_name[0].upper() }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bên phải: Priority Badge HOẶC Rating (tùy status) -->
+                <div>
+                    {% if task.status == 'DONE' and task.performance_rating %}
+                        <!-- Hiển thị KẾT QUẢ đánh giá -->
+                        <div class="task-rating-display">
+                            {% if task.performance_rating == 'good' %}
+                                <div class="rating-icon-display good">
+                                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                                </div>
+                            {% elif task.performance_rating == 'bad' %}
+                                <div class="rating-icon-display bad">
+                                    <i class="bi bi-hand-thumbs-down-fill"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif priority_text %}
+                        <!-- Hiển thị Priority Badge -->
+                        <span class="task-priority-badge {{ priority_class }}">
+                            <span>{{ priority_icon }}</span>
+                            <span>{{ priority_text }}</span>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Hàng 2: Yêu cầu -->
+            <div class="task-requirement-compact">
+                <div class="task-requirement-label">YÊU CẦU:</div>
+                <div>{{ task.description or 'Không có mô tả' }}</div>
+            </div>
         </div>
     </div>
 
@@ -618,7 +829,7 @@ body {
         <!-- Body -->
         <div class="comments-body" id="commentsList">
             {% for comment in sorted_comments %}
-            <div class="comment-item" data-id="{{ comment.id }}">
+           <div class="comment-item {% if comment.user_id == current_user.id %}mine{% else %}other{% endif %}" data-id="{{ comment.id }}">
                 <div class="comment-avatar">
                     {% if comment.user.avatar %}
                     <img src="{{ url_for('profile.get_avatar', filename=comment.user.avatar) }}" alt="">
@@ -1018,7 +1229,8 @@ function addCommentToList(comment) {
     if (noComments) noComments.remove();
 
     const item = document.createElement('div');
-    item.className = 'comment-item';
+    const isMine = comment.user_id === CONFIG.CURRENT_USER_ID;
+    item.className = `comment-item ${isMine ? 'mine' : 'other'}`;
     item.dataset.id = comment.id;
 
     const avatarHTML = comment.user.avatar
@@ -1076,7 +1288,6 @@ function addCommentToList(comment) {
             <div class="comment-header">
                 <div>
                     <span class="comment-author">${escapeHtml(comment.user.full_name)}</span>
-                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">${ROLE_MAP[comment.user.role] || comment.user.role}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="comment-time">${comment.created_at_display}</span>
@@ -1090,11 +1301,10 @@ function addCommentToList(comment) {
 
     commentsList.appendChild(item);
     commentsList.scrollTop = commentsList.scrollHeight;
+    initLongPressListeners();
 }
 
 function deleteComment(commentId) {
-    if (!confirm('Xóa tin nhắn này?')) return;
-
     fetch(`/tasks/${CONFIG.TASK_ID}/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
@@ -1119,6 +1329,10 @@ function deleteComment(commentId) {
         } else {
             showToast(data.error || 'Lỗi xóa tin nhắn', 'danger');
         }
+    })
+    .catch(error => {
+        console.error('Error deleting comment:', error);
+        showToast('Có lỗi xảy ra', 'danger');
     });
 }
 
@@ -1158,12 +1372,119 @@ window.addEventListener('pagehide', () => {
 });
 
 // ============================================
+// LONG PRESS TO DELETE (MOBILE)
+// ============================================
+let longPressTimer = null;
+let longPressCommentId = null;
+
+function initLongPressListeners() {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (!isMobile) return; // Chỉ áp dụng cho mobile
+
+    document.querySelectorAll('.comment-item.mine').forEach(item => {
+        const commentId = parseInt(item.dataset.id);
+
+        // Touch events
+        item.addEventListener('touchstart', (e) => {
+            longPressCommentId = commentId;
+            item.classList.add('long-pressing');
+
+            longPressTimer = setTimeout(() => {
+                showDeleteModal(commentId);
+                item.classList.remove('long-pressing');
+            }, 500); // 500ms = 0.5 giây
+        });
+
+        item.addEventListener('touchend', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            item.classList.remove('long-pressing');
+        });
+
+        item.addEventListener('touchmove', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            item.classList.remove('long-pressing');
+        });
+    });
+}
+
+function showDeleteModal(commentId) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('deleteModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'deleteModal';
+    modal.className = 'delete-modal';
+    modal.innerHTML = `
+        <div class="delete-modal-content">
+            <div class="delete-modal-header">
+                <i class="bi bi-trash3"></i>
+                <h3 class="delete-modal-title">Xóa tin nhắn?</h3>
+            </div>
+            <div class="delete-modal-body">
+                Bạn có chắc chắn muốn xóa tin nhắn này không? Hành động này không thể hoàn tác.
+            </div>
+            <div class="delete-modal-actions">
+                <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">
+                    Hủy
+                </button>
+                <button class="delete-modal-btn delete-modal-btn-delete" onclick="confirmDeleteComment(${commentId})">
+                    Xóa
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Show with animation
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.remove();
+        }, 200);
+    }
+}
+
+function confirmDeleteComment(commentId) {
+    closeDeleteModal();
+    deleteComment(commentId);
+}
+
+// ============================================
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Task Discussion Page Loaded');
 
     startRealtimeComments();
+
+    // ===== ✅ THÊM DÒNG NÀY =====
+    initLongPressListeners();
 
     if (commentInput) {
         commentInput.addEventListener('keypress', (e) => {

@@ -33,6 +33,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/notification-settings.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}?v={{ config.VERSION }}">
 
     <style>
         html {
@@ -230,8 +231,9 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% if current_user.is_authenticated %}
+    <div id="seasonalEffects"></div>
 
+    {% if current_user.is_authenticated %}
     <div class="main-wrapper" id="mainWrapper">
         <!-- TOP NAVBAR -->
         <nav class="top-navbar">
@@ -276,6 +278,12 @@
                             <div class="user-dropdown-role">{{ current_user.role | role_vn }}</div>
                         </div>
                         <div class="user-dropdown-body">
+                            {% if current_user.role == 'director' %}
+                            <a href="{{ url_for('seasonal_effects.settings') }}" class="user-dropdown-item">
+                                <i class="bi bi-snow"></i>
+                                <span>Hiệu ứng theo mùa</span>
+                            </a>
+                            {% endif %}
                             <a href="{{ url_for('profile.settings') }}" class="user-dropdown-item">
                                 <i class="bi bi-gear"></i>
                                 <span>Cài đặt tài khoản</span>
@@ -636,6 +644,12 @@
             <div class="user-dropdown-role">{{ current_user.role | role_vn }}</div>
         </div>
         <div class="user-dropdown-body">
+            {% if current_user.role == 'director' %}
+            <a href="{{ url_for('seasonal_effects.settings') }}" class="user-dropdown-item">
+                <i class="bi bi-snow"></i>
+                <span>Hiệu ứng theo mùa</span>
+            </a>
+            {% endif %}
             <button class="user-dropdown-item notification-settings-btn" onclick="if(window.notificationManager) window.notificationManager.openSettings()">
                 <i class="bi bi-volume-up-fill"></i>
                 <span>Cài đặt thông báo</span>
@@ -801,5 +815,16 @@
     </script>
     {% endif %}
     {% block scripts %}{% endblock %}
+{% if current_user.is_authenticated %}
+    <!-- Seasonal Effects -->
+    <script src="{{ url_for('static', filename='js/santa-effect.js') }}?v={{ config.VERSION }}"></script>
+    <script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }}"></script>
+    <script>
+        // Auto-init seasonal effects
+        if (window.SeasonalEffects) {
+            SeasonalEffects.init();
+        }
+    </script>
+{% endif %}
 </body>
 </html>

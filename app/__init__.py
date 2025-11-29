@@ -162,6 +162,9 @@ def create_app(config_class=Config):
     from app.sse import bp as sse_bp
     app.register_blueprint(sse_bp)
 
+    from app.seasonal_effects import bp as seasonal_effects_bp
+    app.register_blueprint(seasonal_effects_bp, url_prefix='/seasonal-effects')
+
     # Dashboard route
     @app.route('/')
     def index():
