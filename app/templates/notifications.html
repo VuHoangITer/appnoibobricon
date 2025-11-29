@@ -15,7 +15,6 @@
     --notif-danger: #ef4444;
 }
 
-/* Nền tổng thể nhẹ nhàng */
 body {
     background: var(--notif-bg);
 }
@@ -448,12 +447,12 @@ body {
         const totalBadge = document.getElementById('total-count');
 
         if (unreadBadge) {
-            unreadBadge.textContent = `Chưa Đọc: ${unreadCount}`;
+            unreadBadge.textContent = `${unreadCount}`;
             unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
         }
 
         if (totalCount !== null && totalBadge) {
-            totalBadge.textContent = `Tổng: ${totalCount}`;
+            totalBadge.textContent = `${totalCount}`;
         }
 
         // Cập nhật badge ở topbar và sidebar
