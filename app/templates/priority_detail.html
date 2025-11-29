@@ -212,7 +212,7 @@
     .priority-header {
         padding: 12px 14px;
         gap: 12px;
-        /* ✅ THÊM 2 DÒNG NÀY - Chuyển sang layout dọc */
+        /* Chuyển sang layout dọc */
         flex-direction: column;
         align-items: stretch;
     }
@@ -750,6 +750,9 @@
 {% endblock %}
 
 {% block content %}
+<div class="task-header-container">
+    {% include 'components/task_header.html' %}
+</div>
 <!-- Priority Header -->
 <div class="priority-header">
     <!-- BÊN TRÁI: trạng thái chính -->

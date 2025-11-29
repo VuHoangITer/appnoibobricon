@@ -290,8 +290,11 @@ body {
 {% endblock %}
 
 {% block content %}
+<!-- ===== TASK HEADER ===== -->
+<div class="task-header-container">
+    {% include 'components/task_header.html' %}
+</div>
 <div class="container-fluid">
-
     <!-- HEADER THEO STYLE PRIORITY -->
     <div class="approval-header">
         <div class="d-flex justify-content-between align-items-center">

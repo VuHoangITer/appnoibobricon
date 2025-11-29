@@ -522,7 +522,12 @@
 {% endblock %}
 
 {% block content %}
-<!-- Filter Section (giữ nguyên ở trên) -->
+<!-- ===== TASK HEADER ===== -->
+<div class="task-header-container">
+    {% include 'components/task_header.html' %}
+</div>
+
+<!-- Filter Section -->
 <div class="mobile-filter-btn mb-3">
     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filterModal">
         <i class="bi bi-funnel-fill"></i> Bộ lọc

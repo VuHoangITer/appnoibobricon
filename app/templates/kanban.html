@@ -316,8 +316,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 {% endblock %}
-
 {% block content %}
+<!-- ===== TASK HEADER ===== -->
+<div class="task-header-container">
+    {% include 'components/task_header.html' %}
+</div>
 <!-- Header Card -->
 <div class="card mb-3">
     <div class="card-header">

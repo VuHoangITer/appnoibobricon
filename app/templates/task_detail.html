@@ -177,8 +177,11 @@ body {
 </style>
 {% endblock %}
 
-
 {% block content %}
+<!-- ===== TASK HEADER ===== -->
+<div class="task-header-container">
+    {% include 'components/task_header.html' %}
+</div>
 <div class="row">
     <!-- ===== CỘT TRÁI: THÔNG TIN CHÍNH ===== -->
     <div class="col-md-8">

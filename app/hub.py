@@ -500,3 +500,21 @@ def get_top_bottom_users():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@bp.app_context_processor
+def inject_top_bottom_users():
+    """
+    Tự động inject top_bottom_data vào tất cả template
+    Chỉ chạy khi user đã đăng nhập
+    """
+    from flask_login import current_user
+
+    if current_user.is_authenticated:
+        try:
+            top_bottom_data = get_top_bottom_users_data()
+            return {'top_bottom_data': top_bottom_data}
+        except:
+            return {'top_bottom_data': None}
+
+    return {'top_bottom_data': None}

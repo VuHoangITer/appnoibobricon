@@ -1,0 +1,82 @@
+<!-- ============================================
+     TASK HEADER COMPONENT - Dùng chung cho tất cả trang tasks
+     ============================================ -->
+
+<div class="performance-header">
+    <div class="performance-logo">
+        <a href="{{ url_for('hub.workflow_hub') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BRICON Logo">
+        </a>
+    </div>
+
+    <div class="performance-right">
+        <h5 class="performance-title">TO DO BRICON</h5>
+
+        <div class="filter-bar">
+            <!-- Nút hiển thị ngày hiện tại (không filter) -->
+            <button class="filter-date-btn" disabled style="cursor: default;">
+                <span class="current-day" id="currentDay">...</span>
+            </button>
+
+            <!-- Top & Bottom Users -->
+            <div class="top-bottom-users" id="topBottomUsers">
+                {% if top_bottom_data %}
+                    {% if top_bottom_data.top_user %}
+                    <div class="top-user" title="Làm nhiều nhất: {{ top_bottom_data.top_user.full_name }}">
+                        <img src="{% if top_bottom_data.top_user.avatar %}/profile/avatar/{{ top_bottom_data.top_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ top_bottom_data.top_user.full_name|urlencode }}&background=00ff89&color=000&size=128{% endif %}"
+                             alt="{{ top_bottom_data.top_user.full_name }}"
+                             class="user-badge-avatar"
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ top_bottom_data.top_user.full_name|urlencode }}&background=00ff89&color=000&size=128'">
+                        <span class="user-badge-name">{{ top_bottom_data.top_user.full_name }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if top_bottom_data.bottom_user %}
+                    <div class="bottom-user" title="Cần cố gắng thêm: {{ top_bottom_data.bottom_user.full_name }}">
+                        <img src="{% if top_bottom_data.bottom_user.avatar %}/profile/avatar/{{ top_bottom_data.bottom_user.avatar }}{% else %}https://ui-avatars.com/api/?name={{ top_bottom_data.bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128{% endif %}"
+                             alt="{{ top_bottom_data.bottom_user.full_name }}"
+                             class="user-badge-avatar"
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ top_bottom_data.bottom_user.full_name|urlencode }}&background=dc3545&color=fff&size=128'">
+                        <span class="user-badge-name">{{ top_bottom_data.bottom_user.full_name }}</span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========================================
+// UPDATE CURRENT DAY DISPLAY
+// ========================================
+(function setupCurrentDayDisplay() {
+    function updateCurrentDay() {
+        const currentDayElement = document.getElementById('currentDay');
+        if (!currentDayElement) return;
+
+        const today = new Date();
+        const day = today.getDate();
+        currentDayElement.textContent = day;
+    }
+
+    // Update immediately
+    updateCurrentDay();
+
+    // Schedule update at midnight
+    function scheduleNextDayUpdate() {
+        const now = new Date();
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const timeUntilMidnight = tomorrow - now;
+
+        setTimeout(() => {
+            updateCurrentDay();
+            scheduleNextDayUpdate();
+        }, timeUntilMidnight);
+    }
+
+    scheduleNextDayUpdate();
+})();
+</script>
