@@ -415,16 +415,18 @@
     justify-content: flex-end;
 }
 
-/* Task Flow (Avatar) */
+/* ===== TASK FLOW (AVATAR) ===== */
 .task-flow {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
+/* Avatar container */
 .task-user {
     display: flex;
     align-items: center;
+    margin-left: 0;
 }
 
 .task-user-avatar {
@@ -439,6 +441,8 @@
     font-weight: 600;
     font-size: 0.8rem;
     flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .task-user-avatar img {
@@ -453,6 +457,33 @@
     color: var(--ed-muted);
     margin: 0 4px;
 }
+
+/* ===== DÃY AVATAR NGƯỜI LÀM ===== */
+.task-assignees {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 100%;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 768px) {
+    .task-user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+
+    .task-arrow {
+        font-size: 0.9rem;
+        margin: 0 2px;
+    }
+
+    .task-assignees {
+        gap: 6px;
+    }
+}
+
 
 /* Requirement Box */
 .task-requirement {
@@ -872,15 +903,21 @@
 
                             <div class="task-arrow">→</div>
 
-                            <!-- Avatar người làm -->
-                            <div class="task-user">
-                                <div class="task-user-avatar">
-                                    {% if user.avatar %}
-                                        <img src="{{ url_for('profile.get_avatar', filename=user.avatar) }}" alt="{{ user.full_name }}">
-                                    {% else %}
-                                        {{ user.full_name[0].upper() }}
-                                    {% endif %}
-                                </div>
+                            <!-- Avatar TẤT CẢ người làm - KHÔNG GIỚI HẠN -->
+                            <div class="task-assignees">
+                                {% if task._cached_assignments %}
+                                    {% for assignment in task._cached_assignments %}
+                                    <div class="task-user">
+                                        <div class="task-user-avatar">
+                                            {% if assignment.user.avatar %}
+                                                <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="{{ assignment.user.full_name }}">
+                                            {% else %}
+                                                {{ assignment.user.full_name[0].upper() }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -912,7 +949,7 @@
                 <!-- Hàng 2: Yêu cầu -->
                 <div class="task-requirement">
                     <div class="task-requirement-label">YÊU CẦU:</div>
-                    <div>{{ task.description or 'Không có mô tả' }}</div>
+                    <div style="white-space: pre-wrap;">{{ task.description or 'Không có mô tả' }}</div>
                 </div>
             </div>
 

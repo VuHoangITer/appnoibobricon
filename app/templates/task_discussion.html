@@ -27,6 +27,7 @@
         <div class="task-card-body">
             <div class="task-card-row">
                 <div class="task-flow-compact">
+                    <!-- Avatar người giao -->
                     <div class="task-avatar-compact">
                         {% if task.creator.avatar %}
                             <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}"
@@ -35,23 +36,22 @@
                             {{ task.creator.full_name[0].upper() }}
                         {% endif %}
                     </div>
+
                     <div class="task-arrow-compact">→</div>
-                    <div class="task-avatar-compact">
-                        {% if user_assignment %}
-                            {% if current_user.avatar %}
-                                <img src="{{ url_for('profile.get_avatar', filename=current_user.avatar) }}"
-                                     alt="{{ current_user.full_name }}">
-                            {% else %}
-                                {{ current_user.full_name[0].upper() }}
-                            {% endif %}
-                        {% elif assignments %}
-                            {% set first_assigned = assignments[0].user %}
-                            {% if first_assigned.avatar %}
-                                <img src="{{ url_for('profile.get_avatar', filename=first_assigned.avatar) }}"
-                                     alt="{{ first_assigned.full_name }}">
-                            {% else %}
-                                {{ first_assigned.full_name[0].upper() }}
-                            {% endif %}
+
+                    <!-- DÃY AVATAR NGƯỜI LÀM -->
+                    <div class="task-assignees-compact">
+                        {% if assignments %}
+                            {% for assignment in assignments %}
+                            <div class="task-avatar-compact">
+                                {% if assignment.user.avatar %}
+                                    <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}"
+                                         alt="{{ assignment.user.full_name }}">
+                                {% else %}
+                                    {{ assignment.user.full_name[0].upper() }}
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         {% endif %}
                     </div>
                 </div>
@@ -69,38 +69,13 @@
                                 </div>
                             {% endif %}
                         </div>
-                    {% elif priority_text %}
-                        <span class="task-priority-badge {{ priority_class }}">
-                            <span>{{ priority_icon }}</span>
-                            <span>{{ priority_text }}</span>
-                        </span>
                     {% endif %}
                 </div>
             </div>
 
             <div class="task-requirement-compact">
                 <div class="task-requirement-label">YÊU CẦU:</div>
-                <div>{{ task.description or 'Không có mô tả' }}</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Participants -->
-    <div class="participants-section">
-        <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-people text-muted"></i>
-            <small class="text-muted">Người Làm:</small>
-            <div class="participants-list">
-                {% for assignment in assignments %}
-                <div class="participant-avatar"
-                     title="{{ assignment.user.full_name }} - {{ assignment.user.role | role_vn }}">
-                    {% if assignment.user.avatar %}
-                    <img src="{{ url_for('profile.get_avatar', filename=assignment.user.avatar) }}" alt="">
-                    {% else %}
-                    {{ assignment.user.full_name[0].upper() }}
-                    {% endif %}
-                </div>
-                {% endfor %}
+                <div style="white-space: pre-wrap;">{{ task.description or 'Không có mô tả' }}</div>
             </div>
         </div>
     </div>
@@ -109,7 +84,12 @@
     <div class="comments-container">
         <!-- Header -->
         <div class="comments-header">
-            <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Thảo luận</h6>
+            {% if priority_text %}
+                <span class="task-priority-badge {{ priority_class }}">
+                    <span>{{ priority_icon }}</span>
+                    <span>{{ priority_text }}</span>
+                </span>
+            {% endif %}
             <span class="comments-count" id="commentsCount">
                 {{ sorted_comments | length }} tin nhắn
             </span>

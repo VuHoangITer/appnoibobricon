@@ -1597,6 +1597,27 @@ def priority_detail():
 
         unread_counts = {task_id: max(0, unread) for task_id, unread in results}
 
+    # ===== BATCH LOAD ASSIGNMENTS CHO TẤT CẢ TASKS =====
+    if task_ids:
+        from sqlalchemy.orm import joinedload
+        all_assignments = db.session.query(TaskAssignment).options(
+            joinedload(TaskAssignment.user)
+        ).filter(
+            TaskAssignment.task_id.in_(task_ids),
+            TaskAssignment.accepted == True
+        ).all()
+
+        # Tạo dictionary: task_id -> list of assignments
+        assignments_by_task = {}
+        for assignment in all_assignments:
+            if assignment.task_id not in assignments_by_task:
+                assignments_by_task[assignment.task_id] = []
+            assignments_by_task[assignment.task_id].append(assignment)
+
+        # Gán vào tasks
+        for task in tasks:
+            task._cached_assignments = assignments_by_task.get(task.id, [])
+
     # ===== GÁN DATA CHO TASKS =====
     for task in tasks:
         if task.due_date:
