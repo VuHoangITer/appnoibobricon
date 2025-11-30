@@ -24,3 +24,18 @@ def vn_to_utc(vn_dt):
         # Assume VN timezone
         vn_dt = vn_dt.replace(tzinfo=VN_TZ)
     return vn_dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+# ============================================
+#  CACHE BUSTER
+# ============================================
+def versioned_static(filename):
+    """Thêm version vào static URL để tránh cache"""
+    from flask import url_for, current_app
+    version = current_app.config.get('VERSION', '1.0')
+    url = url_for('static', filename=filename)
+    return f"{url}?v={version}"
+
+def init_cache_buster(app):
+    """Đăng ký cache buster với Flask"""
+    app.jinja_env.globals['versioned_static'] = versioned_static
+    print(f"✅ Cache buster OK (v{app.config.get('VERSION')})")

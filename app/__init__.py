@@ -34,6 +34,9 @@ def create_app(config_class=Config):
     os.makedirs(upload_path, exist_ok=True)
     os.makedirs(news_images_path, exist_ok=True)
 
+    from app.utils import init_cache_buster
+    init_cache_buster(app)
+
     # THÊM: Register built-in Python functions to Jinja2
     from datetime import datetime, timedelta  # ← SỬA: Thêm timedelta
     app.jinja_env.globals.update(min=min, max=max, timedelta=timedelta)  # ← SỬA: Thêm timedelta

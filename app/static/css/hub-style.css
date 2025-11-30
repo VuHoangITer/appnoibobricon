@@ -1,9 +1,9 @@
 /* ============================================
-   BASE STYLES
+   BASE STYLES HUB-STYLE.CSS
    ============================================ */
 body {
     background-color: transparent !important;
-    background-image: url('/static/images/hinh-nen.webp') !important;
+    /* ẢNH NỀN SẼ ĐƯỢC THÊM VÀO TỪ HUB.HTML */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -12,7 +12,6 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* iOS Safari fixed background fix */
 @supports (-webkit-touch-callout: none) {
     body {
         background: none;
@@ -27,7 +26,6 @@ body {
         height: 100vh;
         height: 100dvh;
         background-color: transparent !important;
-        background-image: url('/static/images/hinh-nen.webp') !important;
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
