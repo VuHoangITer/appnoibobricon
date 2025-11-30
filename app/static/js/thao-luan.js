@@ -616,41 +616,114 @@ window.addEventListener('pagehide', () => {
 // ============================================
 let longPressTimer = null;
 let longPressCommentId = null;
+let isScrolling = false;
+let scrollTimeout = null;
 
 function initLongPressListeners() {
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
     if (!isMobile) return; // Chỉ áp dụng cho mobile
 
+    // QUAN TRỌNG: Xóa tất cả listeners cũ trước khi gắn mới
+    document.querySelectorAll('.comment-item.mine').forEach(item => {
+        // Clone node để xóa tất cả event listeners
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+    });
+
+    // Detect scrolling
+    const commentsList = document.getElementById('commentsList');
+    if (commentsList) {
+        commentsList.addEventListener('scroll', () => {
+            isScrolling = true;
+
+            // Clear timer nếu đang scroll
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+
+            // Reset scroll state sau 150ms
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        }, { passive: true });
+    }
+
+    // Gắn listeners MỚI
     document.querySelectorAll('.comment-item.mine').forEach(item => {
         const commentId = parseInt(item.dataset.id);
+        let touchStartY = 0;
+        let hasMoved = false;
 
-        // Touch events
-        item.addEventListener('touchstart', (e) => {
+        // Touch start
+        const handleTouchStart = (e) => {
+            // Không làm gì nếu đang scroll
+            if (isScrolling) return;
+
+            touchStartY = e.touches[0].clientY;
+            hasMoved = false;
             longPressCommentId = commentId;
             item.classList.add('long-pressing');
 
             longPressTimer = setTimeout(() => {
-                showDeleteModal(commentId);
+                // Chỉ show modal nếu KHÔNG di chuyển và KHÔNG scroll
+                if (!hasMoved && !isScrolling) {
+                    showDeleteModal(commentId);
+                }
                 item.classList.remove('long-pressing');
-            }, 500); // 500ms = 0.5 giây
-        });
+                longPressTimer = null;
+            }, 500);
+        };
 
-        item.addEventListener('touchend', () => {
+        // Touch move - detect scroll
+        const handleTouchMove = (e) => {
+            const touchY = e.touches[0].clientY;
+            const deltaY = Math.abs(touchY - touchStartY);
+
+            // Nếu di chuyển > 10px thì coi như scroll
+            if (deltaY > 10) {
+                hasMoved = true;
+                isScrolling = true;
+            }
+
+            if (longPressTimer && (hasMoved || isScrolling)) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                item.classList.remove('long-pressing');
+            }
+        };
+
+        // Touch end
+        const handleTouchEnd = () => {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
             item.classList.remove('long-pressing');
-        });
 
-        item.addEventListener('touchmove', () => {
+            // Reset hasMoved sau 100ms
+            setTimeout(() => {
+                hasMoved = false;
+            }, 100);
+        };
+
+        // Touch cancel
+        const handleTouchCancel = () => {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
             }
             item.classList.remove('long-pressing');
-        });
+            hasMoved = false;
+        };
+
+        // Gắn events với passive: false để có thể preventDefault nếu cần
+        item.addEventListener('touchstart', handleTouchStart, { passive: true });
+        item.addEventListener('touchmove', handleTouchMove, { passive: true });
+        item.addEventListener('touchend', handleTouchEnd, { passive: true });
+        item.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     });
 }
 
@@ -670,9 +743,6 @@ function showDeleteModal(commentId) {
             <div class="delete-modal-header">
                 <i class="bi bi-trash3"></i>
                 <h3 class="delete-modal-title">Xóa tin nhắn?</h3>
-            </div>
-            <div class="delete-modal-body">
-                Bạn có chắc chắn muốn xóa tin nhắn này không? Hành động này không thể hoàn tác.
             </div>
             <div class="delete-modal-actions">
                 <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">
