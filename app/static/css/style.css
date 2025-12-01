@@ -1262,27 +1262,3 @@ body::-webkit-scrollbar {
         height: 26px;
     }
 }
-/* ============================================
-   FIX LOADING SPINNER & HUB CENTERING
-   ============================================ */
-
-/* Ẩn loading spinner toàn cục */
-body:not(.page-loaded)::before {
-    display: none !important;
-}
-
-body:not(.page-loaded) .main-content,
-body:not(.page-loaded) .hub-main-container {
-    opacity: 1 !important;
-}
-
-body.page-loaded .main-content,
-body.page-loaded .hub-main-container {
-    opacity: 1;
-    animation: quickFadeIn 0.2s ease;
-}
-
-@keyframes quickFadeIn {
-    from { opacity: 0.8; }
-    to { opacity: 1; }
-}
