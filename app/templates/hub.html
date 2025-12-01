@@ -96,7 +96,7 @@
                 {% if current_user.role in ['director', 'manager'] %}
                 <a href="{{ url_for('tasks.pending_approvals') }}" class="sidebar-menu-item" data-badge-id="tasks_need_approval">
                     <i class="bi bi-hourglass-split" style="color: #ff9800;"></i>
-                    <span>Chờ Phê Duyệt</span>
+                    <span>Chờ Duyệt</span>
                     {% if tasks_need_approval > 0 %}
                     <span class="badge bg-warning text-dark">{{ tasks_need_approval }}</span>
                     {% endif %}

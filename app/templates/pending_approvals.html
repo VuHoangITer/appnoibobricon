@@ -28,7 +28,7 @@ body {
     background: var(--ed-bg);
 }
 
-/* HEADER TRÊN CÙNG – giống priority-header nhưng text riêng */
+/* HEADER TRÊN CÙNG */
 .approval-header {
     background: var(--ed-card-bg);
     border: 1px solid var(--ed-border);
@@ -53,20 +53,13 @@ body {
     margin-top: 4px;
 }
 
-.approval-count-label {
-    font-size: 0.8rem;
-    color: var(--ed-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
 .approval-count-number {
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--ed-text);
 }
 
-/* Lưới card giống task-cards-container */
+/* Lưới card */
 .task-cards-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -74,7 +67,7 @@ body {
     margin-bottom: 20px;
 }
 
-/* CARD NHIỆM VỤ – reuse style enterprise */
+/* CARD NHIỆM VỤ */
 .task-card {
     border: 1px solid var(--ed-border);
     border-radius: 24px;
@@ -101,6 +94,25 @@ body {
     text-align: center;
     color: var(--ed-text);
     background: #f9fafb;
+}
+
+/* Header màu theo loại task */
+.task-card-header.header-urgent {
+    background: var(--ed-danger-soft);
+    color: #b91c1c;
+    border-bottom-color: #fecaca;
+}
+
+.task-card-header.header-important {
+    background: #fff7ed;
+    color: #c2410c;
+    border-bottom-color: #fed7aa;
+}
+
+.task-card-header.header-recurring {
+    background: var(--ed-info-soft);
+    color: #075985;
+    border-bottom-color: #bae6fd;
 }
 
 .task-card-body {
@@ -170,14 +182,6 @@ body {
     color: var(--ed-muted);
 }
 
-/* Badge vai trò nhỏ gọn */
-.task-role-badge {
-    border-radius: var(--ed-radius-pill);
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    margin-right: 4px;
-}
-
 /* Hạn xử lý */
 .task-due-pill {
     padding: 6px 10px;
@@ -196,49 +200,17 @@ body {
     font-size: 0.9rem;
 }
 
-/* Mô tả */
+/* Mô tả - Hiển thị đầy đủ với white-space: pre-wrap */
 .task-description {
     font-size: 0.84rem;
     color: var(--ed-muted);
-    max-height: 60px;
-    overflow: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.5;
+    margin-top: 8px;
 }
 
-/* Tags (Khẩn cấp / Quan trọng / Lặp lại) */
-.task-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 2px;
-}
-
-.task-tag {
-    border-radius: var(--ed-radius-pill);
-    padding: 3px 9px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* Style từng loại tag */
-.task-tag-urgent {
-    background: var(--ed-danger-soft);
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-}
-
-.task-tag-important {
-    background: var(--ed-primary-soft);
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-}
-
-.task-tag-recurring {
-    background: var(--ed-info-soft);
-    color: #075985;
-    border: 1px solid #bae6fd;
-}
-
-/* Empty state enterprise */
+/* Empty state */
 .empty-state {
     background: var(--ed-card-bg);
     border-radius: 24px;
@@ -264,7 +236,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* Responsive giống priority */
+/* Responsive */
 @media (max-width: 1024px) {
     .task-cards-container {
         grid-template-columns: repeat(2, 1fr);
@@ -295,7 +267,7 @@ body {
     {% include 'components/task_header.html' %}
 </div>
 <div class="container-fluid">
-    <!-- HEADER THEO STYLE PRIORITY -->
+    <!-- HEADER -->
     <div class="approval-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -317,14 +289,18 @@ body {
         </div>
     </div>
 
-    <!-- DANH SÁCH TASKS – GRID 3 CỘT GIỐNG TRANG PRIORITY -->
+    <!-- DANH SÁCH TASKS -->
     {% if tasks %}
     <div class="task-cards-container">
         {% for task in tasks %}
         <div class="task-card"
              onclick="location.href='{{ url_for('tasks.task_detail', task_id=task.id) }}'">
-            <!-- Header -->
-            <div class="task-card-header">
+            <!-- Header - Màu theo loại task (ưu tiên: khẩn cấp > quan trọng > lặp lại) -->
+            <div class="task-card-header
+                {% if task.is_urgent %}header-urgent
+                {% elif task.is_important %}header-important
+                {% elif task.is_recurring %}header-recurring
+                {% endif %}">
                 {{ task.title }}
             </div>
 
@@ -347,48 +323,28 @@ body {
                                     {{ task.creator.full_name }}
                                 </div>
                                 <div class="task-creator-meta">
-                                    <span class="badge bg-info task-role-badge">
-                                        {{ task.creator.role | role_vn }}
-                                    </span>
-                                    Tạo lúc {{ task.created_at | vn_datetime }}
+                                    Tạo: {{ task.created_at | vn_datetime }}
                                 </div>
                             </div>
                         </div>
 
                         {% if task.due_date %}
-                        <div class="task-due-pill">
-                            <i class="bi bi-calendar-event"></i>
-                            <span>Hạn: {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}</span>
+                        <div class="task-due-pill text-danger">
+                            <span>{{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}</span>
                         </div>
                         {% endif %}
                     </div>
-
-                    <!-- Mô tả -->
+                    <!-- Mô tả - Hiển thị đầy đủ -->
                     {% if task.description %}
-                    <p class="task-description mb-1">
-                        {{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}
-                    </p>
+                    <div class="task-description">{{ task.description }}</div>
                     {% endif %}
-
-                    <!-- Tags -->
-                    <div class="task-tags">
-                        {% if task.is_urgent %}
-                        <span class="task-tag task-tag-urgent">🔥 Khẩn cấp</span>
-                        {% endif %}
-                        {% if task.is_important %}
-                        <span class="task-tag task-tag-important">⭐ Quan trọng</span>
-                        {% endif %}
-                        {% if task.is_recurring %}
-                        <span class="task-tag task-tag-recurring">🔁 Lặp lại</span>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <!-- Empty state enterprise -->
+    <!-- Empty state -->
     <div class="empty-state">
         <i class="bi bi-inbox"></i>
         <h5>Không có công việc chờ phê duyệt</h5>
