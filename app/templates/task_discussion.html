@@ -4,7 +4,7 @@
 {% block page_title %}{ task.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/thao-luan.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/thao-luan.css') }}?v={{ config.VERSION }} }}">
 {% endblock %}
 
 {% block content %}
@@ -266,5 +266,5 @@ window.CONFIG = {
 </script>
 
 <!-- ✅ LOAD FILE JS SAU KHI ĐÃ CÓ CONFIG -->
-<script src="{{ url_for('static', filename='js/thao-luan.js') }}"></script>
+<script src="{{ url_for('static', filename='js/thao-luan.js') }}?v={{ config.VERSION }} }}"></script>
 {% endblock %}

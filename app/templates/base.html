@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ thống quản lý công việc{% endblock %}</title>
 
+    <style>
+    /* Ẩn main content khi chưa load xong */
+    body:not(.page-loaded) .main-content,
+    body:not(.page-loaded) .hub-main-container {
+        opacity: 0;
+    }
+
+    /* Loading spinner */
+    body:not(.page-loaded)::before {
+        content: '';
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: globalSpin 0.8s linear infinite;
+        z-index: 9999;
+    }
+
+    @keyframes globalSpin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Fade in khi loaded */
+    body.page-loaded .main-content,
+    body.page-loaded .hub-main-container {
+        opacity: 1;
+        animation: globalFadeIn 0.3s ease;
+    }
+
+    @keyframes globalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
 
@@ -31,8 +70,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/notification-settings.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ config.VERSION }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notification-settings.css') }}?v={{ config.VERSION }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}?v={{ config.VERSION }}">
 
     <style>
@@ -332,23 +371,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- ========== CACHE BUSTER ========== -->
     <script>
-        // THÊM VERSION VÀO TẤT CẢ CSS/JS
+        // ✅ CACHE BUSTER - OPTIMIZED VERSION
         (function() {
             const VERSION = '{{ config.VERSION }}';
-
-            // Thêm ?v=VERSION vào tất cả CSS
-            document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && !href.includes('?v=') && !href.startsWith('http')) {
-                    link.href = href + '?v=' + VERSION;
-                }
-            });
-
-            // Check version và clear cache nếu khác
             const STORED_VERSION = localStorage.getItem('app_version');
 
+            // Chỉ reload khi version thay đổi
             if (STORED_VERSION && STORED_VERSION !== VERSION) {
-                console.log('🔄 New version! Clearing cache and reloading...');
+                console.log('🔄 New version detected! Clearing cache...');
 
                 // Clear cache
                 if ('caches' in window) {
@@ -363,7 +393,7 @@
                 // Hard reload
                 window.location.reload(true);
             } else if (!STORED_VERSION) {
-                // First time
+                // First time visit
                 localStorage.setItem('app_version', VERSION);
             }
         })();
@@ -387,7 +417,7 @@
 
     <!-- SSE Manager - Load cho tất cả authenticated users -->
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/sse-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sse-manager.js') }}?v={{ config.VERSION }}"></script>
     <script>
     // ==========================================
     // SSE CLEANUP ON NAVIGATION
@@ -437,8 +467,8 @@
 
     <!-- Notification Sound & Manager -->
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/notification-sound.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/notification-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-sound.js') }}?v={{ config.VERSION }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-manager.js') }}?v={{ config.VERSION }}"></script>
     {% endif %}
 
     <script>
@@ -826,5 +856,29 @@
             }
         </script>
     {% endif %}
+    <script>
+        (function() {
+            // Mark page as loaded khi DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    requestAnimationFrame(function() {
+                        document.body.classList.add('page-loaded');
+                    });
+                });
+            } else {
+                // Nếu đã load rồi (cache)
+                requestAnimationFrame(function() {
+                    document.body.classList.add('page-loaded');
+                });
+            }
+
+            // Fallback: force loaded sau 800ms
+            setTimeout(function() {
+                if (!document.body.classList.contains('page-loaded')) {
+                    document.body.classList.add('page-loaded');
+                }
+            }, 800);
+        })();
+    </script>
 </body>
 </html>

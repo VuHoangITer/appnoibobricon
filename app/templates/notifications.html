@@ -43,9 +43,23 @@ body {
 }
 
 .d-flex.justify-content-between.align-items-center.mb-4 h2 .badge {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     border-radius: 999px;
-    font-weight: 500;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    line-height: 1;
+}
+/* Fix header layout - không cho xuống dòng */
+.d-flex.justify-content-between.align-items-center.mb-4 {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.75rem;
+}
+
+.d-flex.justify-content-between.align-items-center.mb-4 > .d-flex.gap-2 {
+    flex: 0 0 auto;
+    flex-shrink: 0;
 }
 
 /* Animation cho item bị xóa */
@@ -77,7 +91,7 @@ body {
     font-size: 0.875rem;
 }
 
-/* Button action mềm, không quá “nổi” */
+/* Button action mềm, không quá "nổi" */
 .btn-action {
     border-radius: 999px !important;
     padding-inline: 0.65rem;
@@ -195,17 +209,6 @@ body {
     padding-block: 0.25rem;
 }
 
-/* Nút “đánh dấu đã đọc” */
-.list-group-item .btn-outline-success {
-    border-color: rgba(16, 185, 129, 0.35);
-    color: #059669;
-}
-
-.list-group-item .btn-outline-success:hover {
-    background: #ecfdf5;
-    border-color: #059669;
-}
-
 /* Nút xóa */
 .list-group-item .btn-danger {
     background-color: #fee2e2;
@@ -228,6 +231,7 @@ body {
     font-size: 0.9rem;
     color: var(--notif-muted);
 }
+
 /* ---------- RESPONSIVE CHO MOBILE ---------- */
 @media (max-width: 767.98px) {
     /* Header: trái = tiêu đề, phải = cụm nút */
@@ -269,14 +273,14 @@ body {
 
     /* --- QUAN TRỌNG: giữ layout 2 cột cho card thông báo --- */
     .list-group-item .d-flex.w-100.justify-content-between.align-items-start {
-        flex-direction: row;          /* KHÔNG cho column nữa */
+        flex-direction: row;
         align-items: flex-start;
         gap: 0.5rem;
     }
 
     .list-group-item .d-flex.gap-2.ms-3.flex-wrap {
         margin-left: 0.5rem !important;
-        width: auto;                  /* không full width */
+        width: auto;
         justify-content: flex-end;
         align-items: flex-start;
     }
@@ -323,13 +327,14 @@ body {
 <div class="task-header-container">
     {% include 'components/task_header.html' %}
 </div>
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>
-        <i class="bi bi-bell"></i> Thông báo
-        <span class="badge bg-primary ms-2" id="total-count">{{ notifications|length }}</span>
-        <span class="badge bg-danger ms-1" id="unread-badge">
-            {{ notifications|selectattr('read', 'equalto', False)|list|length }}
-        </span>
+        <i class="bi bi-bell"></i> Thông Báo
+        {% set unread_count = notifications|selectattr('read', 'equalto', False)|list|length %}
+        {% if unread_count > 0 %}
+        <span class="badge bg-danger ms-1" id="unread-badge">{{ unread_count }}</span>
+        {% endif %}
     </h2>
 
     <div class="d-flex gap-2">
@@ -340,13 +345,13 @@ body {
 
         <!-- Đánh dấu tất cả đã đọc -->
         <button type="button" class="btn btn-sm btn-secondary btn-action" id="mark-all-read-btn">
-            <i class="bi bi-check-all"></i>Đã đọc tất cả
+            <i class="bi bi-check-all"></i>
         </button>
 
         <!-- Xóa dropdown -->
         <div class="dropdown">
             <button class="btn btn-sm btn-danger dropdown-toggle btn-action" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-trash"></i>Xóa
+                <i class="bi bi-trash"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li>
@@ -364,6 +369,7 @@ body {
         </div>
     </div>
 </div>
+
 <div class="card">
     <div class="card-body">
         {% if notifications %}
@@ -388,21 +394,12 @@ body {
                     </div>
 
                     <div class="d-flex gap-2 ms-3 flex-wrap">
-                        <!-- Nút đánh dấu đã đọc (chỉ hiện khi chưa đọc) -->
-                        {% if not notif.read %}
-                        <button type="button"
-                                class="btn btn-sm btn-outline-success mark-read-btn"
-                                data-notif-id="{{ notif.id }}"
-                                title="Đánh dấu đã đọc">
-                            <i class="bi bi-check"></i>
-                        </button>
-                        {% endif %}
-
-                        <!-- Nút xóa -->
+                        <!-- CHỈ CÒN NÚT XÓA -->
                         <button type="button"
                                 class="btn btn-sm btn-danger delete-btn"
                                 data-notif-id="{{ notif.id }}"
-                                title="Xóa">
+                                title="Xóa"
+                                onclick="event.stopPropagation()">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -442,23 +439,33 @@ body {
     }
 
     // Update badge counts
-    function updateCounts(unreadCount, totalCount = null) {
+    function updateCounts(unreadCount) {
         const unreadBadge = document.getElementById('unread-badge');
-        const totalBadge = document.getElementById('total-count');
 
+        // Update badge ở header trang
         if (unreadBadge) {
-            unreadBadge.textContent = `${unreadCount}`;
-            unreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+            if (unreadCount > 0) {
+                unreadBadge.textContent = `${unreadCount}`;
+                unreadBadge.style.display = 'inline-block';
+            } else {
+                unreadBadge.style.display = 'none';
+            }
+        } else {
+            // Nếu chưa có badge, tạo mới
+            if (unreadCount > 0) {
+                const h2 = document.querySelector('.d-flex.justify-content-between h2');
+                if (h2 && !h2.querySelector('#unread-badge')) {
+                    const badge = document.createElement('span');
+                    badge.id = 'unread-badge';
+                    badge.className = 'badge bg-danger ms-1';
+                    badge.textContent = unreadCount;
+                    h2.appendChild(badge);
+                }
+            }
         }
 
-        if (totalCount !== null && totalBadge) {
-            totalBadge.textContent = `${totalCount}`;
-        }
-
-        // Cập nhật badge ở topbar và sidebar
+        // Cập nhật badge ở topbar
         const topbarBadge = document.getElementById('notif-count');
-        const sidebarBadge = document.getElementById('sidebar-notif-count');
-
         if (topbarBadge) {
             if (unreadCount > 0) {
                 topbarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
@@ -468,12 +475,14 @@ body {
             }
         }
 
-        if (sidebarBadge) {
+        // Cập nhật badge mobile
+        const mobileBadge = document.getElementById('mobile-notif-count');
+        if (mobileBadge) {
             if (unreadCount > 0) {
-                sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                sidebarBadge.style.display = 'inline-block';
+                mobileBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                mobileBadge.style.display = 'inline-block';
             } else {
-                sidebarBadge.style.display = 'none';
+                mobileBadge.style.display = 'none';
             }
         }
     }
@@ -498,49 +507,50 @@ body {
         }
     }
 
-    // Mark single notification as read
+    // Click vào notification → Mark as read + Open link
     document.addEventListener('click', async function(e) {
-        const btn = e.target.closest('.mark-read-btn');
-        if (!btn) return;
+        const item = e.target.closest('.list-group-item');
+        if (!item) return;
 
-        const notifId = btn.getAttribute('data-notif-id');
-        const notifItem = document.querySelector(`[data-notif-id="${notifId}"]`);
+        // Nếu click vào nút xóa → không xử lý
+        if (e.target.closest('.delete-btn')) return;
 
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        const notifId = item.getAttribute('data-notif-id');
+        const isRead = item.getAttribute('data-read') === 'true';
+        const link = item.getAttribute('data-link');
 
-        try {
-            const response = await fetch(`/notifications/${notifId}/mark-read`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: `csrf_token=${CSRF_TOKEN}`
-            });
+        // Nếu chưa đọc → mark as read
+        if (!isRead) {
+            try {
+                const response = await fetch(`/notifications/${notifId}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `csrf_token=${CSRF_TOKEN}`
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (data.success) {
-                notifItem.classList.remove('list-group-item-primary');
-                notifItem.setAttribute('data-read', 'true');
+                if (data.success) {
+                    // Update UI
+                    item.classList.remove('list-group-item-primary');
+                    item.setAttribute('data-read', 'true');
 
-                const dot = notifItem.querySelector('.bi-circle-fill');
-                if (dot) dot.remove();
+                    const dot = item.querySelector('.bi-circle-fill');
+                    if (dot) dot.remove();
 
-                btn.remove();
-
-                updateCounts(data.unread_count);
-
-                showToast('Đã đánh dấu đã đọc', 'success');
-            } else {
-                throw new Error(data.error || 'Có lỗi xảy ra');
+                    updateCounts(data.unread_count);
+                }
+            } catch (error) {
+                console.error('Error marking as read:', error);
             }
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Không thể đánh dấu đã đọc', 'danger');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check"></i>';
+        }
+
+        // Mở link (nếu có)
+        if (link) {
+            window.location.href = link;
         }
     });
 
@@ -548,6 +558,8 @@ body {
     document.addEventListener('click', async function(e) {
         const btn = e.target.closest('.delete-btn');
         if (!btn) return;
+
+        e.stopPropagation(); // Ngăn trigger click vào item
 
         if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
 
@@ -572,7 +584,7 @@ body {
                 notifItem.classList.add('notification-removing');
                 setTimeout(() => {
                     notifItem.remove();
-                    updateCounts(data.unread_count, data.total_count);
+                    updateCounts(data.unread_count);
                     checkEmptyState();
                     showToast('Đã xóa thông báo', 'success');
                 }, 300);
@@ -617,9 +629,6 @@ body {
 
                     const dot = item.querySelector('.bi-circle-fill');
                     if (dot) dot.remove();
-
-                    const markBtn = item.querySelector('.mark-read-btn');
-                    if (markBtn) markBtn.remove();
                 });
 
                 updateCounts(0);
@@ -665,7 +674,7 @@ body {
                         setTimeout(() => {
                             item.remove();
                             if (index === readItems.length - 1) {
-                                updateCounts(data.unread_count, data.total_count);
+                                updateCounts(data.unread_count);
                                 checkEmptyState();
                                 showToast(`Đã xóa ${data.deleted_count} thông báo`, 'success');
                             }
@@ -707,7 +716,7 @@ body {
                         setTimeout(() => {
                             item.remove();
                             if (index === allItems.length - 1) {
-                                updateCounts(0, 0);
+                                updateCounts(0);
                                 checkEmptyState();
                                 showToast(`Đã xóa ${data.deleted_count} thông báo`, 'success');
                             }
@@ -728,18 +737,5 @@ body {
     updateCounts(unreadCount);
 
 })();
-    // Click vào cả item để mở link
-document.addEventListener("click", function (e) {
-    const item = e.target.closest(".list-group-item");
-    if (!item) return;
-
-    // Nếu click trúng nút (đọc, xóa) thì không mở link
-    if (e.target.closest("button")) return;
-
-    const link = item.getAttribute("data-link");
-    if (link) {
-        window.location.href = link;
-    }
-});
 </script>
 {% endblock %}

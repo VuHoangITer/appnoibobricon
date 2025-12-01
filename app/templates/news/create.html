@@ -4,7 +4,7 @@
 {% block page_title %}Đăng Tin Tức{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news-style.css') }}?v={{ config.VERSION }} }}">
 {% endblock %}
 
 {% block content %}

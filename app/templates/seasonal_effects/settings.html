@@ -3,7 +3,7 @@
 {% block title %}Hiệu Ứng Theo Mùa{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}?v={{ config.VERSION }} }}">
 <style>
 /* ============================================
    SANTA CLAUS ANIMATION - ÔNG GIÀ NOEL TẶNG QUÀ
@@ -750,7 +750,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/seasonal-effects.js') }}"></script>
+<script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }} }}"></script>
 <script>
 // ============================================
 // SANTA EFFECT - INLINE VERSION

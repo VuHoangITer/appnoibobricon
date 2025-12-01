@@ -5,7 +5,9 @@
 {% block page_title %}Quy Trình Công Việc{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}">
+<link rel="preload" href="{{ url_for('static', filename='images/hinh-nen.webp') }}" as="image">
+<link rel="preload" href="{{ url_for('static', filename='images/logo.png') }}" as="image">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}?v={{ config.VERSION }}">
 <style>
     body {
         background-image: url('{{ versioned_static("images/hinh-nen.webp") }}') !important;
@@ -1340,14 +1342,6 @@ function formatDate(dateString) {
     // Execute cleanup on page unload
     window.addEventListener('beforeunload', performCleanup);
     window.addEventListener('pagehide', performCleanup);
-
-    // Cleanup when page is restored from bfcache
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            console.log('🔄 Page restored from cache, reloading...');
-            location.reload();
-        }
-    });
 })();
 
 // ========================================
