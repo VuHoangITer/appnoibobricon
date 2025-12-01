@@ -156,8 +156,6 @@
                                 <span class="user-badge-name">{{ initial_top_bottom.bottom_user.full_name }}</span>
                             </div>
                             {% endif %}
-                        {% else %}
-                            <p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>
                         {% endif %}
                     </div>
                 </div>
@@ -1196,9 +1194,11 @@ function renderTopBottomUsers(data) {
     const container = document.getElementById('topBottomUsers');
 
     if (!data || (!data.top_user && !data.bottom_user)) {
-        container.innerHTML = '<p class="text-muted" style="margin: 0;">Chưa có dữ liệu</p>';
+        container.style.display = 'none';
         return;
     }
+
+    container.style.display = 'flex';
 
     const createUserBadge = (user, type) => {
         if (!user) return '';
