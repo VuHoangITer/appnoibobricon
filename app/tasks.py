@@ -534,11 +534,18 @@ def create_task():
         assign_to_user_id = request.form.get('assign_to_user')
         assign_to_group = request.form.get('assign_to_group')
         assign_to_multiple = request.form.getlist('assign_to_multiple[]')
+
+        # ===== TAGS: Cho phép TẤT CẢ user gắn tags =====
         is_urgent = request.form.get('is_urgent') == 'on'
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
-        recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
-        recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+
+        # Recurrence: CHỈ Director/Manager
+        recurrence_enabled = False
+        recurrence_interval_days = 7
+        if current_user.can_assign_tasks():
+            recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
+            recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
 
         # Validate
         if not title:

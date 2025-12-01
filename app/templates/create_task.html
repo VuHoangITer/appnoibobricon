@@ -35,9 +35,8 @@
                         <small class="text-muted">Chọn cả ngày và giờ hạn hoàn thành</small>
                     </div>
 
-                    <!-- Tags -->
-                    {% if current_user.can_assign_tasks() %}
-                    <div class="mb-3">
+                    <!-- Tags - Hiện cho TẤT CẢ user khi tự giao cho mình -->
+                    <div class="mb-3" id="tags_section" style="display: none;">
                         <label class="form-label">
                             <i class="bi bi-tags"></i> Phân Loại Nhiệm Vụ
                         </label>
@@ -73,9 +72,8 @@
                             </div>
                         </div>
                     </div>
-                    {% endif %}
 
-                    <!-- Recurrence -->
+                    <!-- Recurrence - CHỈ cho Director/Manager -->
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
@@ -188,9 +186,11 @@
 {% block scripts %}
 <script>
     // Recurrence toggle
+    {% if current_user.can_assign_tasks() %}
     document.getElementById('recurrence_enabled').addEventListener('change', function() {
         document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
     });
+    {% endif %}
 
     // Character counter for title
     const titleInput = document.getElementById('title');
@@ -211,6 +211,21 @@
             document.getElementById('assign_multiple_container').style.display = 'none';
             document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = true);
 
+            // ===== HIỆN/ẨN PHẦN TAGS =====
+            const tagsSection = document.getElementById('tags_section');
+
+            if (this.value === 'self') {
+                // Tự giao cho mình → HIỆN tags cho TẤT CẢ user
+                tagsSection.style.display = 'block';
+            } else {
+                // Giao cho người khác → CHỈ hiện tags cho Director/Manager
+                {% if current_user.can_assign_tasks() %}
+                tagsSection.style.display = 'block';
+                {% else %}
+                tagsSection.style.display = 'none';
+                {% endif %}
+            }
+
             // Enable theo lựa chọn
             if (this.value === 'user') {
                 document.getElementById('assign_to_user').disabled = false;
@@ -222,5 +237,9 @@
             }
         });
     });
+
+    // ===== TRIGGER LẦN ĐẦU KHI LOAD TRANG =====
+    // Mặc định "self" được chọn → hiện tags
+    document.getElementById('tags_section').style.display = 'block';
 </script>
 {% endblock %}
