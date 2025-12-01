@@ -5,8 +5,6 @@
 {% block page_title %}Quy Trình Công Việc{% endblock %}
 
 {% block extra_css %}
-<link rel="preload" href="{{ url_for('static', filename='images/hinh-nen.webp') }}" as="image">
-<link rel="preload" href="{{ url_for('static', filename='images/logo.png') }}" as="image">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}?v={{ config.VERSION }}">
 <style>
     body {

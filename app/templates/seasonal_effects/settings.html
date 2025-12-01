@@ -3,231 +3,20 @@
 {% block title %}Hiệu Ứng Theo Mùa{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}?v={{ config.VERSION }} }}">
-<style>
-/* ============================================
-   SANTA CLAUS ANIMATION - ÔNG GIÀ NOEL TẶNG QUÀ
-   ============================================ */
-
-.santa-container {
-    position: fixed;
-    bottom: -200px;
-    right: -200px;
-    z-index: 10000;
-    pointer-events: none;
-    animation: santaEnter 8s ease-in-out forwards;
-}
-
-.santa-character {
-    font-size: 120px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-    animation: santaWave 1s ease-in-out infinite;
-}
-
-.santa-gift {
-    position: absolute;
-    font-size: 60px;
-    bottom: 20px;
-    right: 120px;
-    opacity: 0;
-    transform: scale(0);
-    /* 5s: khoảng 2s bung, 3s đứng yên */
-    animation: giftAppear 5s ease-out 3s forwards;
-}
-
-.santa-message {
-    position: absolute;
-    top: -80px;
-    right: 0;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 20px;
-    font-size: 18px;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
-    opacity: 0;
-    transform: translateY(20px);
-    animation: messageAppear 1s ease-out 2s forwards, messageFade 1s ease-in 6s forwards;
-}
-
-.santa-message::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    right: 60px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid #c0392b;
-}
-
-@keyframes santaEnter {
-    0% {
-        bottom: -200px;
-        right: -200px;
-        transform: scale(0.5);
-    }
-    20% {
-        bottom: 50px;
-        right: 50px;
-        transform: scale(1);
-    }
-    80% {
-        bottom: 50px;
-        right: 50px;
-        transform: scale(1);
-    }
-    100% {
-        bottom: -200px;
-        right: -200px;
-        transform: scale(0.5);
-        opacity: 0;
-    }
-}
-
-@keyframes santaWave {
-    0%, 100% {
-        transform: rotate(-5deg);
-    }
-    50% {
-        transform: rotate(5deg);
-    }
-}
-
-@keyframes giftAppear {
-    0% {
-        opacity: 0;
-        transform: scale(0) rotate(0deg);
-    }
-
-    30% {
-        opacity: 1;
-        transform: scale(1.2) rotate(360deg);
-    }
-
-    40% {
-        opacity: 1;
-        transform: scale(1.1) rotate(360deg);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1.1) rotate(360deg);
-    }
-}
-
-@keyframes messageAppear {
-    0% {
-        opacity: 0;
-        transform: translateY(20px) scale(0.8);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-@keyframes messageFade {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-
-.santa-sparkle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #ffd700;
-    border-radius: 50%;
-    animation: sparkle 1.5s ease-in-out infinite;
-    box-shadow: 0 0 10px #ffd700;
-}
-
-@keyframes sparkle {
-    0%, 100% {
-        opacity: 0;
-        transform: scale(0);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@media (max-width: 768px) {
-    .santa-container {
-        bottom: -150px;
-        right: -150px;
-    }
-    .santa-character {
-        font-size: 80px;
-    }
-    .santa-gift {
-        font-size: 40px;
-        bottom: 15px;
-        right: 80px;
-    }
-    .santa-message {
-        font-size: 14px;
-        padding: 10px 18px;
-        top: -60px;
-    }
-    @keyframes santaEnter {
-        0% {
-            bottom: -150px;
-            right: -150px;
-            transform: scale(0.5);
-        }
-        20% {
-            bottom: 30px;
-            right: 30px;
-            transform: scale(1);
-        }
-        80% {
-            bottom: 30px;
-            right: 30px;
-            transform: scale(1);
-        }
-        100% {
-            bottom: -150px;
-            right: -150px;
-            transform: scale(0.5);
-            opacity: 0;
-        }
-    }
-}
-
-@media (max-width: 480px) {
-    .santa-character {
-        font-size: 60px;
-    }
-    .santa-gift {
-        font-size: 30px;
-        bottom: 10px;
-        right: 60px;
-    }
-    .santa-message {
-        font-size: 12px;
-        padding: 8px 15px;
-        top: -50px;
-    }
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seasonal-effects.css') }}?v={{ config.VERSION }}">
 {% endblock %}
 
 {% block content %}
+<script>
+    window.IS_SEASONAL_SETTINGS_PAGE = true;
+</script>
+
 <div class="seasonal-settings-container">
     <h2 style="margin-bottom: 30px; color: #2c3e50; font-weight: 700;">
         <i class="bi bi-palette-fill"></i> Quản Lý Hiệu Ứng Theo Mùa
     </h2>
 
-    <!-- SNOWFALL EFFECT -->
+    <!-- ========== SNOWFALL ========== -->
     <div class="effect-card" id="card-snowfall">
         <div class="effect-header">
             <div class="effect-title">
@@ -314,339 +103,7 @@
         </div>
     </div>
 
-    <!-- FIREWORKS EFFECT -->
-    <div class="effect-card" id="card-fireworks">
-        <div class="effect-header">
-            <div class="effect-title">
-                <i class="bi bi-stars" style="color: #ffd700;"></i>
-                <span>Pháo Hoa</span>
-            </div>
-            <label class="effect-toggle">
-                <input type="checkbox" id="toggle-fireworks" onchange="toggleEffect('fireworks')">
-                <span class="effect-toggle-slider"></span>
-            </label>
-        </div>
-
-        <div class="effect-controls">
-            <div class="control-group">
-                <label class="control-label">
-                    Thời gian (giây): <span class="slider-value" id="value-fireworks-duration">0</span>
-                    <small style="color: #6c757d; display: block; margin-top: 4px;">0 = Không giới hạn</small>
-                </label>
-                <input type="range" class="control-slider" id="slider-fireworks-duration"
-                       min="0" max="300" value="0" step="10"
-                       oninput="updateSliderValue('fireworks', 'duration', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    Mật độ: <span class="slider-value" id="value-fireworks-intensity">50</span>
-                </label>
-                <input type="range" class="control-slider" id="slider-fireworks-intensity"
-                       min="10" max="100" value="50"
-                       oninput="updateSliderValue('fireworks', 'intensity', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    Tần suất (ms): <span class="slider-value" id="value-fireworks-frequency">1500</span>
-                </label>
-                <input type="range" class="control-slider" id="slider-fireworks-frequency"
-                       min="500" max="3000" value="1500" step="100"
-                       oninput="updateSliderValue('fireworks', 'frequency', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">Màu sắc</label>
-                <div class="color-picker-group" id="colors-fireworks">
-                    <input type="color" class="color-picker" value="#ff0000" data-index="0">
-                    <input type="color" class="color-picker" value="#ffd700" data-index="1">
-                    <input type="color" class="color-picker" value="#00ff00" data-index="2">
-                    <input type="color" class="color-picker" value="#0000ff" data-index="3">
-                    <input type="color" class="color-picker" value="#ff00ff" data-index="4">
-                </div>
-            </div>
-
-            <!-- PAGES SELECTOR - FIREWORKS -->
-            <div class="control-group">
-                <label class="control-label">Hiển thị trên trang</label>
-                <div class="pages-selector" id="pages-fireworks">
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="all" onchange="updatePageSelection('fireworks')">
-                        <span>Tất cả trang</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="hub" onchange="updatePageSelection('fireworks')">
-                        <span>Trang Chủ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="tasks" onchange="updatePageSelection('fireworks')">
-                        <span>Nhiệm Vụ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="news" onchange="updatePageSelection('fireworks')">
-                        <span>Tin Tức</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="files" onchange="updatePageSelection('fireworks')">
-                        <span>Tệp Tin</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="notes" onchange="updatePageSelection('fireworks')">
-                        <span>Ghi Chú</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="salaries" onchange="updatePageSelection('fireworks')">
-                        <span>Lương</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="performance" onchange="updatePageSelection('fireworks')">
-                        <span>Hiệu Suất</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="employees" onchange="updatePageSelection('fireworks')">
-                        <span>Nhân Viên</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NOEL EFFECT -->
-    <div class="effect-card" id="card-noel">
-        <div class="effect-header">
-            <div class="effect-title">
-                <span style="font-size: 2rem;">🎄</span>
-                <span>Giáng Sinh (🎄🎁)</span>
-            </div>
-            <label class="effect-toggle">
-                <input type="checkbox" id="toggle-noel" onchange="toggleEffect('noel')">
-                <span class="effect-toggle-slider"></span>
-            </label>
-        </div>
-
-        <div class="effect-controls">
-            <div class="control-group">
-                <label class="control-label">
-                    Thời gian (giây): <span class="slider-value" id="value-noel-duration">0</span>
-                    <small style="color: #6c757d; display: block; margin-top: 4px;">0 = Không giới hạn</small>
-                </label>
-                <input type="range" class="control-slider" id="slider-noel-duration"
-                       min="0" max="300" value="0" step="10"
-                       oninput="updateSliderValue('noel', 'duration', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    Mật độ: <span class="slider-value" id="value-noel-intensity">50</span>
-                </label>
-                <input type="range" class="control-slider" id="slider-noel-intensity"
-                       min="10" max="100" value="50"
-                       oninput="updateSliderValue('noel', 'intensity', this.value)">
-            </div>
-
-            <!-- PAGES SELECTOR - NOEL -->
-            <div class="control-group">
-                <label class="control-label">Hiển thị trên trang</label>
-                <div class="pages-selector" id="pages-noel">
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="all" onchange="updatePageSelection('noel')">
-                        <span>Tất cả trang</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="hub" onchange="updatePageSelection('noel')">
-                        <span>Trang Chủ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="tasks" onchange="updatePageSelection('noel')">
-                        <span>Nhiệm Vụ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="news" onchange="updatePageSelection('noel')">
-                        <span>Tin Tức</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="files" onchange="updatePageSelection('noel')">
-                        <span>Tệp Tin</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="notes" onchange="updatePageSelection('noel')">
-                        <span>Ghi Chú</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="salaries" onchange="updatePageSelection('noel')">
-                        <span>Lương</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="performance" onchange="updatePageSelection('noel')">
-                        <span>Hiệu Suất</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="employees" onchange="updatePageSelection('noel')">
-                        <span>Nhân Viên</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TET EFFECT -->
-    <div class="effect-card" id="card-tet">
-        <div class="effect-header">
-            <div class="effect-title">
-                <span style="font-size: 2rem;">🧧</span>
-                <span>Tết Nguyên Đán</span>
-            </div>
-            <label class="effect-toggle">
-                <input type="checkbox" id="toggle-tet" onchange="toggleEffect('tet')">
-                <span class="effect-toggle-slider"></span>
-            </label>
-        </div>
-
-        <div class="effect-controls">
-            <div class="control-group">
-                <label class="control-label">
-                    Thời gian (giây): <span class="slider-value" id="value-tet-duration">0</span>
-                    <small style="color: #6c757d; display: block; margin-top: 4px;">0 = Không giới hạn</small>
-                </label>
-                <input type="range" class="control-slider" id="slider-tet-duration"
-                       min="0" max="300" value="0" step="10"
-                       oninput="updateSliderValue('tet', 'duration', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    Mật độ: <span class="slider-value" id="value-tet-intensity">50</span>
-                </label>
-                <input type="range" class="control-slider" id="slider-tet-intensity"
-                       min="10" max="100" value="50"
-                       oninput="updateSliderValue('tet', 'intensity', this.value)">
-            </div>
-
-            <!-- PAGES SELECTOR - TET -->
-            <div class="control-group">
-                <label class="control-label">Hiển thị trên trang</label>
-                <div class="pages-selector" id="pages-tet">
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="all" onchange="updatePageSelection('tet')">
-                        <span>Tất cả trang</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="hub" onchange="updatePageSelection('tet')">
-                        <span>Trang Chủ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="tasks" onchange="updatePageSelection('tet')">
-                        <span>Nhiệm Vụ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="news" onchange="updatePageSelection('tet')">
-                        <span>Tin Tức</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="files" onchange="updatePageSelection('tet')">
-                        <span>Tệp Tin</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="notes" onchange="updatePageSelection('tet')">
-                        <span>Ghi Chú</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="salaries" onchange="updatePageSelection('tet')">
-                        <span>Lương</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="performance" onchange="updatePageSelection('tet')">
-                        <span>Hiệu Suất</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="employees" onchange="updatePageSelection('tet')">
-                        <span>Nhân Viên</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FLAGS EFFECT -->
-    <div class="effect-card" id="card-flags">
-        <div class="effect-header">
-            <div class="effect-title">
-                <i class="bi bi-flag-fill" style="color: #da251d;"></i>
-                <span>Cờ Bay (30/4 - Quốc Khánh)</span>
-            </div>
-            <label class="effect-toggle">
-                <input type="checkbox" id="toggle-flags" onchange="toggleEffect('flags')">
-                <span class="effect-toggle-slider"></span>
-            </label>
-        </div>
-
-        <div class="effect-controls">
-            <div class="control-group">
-                <label class="control-label">
-                    Thời gian (giây): <span class="slider-value" id="value-flags-duration">0</span>
-                    <small style="color: #6c757d; display: block; margin-top: 4px;">0 = Không giới hạn</small>
-                </label>
-                <input type="range" class="control-slider" id="slider-flags-duration"
-                       min="0" max="300" value="0" step="10"
-                       oninput="updateSliderValue('flags', 'duration', this.value)">
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">
-                    Mật độ: <span class="slider-value" id="value-flags-intensity">50</span>
-                </label>
-                <input type="range" class="control-slider" id="slider-flags-intensity"
-                       min="10" max="100" value="50"
-                       oninput="updateSliderValue('flags', 'intensity', this.value)">
-            </div>
-
-            <!-- PAGES SELECTOR - FLAGS -->
-            <div class="control-group">
-                <label class="control-label">Hiển thị trên trang</label>
-                <div class="pages-selector" id="pages-flags">
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="all" onchange="updatePageSelection('flags')">
-                        <span>Tất cả trang</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="hub" onchange="updatePageSelection('flags')">
-                        <span>Trang Chủ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="tasks" onchange="updatePageSelection('flags')">
-                        <span>Nhiệm Vụ</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="news" onchange="updatePageSelection('flags')">
-                        <span>Tin Tức</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="files" onchange="updatePageSelection('flags')">
-                        <span>Tệp Tin</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="notes" onchange="updatePageSelection('flags')">
-                        <span>Ghi Chú</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="salaries" onchange="updatePageSelection('flags')">
-                        <span>Lương</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="performance" onchange="updatePageSelection('flags')">
-                        <span>Hiệu Suất</span>
-                    </label>
-                    <label class="page-checkbox">
-                        <input type="checkbox" class="page-check" value="employees" onchange="updatePageSelection('flags')">
-                        <span>Nhân Viên</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SANTA EFFECT - ÔNG GIÀ NOEL -->
+    <!-- ========== SANTA ========== -->
     <div class="effect-card" id="card-santa">
         <div class="effect-header">
             <div class="effect-title">
@@ -735,7 +192,7 @@
         </div>
     </div>
 
-    <!-- GLOBAL ACTIONS -->
+    <!-- ========== GLOBAL ACTIONS ========== -->
     <div class="global-actions">
         <div class="current-effect-status">
             <i class="bi bi-info-circle"></i>
@@ -750,113 +207,24 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }} }}"></script>
+<script src="{{ url_for('static', filename='js/seasonal-effects.js') }}?v={{ config.VERSION }}"></script>
+<script src="{{ url_for('static', filename='js/santa-effect.js') }}?v={{ config.VERSION }}"></script>
+
 <script>
-// ============================================
-// SANTA EFFECT - INLINE VERSION
-// ============================================
-const SantaEffect = {
-    isShowing: false,
-    container: null,
-
-    show(config = {}) {
-        if (this.isShowing) {
-            console.log('🎅 Santa is already showing');
-            return;
-        }
-
-        console.log('🎅 Santa Claus is coming to town!');
-        this.isShowing = true;
-
-        const message = config.message || 'Chúc Mừng Giáng Sinh! 🎄';
-
-        this.container = document.createElement('div');
-        this.container.className = 'santa-container';
-        this.container.innerHTML = `
-            <div class="santa-message">${message}</div>
-            <div class="santa-character">🎅</div>
-            <div class="santa-gift">🎁</div>
-        `;
-
-        if (config.sparkles !== false) {
-            this.addSparkles();
-        }
-
-        document.body.appendChild(this.container);
-
-        setTimeout(() => {
-            this.hide();
-        }, 8000);
-    },
-
-    addSparkles() {
-        const sparkleCount = 20;
-
-        for (let i = 0; i < sparkleCount; i++) {
-            setTimeout(() => {
-                const sparkle = document.createElement('div');
-                sparkle.className = 'santa-sparkle';
-
-                const x = Math.random() * 150 - 50;
-                const y = Math.random() * 150 - 50;
-                sparkle.style.left = x + 'px';
-                sparkle.style.top = y + 'px';
-                sparkle.style.animationDelay = Math.random() * 1 + 's';
-
-                this.container.appendChild(sparkle);
-
-                setTimeout(() => {
-                    if (sparkle.parentNode) {
-                        sparkle.parentNode.removeChild(sparkle);
-                    }
-                }, 2000);
-            }, i * 100);
-        }
-    },
-
-    hide() {
-        if (this.container && this.container.parentNode) {
-            this.container.parentNode.removeChild(this.container);
-            this.container = null;
-            this.isShowing = false;
-            console.log('🎅 Santa has left the building');
-        }
-    },
-
-    showOnPageLoad(config = {}) {
-        const hasShownToday = sessionStorage.getItem('santa_shown_today');
-
-        if (hasShownToday) {
-            console.log('🎅 Santa already appeared today');
-            return;
-        }
-
-        const delay = config.delay || 1000;
-
-        setTimeout(() => {
-            this.show(config);
-            sessionStorage.setItem('santa_shown_today', 'true');
-        }, delay);
-    }
-};
-
-window.SantaEffect = SantaEffect;
-
-window.IS_SEASONAL_SETTINGS_PAGE = true;
-
 // ==========================================
-// SETTINGS PAGE CONTROLLER
+// SETTINGS PAGE CONTROLLER - SNOW + SANTA ONLY
 // ==========================================
+
+const EFFECT_NAMES = ['snowfall', 'santa'];
 
 let previewTimeout = null;
 
 // Load current config when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for SeasonalEffects to finish loading config from server
     setTimeout(function() {
         loadCurrentConfig();
     }, 1000);
-})
+});
 
 function loadCurrentConfig() {
     if (!window.SeasonalEffects) {
@@ -873,8 +241,9 @@ function loadCurrentConfig() {
     }
 
     // Update UI for each effect
-    Object.keys(config.effects).forEach(effectName => {
+    EFFECT_NAMES.forEach(effectName => {
         const effectConfig = config.effects[effectName];
+        if (!effectConfig) return;
 
         // Update toggle
         const toggle = document.getElementById(`toggle-${effectName}`);
@@ -888,40 +257,21 @@ function loadCurrentConfig() {
             card.classList.add('active');
         }
 
-        // Update specific controls based on effect type
+        // Update specific controls
         updateEffectControls(effectName, effectConfig);
 
         // Update pages checkboxes
         updatePagesCheckboxes(effectName, effectConfig.pages || ['all']);
     });
 
-    // Update current effect status
     updateCurrentEffectStatus();
 }
 
 function updateEffectControls(effectName, config) {
-    // Update duration (common for all - except santa)
-    updateControl(`slider-${effectName}-duration`, config.duration || 0);
-
-    // Update sliders and selects based on effect type
     if (effectName === 'snowfall') {
+        updateControl('slider-snowfall-duration', config.duration || 0);
         updateControl('slider-snowfall-intensity', config.intensity || 50);
-        updateControl('select-snowfall-speed', config.speed);
-    } else if (effectName === 'fireworks') {
-        updateControl('slider-fireworks-frequency', config.frequency);
-        updateControl('slider-fireworks-intensity', config.intensity || 50);
-        const colorPickers = document.querySelectorAll('#colors-fireworks .color-picker');
-        (config.colors || []).forEach((color, index) => {
-            if (colorPickers[index]) {
-                colorPickers[index].value = color;
-            }
-        });
-    } else if (effectName === 'noel') {
-        updateControl('slider-noel-intensity', config.intensity || 50);
-    } else if (effectName === 'tet') {
-        updateControl('slider-tet-intensity', config.intensity || 50);
-    } else if (effectName === 'flags') {
-        updateControl('slider-flags-intensity', config.intensity || 50);
+        updateControl('select-snowfall-speed', config.speed || 'medium');
     } else if (effectName === 'santa') {
         const messageInput = document.getElementById('input-santa-message');
         if (messageInput) {
@@ -947,7 +297,6 @@ function updateControl(id, value) {
     const element = document.getElementById(id);
     if (element) {
         element.value = value;
-        // Update display value if it's a slider
         if (element.type === 'range') {
             const valueDisplay = document.getElementById('value-' + id.replace('slider-', ''));
             if (valueDisplay) {
@@ -963,10 +312,7 @@ function updateControl(id, value) {
 
 function updatePagesCheckboxes(effectName, pages) {
     const pagesContainer = document.getElementById(`pages-${effectName}`);
-    if (!pagesContainer) {
-        console.warn(`Pages container not found for effect: ${effectName}`);
-        return;
-    }
+    if (!pagesContainer) return;
 
     const checkboxes = pagesContainer.querySelectorAll('.page-check');
     checkboxes.forEach(checkbox => {
@@ -992,19 +338,16 @@ function updatePageSelection(effectName) {
         });
         selectedPages = ['all'];
     } else {
-        // Nếu chọn trang cụ thể, bỏ chọn "all"
         const allCheckbox = pagesContainer.querySelector('[value="all"]');
         if (allCheckbox && selectedPages.length > 0) {
             allCheckbox.checked = false;
         }
 
-        // Nếu không chọn gì cả, mặc định là empty array (không hiển thị ở trang nào)
         if (selectedPages.length === 0) {
             selectedPages = [];
         }
     }
 
-    // Update config
     if (!window.SeasonalEffects.config.effects[effectName]) {
         window.SeasonalEffects.config.effects[effectName] = {};
     }
@@ -1039,19 +382,12 @@ async function toggleEffect(effectName) {
     }
 
     if (toggle.checked) {
-        // BẬT hiệu ứng
         card.classList.add('active');
 
-        // Lấy config từ UI
         const config = getEffectConfigFromUI(effectName);
-
-        // Cập nhật config
         SeasonalEffects.config.effects[effectName] = config;
-
-        // Bật hiệu ứng
         SeasonalEffects.startEffect(effectName, config);
 
-        // Lưu vào server
         const saved = await SeasonalEffects.saveConfig();
 
         if (!saved) {
@@ -1061,10 +397,8 @@ async function toggleEffect(effectName) {
             return;
         }
 
-        // Cập nhật trạng thái
         updateCurrentEffectStatus();
 
-        // Thông báo
         const pages = config.pages.join(', ');
         if (config.duration > 0) {
             console.log(`✅ ${effectName} BẬT - ${config.duration}s trên: ${pages}`);
@@ -1073,18 +407,10 @@ async function toggleEffect(effectName) {
         }
 
     } else {
-        // TẮT hiệu ứng
         card.classList.remove('active');
-
-        // Tắt hiệu ứng
         SeasonalEffects.stopEffect(effectName);
-
-        // Lưu vào server
         await SeasonalEffects.saveConfig();
-
-        // Cập nhật trạng thái
         updateCurrentEffectStatus();
-
         console.log(`🛑 ${effectName} TẮT`);
     }
 }
@@ -1092,19 +418,14 @@ async function toggleEffect(effectName) {
 // ==========================================
 // EFFECT ACTIONS
 // ==========================================
+
 async function stopAllEffects() {
     if (!window.SeasonalEffects) return;
 
-    // Tắt tất cả hiệu ứng
     SeasonalEffects.stopAllEffects();
-
-    // Lưu config
     await SeasonalEffects.saveConfig();
-
-    // Cập nhật UI
     updateCurrentEffectStatus();
 
-    // Update all cards and toggles
     document.querySelectorAll('.effect-card').forEach(card => {
         card.classList.remove('active');
     });
@@ -1118,7 +439,7 @@ async function stopAllEffects() {
 function getEffectConfigFromUI(effectName) {
     const config = { active: true };
 
-    // Get duration (common for all - except santa)
+    // Get duration
     const durationSlider = document.getElementById(`slider-${effectName}-duration`);
     if (durationSlider) {
         config.duration = parseInt(durationSlider.value);
@@ -1136,21 +457,10 @@ function getEffectConfigFromUI(effectName) {
         config.pages = ['all'];
     }
 
-    // Get effect-specific configs
+    // Effect-specific configs
     if (effectName === 'snowfall') {
         config.intensity = parseInt(document.getElementById('slider-snowfall-intensity').value);
         config.speed = document.getElementById('select-snowfall-speed').value;
-    } else if (effectName === 'fireworks') {
-        config.frequency = parseInt(document.getElementById('slider-fireworks-frequency').value);
-        config.intensity = parseInt(document.getElementById('slider-fireworks-intensity').value);
-        const colorPickers = document.querySelectorAll('#colors-fireworks .color-picker');
-        config.colors = Array.from(colorPickers).map(picker => picker.value);
-    } else if (effectName === 'noel') {
-        config.intensity = parseInt(document.getElementById('slider-noel-intensity').value);
-    } else if (effectName === 'tet') {
-        config.intensity = parseInt(document.getElementById('slider-tet-intensity').value);
-    } else if (effectName === 'flags') {
-        config.intensity = parseInt(document.getElementById('slider-flags-intensity').value);
     } else if (effectName === 'santa') {
         config.message = document.getElementById('input-santa-message').value || 'Chúc Mừng Giáng Sinh! 🎄';
         config.delay = parseInt(document.getElementById('slider-santa-delay').value) * 1000;
@@ -1166,18 +476,14 @@ function updateCurrentEffectStatus() {
 
     const effectNames = {
         'snowfall': '❄️ Tuyết Rơi',
-        'fireworks': '🎆 Pháo Hoa',
-        'noel': '🎄 Giáng Sinh',
-        'tet': '🧧 Tết',
-        'flags': '🇻🇳 Cờ Bay',
         'santa': '🎅 Ông Già Noel'
     };
 
     const config = SeasonalEffects.config;
     const activeEffects = [];
 
-    Object.keys(config.effects).forEach(effectName => {
-        if (config.effects[effectName].active) {
+    EFFECT_NAMES.forEach(effectName => {
+        if (config.effects[effectName] && config.effects[effectName].active) {
             activeEffects.push(effectNames[effectName]);
         }
     });
@@ -1192,6 +498,7 @@ function updateCurrentEffectStatus() {
 // ==========================================
 // RESET SANTA SESSION
 // ==========================================
+
 function resetSantaSession() {
     sessionStorage.removeItem('santa_shown_today');
     alert('✅ Đã xóa session! Santa sẽ xuất hiện lại khi reload trang (nếu đã bật).');

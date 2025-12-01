@@ -43,7 +43,7 @@ def get_config():
                 'config': config
             })
 
-        # Config mặc định
+        # Config mặc định - CHỈ SNOW + SANTA
         default_config = {
             'effects': {
                 'snowfall': {
@@ -51,32 +51,6 @@ def get_config():
                     'duration': 0,
                     'intensity': 50,
                     'speed': 'medium',
-                    'pages': ['all']
-                },
-                'fireworks': {
-                    'active': False,
-                    'duration': 0,
-                    'frequency': 1500,
-                    'intensity': 50,
-                    'colors': ['#ff0000', '#ffd700', '#00ff00', '#0000ff', '#ff00ff'],
-                    'pages': ['all']
-                },
-                'noel': {
-                    'active': False,
-                    'duration': 0,
-                    'intensity': 50,
-                    'pages': ['all']
-                },
-                'tet': {
-                    'active': False,
-                    'duration': 0,
-                    'intensity': 50,
-                    'pages': ['all']
-                },
-                'flags': {
-                    'active': False,
-                    'duration': 0,
-                    'intensity': 50,
                     'pages': ['all']
                 },
                 'santa': {
