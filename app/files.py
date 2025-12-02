@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, current_app, abort
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from app import db
 from app.models import File
 from app.decorators import role_required
@@ -10,6 +11,41 @@ import uuid
 
 bp = Blueprint('files', __name__)
 
+
+# ==========================================
+# TOKEN FUNCTIONS - Tạo URL tạm thời
+# ==========================================
+
+def get_serializer():
+    """Tạo serializer để ký token"""
+    return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+
+
+def generate_file_token(file_id, expires_in=3600):
+    """
+    Tạo token có thời hạn cho file
+    expires_in: thời gian hết hạn (giây), mặc định 1 giờ
+    """
+    serializer = get_serializer()
+    return serializer.dumps({'file_id': file_id}, salt='file-viewer')
+
+
+def verify_file_token(token, max_age=3600):
+    """
+    Xác thực token và trả về file_id
+    max_age: thời gian tối đa token còn hiệu lực (giây)
+    """
+    serializer = get_serializer()
+    try:
+        data = serializer.loads(token, salt='file-viewer', max_age=max_age)
+        return data['file_id']
+    except (BadSignature, SignatureExpired):
+        return None
+
+
+# ==========================================
+# HELPER FUNCTIONS
+# ==========================================
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -31,6 +67,10 @@ def get_file_type(filename):
     else:
         return 'unknown'
 
+
+# ==========================================
+# ROUTES
+# ==========================================
 
 @bp.route('/')
 @login_required
@@ -65,18 +105,18 @@ def upload_file():
                 # Tạo folder nếu chưa tồn tại
                 os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-                # Lưu file vào UPLOAD_FOLDER (/var/www/appnoibobricon/app/uploads)
+                # Lưu file vào UPLOAD_FOLDER
                 filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
                 file.save(filepath)
 
                 # Get file size
                 file_size = os.path.getsize(filepath)
 
-                # Save to database - LƯU ĐƯỜNG DẪN TUYỆT ĐỐI
+                # Save to database
                 file_record = File(
                     filename=unique_filename,
                     original_filename=original_filename,
-                    path=filepath,  # Đường dẫn đầy đủ: /var/www/appnoibobricon/app/uploads/xxxxx.png
+                    path=filepath,
                     uploader_id=current_user.id,
                     description=description,
                     file_size=file_size
@@ -131,15 +171,22 @@ def preview_file(file_id):
     file = File.query.get_or_404(file_id)
     file_type = get_file_type(file.original_filename)
 
+    # Tạo token có thời hạn 1 giờ
+    token = generate_file_token(file.id, expires_in=3600)
+
+    # URL công khai tạm thời (không cần login)
+    public_url = url_for('files.view_file_public', token=token, _external=True)
+
     return render_template('preview_file.html',
                            file=file,
-                           file_type=file_type)
+                           file_type=file_type,
+                           file_url=public_url)
 
 
 @bp.route('/view/<int:file_id>')
 @login_required
 def view_file(file_id):
-    """Serve raw file for viewing in browser"""
+    """Serve raw file for logged-in users"""
     file = File.query.get_or_404(file_id)
 
     # Xác định MIME type dựa trên extension
@@ -162,7 +209,6 @@ def view_file(file_id):
 
     # Kiểm tra file có tồn tại không
     if not os.path.exists(file.path):
-        from flask import abort
         abort(404)
 
     try:
@@ -170,14 +216,75 @@ def view_file(file_id):
         directory = os.path.dirname(file.path)
         filename = os.path.basename(file.path)
 
-        return send_from_directory(
+        response = send_from_directory(
             directory,
             filename,
             as_attachment=False,
             mimetype=mimetype
         )
+
+        # Cache trong 1 ngày
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+
+        return response
     except Exception as e:
-        from flask import abort
+        abort(500)
+
+
+@bp.route('/public/<token>')
+def view_file_public(token):
+    """
+    Serve file qua signed URL - KHÔNG CẦN LOGIN
+    Token hết hạn sau 1 giờ
+    Để Google/Microsoft Viewer có thể truy cập
+    """
+    # Xác thực token (hết hạn sau 1 giờ)
+    file_id = verify_file_token(token, max_age=3600)
+
+    if not file_id:
+        abort(403)  # Token không hợp lệ hoặc đã hết hạn
+
+    file = File.query.get_or_404(file_id)
+
+    mime_types = {
+        'pdf': 'application/pdf',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'bmp': 'image/bmp',
+        'webp': 'image/webp',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+
+    file_ext = file.original_filename.rsplit('.', 1)[1].lower() if '.' in file.original_filename else ''
+    mimetype = mime_types.get(file_ext, 'application/octet-stream')
+
+    if not os.path.exists(file.path):
+        abort(404)
+
+    try:
+        directory = os.path.dirname(file.path)
+        filename = os.path.basename(file.path)
+
+        response = send_from_directory(
+            directory,
+            filename,
+            as_attachment=False,
+            mimetype=mimetype
+        )
+
+        # Cache trong 1 giờ
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+
+        # Thêm header CORS để viewer bên ngoài truy cập được
+        response.headers['Access-Control-Allow-Origin'] = '*'
+
+        return response
+    except Exception as e:
         abort(500)
 
 

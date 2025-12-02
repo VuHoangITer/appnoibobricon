@@ -18,7 +18,7 @@
         border-radius: 12px;
         margin-bottom: 16px;
         border: 1px solid #e5e7eb;
-        box-shadow: none; /* bỏ bóng cho minimal */
+        box-shadow: none;
     }
 
     .file-name {
@@ -96,16 +96,54 @@
     }
 
     .btn-open-app {
-        background: #0d2058;
+        background: #0d9488;
         border-radius: 999px;
-        border: 1px solid #0f766e;
+        border: none;
         font-size: 0.95rem;
         padding: 9px 26px;
         font-weight: 500;
-        color: #0f766e;
+        color: white;
     }
 
-    /* Responsive tối giản */
+    .btn-open-app:hover {
+        background: #0f766e;
+        color: white;
+    }
+
+    .viewer-tabs {
+        margin-bottom: 16px;
+    }
+
+    .viewer-tabs .btn-group {
+        display: inline-flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .viewer-tabs .btn {
+        border-radius: 999px;
+        padding: 8px 20px;
+        font-size: 0.9rem;
+    }
+
+    .viewer-tabs .btn.active {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+    }
+
+    .viewer-loading {
+        padding: 40px;
+        text-align: center;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
         .preview-container {
             padding: 16px 0 24px;
@@ -130,6 +168,11 @@
         .file-header .text-end {
             text-align: left !important;
             margin-top: 10px;
+        }
+
+        .viewer-tabs .btn {
+            font-size: 0.85rem;
+            padding: 6px 16px;
         }
     }
 </style>
@@ -166,54 +209,178 @@
     <!-- Nội dung xem trước -->
     <div class="preview-content">
         {% if file_type == 'pdf' %}
-            <iframe src="{{ url_for('files.view_file', file_id=file.id) }}" style="width:100%; height:800px; border:none;"></iframe>
+            <!-- PDF xem trực tiếp -->
+            <iframe src="{{ url_for('files.view_file', file_id=file.id) }}"
+                    style="width:100%; height:800px; border:none;"></iframe>
 
         {% elif file_type == 'image' %}
-            <img src="{{ url_for('files.view_file', file_id=file.id) }}" class="img-fluid rounded" alt="{{ file.original_filename }}">
+            <!-- Hình ảnh xem trực tiếp -->
+            <img src="{{ url_for('files.view_file', file_id=file.id) }}"
+                 class="img-fluid rounded"
+                 alt="{{ file.original_filename }}">
 
-        {% else %}
-            <!-- Word, Excel, hoặc file khác -->
-            <div>
-                <i class="bi big-icon {% if file_type == 'word' %}bi-file-word{% elif file_type == 'excel' %}bi-file-excel{% else %}bi-file-earmark{% endif %}"></i>
+        {% elif file_type in ['word', 'excel'] %}
+            <!-- Word/Excel - Tab chọn cách xem -->
+            <div class="viewer-tabs">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" onclick="showGoogleViewer()">
+                        <i class="bi bi-eye"></i> Xem online
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="showMicrosoftViewer()">
+                        <i class="bi bi-microsoft"></i> Microsoft Viewer
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="showDownloadOption()">
+                        <i class="bi bi-download"></i> Tải về
+                    </button>
+                </div>
+            </div>
+
+            <!-- Google Docs Viewer -->
+            <div id="googleViewer">
+                <div class="viewer-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Đang tải trình xem...</p>
+                </div>
+                <iframe
+                    src="https://docs.google.com/viewer?url={{ file_url | urlencode }}&embedded=true"
+                    style="width:100%; height:800px; border:none; display:none;"
+                    frameborder="0"
+                    onload="this.style.display='block'; this.previousElementSibling.style.display='none';">
+                </iframe>
+                <p class="text-muted small mt-2">
+                    <i class="bi bi-info-circle"></i>
+                    Nếu không xem được, hãy thử Microsoft Viewer hoặc tải về
+                </p>
+            </div>
+
+            <!-- Microsoft Office Online Viewer -->
+            <div id="microsoftViewer" style="display: none;">
+                <div class="viewer-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Đang tải trình xem...</p>
+                </div>
+                <iframe
+                    src="https://view.officeapps.live.com/op/view.aspx?src={{ file_url | urlencode }}"
+                    style="width:100%; height:800px; border:none; display:none;"
+                    frameborder="0"
+                    onload="this.style.display='block'; this.previousElementSibling.style.display='none';">
+                </iframe>
+                <p class="text-muted small mt-2">
+                    <i class="bi bi-info-circle"></i>
+                    Nếu không xem được, hãy thử Google Viewer hoặc tải về
+                </p>
+            </div>
+
+            <!-- Download Option -->
+            <div id="downloadOption" style="display: none;">
+                <i class="bi big-icon {% if file_type == 'word' %}bi-file-word{% elif file_type == 'excel' %}bi-file-excel{% endif %}"></i>
                 <h3>
-                    {% if file_type == 'word' %}Tài liệu Microsoft Word
-                    {% elif file_type == 'excel' %}Bảng tính Microsoft Excel
-                    {% else %}File đính kèm{% endif %}
+                    {% if file_type == 'word' %}📄 Tài liệu Microsoft Word
+                    {% elif file_type == 'excel' %}📊 Bảng tính Microsoft Excel
+                    {% endif %}
                 </h3>
                 <p class="text-muted lead" style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;">
                     {{ file.original_filename }}
                 </p>
-                <p class="text-secondary">
-                    {% if file_type in ['word', 'excel'] %}
-                        Không xem trước trực tuyến được trong mạng nội bộ.<br>
-                        <strong>Nhưng bạn có thể mở ngay bằng ứng dụng Word/Excel trên điện thoại!</strong>
-                    {% else %}
-                        Loại file này không hỗ trợ xem trước.
-                    {% endif %}
-                </p>
 
                 <!-- Nút tải về -->
                 <a href="{{ url_for('files.download_file', file_id=file.id) }}"
-                   class="btn btn-success btn-lg px-5">
+                   class="btn btn-success btn-lg px-5 mb-3">
                     <i class="bi bi-download"></i> Tải xuống ({{ (file.file_size / 1024 / 1024)|round(2) }} MB)
                 </a>
 
                 <!-- Nút mở trực tiếp bằng app – chỉ hiện trên mobile -->
                 {% if request.user_agent.platform in ['android', 'iphone', 'ipad'] or 'mobile' in request.user_agent.string|lower %}
                 <div class="mt-4">
-                    <small class="text-muted">Hoặc</small><br>
+                    <p class="text-muted small mb-2">Hoặc</p>
                     <a href="{{ url_for('files.view_file', file_id=file.id) }}"
-                       class="btn btn-open-app text-white btn-lg px-5 mt-2"
+                       class="btn btn-open-app btn-lg px-5"
                        target="_blank">
                         <i class="bi bi-box-arrow-up-right"></i> Mở ngay bằng Word/Excel
                     </a>
                     <p class="text-muted small mt-3">
-                        Nếu đã cài Microsoft Word/Excel → file sẽ mở ngay trong ứng dụng
+                        <i class="bi bi-phone"></i> Nếu đã cài Microsoft Word/Excel → file sẽ mở ngay trong ứng dụng
                     </p>
                 </div>
                 {% endif %}
+
+                <div class="alert alert-info mt-4" style="max-width: 500px; margin: 20px auto;">
+                    <i class="bi bi-lightbulb"></i> <strong>Mẹo:</strong><br>
+                    Nếu muốn xem online mà không tải về, hãy chọn tab "Xem online" hoặc "Microsoft Viewer" ở trên
+                </div>
+            </div>
+
+        {% else %}
+            <!-- File khác không hỗ trợ xem trước -->
+            <div>
+                <i class="bi big-icon bi-file-earmark"></i>
+                <h3>File đính kèm</h3>
+                <p class="text-muted lead" style="word-break: break-word; overflow-wrap: anywhere;">
+                    {{ file.original_filename }}
+                </p>
+                <p class="text-secondary">Loại file này không hỗ trợ xem trước.</p>
+
+                <a href="{{ url_for('files.download_file', file_id=file.id) }}"
+                   class="btn btn-success btn-lg px-5">
+                    <i class="bi bi-download"></i> Tải xuống
+                </a>
             </div>
         {% endif %}
     </div>
 </div>
+
+{% if file_type in ['word', 'excel'] %}
+<script>
+function showGoogleViewer() {
+    // Ẩn tất cả
+    document.getElementById('googleViewer').style.display = 'block';
+    document.getElementById('microsoftViewer').style.display = 'none';
+    document.getElementById('downloadOption').style.display = 'none';
+
+    // Update active button
+    updateActiveButton(0);
+}
+
+function showMicrosoftViewer() {
+    // Ẩn tất cả
+    document.getElementById('googleViewer').style.display = 'none';
+    document.getElementById('microsoftViewer').style.display = 'block';
+    document.getElementById('downloadOption').style.display = 'none';
+
+    // Update active button
+    updateActiveButton(1);
+}
+
+function showDownloadOption() {
+    // Ẩn tất cả
+    document.getElementById('googleViewer').style.display = 'none';
+    document.getElementById('microsoftViewer').style.display = 'none';
+    document.getElementById('downloadOption').style.display = 'block';
+
+    // Update active button
+    updateActiveButton(2);
+}
+
+function updateActiveButton(index) {
+    const buttons = document.querySelectorAll('.viewer-tabs .btn');
+    buttons.forEach((btn, i) => {
+        if (i === index) {
+            btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+            btn.classList.add('btn-primary', 'active');
+        } else {
+            btn.classList.remove('btn-primary', 'active');
+            if (i === 0) {
+                btn.classList.add('btn-outline-primary');
+            } else {
+                btn.classList.add('btn-outline-secondary');
+            }
+        }
+    });
+}
+</script>
+{% endif %}
 {% endblock %}
