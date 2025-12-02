@@ -148,3 +148,15 @@ def toggle_user_active(user_id):
     status = 'kích hoạt' if user.is_active else 'vô hiệu hóa'
     flash(f'Đã {status} người dùng {user.email}.', 'success')
     return redirect(url_for('auth.users'))
+
+@bp.route('/offline')
+def offline():
+    """Trang offline khi không có mạng"""
+    return render_template('offline.html')
+
+
+@bp.route('/ping')
+def ping():
+    """Health check endpoint"""
+    from flask import jsonify
+    return jsonify({'status': 'ok'}), 200

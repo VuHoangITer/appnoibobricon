@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không có kết nối</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .offline-container {
+            text-align: center;
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .offline-icon {
+            font-size: 6rem;
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #f8d7da;
+            color: #721c24;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-retry:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .offline-tips {
+            margin-top: 2rem;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .offline-tips h3 {
+            font-size: 1rem;
+            color: #495057;
+            margin-bottom: 0.8rem;
+        }
+
+        .offline-tips ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .offline-tips li {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <i class="bi bi-wifi-off offline-icon"></i>
+
+        <div class="status-badge" id="statusBadge">
+            <i class="bi bi-exclamation-circle"></i> Không có kết nối
+        </div>
+
+        <h1>Mất kết nối mạng</h1>
+        <p>
+            Vui lòng kiểm tra kết nối Internet của bạn và thử lại.
+        </p>
+
+        <button class="btn-retry" id="retryBtn" onclick="retryConnection()">
+            <i class="bi bi-arrow-clockwise"></i> Thử lại
+        </button>
+
+        <div class="offline-tips">
+            <h3><i class="bi bi-lightbulb"></i> Gợi ý:</h3>
+            <ul>
+                <li>Kiểm tra kết nối Wi-Fi hoặc dữ liệu di động</li>
+                <li>Tắt và bật lại chế độ máy bay</li>
+                <li>Khởi động lại router nếu dùng Wi-Fi</li>
+                <li>Liên hệ nhà cung cấp nếu sự cố kéo dài</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function retryConnection() {
+            const btn = document.getElementById('retryBtn');
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang kiểm tra...';
+            btn.disabled = true;
+
+            fetch('/ping', {
+                method: 'GET',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã kết nối!';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                } else {
+                    throw new Error('Still offline');
+                }
+            })
+            .catch(() => {
+                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Thử lại';
+                btn.disabled = false;
+
+                const badge = document.getElementById('statusBadge');
+                badge.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    badge.style.animation = '';
+                }, 500);
+            });
+        }
+
+        // Auto retry mỗi 10 giây
+        let autoRetryInterval = setInterval(() => {
+            fetch('/ping', {
+                method: 'GET',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    clearInterval(autoRetryInterval);
+                    window.location.href = '/';
+                }
+            })
+            .catch(() => {
+                console.log('Still offline, will retry in 10s...');
+            });
+        }, 10000);
+
+        // Cleanup khi user rời trang
+        window.addEventListener('beforeunload', () => {
+            clearInterval(autoRetryInterval);
+        });
+    </script>
+</body>
+</html>
