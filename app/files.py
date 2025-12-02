@@ -21,16 +21,16 @@ def get_serializer():
     return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
 
-def generate_file_token(file_id, expires_in=3600):
+def generate_file_token(file_id, expires_in=1800):
     """
     Tạo token có thời hạn cho file
-    expires_in: thời gian hết hạn (giây), mặc định 1 giờ
+    expires_in: thời gian hết hạn (giây), mặc định 30p
     """
     serializer = get_serializer()
     return serializer.dumps({'file_id': file_id}, salt='file-viewer')
 
 
-def verify_file_token(token, max_age=3600):
+def verify_file_token(token, max_age=1800):
     """
     Xác thực token và trả về file_id
     max_age: thời gian tối đa token còn hiệu lực (giây)
@@ -171,8 +171,8 @@ def preview_file(file_id):
     file = File.query.get_or_404(file_id)
     file_type = get_file_type(file.original_filename)
 
-    # Tạo token có thời hạn 1 giờ
-    token = generate_file_token(file.id, expires_in=3600)
+    # Tạo token có thời hạn 30p
+    token = generate_file_token(file.id, expires_in=1800)
 
     # URL công khai tạm thời (không cần login)
     public_url = url_for('files.view_file_public', token=token, _external=True)
@@ -235,11 +235,11 @@ def view_file(file_id):
 def view_file_public(token):
     """
     Serve file qua signed URL - KHÔNG CẦN LOGIN
-    Token hết hạn sau 1 giờ
+    Token hết hạn sau 30p
     Để Google/Microsoft Viewer có thể truy cập
     """
-    # Xác thực token (hết hạn sau 1 giờ)
-    file_id = verify_file_token(token, max_age=3600)
+    # Xác thực token (hết hạn sau 30p)
+    file_id = verify_file_token(token, max_age=1800)
 
     if not file_id:
         abort(403)  # Token không hợp lệ hoặc đã hết hạn
@@ -277,8 +277,8 @@ def view_file_public(token):
             mimetype=mimetype
         )
 
-        # Cache trong 1 giờ
-        response.headers['Cache-Control'] = 'public, max-age=3600'
+        # Cache trong 30p
+        response.headers['Cache-Control'] = 'public, max-age=1800'
 
         # Thêm header CORS để viewer bên ngoài truy cập được
         response.headers['Access-Control-Allow-Origin'] = '*'
