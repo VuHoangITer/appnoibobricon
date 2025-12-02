@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_from_directory, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models import Task, TaskAssignment, User, Notification, TaskComment
@@ -6,6 +6,7 @@ from app.decorators import role_required
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, case, func
 from app.utils import vn_to_utc, utc_to_vn, vn_now
+from werkzeug.exceptions import abort
 
 bp = Blueprint('tasks', __name__)
 
@@ -2142,57 +2143,38 @@ def download_comment_attachment(task_id, comment_id, attachment_id):
 @bp.route('/<int:task_id>/comments/<int:comment_id>/attachments/<int:attachment_id>/preview')
 @login_required
 def preview_comment_attachment(task_id, comment_id, attachment_id):
-    """
-    Preview file Word/Excel từ comment attachment
-
-    Flow:
-    1. Kiểm tra file có tồn tại không
-    2. Kiểm tra quyền xem của user
-    3. Tạo URL công khai để Microsoft Viewer có thể truy cập
-    4. Render trang preview
-    """
+    """Preview file Word/Excel từ comment attachment"""
     from app.models import TaskComment, TaskCommentAttachment
+    from app.files import generate_file_token
 
-    # ===== BƯỚC 1: LẤY ATTACHMENT =====
     attachment = TaskCommentAttachment.query.get_or_404(attachment_id)
 
-    # ===== BƯỚC 2: KIỂM TRA TÍNH HỢP LỆ =====
-    # Đảm bảo attachment thuộc đúng comment
     if attachment.comment_id != comment_id:
         flash('File không tồn tại', 'danger')
         return redirect(url_for('tasks.task_discussion', task_id=task_id))
 
-    # Đảm bảo comment thuộc đúng task
     comment = attachment.comment
     if comment.task_id != task_id:
         flash('File không tồn tại', 'danger')
         return redirect(url_for('tasks.task_discussion', task_id=task_id))
 
-    # ===== BƯỚC 3: KIỂM TRA QUYỀN XEM =====
     task = Task.query.get_or_404(task_id)
-
-    # Check xem user có được assign task không
     assignment = TaskAssignment.query.filter_by(
         task_id=task_id,
         user_id=current_user.id,
         accepted=True
     ).first()
 
-    # Chỉ cho phép: người được assign, người tạo task, hoặc director/manager
     if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
         flash('Bạn không có quyền xem file này', 'danger')
         return redirect(url_for('tasks.task_discussion', task_id=task_id))
 
-    # ===== BƯỚC 4: TẠO URL CÔNG KHAI =====
-    # _external=True tạo URL đầy đủ: http://your-domain.com/tasks/...
-    # Microsoft Office Viewer CẦN URL này để truy cập file từ internet
-    file_url = url_for('tasks.download_comment_attachment',
-                       task_id=task_id,
-                       comment_id=comment_id,
-                       attachment_id=attachment_id,
-                       _external=True)
+    # Tạo token
+    token = generate_file_token(f"comment_{comment_id}_{attachment_id}", expires_in=1800)
 
-    # ===== BƯỚC 5: RENDER TRANG PREVIEW =====
+    # URL công khai
+    file_url = url_for('tasks.view_comment_attachment_public', token=token, _external=True)
+
     return render_template('preview_comment_file.html',
                            task=task,
                            attachment=attachment,
@@ -2308,3 +2290,46 @@ def task_discussion(task_id):
                            priority_icon=priority_icon,
                            priority_text=priority_text,
                            priority_class=priority_class)
+
+
+@bp.route('/comment-attachments/public/<token>')
+def view_comment_attachment_public(token):
+    """Serve comment attachment qua signed URL - KHÔNG CẦN LOGIN"""
+    from app.files import verify_file_token
+    from app.models import TaskCommentAttachment
+
+    data = verify_file_token(token, max_age=1800)
+    if not data:
+        abort(403)
+
+    try:
+        parts = data.split('_')
+        comment_id = int(parts[1])
+        attachment_id = int(parts[2])
+    except:
+        abort(403)
+
+    attachment = TaskCommentAttachment.query.get_or_404(attachment_id)
+    if attachment.comment_id != comment_id:
+        abort(403)
+
+    mime_types = {
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'pdf': 'application/pdf',
+    }
+
+    file_ext = attachment.original_filename.rsplit('.', 1)[1].lower() if '.' in attachment.original_filename else ''
+    mimetype = mime_types.get(file_ext, 'application/octet-stream')
+
+    if not os.path.exists(attachment.file_path):
+        abort(404)
+
+    directory = os.path.dirname(attachment.file_path)
+    filename = os.path.basename(attachment.file_path)
+
+    response = send_from_directory(directory, filename, as_attachment=False, mimetype=mimetype)
+    response.headers['Cache-Control'] = 'public, max-age=1800'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
+    return response
