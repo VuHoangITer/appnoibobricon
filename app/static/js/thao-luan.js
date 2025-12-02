@@ -519,10 +519,12 @@ function addCommentToList(comment) {
 
                 attachmentHTML += `
                     <div class="attachment-info mt-2">
-                        <a href="${fileUrl}" class="btn btn-sm btn-outline-primary" ${targetAttr}>
-                            <i class="bi bi-${icon}"></i>
-                            ${escapeHtml(att.filename)}
-                        </a>
+                        <div>
+                            <a href="${fileUrl}" class="btn btn-sm btn-outline-primary" ${targetAttr}>
+                                <i class="bi bi-${icon}"></i>
+                                ${escapeHtml(att.filename)}
+                            </a>
+                        </div>
                         <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
                     </div>
                 `;
