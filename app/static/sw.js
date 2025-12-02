@@ -1,5 +1,5 @@
 // ========== VERSION CONTROL ==========
-const VERSION = '2.3';
+const VERSION = '2.4';
 const CACHE_NAME = `company-workflow-v${VERSION}`;
 const OFFLINE_URL = '/offline';
 
