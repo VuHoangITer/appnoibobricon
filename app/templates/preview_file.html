@@ -51,6 +51,52 @@
         box-shadow: none;
     }
 
+    /* Style cho mô tả */
+    .file-description {
+        margin-top: 12px;
+        margin-bottom: 0;
+        padding: 10px 12px;
+        background: #f9fafb;
+        border-radius: 6px;
+        border-left: 3px solid #0d9488;
+    }
+
+    .file-description strong {
+        color: #111827;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .file-description-text {
+        color: #4b5563;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    /* Scrollbar cho mô tả dài */
+    .file-description-text::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .file-description-text::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .file-description-text::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+    }
+
+    .file-description-text::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+
     .preview-content {
         background: #ffffff;
         border-radius: 12px;
@@ -166,6 +212,16 @@
             font-size: 1rem;
         }
 
+        .file-description {
+            margin-top: 10px;
+            padding: 8px 10px;
+        }
+
+        .file-description-text {
+            font-size: 0.9rem;
+            max-height: 100px;
+        }
+
         .preview-content {
             padding: 24px 14px;
         }
@@ -204,7 +260,10 @@
                     <i class="bi bi-hdd"></i> {{ (file.file_size / 1024 / 1024) | round(2) }} MB
                 </small></div>
                 {% if file.description %}
-                <p class="mt-2 mb-0"><strong>Mô tả:</strong> {{ file.description }}</p>
+                    <div class="file-description">
+                        <strong>Mô tả:</strong>
+                        <div class="file-description-text">{{ file.description }}</div>
+                    </div>
                 {% endif %}
             </div>
             <div class="col-md-4 text-end">
@@ -297,20 +356,6 @@
                    class="btn btn-success btn-lg px-5 mb-3">
                     <i class="bi bi-download"></i> Tải xuống ({{ (file.file_size / 1024 / 1024)|round(2) }} MB)
                 </a>
-
-                {% if request.user_agent.platform in ['android', 'iphone', 'ipad'] or 'mobile' in request.user_agent.string|lower %}
-                <div class="mt-4">
-                    <p class="text-muted small mb-2">Hoặc</p>
-                    <a href="{{ private_url }}"
-                       class="btn btn-open-app btn-lg px-5"
-                       target="_blank">
-                        <i class="bi bi-box-arrow-up-right"></i> Mở ngay bằng Word/Excel
-                    </a>
-                    <p class="text-muted small mt-3">
-                        <i class="bi bi-phone"></i> Nếu đã cài Microsoft Word/Excel → file sẽ mở ngay trong ứng dụng
-                    </p>
-                </div>
-                {% endif %}
 
                 <div class="alert alert-info mt-4" style="max-width: 500px; margin: 20px auto;">
                     <i class="bi bi-lightbulb"></i> <strong>Mẹo:</strong><br>

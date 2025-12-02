@@ -465,7 +465,7 @@ function addCommentToList(comment) {
         ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
         : comment.user.avatar_letter;
 
-    const deleteBtn = comment.can_delete
+    const deleteBtn = (window.CONFIG.CURRENT_USER_ROLE === 'director')
         ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
                <i class="bi bi-trash"></i>
            </button>`
@@ -499,7 +499,7 @@ function addCommentToList(comment) {
             attachmentHTML += '</div>';
         }
 
-        // Hiển thị tất cả OTHER FILES (PDF, DOC, etc)
+        // Hiển thị tất cả OTHER FILES (PDF, DOC, EXCEL, etc)
         if (otherFiles.length > 0) {
             otherFiles.forEach(att => {
                 const icon = att.file_type === 'pdf' ? 'file-pdf' :
@@ -507,9 +507,19 @@ function addCommentToList(comment) {
                             att.file_type === 'spreadsheet' ? 'file-excel' :
                             'file-earmark';
 
+                // ===== NẾU LÀ WORD/EXCEL → PREVIEW (chuyển trang) =====
+                // ===== NẾU LÀ FILE KHÁC → DOWNLOAD (mở tab mới) =====
+                const fileUrl = (att.file_type === 'document' || att.file_type === 'spreadsheet')
+                    ? `/tasks/${window.CONFIG.TASK_ID}/comments/${comment.id}/attachments/${att.id}/preview`
+                    : att.download_url;
+
+                const targetAttr = (att.file_type === 'document' || att.file_type === 'spreadsheet')
+                    ? '' // KHÔNG mở tab mới cho Word/Excel
+                    : 'target="_blank"'; // Mở tab mới cho PDF/file khác
+
                 attachmentHTML += `
                     <div class="attachment-info mt-2">
-                        <a href="${att.download_url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <a href="${fileUrl}" class="btn btn-sm btn-outline-primary" ${targetAttr}>
                             <i class="bi bi-${icon}"></i>
                             ${escapeHtml(att.filename)}
                             <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
@@ -624,8 +634,13 @@ function initLongPressListeners() {
 
     if (!isMobile) return; // Chỉ áp dụng cho mobile
 
+    // ===== CHỈ DIRECTOR MỚI CÓ LONG-PRESS DELETE =====
+    if (window.CONFIG.CURRENT_USER_ROLE !== 'director') {
+        return; // Không phải director thì không setup long-press
+    }
+
     // QUAN TRỌNG: Xóa tất cả listeners cũ trước khi gắn mới
-    document.querySelectorAll('.comment-item.mine').forEach(item => {
+    document.querySelectorAll('.comment-item').forEach(item => {  // ← ĐÃ XÓA .mine
         // Clone node để xóa tất cả event listeners
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
@@ -651,8 +666,8 @@ function initLongPressListeners() {
         }, { passive: true });
     }
 
-    // Gắn listeners MỚI
-    document.querySelectorAll('.comment-item.mine').forEach(item => {
+    // Gắn listeners MỚI - DIRECTOR CÓ THỂ XÓA TẤT CẢ COMMENTS
+    document.querySelectorAll('.comment-item').forEach(item => {  // ← ĐÃ XÓA .mine
         const commentId = parseInt(item.dataset.id);
         let touchStartY = 0;
         let hasMoved = false;

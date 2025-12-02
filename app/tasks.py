@@ -1803,7 +1803,7 @@ def get_comments(task_id):
                 'avatar': comment.user.avatar,
                 'avatar_letter': comment.user.full_name[0].upper()
             },
-            'can_delete': comment.user_id == current_user.id or current_user.role == 'director',
+            'can_delete': current_user.role == 'director',
             'has_attachment': comment.has_attachment
         }
 
@@ -2033,9 +2033,9 @@ def delete_comment(task_id, comment_id):
     if comment.task_id != task_id:
         return jsonify({'success': False, 'error': 'Comment không tồn tại'}), 404
 
-    # Only owner or director can delete
-    if comment.user_id != current_user.id and current_user.role != 'director':
-        return jsonify({'success': False, 'error': 'Không có quyền xóa'}), 403
+    # Only  director can delete
+    if current_user.role != 'director':
+        return jsonify({'success': False, 'error': 'Không có quyền xóa tin nhắn'}), 403
 
     try:
         # ===== XÓA TẤT CẢ FILES =====
@@ -2137,6 +2137,67 @@ def download_comment_attachment(task_id, comment_id, attachment_id):
     directory = os.path.dirname(attachment.file_path)
     return send_from_directory(directory, attachment.filename, as_attachment=True,
                                download_name=attachment.original_filename)
+
+
+@bp.route('/<int:task_id>/comments/<int:comment_id>/attachments/<int:attachment_id>/preview')
+@login_required
+def preview_comment_attachment(task_id, comment_id, attachment_id):
+    """
+    Preview file Word/Excel từ comment attachment
+
+    Flow:
+    1. Kiểm tra file có tồn tại không
+    2. Kiểm tra quyền xem của user
+    3. Tạo URL công khai để Microsoft Viewer có thể truy cập
+    4. Render trang preview
+    """
+    from app.models import TaskComment, TaskCommentAttachment
+
+    # ===== BƯỚC 1: LẤY ATTACHMENT =====
+    attachment = TaskCommentAttachment.query.get_or_404(attachment_id)
+
+    # ===== BƯỚC 2: KIỂM TRA TÍNH HỢP LỆ =====
+    # Đảm bảo attachment thuộc đúng comment
+    if attachment.comment_id != comment_id:
+        flash('File không tồn tại', 'danger')
+        return redirect(url_for('tasks.task_discussion', task_id=task_id))
+
+    # Đảm bảo comment thuộc đúng task
+    comment = attachment.comment
+    if comment.task_id != task_id:
+        flash('File không tồn tại', 'danger')
+        return redirect(url_for('tasks.task_discussion', task_id=task_id))
+
+    # ===== BƯỚC 3: KIỂM TRA QUYỀN XEM =====
+    task = Task.query.get_or_404(task_id)
+
+    # Check xem user có được assign task không
+    assignment = TaskAssignment.query.filter_by(
+        task_id=task_id,
+        user_id=current_user.id,
+        accepted=True
+    ).first()
+
+    # Chỉ cho phép: người được assign, người tạo task, hoặc director/manager
+    if not assignment and task.creator_id != current_user.id and current_user.role not in ['director', 'manager']:
+        flash('Bạn không có quyền xem file này', 'danger')
+        return redirect(url_for('tasks.task_discussion', task_id=task_id))
+
+    # ===== BƯỚC 4: TẠO URL CÔNG KHAI =====
+    # _external=True tạo URL đầy đủ: http://your-domain.com/tasks/...
+    # Microsoft Office Viewer CẦN URL này để truy cập file từ internet
+    file_url = url_for('tasks.download_comment_attachment',
+                       task_id=task_id,
+                       comment_id=comment_id,
+                       attachment_id=attachment_id,
+                       _external=True)
+
+    # ===== BƯỚC 5: RENDER TRANG PREVIEW =====
+    return render_template('preview_comment_file.html',
+                           task=task,
+                           attachment=attachment,
+                           file_url=file_url,
+                           file_type=attachment.file_type)
 
 @bp.route('/<int:task_id>/quick-rate', methods=['POST'])
 @login_required

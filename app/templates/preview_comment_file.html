@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Xem trước: {{ attachment.original_filename }}{% endblock %}
+{% block page_title %}Xem trước File{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== CONTAINER ===== */
+    .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* ===== HEADER (Hiển thị tên file + nút tải về) ===== */
+    .file-header {
+        background: #ffffff;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .file-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        word-break: break-word;
+        margin-bottom: 8px;
+        color: #1f2937;
+    }
+
+    .file-name i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+    }
+
+    /* ===== PREVIEW CONTENT ===== */
+    .preview-content {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        min-height: 600px;
+    }
+
+    /* ===== LOADING SPINNER ===== */
+    .viewer-loading {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3em;
+    }
+
+    /* ===== ERROR MESSAGE ===== */
+    .viewer-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        color: #991b1b;
+        text-align: center;
+    }
+
+    .viewer-error i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* ===== IFRAME (Chứa Microsoft Viewer) ===== */
+    #msFrame {
+        width: 100%;
+        height: 800px;
+        border: none;
+        border-radius: 8px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .preview-container {
+            padding: 10px;
+        }
+
+        .file-header {
+            padding: 12px 14px;
+        }
+
+        .file-name {
+            font-size: 1rem;
+        }
+
+        #msFrame {
+            height: 600px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <!-- ===== HEADER: TÊN FILE + NÚT TẢI VỀ ===== -->
+    <div class="file-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="file-name">
+                    <!-- Icon theo loại file -->
+                    <i class="bi {% if file_type == 'document' %}bi-file-word{% elif file_type == 'spreadsheet' %}bi-file-excel{% else %}bi-file-earmark{% endif %}"></i>
+                    {{ attachment.original_filename }}
+                </h4>
+                <small class="text-muted">
+                    <i class="bi bi-hdd"></i> {{ (attachment.file_size / 1024 / 1024) | round(2) }} MB
+                </small>
+            </div>
+            <div class="col-md-4 text-end">
+                <!-- Nút quay lại -->
+                <a href="{{ url_for('tasks.task_discussion', task_id=task.id) }}"
+                   class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+                <!-- Nút tải về -->
+                <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=attachment.comment_id, attachment_id=attachment.id) }}" 
+                   class="btn btn-primary">
+                    <i class="bi bi-download"></i> Tải về
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PREVIEW CONTENT ===== -->
+    <div class="preview-content">
+        <!-- LOADING (hiển thị khi đang load) -->
+        <div id="msLoading" class="viewer-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-3 text-muted">Đang tải Microsoft Office Viewer...</p>
+            <p class="text-muted small">Có thể mất 5-10 giây</p>
+        </div>
+
+        <!-- ERROR (hiển thị khi load thất bại) -->
+        <div id="msError" class="viewer-error" style="display:none;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Không thể tải preview</strong><br>
+            <small>
+                File quá lớn (&gt;10MB), định dạng không hỗ trợ, hoặc lỗi mạng.<br>
+                Vui lòng tải file về để xem.
+            </small>
+        </div>
+
+        <!-- IFRAME (chứa Microsoft Office Viewer) -->
+        <iframe id="msFrame" style="display:none;"></iframe>
+    </div>
+</div>
+
+<script>
+// ============================================
+// BIẾN TOÀN CỤC
+// ============================================
+let msFrameLoaded = false;      // Đánh dấu iframe đã load chưa
+const VIEWER_TIMEOUT = 20000;   // Timeout 20 giây
+
+// ============================================
+// HÀM LOAD MICROSOFT VIEWER
+// ============================================
+function loadMicrosoftViewer() {
+    // Lấy các elements
+    const frame = document.getElementById('msFrame');
+    const loading = document.getElementById('msLoading');
+    const error = document.getElementById('msError');
+
+    // ===== TẠO URL CHO MICROSOFT OFFICE VIEWER =====
+    // Format: https://view.officeapps.live.com/op/view.aspx?src=YOUR_FILE_URL
+    const viewerUrl = "https://view.officeapps.live.com/op/view.aspx?src={{ file_url | urlencode }}";
+    
+    // Set src cho iframe
+    frame.src = viewerUrl;
+
+    // ===== TIMEOUT: Hiển thị lỗi nếu không load được sau 20s =====
+    const timeout = setTimeout(() => {
+        if (!msFrameLoaded) {
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            frame.style.display = 'none';
+        }
+    }, VIEWER_TIMEOUT);
+
+    // ===== CHECK ĐỊNH KỲ: Kiểm tra iframe đã load chưa =====
+    const checkInterval = setInterval(() => {
+        try {
+            // Thử truy cập contentDocument hoặc contentWindow
+            if (frame.contentDocument || frame.contentWindow) {
+                // Nếu truy cập được → iframe đã load
+                clearTimeout(timeout);
+                clearInterval(checkInterval);
+                msFrameLoaded = true;
+                loading.style.display = 'none';
+                frame.style.display = 'block';
+                error.style.display = 'none';
+            }
+        } catch (e) {
+            // Cross-origin error = iframe đã load (đây là dấu hiệu TỐT)
+            clearTimeout(timeout);
+            clearInterval(checkInterval);
+            msFrameLoaded = true;
+            loading.style.display = 'none';
+            frame.style.display = 'block';
+            error.style.display = 'none';
+        }
+    }, 1000); // Check mỗi 1 giây
+
+    // ===== ONLOAD EVENT =====
+    frame.onload = function() {
+        clearTimeout(timeout);
+        clearInterval(checkInterval);
+        msFrameLoaded = true;
+        loading.style.display = 'none';
+        frame.style.display = 'block';
+        error.style.display = 'none';
+    };
+
+    // ===== ONERROR EVENT =====
+    frame.onerror = function() {
+        clearTimeout(timeout);
+        clearInterval(checkInterval);
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        frame.style.display = 'none';
+    };
+}
+
+// ============================================
+// AUTO-LOAD KHI TRANG LOAD XONG
+// ============================================
+window.addEventListener('load', function() {
+    loadMicrosoftViewer();
+});
+</script>
+{% endblock %}

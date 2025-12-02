@@ -113,7 +113,7 @@
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="comment-time">{{ comment.created_at | vn_datetime }}</span>
-                            {% if comment.user_id == current_user.id or current_user.role == 'director' %}
+                            {% if current_user.role == 'director' %}
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteComment({{ comment.id }})">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -148,12 +148,22 @@
                             {% if other_files %}
                                 {% for att in other_files %}
                                 <div class="attachment-info mt-2">
-                                    <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id, attachment_id=att.id) }}"
-                                       class="btn btn-sm btn-outline-primary" target="_blank">
-                                        <i class="bi bi-{% if att.file_type == 'pdf' %}file-pdf{% elif att.file_type == 'document' %}file-word{% elif att.file_type == 'spreadsheet' %}file-excel{% else %}file-earmark{% endif %}"></i>
-                                        {{ att.original_filename }}
+                                    {% if att.file_type in ['document', 'spreadsheet'] %}
+                                        <!-- ===== WORD/EXCEL: CÓ PREVIEW - CHUYỂN TRANG ===== -->
+                                        <a href="{{ url_for('tasks.preview_comment_attachment', task_id=task.id, comment_id=comment.id, attachment_id=att.id) }}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            {{ att.original_filename }}
+                                        </a>
                                         <small class="text-muted">({{ (att.file_size / 1024) | round(1) }} KB)</small>
-                                    </a>
+                                    {% else %}
+                                        <!-- ===== FILE KHÁC: DOWNLOAD TRỰC TIẾP ===== -->
+                                        <a href="{{ url_for('tasks.download_comment_attachment', task_id=task.id, comment_id=comment.id, attachment_id=att.id) }}"
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="bi bi-{% if att.file_type == 'pdf' %}file-pdf{% else %}file-earmark{% endif %}"></i>
+                                            {{ att.original_filename }}
+                                            <small class="text-muted">({{ (att.file_size / 1024) | round(1) }} KB)</small>
+                                        </a>
+                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             {% endif %}
@@ -255,7 +265,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- ✅ CONFIG PHẢI Ở TRONG TEMPLATE (vì có Jinja2 variables) -->
+<!-- CONFIG PHẢI Ở TRONG TEMPLATE (vì có Jinja2 variables) -->
 <script>
 window.CONFIG = {
     TASK_ID: {{ task.id }},

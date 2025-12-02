@@ -78,48 +78,69 @@
         }
     }
 
-    @media (max-width: 767.98px) {
-        .file-library-card {
-            border-radius: 12px;
-        }
-
-        .table-file-library .table {
-            font-size: 0.85rem;
-        }
-
-        /* Gỡ kiểu bẻ từng ký tự ở mobile cho riêng bảng này */
-        .table-file-library td,
-        .table-file-library td::before {
-            white-space: normal !important;
-            word-break: normal !important;
-            overflow-wrap: normal !important;
-        }
-
-        /* Mobile: tên file hiển thị tối đa 2 dòng, bẻ theo cụm, không vỡ chữ */
-        .file-name-cell {
-            max-width: 100%;
-        }
-
-        .file-name-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;          /* tối đa 2 dòng */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        .file-actions {
-            gap: 0.25rem;
-        }
-
-        .file-actions .btn {
-            padding: 0.25rem 0.45rem;
-            font-size: 0.75rem;
-        }
+@media (max-width: 767.98px) {
+    .file-library-card {
+        border-radius: 12px;
     }
+
+    .table-file-library .table {
+        font-size: 0.85rem;
+    }
+
+    /* ===== ẨN TIÊU ĐỀ "TÊN FILE" TRÊN MOBILE ===== */
+    .file-name-cell::before {
+        display: none !important;
+    }
+
+    /* ===== CĂN GIỮA TẤT CẢ NỘI DUNG ===== */
+    .table-file-library td {
+        text-align: center !important;
+    }
+
+    /* ===== TÊN FILE: CĂN GIỮA, TỐI ĐA 2 DÒNG ===== */
+    .file-name-cell {
+        max-width: 100%;
+        text-align: center !important; /* ← ĐÃ SỬA THÀNH CENTER */
+    }
+
+    .file-name-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    /* ===== NÚT THAO TÁC: CĂN GIỮA VÀ FIX LAYOUT ===== */
+    .file-actions-cell {
+        text-align: center !important;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .file-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 0.5rem 0 !important;
+    }
+
+    .file-actions .btn {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Fix form inline */
+    .file-actions form {
+        display: inline-block !important;
+        margin: 0 !important;
+    }
+}
 
     @media (max-width: 575.98px) {
         .file-library-header {
@@ -157,7 +178,6 @@
                     <thead class="table-light">
                         <tr>
                             <th scope="col">Tên file</th>
-                            <th scope="col">Mô tả</th>
                             <th scope="col">Người upload</th>
                             <th scope="col">Kích thước</th>
                             <th scope="col">Ngày upload</th>
@@ -167,16 +187,17 @@
                     <tbody>
                         {% for file in files %}
                         <tr>
-                            <td data-label="File" class="file-name-cell">
+                            <!-- ===== TÊN FILE: KHÔNG CÓ data-label ===== -->
+                            <td class="file-name-cell">
                                 <span class="file-name-text" title="{{ file.original_filename }}">
                                     {{ file.original_filename }}
                                 </span>
                             </td>
-                            <td data-label="Mô tả">{{ file.description or '-' }}</td>
                             <td data-label="Người upload">{{ file.uploader.full_name }}</td>
                             <td data-label="Kích thước">{{ (file.file_size / 1024) | round(2) }} KB</td>
                             <td data-label="Ngày upload">{{ file.uploaded_at | vn_datetime }}</td>
-                            <td data-label="ThTác" class="file-actions-cell text-center">
+                            <!-- ===== THAO TÁC: ĐÃ BỎ data-label ===== -->
+                            <td class="file-actions-cell">
                                 <div class="file-actions">
                                     <!-- Xem -->
                                     <a href="{{ url_for('files.preview_file', file_id=file.id) }}"

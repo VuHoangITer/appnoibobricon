@@ -181,6 +181,36 @@
         </div>
     </div>
 </div>
+<!-- Modal cảnh báo mô tả quá dài -->
+<div class="modal fade" id="descriptionWarningModal" tabindex="-1" aria-labelledby="descriptionWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="descriptionWarningModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Cảnh báo: Mô tả quá dài
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2"><strong>Mô tả của bạn đã vượt quá 80 từ!</strong></p>
+                <p class="mb-2">Số từ hiện tại: <span id="currentWordCount" class="text-danger fw-bold">0</span> từ</p>
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Lưu ý:</strong> Sếp SẼ không duyệt nếu bạn viết mô tả quá dài.
+                    Hãy cố gắng diễn đạt ngắn gọn, súc tích và đi thẳng vào vấn đề.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-pencil"></i> Chỉnh sửa lại
+                </button>
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal" id="continueAnyway">
+                    <i class="bi bi-check-circle"></i> Tiếp tục tạo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -201,6 +231,59 @@
         charCount.textContent = remaining;
         charCount.style.color = remaining < 20 ? 'red' : '';
     });
+
+    // ===== WORD COUNTER CHO MÔ TẢ (CHỈ ÁP DỤNG CHO NON-DIRECTOR) =====
+    {% if current_user.role != 'director' %}
+    const descriptionTextarea = document.getElementById('description');
+    let wordCountWarningShown = false;
+    let allowSubmitWithLongDescription = false; // FLAG ĐỂ BỎ QUA VALIDATION
+
+    // Hàm đếm từ (tách theo khoảng trắng và loại bỏ khoảng trắng thừa)
+    function countWords(text) {
+        text = text.trim();
+        if (text === '') return 0;
+        return text.split(/\s+/).length;
+    }
+
+    // Kiểm tra khi người dùng nhập
+    descriptionTextarea.addEventListener('input', function() {
+        const wordCount = countWords(this.value);
+
+        // Nếu vượt 80 từ và chưa hiện cảnh báo
+        if (wordCount > 80 && !wordCountWarningShown) {
+            document.getElementById('currentWordCount').textContent = wordCount;
+            const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
+            modal.show();
+            wordCountWarningShown = true;
+        }
+
+        // Reset cờ nếu người dùng giảm xuống dưới 80 từ
+        if (wordCount <= 80) {
+            wordCountWarningShown = false;
+            allowSubmitWithLongDescription = false; // Reset flag khi đã sửa
+        }
+    });
+
+    // ===== KIỂM TRA LẠI KHI SUBMIT FORM =====
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const wordCount = countWords(descriptionTextarea.value);
+
+        // Nếu vượt 80 từ VÀ chưa được phép submit
+        if (wordCount > 80 && !allowSubmitWithLongDescription) {
+            e.preventDefault(); // Chặn submit
+            document.getElementById('currentWordCount').textContent = wordCount;
+            const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
+            modal.show();
+
+            // Nếu người dùng chọn "Tiếp tục tạo", cho phép submit
+            document.getElementById('continueAnyway').onclick = function() {
+                allowSubmitWithLongDescription = true; // Đặt flag = true
+                document.querySelector('form').submit(); // Submit lại
+            };
+        }
+        // Nếu đã được phép hoặc <= 80 từ → submit bình thường
+    });
+    {% endif %}
 
     // Assignment type toggle
     document.querySelectorAll('input[name="assign_type"]').forEach(radio => {

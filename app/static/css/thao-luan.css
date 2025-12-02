@@ -229,9 +229,30 @@ body {
     transform: scale(1.02);
 }
 
+.attachment-info {
+    margin-top: 10px;
+}
+
 .attachment-info .btn {
     border-radius: var(--ed-radius-pill);
     font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-align: left;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+    padding: 8px 12px;
+}
+
+.attachment-info .btn i {
+    flex-shrink: 0;
+}
+
+.attachment-info .btn small {
+    display: inline;
 }
 
 /* ============================================
