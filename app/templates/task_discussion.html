@@ -161,8 +161,8 @@
                                            class="btn btn-sm btn-outline-primary" target="_blank">
                                             <i class="bi bi-{% if att.file_type == 'pdf' %}file-pdf{% else %}file-earmark{% endif %}"></i>
                                             {{ att.original_filename }}
-                                            <small class="text-muted">({{ (att.file_size / 1024) | round(1) }} KB)</small>
                                         </a>
+                                        <small class="text-muted">({{ (att.file_size / 1024) | round(1) }} KB)</small>
                                     {% endif %}
                                 </div>
                                 {% endfor %}

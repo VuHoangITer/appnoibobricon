@@ -522,8 +522,8 @@ function addCommentToList(comment) {
                         <a href="${fileUrl}" class="btn btn-sm btn-outline-primary" ${targetAttr}>
                             <i class="bi bi-${icon}"></i>
                             ${escapeHtml(att.filename)}
-                            <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
                         </a>
+                        <small class="text-muted">(${(att.file_size / 1024).toFixed(1)} KB)</small>
                     </div>
                 `;
             });
