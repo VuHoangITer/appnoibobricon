@@ -5,261 +5,119 @@
 
 {% block extra_css %}
 <style>
-.perf-stat-card {
-	background: white;
-	border-radius: 12px;
-	padding: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-	text-align: center;
-	transition: transform 0.3s ease, box-shadow 0.3s ease;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	min-height: 200px;
-	height: 100%;
-}
-.perf-stat-card:hover {
-	transform: translateY(-5px);
-	box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-.perf-stat-card .stat-icon {
-	font-size: 2.5rem;
-	margin-bottom: 12px;
-	height: 60px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-.perf-stat-card .stat-value {
-	font-size: 2.2rem;
-	font-weight: 700;
-	margin-bottom: 8px;
-	line-height: 1.2;
-	min-height: 52px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	word-break: keep-all;
-}
-.perf-stat-card .stat-label {
-	font-size: 0.85rem;
-	color: #6c757d;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	font-weight: 600;
-	min-height: 38px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	line-height: 1.4;
-}
-.perf-stat-card .stat-sublabel {
-	font-size: 0.75rem;
-	color: #adb5bd;
-	margin-top: 6px;
-	min-height: 24px;
-	height: 24px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-.stats-container {
-	display: flex;
-	flex-wrap: wrap;
-	margin-left: -7.5px;
-	margin-right: -7.5px;
-}
-.stats-container > [class*="col-"] {
-	display: flex;
-	padding-left: 7.5px;
-	padding-right: 7.5px;
-	margin-bottom: 15px;
-}
-.progress {
-	height: 8px;
-	border-radius: 4px;
-	background: #e9ecef;
-	overflow: hidden;
-}
-.progress-bar {
-	border-radius: 4px;
-	transition: width 0.6s ease;
-}
-.user-selector-card {
-	background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
-	color: white;
-	border-radius: 12px;
-	padding: 30px;
-	margin-bottom: 30px;
-	box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
-}
-.user-selector-card h3 {
-	margin-bottom: 20px;
-	font-weight: 600;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-.user-selector-card .form-select {
-	font-size: 1.1rem;
-	padding: 12px 16px;
-	border: 2px solid rgba(255, 255, 255, 0.3);
-	border-radius: 8px;
-}
-.user-selector-card .form-select:focus {
-	border-color: white;
-	box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-}
-.rating-badge-good {
-	background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-	color: white;
-	padding: 8px 16px;
-	border-radius: 20px;
-	font-weight: 600;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
-}
-.rating-badge-bad {
-	background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-	color: white;
-	padding: 8px 16px;
-	border-radius: 20px;
-	font-weight: 600;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	box-shadow: 0 2px 8px rgba(235, 51, 73, 0.3);
-}
-.rating-badge-unrated {
-	background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-	color: white;
-	padding: 8px 16px;
-	border-radius: 20px;
-	font-weight: 600;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	box-shadow: 0 2px 8px rgba(25, 84, 123, 0.3);
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-muted: #6c757d;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-primary-soft: #e7f1ff;
+    --ed-success: #198754;
+    --ed-danger: #dc3545;
+    --ed-warning: #f59e0b;
+    --ed-info-soft: #e3f2fd;
+    --ed-radius-lg: 16px;
+    --ed-radius-md: 12px;
+    --ed-radius-pill: 999px;
 }
 
-/* Clickable row styles */
-.clickable-row {
-    cursor: pointer;
-    transition: background-color 0.2s;
+/* Nền dashboard */
+body {
+    background: var(--ed-bg);
 }
 
-.clickable-row:hover {
-    background-color: rgba(0, 123, 255, 0.1);
+/* Container chung cho trang */
+.performance-page {
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-/* Modal scrollbar */
-.modal-body::-webkit-scrollbar {
-    width: 8px;
+/* CARD CHỌN NHÂN VIÊN */
+.user-summary-card {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.modal-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
+.user-summary-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-summary-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-summary-title h3 {
+    font-size: 1.05rem;
+    margin: 0;
+    font-weight: 600;
+    color: var(--ed-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-summary-title h3 i {
+    color: var(--ed-primary);
+}
+
+.user-summary-title span {
+    font-size: 0.85rem;
+    color: var(--ed-muted);
+}
+
+.user-select-wrapper {
+    min-width: 260px;
+    flex: 1;
+    max-width: 420px;
+}
+
+.user-summary-card .form-select {
+    font-size: 0.9rem;
+    padding: 8px 10px;
     border-radius: 10px;
+    border: 1px solid var(--ed-border);
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
+.user-summary-card .form-select:focus {
+    border-color: var(--ed-primary);
+    box-shadow: 0 0 0 0.12rem rgba(13, 110, 253, 0.25);
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-@media (max-height: 768px) {
-    .modal-dialog-scrollable .modal-body {
-        max-height: 50vh !important;
-    }
-}
-
-@media (max-width: 768px) {
-	.perf-stat-card {
-		margin-bottom: 15px;
-		min-height: 180px;
-		padding: 16px;
-	}
-	.perf-stat-card .stat-icon {
-		font-size: 2rem;
-		height: 50px;
-	}
-	.perf-stat-card .stat-value {
-		font-size: 1.8rem;
-		min-height: 44px;
-	}
-	.perf-stat-card .stat-label {
-		font-size: 0.8rem;
-		min-height: 34px;
-	}
-	.user-selector-card {
-		padding: 20px;
-	}
-	.user-selector-card h3 {
-		font-size: 1.1rem;
-	}
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-.perf-stat-card {
-	animation: fadeIn 0.5s ease-out;
-}
-.perf-stat-card:nth-child(1) {
-	animation-delay: 0.05s;
-}
-.perf-stat-card:nth-child(2) {
-	animation-delay: 0.1s;
-}
-.perf-stat-card:nth-child(3) {
-	animation-delay: 0.15s;
-}
-.perf-stat-card:nth-child(4) {
-	animation-delay: 0.2s;
-}
-.perf-stat-card:nth-child(5) {
-	animation-delay: 0.25s;
-}
-.perf-stat-card:nth-child(6) {
-	animation-delay: 0.3s;
-}
-/* Selected User Info */
-.selected-user-info {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    padding: 15px;
+/* Thông tin user được chọn */
+.selected-user-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
 }
 
 .selected-user-avatar {
-    width: 60px;
-    height: 60px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 600;
     flex-shrink: 0;
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.7);
 }
 
 .selected-user-avatar img {
@@ -269,17 +127,226 @@
     border-radius: 50%;
 }
 
-/* Creator Avatar in Table */
+.selected-user-text h5 {
+    font-size: 0.95rem;
+    margin: 0;
+    font-weight: 600;
+    color: var(--ed-text);
+}
+
+.selected-user-text small {
+    font-size: 0.78rem;
+    color: var(--ed-muted);
+}
+
+/* Nhóm nút filter / reset bên phải */
+.user-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Badge hiển thị filter đang áp dụng */
+.active-filters-badge {
+    font-size: 0.78rem;
+    color: var(--ed-muted);
+}
+
+/* Lưới STAT */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Thẻ STAT */
+.perf-stat-card {
+    background: var(--ed-card-bg);
+    border-radius: 20px;
+    border: 1px solid var(--ed-border);
+    padding: 14px 12px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    text-align: center;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.perf-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    border-color: var(--ed-primary);
+}
+
+.perf-stat-icon {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+
+.perf-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.perf-stat-label {
+    font-size: 0.8rem;
+    color: var(--ed-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.perf-stat-sublabel {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+/* Lưới TASK */
+.tasks-section-card {
+    background: var(--ed-card-bg);
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    padding: 16px 18px 18px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.tasks-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.tasks-section-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ed-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tasks-section-header h5 i {
+    color: var(--ed-primary);
+}
+
+.tasks-section-meta {
+    font-size: 0.8rem;
+    color: var(--ed-muted);
+}
+
+/* Lưới card nhiệm vụ */
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+@media (max-width: 1200px) {
+    .tasks-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .tasks-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card nhiệm vụ */
+.task-card {
+    border: 1px solid var(--ed-border);
+    border-radius: 18px;
+    background: var(--ed-card-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    cursor: pointer;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    border-color: var(--ed-primary);
+}
+
+/* Header nhiệm vụ */
+.task-card-header {
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--ed-border);
+    color: var(--ed-text);
+    background: #f9fafb;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* Body nhiệm vụ */
+.task-card-body {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Dòng meta */
+.task-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.78rem;
+}
+
+.task-meta-left small {
+    color: var(--ed-muted);
+}
+
+/* Người giao */
+.task-creator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .creator-avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0dcaf0, #0d6efd);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     flex-shrink: 0;
     border: 2px solid #e9ecef;
@@ -291,333 +358,462 @@
     object-fit: cover;
     border-radius: 50%;
 }
+
+.task-creator-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-creator-info strong {
+    font-size: 0.8rem;
+    color: var(--ed-text);
+}
+
+.task-creator-info small {
+    font-size: 0.72rem;
+    color: var(--ed-muted);
+}
+
+/* Hàng chips */
+.task-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    border: 1px solid transparent;
+}
+
+/* Chip hạn chót */
+.chip-deadline {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #374151;
+}
+
+/* Chip trạng thái */
+.chip-status {
+    background: var(--ed-primary-soft);
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+/* Chip quá hạn / đúng hạn */
+.chip-late {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.chip-ontime {
+    background: #dcfce7;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+/* Chip đánh giá */
+.chip-rating-good {
+    background: #dcfce7;
+    border-color: #a7f3d0;
+    color: #15803d;
+}
+
+.chip-rating-bad {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.chip-rating-unrated {
+    background: #fef9c3;
+    border-color: #fef3c7;
+    color: #854d0e;
+}
+
+/* Empty state */
+.tasks-empty {
+    text-align: center;
+    padding: 40px 10px 30px;
+    color: var(--ed-muted);
+}
+
+.tasks-empty i {
+    font-size: 3rem;
+    color: #cbd5e1;
+}
+
+.tasks-empty p {
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+/* Pagination text */
+.pagination-info {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--ed-muted);
+    margin-top: 6px;
+}
+
+/* Clickable row */
+.clickable-row {
+    cursor: pointer;
+}
+
+/* Modal scrollbar */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.modal-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+@media (max-height: 768px) {
+    .modal-dialog-scrollable .modal-body {
+        max-height: 50vh !important;
+    }
+}
+
+/* Responsive tweak */
+@media (max-width: 768px) {
+    .user-summary-top {
+        align-items: flex-start;
+    }
+    .user-summary-card {
+        padding: 14px 14px;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- ===== TASK HEADER ===== -->
-<div class="task-header-container">
+<div class="task-header-container mb-3">
     {% include 'components/task_header.html' %}
 </div>
-<!-- User Selector -->
-<div class="user-selector-card">
-    <h3><i class="bi bi-person-check-fill"></i> Chọn Nhân Viên Để Xem Hiệu Suất</h3>
-    <form method="GET" class="row g-3">
-        <div class="col-md-12">
-            <select class="form-select" name="user_id" id="userSelect" onchange="this.form.submit()">
-                <option value="">-- Chọn nhân viên --</option>
-                {% for user in all_users %}
-                <option value="{{ user.id }}" {% if selected_user and selected_user.id == user.id %}selected{% endif %}>
-                    {{ user.full_name }} - {{ user.role | role_vn }}
-                </option>
-                {% endfor %}
-            </select>
 
-            <!-- Hiển thị info người được chọn -->
+<div class="performance-page">
+
+    <!-- CARD CHỌN NHÂN VIÊN -->
+    <div class="user-summary-card">
+        <form method="GET" class="w-100">
+            <div class="user-summary-top">
+                <div class="user-summary-title">
+                    <h3>
+                        <i class="bi bi-person-check-fill"></i>
+                        Đánh Giá Hiệu Suất Nhân Viên
+                    </h3>
+                    <span>Chọn nhân viên để xem thống kê nhiệm vụ, tỷ lệ hoàn thành và đánh giá hiệu suất.</span>
+                </div>
+
+                <div class="user-select-wrapper">
+                    <select class="form-select" name="user_id" id="userSelect" onchange="this.form.submit()">
+                        <option value="">-- Chọn nhân viên --</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {% if selected_user and selected_user.id == user.id %}selected{% endif %}>
+                            {{ user.full_name }} - {{ user.role | role_vn }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="user-summary-actions">
+                    {% if selected_user %}
+                        <!-- Nút bộ lọc mở modal -->
+                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#filterModal">
+                            <i class="bi bi-funnel-fill"></i>
+                            {% if status_filter or date_from or date_to %}
+                            <span class="badge bg-danger ms-1">
+                                {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) }}
+                            </span>
+                            {% endif %}
+                        </button>
+
+                        <!-- Reset tất cả filter -->
+                        <a href="{{ url_for('performance.performance_review') }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
             {% if selected_user %}
-            <div class="selected-user-info mt-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="selected-user-avatar">
-                        {% if selected_user.avatar %}
-                            <img src="{{ url_for('profile.get_avatar', filename=selected_user.avatar) }}" alt="">
-                        {% else %}
-                            {{ selected_user.full_name[0].upper() }}
-                        {% endif %}
-                    </div>
-                    <div>
-                        <h5 class="mb-0">{{ selected_user.full_name }}</h5>
-                        <small class="opacity-75">{{ selected_user.role | role_vn }} • {{ selected_user.email }}</small>
-                    </div>
+            <div class="selected-user-inline">
+                <div class="selected-user-avatar">
+                    {% if selected_user.avatar %}
+                        <img src="{{ url_for('profile.get_avatar', filename=selected_user.avatar) }}" alt="">
+                    {% else %}
+                        {{ selected_user.full_name[0].upper() }}
+                    {% endif %}
+                </div>
+                <div class="selected-user-text">
+                    <h5>{{ selected_user.full_name }}</h5>
+                    <small>{{ selected_user.role | role_vn }} • {{ selected_user.email }}</small>
                 </div>
             </div>
             {% endif %}
-        </div>
-
-        {% if selected_user %}
-        <div class="col-md-1">
-            <a href="{{ url_for('performance.performance_review') }}" class="btn btn-light w-100">
-                <i class="bi bi-arrow-clockwise"></i>
-            </a>
-        </div>
-        {% endif %}
-    </form>
-</div>
-
-{% if selected_user %}
-<!-- Statistics Overview -->
-<div class="row mb-4">
-    <div class="col-12">
-        <h4 class="mb-3">
-            <i class="bi bi-graph-up-arrow"></i>
-            Tổng Quan Hiệu Suất: {{ selected_user.full_name }}
-        </h4>
+        </form>
     </div>
 
-    <!-- Total Tasks -->
-    <div class="col-lg-2 col-md-4 col-6">
+    {% if selected_user %}
+    <!-- MODAL BỘ LỌC -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">
+                        <i class="bi bi-funnel-fill"></i> Bộ lọc nhiệm vụ
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="GET">
+                    <input type="hidden" name="user_id" value="{{ selected_user.id }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-flag-fill"></i> Trạng thái:
+                            </label>
+                            <select class="form-select" name="status">
+                                <option value="">Tất cả</option>
+                                <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
+                                <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
+                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chưa làm</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-range"></i> Từ ngày:
+                            </label>
+                            <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-range"></i> Đến ngày:
+                            </label>
+                            <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                        </div>
+
+                        {% if status_filter or date_from or date_to %}
+                        <div class="alert alert-info mb-0">
+                            <small>
+                                <i class="bi bi-info-circle"></i> Đang áp dụng:
+                                {% if status_filter %}
+                                <br>• Trạng thái: {{ status_filter | status_vn }}
+                                {% endif %}
+                                {% if date_from %}
+                                <br>• Từ: {{ date_from }}
+                                {% endif %}
+                                {% if date_to %}
+                                <br>• Đến: {{ date_to }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ url_for('performance.performance_review', user_id=selected_user.id) }}"
+                           class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Áp dụng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LƯỚI THỐNG KÊ -->
+    <div class="stats-grid">
+        <!-- Tổng nhiệm vụ -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-primary">
+            <div class="perf-stat-icon text-primary">
                 <i class="bi bi-list-task"></i>
             </div>
-            <div class="stat-value text-primary">{{ stats.total_tasks }}</div>
-            <div class="stat-label">Tổng Nhiệm Vụ</div>
+            <div class="perf-stat-value text-primary">{{ stats.total_tasks }}</div>
+            <div class="perf-stat-label">TỔNG NHIỆM VỤ</div>
         </div>
-    </div>
 
-    <!-- Completion Rate -->
-    <div class="col-lg-2 col-md-4 col-6">
+        <!-- Tỷ lệ hoàn thành -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-success">
+            <div class="perf-stat-icon text-success">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="stat-value text-success">{{ stats.completion_rate }}%</div>
-            <div class="stat-label">Hoàn Thành</div>
-            <div class="stat-sublabel">{{ stats.done_tasks }}/{{ stats.total_tasks }}</div>
+            <div class="perf-stat-value text-success">{{ stats.completion_rate }}%</div>
+            <div class="perf-stat-label">HOÀN THÀNH</div>
+            <div class="perf-stat-sublabel">{{ stats.done_tasks }}/{{ stats.total_tasks }}</div>
         </div>
-    </div>
 
-    <!-- On-Time Rate -->
-    <div class="col-lg-2 col-md-4 col-6">
+        <!-- Tỷ lệ đúng hạn -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-info">
+            <div class="perf-stat-icon text-info">
                 <i class="bi bi-clock-fill"></i>
             </div>
-            <div class="stat-value text-info">{{ stats.on_time_rate }}%</div>
-            <div class="stat-label">Đúng Hạn</div>
-            <div class="stat-sublabel">{{ stats.done_on_time }}/{{ stats.done_tasks }}</div>
+            <div class="perf-stat-value text-info">{{ stats.on_time_rate }}%</div>
+            <div class="perf-stat-label">ĐÚNG HẠN</div>
+            <div class="perf-stat-sublabel">{{ stats.done_on_time }}/{{ stats.done_tasks }}</div>
         </div>
-    </div>
 
-    <!-- Good Rating -->
-    <div class="col-lg-2 col-md-4 col-6">
+        <!-- Đánh giá tốt -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-success">
+            <div class="perf-stat-icon text-success">
                 <i class="bi bi-hand-thumbs-up-fill"></i>
             </div>
-            <div class="stat-value text-success">{{ stats.good_rating }}</div>
-            <div class="stat-label">Đánh Giá Tốt</div>
-            <div class="stat-sublabel">{{ stats.good_rating_rate }}%</div>
+            <div class="perf-stat-value text-success">{{ stats.good_rating }}</div>
+            <div class="perf-stat-label">ĐÁNH GIÁ TỐT</div>
+            <div class="perf-stat-sublabel">{{ stats.good_rating_rate }}%</div>
         </div>
-    </div>
 
-    <!-- Bad Rating -->
-    <div class="col-lg-2 col-md-4 col-6">
+        <!-- Đánh giá kém -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-danger">
+            <div class="perf-stat-icon text-danger">
                 <i class="bi bi-hand-thumbs-down-fill"></i>
             </div>
-            <div class="stat-value text-danger">{{ stats.bad_rating }}</div>
-            <div class="stat-label">Cần Cải Thiện</div>
+            <div class="perf-stat-value text-danger">{{ stats.bad_rating }}</div>
+            <div class="perf-stat-label">CẦN CẢI THIỆN</div>
         </div>
-    </div>
 
-    <!-- Unrated -->
-    <div class="col-lg-2 col-md-4 col-6">
+        <!-- Chưa đánh giá -->
         <div class="perf-stat-card">
-            <div class="stat-icon text-warning">
+            <div class="perf-stat-icon text-warning">
                 <i class="bi bi-hourglass-split"></i>
             </div>
-            <div class="stat-value text-warning">{{ stats.unrated }}</div>
-            <div class="stat-label">Chưa Đánh Giá</div>
+            <div class="perf-stat-value text-warning">{{ stats.unrated }}</div>
+            <div class="perf-stat-label">CHƯA ĐÁNH GIÁ</div>
         </div>
     </div>
-</div>
 
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">
-                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+    <!-- LƯỚI NHIỆM VỤ -->
+    <div class="tasks-section-card">
+        <div class="tasks-section-header">
+            <div>
+                <h5>
+                    <i class="bi bi-list-check"></i>
+                    Chi Tiết Nhiệm Vụ
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="GET">
-                <input type="hidden" name="user_id" value="{{ selected_user.id }}">
-                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-flag-fill"></i> Trạng thái:
-                        </label>
-                        <select class="form-select" name="status">
-                            <option value="">Tất cả</option>
-                            <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Hoàn thành</option>
-                            <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang làm</option>
-                            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Chưa làm</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-range"></i> Từ ngày:
-                        </label>
-                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-range"></i> Đến ngày:
-                        </label>
-                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
-                    </div>
-
-                    <!-- Hiển thị filter đang áp dụng -->
-                    {% if status_filter or date_from or date_to %}
-                    <div class="alert alert-info mb-0">
-                        <small>
-                            <i class="bi bi-info-circle"></i> Đang lọc:
-                            {% if status_filter %}
-                            <br>• Trạng thái: {{ status_filter | status_vn }}
-                            {% endif %}
-                            {% if date_from %}
-                            <br>• Từ: {{ date_from }}
-                            {% endif %}
-                            {% if date_to %}
-                            <br>• Đến: {{ date_to }}
-                            {% endif %}
-                        </small>
-                    </div>
+                <div class="tasks-section-meta">
+                    {{ pagination.total }} nhiệm vụ
+                    {% if pagination.pages > 1 %}
+                        • Trang {{ pagination.page }}/{{ pagination.pages }}
                     {% endif %}
                 </div>
-                <div class="modal-footer">
-                    <a href="{{ url_for('performance.performance_review', user_id=selected_user.id) }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Áp dụng
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Tasks Table -->
-<div class="card">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-list-check"></i> Chi Tiết Nhiệm Vụ
-                <span class="badge bg-primary ms-2">{{ pagination.total }} nhiệm vụ</span>
-                {% if pagination.pages > 1 %}
-                <span class="badge bg-secondary ms-1">Trang {{ pagination.page }}/{{ pagination.pages }}</span>
-                {% endif %}
-            </h5>
-
-            <div class="d-flex gap-2 align-items-center">
-                <!-- Nút bộ lọc -->
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                    <i class="bi bi-funnel-fill"></i>
-                    {% if status_filter or date_from or date_to %}
-                    <span class="badge bg-danger">
-                        {{ (1 if status_filter else 0) + (1 if date_from else 0) + (1 if date_to else 0) }}
-                    </span>
-                    {% endif %}
-                </button>
             </div>
         </div>
-    </div>
-    <div class="card-body">
+
         {% if tasks %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Nhiệm Vụ</th>
-                        <th>Người Giao</th>
-                        <th>Hạn Chót</th>
-                        <th>Trạng Thái</th>
-                        <th>Đánh Giá</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for task in tasks %}
-                    <tr class="clickable-row" data-href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
-                        <td data-label="Nhiệm Vụ">
-                            <strong>{{ task.title }}</strong>
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-calendar-plus"></i> Tạo: {{ task.created_at | vn_datetime('%d/%m/%Y') }}
+        <div class="tasks-grid">
+            {% for task in tasks %}
+            <div class="task-card clickable-row" data-href="{{ url_for('tasks.task_detail', task_id=task.id) }}">
+                <div class="task-card-header">
+                    {{ task.title }}
+                </div>
+                <div class="task-card-body">
+                    <div class="task-meta-row">
+                        <div class="task-meta-left">
+                            <small>
+                                <i class="bi bi-calendar-plus"></i>
+                                Tạo: {{ task.created_at | vn_datetime('%d/%m/%Y') }}
                             </small>
                             {% if task.status == 'DONE' %}
                             <br>
-                            <small class="text-muted">
-                                <i class="bi bi-calendar-check"></i> Hoàn thành: {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
+                            <small>
+                                <i class="bi bi-calendar-check"></i>
+                                Hoàn thành: {{ task.updated_at | vn_datetime('%d/%m/%Y') }}
                             </small>
                             {% endif %}
-                        </td>
-                        <td data-label="Người Giao">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="creator-avatar">
-                                    {% if task.creator.avatar %}
-                                        <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}" alt="">
-                                    {% else %}
-                                        {{ task.creator.full_name[0].upper() }}
-                                    {% endif %}
-                                </div>
-                                <div>
-                                    <strong>{{ task.creator.full_name }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ task.creator.role | role_vn }}</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td data-label="Hạn Chót">
-                            {% if task.due_date %}
-                            <span class="badge bg-secondary">
-                                {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
+                        </div>
+                    </div>
+
+                    <!-- Người giao -->
+                    <div class="task-creator mt-2">
+                        <div class="creator-avatar">
+                            {% if task.creator.avatar %}
+                                <img src="{{ url_for('profile.get_avatar', filename=task.creator.avatar) }}" alt="">
+                            {% else %}
+                                {{ task.creator.full_name[0].upper() }}
+                            {% endif %}
+                        </div>
+                        <div class="task-creator-info">
+                            <strong>{{ task.creator.full_name }}</strong>
+                            <small>{{ task.creator.role | role_vn }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Chips -->
+                    <div class="task-chips-row">
+                        <!-- Hạn chót -->
+                        {% if task.due_date %}
+                        <span class="chip chip-deadline text-danger">
+                            {{ task.due_date | vn_datetime('%d/%m/%Y %H:%M') }}
+                        </span>
+                        {% else %}
+                        <span class="chip chip-deadline">
+                            <i class="bi bi-clock"></i> Không có hạn
+                        </span>
+                        {% endif %}
+
+                        <!-- Trạng thái -->
+                        <span class="chip chip-status">
+                            <i class="bi bi-flag-fill"></i>
+                            {{ task.status | status_vn }}
+                        </span>
+
+                        {% if task.status == 'DONE' %}
+                            {% if task.completed_overdue %}
+                            <span class="chip chip-late">
+                                <i class="bi bi-clock-history"></i> Quá hạn
                             </span>
                             {% else %}
-                            <span class="text-muted">Không có</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Trạng Thái">
-                            <span class="badge bg-{{ task.status | status_badge }}">
-                                {{ task.status | status_vn }}
+                            <span class="chip chip-ontime">
+                                <i class="bi bi-check-circle"></i> Đúng hạn
                             </span>
-                            {% if task.status == 'DONE' %}
-                                {% if task.completed_overdue %}
-                                <br>
-                                <span class="badge bg-danger mt-1">
-                                    <i class="bi bi-clock-history"></i> Quá hạn
-                                </span>
-                                {% else %}
-                                <br>
-                                <span class="badge bg-success mt-1">
-                                    <i class="bi bi-check-circle"></i> Đúng hạn
-                                </span>
-                                {% endif %}
                             {% endif %}
-                        </td>
-                        <td data-label="Đánh Giá">
-                            {% if task.status == 'DONE' %}
-                                {% if task.performance_rating == 'good' %}
-                                <span class="rating-badge-good">
-                                    <i class="bi bi-hand-thumbs-up-fill"></i> Tốt
-                                </span>
-                                {% elif task.performance_rating == 'bad' %}
-                                <span class="rating-badge-bad">
-                                    <i class="bi bi-hand-thumbs-down-fill"></i> Kém
-                                </span>
-                                {% else %}
-                                <span class="rating-badge-unrated">
-                                    <i class="bi bi-hourglass-split"></i> Chưa đánh giá
-                                </span>
-                                {% endif %}
+                        {% endif %}
+
+                        <!-- Đánh giá -->
+                        {% if task.status == 'DONE' %}
+                            {% if task.performance_rating == 'good' %}
+                            <span class="chip chip-rating-good">
+                                <i class="bi bi-hand-thumbs-up-fill"></i> Tốt
+                            </span>
+                            {% elif task.performance_rating == 'bad' %}
+                            <span class="chip chip-rating-bad">
+                                <i class="bi bi-hand-thumbs-down-fill"></i> Kém
+                            </span>
                             {% else %}
-                            <span class="text-muted">-</span>
+                            <span class="chip chip-rating-unrated">
+                                <i class="bi bi-hourglass-split"></i> Chưa đánh giá
+                            </span>
                             {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
 
-        <!-- Pagination -->
         {% if pagination.pages > 1 %}
-        <nav aria-label="Task pagination" class="mt-4">
+        <nav aria-label="Task pagination" class="mt-3">
             <ul class="pagination justify-content-center">
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                     {% if pagination.has_prev %}
@@ -661,38 +857,35 @@
             </ul>
         </nav>
 
-        <div class="text-center text-muted">
-            <small>
-                Hiển thị {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
-                -
-                {{ min(pagination.page * pagination.per_page, pagination.total) }}
-                /
-                {{ pagination.total }} nhiệm vụ
-            </small>
+        <div class="pagination-info">
+            Hiển thị
+            {{ ((pagination.page - 1) * pagination.per_page) + 1 }}
+            -
+            {{ min(pagination.page * pagination.per_page, pagination.total) }}
+            /
+            {{ pagination.total }} nhiệm vụ
         </div>
         {% endif %}
 
         {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-            <p class="text-muted mt-3">Không có nhiệm vụ nào.</p>
+        <div class="tasks-empty">
+            <i class="bi bi-inbox"></i>
+            <p>Không có nhiệm vụ nào phù hợp bộ lọc.</p>
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Xử lý click vào row để chuyển trang
+// Click card để mở chi tiết task
 document.querySelectorAll('.clickable-row').forEach(row => {
     row.addEventListener('click', function(e) {
-        // Không chuyển trang nếu đang select text
         if (window.getSelection().toString()) {
             return;
         }
-
         window.location.href = this.dataset.href;
     });
 });
