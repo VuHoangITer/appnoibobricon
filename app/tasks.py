@@ -2083,7 +2083,7 @@ def download_comment_attachment(task_id, comment_id, attachment_id):
     """Download 1 file cụ thể từ comment"""
     from app.models import TaskComment, TaskCommentAttachment
 
-    # ✅ THÊM: Handle fallback cho attachment_id=0 (dữ liệu cũ)
+    #  Handle fallback cho attachment_id=0 (dữ liệu cũ)
     if attachment_id == 0:
         comment = TaskComment.query.get_or_404(comment_id)
         if comment.task_id != task_id:

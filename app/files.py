@@ -150,7 +150,11 @@ def view_file(file_id):
         'jpeg': 'image/jpeg',
         'gif': 'image/gif',
         'bmp': 'image/bmp',
-        'webp': 'image/webp'
+        'webp': 'image/webp',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
 
     file_ext = file.original_filename.rsplit('.', 1)[1].lower() if '.' in file.original_filename else ''

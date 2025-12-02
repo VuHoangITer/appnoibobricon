@@ -6,153 +6,212 @@
 {% block extra_css %}
 <style>
     .preview-container {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        min-height: 600px;
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 24px 0 32px;
+        min-height: 0;
     }
-    
+
     .file-header {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: #ffffff;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: none; /* bỏ bóng cho minimal */
     }
-    
+
+    .file-name {
+        font-size: 1.05rem;
+        font-weight: 600;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        line-height: 1.4;
+        margin-bottom: 0.35rem;
+        padding-right: 12px;
+        color: #111827;
+    }
+
+    .file-name i {
+        font-size: 1.15rem;
+        margin-right: 8px;
+        vertical-align: -1px;
+    }
+
+    .file-header .text-muted small {
+        font-size: 0.85rem;
+    }
+
+    .file-header .btn-primary {
+        border-radius: 999px;
+        padding: 8px 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
     .preview-content {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .preview-content iframe {
-        width: 100%;
-        height: 800px;
-        border: none;
-        border-radius: 4px;
-    }
-    
-    .preview-content img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 0 auto;
-        border-radius: 4px;
-    }
-    
-    .office-preview {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 32px 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: none;
         text-align: center;
-        padding: 40px;
-    }
-    
-    .office-preview i {
-        font-size: 80px;
-        margin-bottom: 20px;
     }
 
-    .office-preview .bi-file-word {
-        color: #2b579a;
+    .big-icon {
+        font-size: 72px;
+        margin-bottom: 16px;
+        opacity: 0.9;
     }
 
-    .office-preview .bi-file-excel {
-        color: #217346;
+    .big-icon.bi-file-word { color: #2563eb; }
+    .big-icon.bi-file-excel { color: #16a34a; }
+    .big-icon.bi-file-earmark { color: #6b7280; }
+
+    .preview-content h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    .preview-content .lead {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .preview-content .text-secondary {
+        font-size: 0.9rem;
+        color: #6b7280 !important;
+    }
+
+    .btn-success {
+        border-radius: 999px;
+        padding: 9px 26px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
+    .btn-open-app {
+        background: #0d2058;
+        border-radius: 999px;
+        border: 1px solid #0f766e;
+        font-size: 0.95rem;
+        padding: 9px 26px;
+        font-weight: 500;
+        color: #0f766e;
+    }
+
+    /* Responsive tối giản */
+    @media (max-width: 768px) {
+        .preview-container {
+            padding: 16px 0 24px;
+        }
+
+        .file-header {
+            padding: 14px 14px;
+        }
+
+        .file-name {
+            font-size: 1rem;
+        }
+
+        .preview-content {
+            padding: 24px 14px;
+        }
+
+        .big-icon {
+            font-size: 60px;
+        }
+
+        .file-header .text-end {
+            text-align: left !important;
+            margin-top: 10px;
+        }
     }
 </style>
 {% endblock %}
 
+
 {% block content %}
 <div class="preview-container">
-    <!-- File Header -->
+    <!-- Header -->
     <div class="file-header">
-        <div class="row align-items-center">
+        <div class="row align-items-start">
             <div class="col-md-8">
-                <h4>
-                    <i class="bi bi-file-earmark-text"></i>
+                <h4 class="file-name">
+                    <i class="bi {% if file_type == 'word' %}bi-file-word{% elif file_type == 'excel' %}bi-file-excel{% else %}bi-file-earmark-text{% endif %}"></i>
                     {{ file.original_filename }}
                 </h4>
-                <div class="text-muted">
-                    <small>
-                        <i class="bi bi-person"></i> Người upload: {{ file.uploader.full_name }} |
-                        <i class="bi bi-calendar"></i> {{ file.uploaded_at | vn_datetime }} |
-                        <i class="bi bi-hdd"></i> {{ (file.file_size / 1024 / 1024) | round(2) }} MB
-                    </small>
-                </div>
+                <div class="text-muted"><small>
+                    <i class="bi bi-person"></i> {{ file.uploader.full_name }} |
+                    <i class="bi bi-calendar"></i> {{ file.uploaded_at | vn_datetime }} |
+                    <i class="bi bi-hdd"></i> {{ (file.file_size / 1024 / 1024) | round(2) }} MB
+                </small></div>
                 {% if file.description %}
-                <p class="mt-2 mb-0">
-                    <strong>Mô tả:</strong> {{ file.description }}
-                </p>
+                <p class="mt-2 mb-0"><strong>Mô tả:</strong> {{ file.description }}</p>
                 {% endif %}
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary">
+                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
                     <i class="bi bi-download"></i> Tải về
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Preview Content -->
+    <!-- Nội dung xem trước -->
     <div class="preview-content">
         {% if file_type == 'pdf' %}
-            <!-- PDF Preview -->
-            <iframe src="{{ url_for('files.view_file', file_id=file.id) }}" type="application/pdf"></iframe>
+            <iframe src="{{ url_for('files.view_file', file_id=file.id) }}" style="width:100%; height:800px; border:none;"></iframe>
 
         {% elif file_type == 'image' %}
-            <!-- Image Preview -->
-            <img src="{{ url_for('files.view_file', file_id=file.id) }}" alt="{{ file.original_filename }}">
-
-        {% elif file_type == 'word' %}
-            <!-- Word Document Preview with Microsoft Office Viewer -->
-            <div class="office-preview">
-                <i class="bi bi-file-word"></i>
-                <h4>File Microsoft Word</h4>
-                <p class="text-muted">{{ file.original_filename }}</p>
-                <p>Xem trực tuyến bằng Microsoft Office:</p>
-                <iframe
-                    src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root }}files/view/{{ file.id }}"
-                    width="100%"
-                    height="600px"
-                    frameborder="0">
-                </iframe>
-                <div class="mt-3">
-                    <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
-                        <i class="bi bi-download"></i> Tải về để xem đầy đủ
-                    </a>
-                </div>
-            </div>
-
-        {% elif file_type == 'excel' %}
-            <!-- Excel Preview with Microsoft Office Viewer -->
-            <div class="office-preview">
-                <i class="bi bi-file-excel"></i>
-                <h4>File Microsoft Excel</h4>
-                <p class="text-muted">{{ file.original_filename }}</p>
-                <p>Xem trực tuyến bằng Microsoft Office:</p>
-                <iframe
-                    src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root }}files/view/{{ file.id }}"
-                    width="100%"
-                    height="600px"
-                    frameborder="0">
-                </iframe>
-                <div class="mt-3">
-                    <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
-                        <i class="bi bi-download"></i> Tải về để xem đầy đủ
-                    </a>
-                </div>
-            </div>
+            <img src="{{ url_for('files.view_file', file_id=file.id) }}" class="img-fluid rounded" alt="{{ file.original_filename }}">
 
         {% else %}
-            <!-- Unknown file type -->
-            <div class="office-preview">
-                <i class="bi bi-file-earmark" style="color: #6c757d;"></i>
-                <h4>Không thể xem trước</h4>
-                <p class="text-muted">{{ file.original_filename }}</p>
-                <p>Loại file này không hỗ trợ xem trước trực tuyến.</p>
-                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-primary btn-lg">
-                    <i class="bi bi-download"></i> Tải về
+            <!-- Word, Excel, hoặc file khác -->
+            <div>
+                <i class="bi big-icon {% if file_type == 'word' %}bi-file-word{% elif file_type == 'excel' %}bi-file-excel{% else %}bi-file-earmark{% endif %}"></i>
+                <h3>
+                    {% if file_type == 'word' %}Tài liệu Microsoft Word
+                    {% elif file_type == 'excel' %}Bảng tính Microsoft Excel
+                    {% else %}File đính kèm{% endif %}
+                </h3>
+                <p class="text-muted lead" style="word-break: break-word; overflow-wrap: anywhere; max-width: 100%;">
+                    {{ file.original_filename }}
+                </p>
+                <p class="text-secondary">
+                    {% if file_type in ['word', 'excel'] %}
+                        Không xem trước trực tuyến được trong mạng nội bộ.<br>
+                        <strong>Nhưng bạn có thể mở ngay bằng ứng dụng Word/Excel trên điện thoại!</strong>
+                    {% else %}
+                        Loại file này không hỗ trợ xem trước.
+                    {% endif %}
+                </p>
+
+                <!-- Nút tải về -->
+                <a href="{{ url_for('files.download_file', file_id=file.id) }}"
+                   class="btn btn-success btn-lg px-5">
+                    <i class="bi bi-download"></i> Tải xuống ({{ (file.file_size / 1024 / 1024)|round(2) }} MB)
                 </a>
+
+                <!-- Nút mở trực tiếp bằng app – chỉ hiện trên mobile -->
+                {% if request.user_agent.platform in ['android', 'iphone', 'ipad'] or 'mobile' in request.user_agent.string|lower %}
+                <div class="mt-4">
+                    <small class="text-muted">Hoặc</small><br>
+                    <a href="{{ url_for('files.view_file', file_id=file.id) }}"
+                       class="btn btn-open-app text-white btn-lg px-5 mt-2"
+                       target="_blank">
+                        <i class="bi bi-box-arrow-up-right"></i> Mở ngay bằng Word/Excel
+                    </a>
+                    <p class="text-muted small mt-3">
+                        Nếu đã cài Microsoft Word/Excel → file sẽ mở ngay trong ứng dụng
+                    </p>
+                </div>
+                {% endif %}
             </div>
         {% endif %}
     </div>

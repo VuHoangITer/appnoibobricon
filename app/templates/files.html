@@ -3,82 +3,223 @@
 {% block title %}Thư viện File{% endblock %}
 {% block page_title %}Thư viện File{% endblock %}
 
+{% block extra_css %}
+<style>
+    .file-library-page {
+        padding-bottom: 1.5rem;
+    }
+
+    .file-library-header h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0;
+    }
+
+    .file-library-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Bảng file */
+    .table-file-library .table {
+        margin-bottom: 0;
+    }
+
+    .table-file-library thead th {
+        border-bottom-width: 1px;
+        font-weight: 600;
+        color: #4b5563;
+        white-space: nowrap;
+    }
+
+    .table-file-library tbody td {
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+
+    /* Tên file: desktop thu gọn, ellipsis */
+    .file-name-cell {
+        max-width: 260px;
+    }
+
+    .file-name-text {
+        display: inline-block;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Cột thao tác */
+    .file-actions-cell {
+        white-space: nowrap;
+        width: 1%; /* co lại vừa đủ nội dung */
+    }
+
+    .file-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .file-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        border-radius: 999px;
+    }
+
+    /* Responsive */
+    @media (max-width: 991.98px) {
+        .file-name-cell {
+            max-width: 200px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .file-library-card {
+            border-radius: 12px;
+        }
+
+        .table-file-library .table {
+            font-size: 0.85rem;
+        }
+
+        /* Gỡ kiểu bẻ từng ký tự ở mobile cho riêng bảng này */
+        .table-file-library td,
+        .table-file-library td::before {
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+        }
+
+        /* Mobile: tên file hiển thị tối đa 2 dòng, bẻ theo cụm, không vỡ chữ */
+        .file-name-cell {
+            max-width: 100%;
+        }
+
+        .file-name-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;          /* tối đa 2 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .file-actions {
+            gap: 0.25rem;
+        }
+
+        .file-actions .btn {
+            padding: 0.25rem 0.45rem;
+            font-size: 0.75rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .file-library-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.75rem;
+        }
+
+        .file-library-header .btn {
+            align-self: stretch;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-folder"></i></h2>
-    {% if current_user.can_upload_files() %}
-    <a href="{{ url_for('files.upload_file') }}" class="btn btn-primary">
-        <i class="bi bi-upload"></i> Upload file
-    </a>
-    {% endif %}
-</div>
-
-<div class="card">
-    <div class="card-body">
-        {% if files %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Tên file</th>
-                        <th>Mô tả</th>
-                        <th>Người upload</th>
-                        <th>Kích thước</th>
-                        <th>Ngày upload</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for file in files %}
-                    <tr>
-                        <td data-label="Tên file">
-                            {{ file.original_filename }}
-                        </td>
-                        <td data-label="Mô tả">{{ file.description or '-' }}</td>
-                        <td data-label="Người upload">{{ file.uploader.full_name }}</td>
-                        <td data-label="Kích thước">{{ (file.file_size / 1024) | round(2) }} KB</td>
-                        <td data-label="Ngày upload">{{ file.uploaded_at | vn_datetime }}</td>
-                        <td data-label="Thao tác">
-                            <div class="btn-group" role="group">
-                                <!-- Nút Xem trước - Tất cả role đều có thể xem -->
-                                <a href="{{ url_for('files.preview_file', file_id=file.id) }}"
-                                   class="btn btn-sm btn-info"
-                                   target="_blank"
-                                   title="Xem trước">
-                                    <i class="bi bi-eye"></i> Xem
-                                </a>
-
-                                <!-- Nút Tải về - Tất cả role đều có thể tải -->
-                                <a href="{{ url_for('files.download_file', file_id=file.id) }}"
-                                   class="btn btn-sm btn-primary"
-                                   title="Tải về">
-                                    <i class="bi bi-download"></i> Tải
-                                </a>
-
-                                <!-- Nút Xóa - Chỉ Director hoặc người upload -->
-                                {% if current_user.can_upload_files() and (current_user.role == 'director' or file.uploader_id == current_user.id) %}
-                                <form method="POST"
-                                      action="{{ url_for('files.delete_file', file_id=file.id) }}"
-                                      style="display: inline;"
-                                      onsubmit="return confirm('Bạn có chắc muốn xóa file này?');">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit"
-                                            class="btn btn-sm btn-danger"
-                                            title="Xóa">
-                                        <i class="bi bi-trash"></i> Xóa
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-center text-muted">Chưa có file nào.</p>
+<div class="file-library-page">
+    <div class="d-flex justify-content-between align-items-center mb-4 file-library-header">
+        <h2 class="mb-0">
+            <i class="bi bi-folder"></i>
+        </h2>
+        {% if current_user.can_upload_files() %}
+        <a href="{{ url_for('files.upload_file') }}" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Upload file
+        </a>
         {% endif %}
+    </div>
+
+    <div class="card file-library-card">
+        <div class="card-body">
+            {% if files %}
+            <div class="table-responsive table-file-library">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Tên file</th>
+                            <th scope="col">Mô tả</th>
+                            <th scope="col">Người upload</th>
+                            <th scope="col">Kích thước</th>
+                            <th scope="col">Ngày upload</th>
+                            <th scope="col" class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td data-label="File" class="file-name-cell">
+                                <span class="file-name-text" title="{{ file.original_filename }}">
+                                    {{ file.original_filename }}
+                                </span>
+                            </td>
+                            <td data-label="Mô tả">{{ file.description or '-' }}</td>
+                            <td data-label="Người upload">{{ file.uploader.full_name }}</td>
+                            <td data-label="Kích thước">{{ (file.file_size / 1024) | round(2) }} KB</td>
+                            <td data-label="Ngày upload">{{ file.uploaded_at | vn_datetime }}</td>
+                            <td data-label="ThTác" class="file-actions-cell text-center">
+                                <div class="file-actions">
+                                    <!-- Xem -->
+                                    <a href="{{ url_for('files.preview_file', file_id=file.id) }}"
+                                       class="btn btn-sm btn-info"
+                                       title="Xem trước">
+                                        <i class="bi bi-eye"></i>
+                                        <span>Xem</span>
+                                    </a>
+
+                                    <!-- Tải -->
+                                    <a href="{{ url_for('files.download_file', file_id=file.id) }}"
+                                       class="btn btn-sm btn-primary"
+                                       title="Tải về">
+                                        <i class="bi bi-download"></i>
+                                        <span>Tải</span>
+                                    </a>
+
+                                    <!-- Xóa: chỉ director hoặc người upload -->
+                                    {% if current_user.can_upload_files() and (current_user.role == 'director' or file.uploader_id == current_user.id) %}
+                                    <form method="POST"
+                                          action="{{ url_for('files.delete_file', file_id=file.id) }}"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa file này?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger"
+                                                title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                            <span>Xóa</span>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted mb-0">Chưa có file nào.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
