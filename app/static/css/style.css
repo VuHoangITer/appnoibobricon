@@ -989,10 +989,8 @@ body::-webkit-scrollbar {
         grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
     }
 }
-
 /* ============================================
-   TASK HEADER COMPONENT - Dùng cho các trang tasks
-   (KHÔNG dùng cho hub.html)
+   TASK HEADER COMPONENT
    ============================================ */
 
 /* Container chính của header task */
@@ -1060,27 +1058,54 @@ body::-webkit-scrollbar {
     flex-wrap: wrap;
 }
 
-/* Nút filter date - CHI HIỂN THỊ NGÀY, KHÔNG CLICK ĐƯỢC */
+/* ============================================
+   NÚT LỊCH - GIỐNG Y HỆT HUB-STYLE.CSS
+   ============================================ */
 .task-header-container .filter-date-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 15px;
+    padding: 10px 20px;
     min-height: 60px;
-    background: darkblue;
-    color: white;
-    border: none;
-    border-radius: 12px;
+    background: #ffffff;
+    color: #000000;
+    border: 3px solid darkblue;
+    border-top-width: 10px;
+    border-radius: 16px;
     font-weight: 600;
     font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    position: relative;
+}
+
+/* Hai chấm nhỏ trên đầu nút lịch */
+.task-header-container .filter-date-btn::before,
+.task-header-container .filter-date-btn::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid darkblue;
+}
+
+/* Chấm bên trái */
+.task-header-container .filter-date-btn::before {
+    left: 10px;
+}
+
+/* Chấm bên phải */
+.task-header-container .filter-date-btn::after {
+    right: 10px;
 }
 
 .task-header-container .filter-date-btn:disabled {
     cursor: default;
     opacity: 1;
-    background: darkblue;
+    background: #ffffff;
 }
 
 .task-header-container .filter-date-btn:disabled:hover {
@@ -1090,13 +1115,15 @@ body::-webkit-scrollbar {
 .task-header-container .filter-date-btn .current-day {
     font-size: 1.8rem;
     font-weight: 900;
-    color: white;
+    color: #000000;
     min-width: 30px;
     text-align: center;
     line-height: 1;
 }
 
-/* Top/Bottom Users */
+/* ============================================
+   TOP/BOTTOM USERS
+   ============================================ */
 .task-header-container .top-bottom-users {
     display: flex;
     gap: 20px;
@@ -1174,12 +1201,21 @@ body::-webkit-scrollbar {
    ============================================ */
 @media (max-width: 768px) {
     .task-header-container .performance-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
         padding: 12px 15px;
         gap: 10px;
+        margin-bottom: 15px;
     }
 
     .task-header-container .performance-logo img {
         height: 40px;
+    }
+
+    .task-header-container .performance-right {
+        flex: 1;
+        gap: 8px;
     }
 
     .task-header-container .performance-title {
@@ -1188,29 +1224,44 @@ body::-webkit-scrollbar {
     }
 
     .task-header-container .filter-bar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
         gap: 8px;
+        padding: 0;
+        margin: 0;
     }
 
     .task-header-container .filter-date-btn {
-        padding: 10px 12px;
+        padding: 5px 15px;
         min-height: 44px;
         font-size: 0.9rem;
         border-radius: 10px;
+        gap: 6px;
+        flex-shrink: 0;
+        width: auto;
     }
 
     .task-header-container .filter-date-btn .current-day {
+        display: inline-block !important;
         font-size: 1.5rem;
+        font-weight: 900;
     }
 
     .task-header-container .top-bottom-users {
         gap: 6px;
+        flex: 0;
+        justify-content: flex-end;
     }
 
     .task-header-container .top-user,
     .task-header-container .bottom-user {
         padding: 8px 10px;
-        min-height: 44px;
+        gap: 6px;
         border-radius: 10px;
+        flex-shrink: 0;
+        min-width: auto;
+        min-height: 44px;
     }
 
     .task-header-container .user-badge-avatar {
@@ -1233,7 +1284,7 @@ body::-webkit-scrollbar {
     }
 
     .task-header-container .performance-logo img {
-        height: 45px;
+        height: 40px;
     }
 
     .task-header-container .performance-title {
@@ -1241,10 +1292,38 @@ body::-webkit-scrollbar {
         letter-spacing: 0.5px;
     }
 
+    .task-header-container .filter-bar {
+        gap: 6px;
+    }
+
     .task-header-container .filter-date-btn {
-        padding: 6px 8px;
-        min-height: 36px;
+        padding: 1px 8px;
+        min-height: 26px;
         border-radius: 8px;
+        border-width: 2px;
+        border-top-width: 10px;
+        gap: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .task-header-container .filter-date-btn::before,
+    .task-header-container .filter-date-btn::after {
+        content: '';
+        position: absolute;
+        top: -6px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid darkblue;
+    }
+
+    .task-header-container .filter-date-btn::before {
+        left: 10px;
+    }
+
+    .task-header-container .filter-date-btn::after {
+        right: 10px;
     }
 
     .task-header-container .filter-date-btn .current-day {
@@ -1253,12 +1332,168 @@ body::-webkit-scrollbar {
 
     .task-header-container .top-user,
     .task-header-container .bottom-user {
-        padding: 6px 8px;
-        min-height: 36px;
+        padding: 4px 6px;
+        min-height: 34px;
+        border-radius: 6px;
+        gap: 3px;
     }
 
     .task-header-container .user-badge-avatar {
         width: 26px;
         height: 26px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE - EXTRA SMALL (320px - 360px)
+   ============================================ */
+@media (max-width: 360px) {
+    .task-header-container .performance-header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .task-header-container .performance-logo img {
+        height: 30px;
+    }
+
+    .task-header-container .performance-title {
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+    }
+
+    .task-header-container .filter-bar {
+        gap: 5px;
+    }
+
+    .task-header-container .filter-date-btn {
+        padding: 6px 8px;
+        min-height: 36px;
+        border-radius: 6px;
+    }
+
+    .task-header-container .filter-date-btn .current-day {
+        font-size: 1.1rem;
+    }
+
+    .task-header-container .top-user,
+    .task-header-container .bottom-user {
+        padding: 5px 6px;
+        min-height: 36px;
+        border-radius: 6px;
+        gap: 3px;
+    }
+
+    .task-header-container .user-badge-avatar {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE - SUPER SMALL (320px exactly)
+   ============================================ */
+@media (max-width: 320px) {
+    .task-header-container .performance-header {
+        padding: 6px 8px;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+
+    .task-header-container .performance-logo img {
+        height: 22px;
+    }
+
+    .task-header-container .performance-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.2px;
+    }
+
+    .task-header-container .filter-bar {
+        gap: 4px;
+    }
+
+    .task-header-container .filter-date-btn {
+        padding: 3px 5px;
+        min-height: 24px;
+        border-radius: 6px;
+        gap: 3px;
+        border-width: 2px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    .task-header-container .filter-date-btn::before,
+    .task-header-container .filter-date-btn::after {
+        content: '';
+        position: absolute;
+        top: -6px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid darkblue;
+    }
+
+    .task-header-container .filter-date-btn::before {
+        left: 10px;
+    }
+
+    .task-header-container .filter-date-btn::after {
+        right: 10px;
+    }
+
+    .task-header-container .filter-date-btn .current-day {
+        font-size: 1rem;
+    }
+
+    .task-header-container .top-user,
+    .task-header-container .bottom-user {
+        padding: 4px 5px;
+        min-height: 34px;
+        border-radius: 6px;
+        gap: 3px;
+    }
+
+    .task-header-container .user-badge-avatar {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE - LANDSCAPE MOBILE
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+    .task-header-container .performance-header {
+        padding: 8px 12px;
+    }
+
+    .task-header-container .performance-logo img {
+        height: 30px;
+    }
+
+    .task-header-container .performance-title {
+        font-size: 0.9rem;
+    }
+
+    .task-header-container .filter-date-btn {
+        min-height: 36px;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .task-header-container .filter-date-btn .current-day {
+        font-size: 1.2rem;
+    }
+
+    .task-header-container .top-user,
+    .task-header-container .bottom-user {
+        min-height: 36px;
+        padding: 6px 8px;
+    }
+
+    .task-header-container .user-badge-avatar {
+        width: 24px;
+        height: 24px;
     }
 }
