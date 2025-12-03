@@ -841,8 +841,10 @@ def update_status(task_id):
     # =====  CHECK PHÊ DUYỆT =====
     # Nếu task cần phê duyệt và chưa được duyệt => KHÔNG cho phép thay đổi status
     if task.requires_approval and task.approved is None:
-        # CHỈ Director/Manager mới được thay đổi (để họ có thể cancel nếu cần)
-        if current_user.role not in ['director', 'manager']:
+        # ===== CHỈ DIRECTOR mới được bypass =====
+        # Manager tự giao việc cho mình VẪN PHẢI chờ Director duyệt
+        # HR/Accountant phải chờ Manager/Director duyệt
+        if current_user.role != 'director':
             flash('❌ Công việc chưa được phê duyệt. Vui lòng chờ phê duyệt trước khi bắt đầu.', 'warning')
             return redirect(url_for('tasks.task_detail', task_id=task_id))
 
@@ -1659,7 +1661,8 @@ def quick_update_status(task_id):
     # ===== CHECK PHÊ DUYỆT =====
     # Nếu task cần phê duyệt và chưa được duyệt => KHÔNG cho phép
     if task.requires_approval and task.approved is None:
-        if current_user.role not in ['director', 'manager']:
+        # CHỈ DIRECTOR mới được bypass
+        if current_user.role != 'director':
             return jsonify({
                 'success': False,
                 'error': 'Công việc chưa được phê duyệt. Vui lòng chờ phê duyệt.'

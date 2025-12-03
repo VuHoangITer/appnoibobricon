@@ -448,6 +448,19 @@ function toggleCommentTime(commentId) {
     }
 }
 
+// ============================================
+// HANDLE COMMENT CLICK - CHỈ TOGGLE KHI KHÔNG PHẢI LINK
+// ============================================
+function handleCommentClick(event, commentId) {
+    // Nếu click vào link (thẻ <a>), không làm gì
+    if (event.target.tagName === 'A') {
+        return; // Để link tự xử lý
+    }
+
+    // Nếu click vào chỗ khác, toggle time
+    toggleCommentTime(commentId);
+}
+
 function addCommentToList(comment) {
     if (document.querySelector(`.comment-item[data-id="${comment.id}"]`)) {
         return;
@@ -465,10 +478,16 @@ function addCommentToList(comment) {
         ? `<img src="/profile/avatar/${comment.user.avatar}" alt="">`
         : comment.user.avatar_letter;
 
-    const deleteBtn = (window.CONFIG.CURRENT_USER_ROLE === 'director')
-        ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
-               <i class="bi bi-trash"></i>
-           </button>`
+    // ✅ MENU 3 CHẤM (chỉ director)
+    const menuBtn = (window.CONFIG.CURRENT_USER_ROLE === 'director')
+        ? `<button class="comment-menu-btn" onclick="toggleCommentMenu(${comment.id}, event)">
+               <i class="bi bi-three-dots"></i>
+           </button>
+           <div class="comment-dropdown" id="commentMenu${comment.id}">
+               <button class="comment-dropdown-item delete" onclick="deleteComment(${comment.id})">
+                   <i class="bi bi-trash"></i>
+               </button>
+           </div>`
         : '';
 
     // XỬ LÝ NHIỀU FILES
@@ -537,16 +556,16 @@ function addCommentToList(comment) {
     item.innerHTML = `
         <div class="comment-avatar">${avatarHTML}</div>
         <div class="comment-content">
+            ${menuBtn}
             <div class="comment-header">
                 <div>
                     <span class="comment-author">${escapeHtml(comment.user.full_name)}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="comment-time">${comment.created_at_display}</span>
-                    ${deleteBtn}
                 </div>
             </div>
-            <div class="comment-text" onclick="toggleCommentTime(${comment.id})">${escapeHtml(comment.content)}</div>
+            <div class="comment-text" onclick="handleCommentClick(event, ${comment.id})">${linkifyText(comment.content)}</div>
             ${attachmentHTML}
         </div>
     `;
@@ -557,6 +576,12 @@ function addCommentToList(comment) {
 }
 
 function deleteComment(commentId) {
+    // Đóng menu trước khi xóa
+    const menu = document.getElementById(`commentMenu${commentId}`);
+    if (menu) {
+        menu.classList.remove('show');
+    }
+
     fetch(`/tasks/${window.CONFIG.TASK_ID}/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
@@ -642,7 +667,7 @@ function initLongPressListeners() {
     }
 
     // QUAN TRỌNG: Xóa tất cả listeners cũ trước khi gắn mới
-    document.querySelectorAll('.comment-item').forEach(item => {  // ← ĐÃ XÓA .mine
+    document.querySelectorAll('.comment-item').forEach(item => {
         // Clone node để xóa tất cả event listeners
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
@@ -669,7 +694,7 @@ function initLongPressListeners() {
     }
 
     // Gắn listeners MỚI - DIRECTOR CÓ THỂ XÓA TẤT CẢ COMMENTS
-    document.querySelectorAll('.comment-item').forEach(item => {  // ← ĐÃ XÓA .mine
+    document.querySelectorAll('.comment-item').forEach(item => {
         const commentId = parseInt(item.dataset.id);
         let touchStartY = 0;
         let hasMoved = false;
@@ -829,6 +854,36 @@ function closeLightbox() {
 }
 
 // ============================================
+// COMMENT MENU FUNCTIONS (3 DOTS - DESKTOP ONLY)
+// ============================================
+
+// Toggle comment menu dropdown
+function toggleCommentMenu(commentId, event) {
+    event.stopPropagation();
+
+    const menu = document.getElementById(`commentMenu${commentId}`);
+
+    // Đóng tất cả menu khác
+    document.querySelectorAll('.comment-dropdown').forEach(m => {
+        if (m.id !== `commentMenu${commentId}`) {
+            m.classList.remove('show');
+        }
+    });
+
+    // Toggle menu hiện tại
+    menu.classList.toggle('show');
+}
+
+// Đóng menu khi click ra ngoài
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.comment-menu-btn') && !event.target.closest('.comment-dropdown')) {
+        document.querySelectorAll('.comment-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+// ============================================
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -842,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start real-time comments
     startRealtimeComments();
-    
+
     // Initialize long press listeners
     initLongPressListeners();
 
@@ -880,4 +935,127 @@ document.addEventListener('DOMContentLoaded', () => {
     if (commentsList) {
         commentsList.scrollTop = commentsList.scrollHeight;
     }
+
+    // Init dropdown menu items
+    document.querySelectorAll('.comment-dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
 });
+
+// ============================================
+// DRAG & DROP FILE UPLOAD
+// ============================================
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const commentsList = document.getElementById('commentsList');
+    commentsList.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Only remove if leaving the comments-body itself
+    const commentsList = document.getElementById('commentsList');
+    const rect = commentsList.getBoundingClientRect();
+
+    if (
+        e.clientX <= rect.left ||
+        e.clientX >= rect.right ||
+        e.clientY <= rect.top ||
+        e.clientY >= rect.bottom
+    ) {
+        commentsList.classList.remove('drag-over');
+    }
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const commentsList = document.getElementById('commentsList');
+    commentsList.classList.remove('drag-over');
+
+    const files = e.dataTransfer.files;
+
+    if (files.length === 0) {
+        return;
+    }
+
+    // Validate files
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+                          'application/pdf',
+                          'application/msword',
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                          'application/vnd.ms-excel',
+                          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                          'text/plain'];
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    for (let file of files) {
+        if (!allowedTypes.includes(file.type)) {
+            showToast(`❌ File "${file.name}" không được phép`, 'danger');
+            return;
+        }
+
+        if (file.size > maxSize) {
+            showToast(`❌ File "${file.name}" quá lớn (max 10MB)`, 'danger');
+            return;
+        }
+    }
+
+    // Set files to input
+    const fileInput = document.getElementById('commentFileInput');
+    fileInput.files = files;
+
+    // Trigger change event to show preview
+    const changeEvent = new Event('change', { bubbles: true });
+    fileInput.dispatchEvent(changeEvent);
+
+    showToast(`✅ Đã chọn ${files.length} file`, 'success');
+}
+
+// ============================================
+// AUTO-LINKIFY COMMENT TEXT
+// ============================================
+function linkifyText(text) {
+    // URL regex pattern
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+
+    return text.replace(urlPattern, function(url) {
+        // Remove trailing punctuation
+        let cleanUrl = url.replace(/[.,;:!?]+$/, '');
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>`;
+    });
+}
+
+// ============================================
+// PWA EXTERNAL LINK HANDLER
+// ============================================
+// Detect if running in PWA mode
+const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+              window.navigator.standalone === true;
+
+if (isPWA) {
+    // Intercept all external links
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+
+        if (link && link.hostname !== window.location.hostname) {
+            e.preventDefault();
+
+            // Open in system browser
+            if (window.navigator && window.navigator.share) {
+                // For mobile PWA - open in default browser
+                window.open(link.href, '_blank');
+            } else {
+                // For desktop PWA
+                window.open(link.href, '_blank', 'noopener,noreferrer');
+            }
+        }
+    });
+}

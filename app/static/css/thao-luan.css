@@ -132,6 +132,7 @@ body {
     flex: 0 1 auto;
     max-width: 70%;
     min-width: 0;
+    position: relative;
 }
 
 .comment-header {
@@ -212,6 +213,110 @@ body {
     background: #0d6efd;
     color: #ffffff;
     border-bottom-right-radius: 4px;
+}
+
+/* ============================================
+   MENU 3 CHẤM - CHỈ DESKTOP
+   ============================================ */
+.comment-menu-btn {
+    position: absolute;
+    right: -35px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f0f2f5;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #65676b;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.comment-menu-btn:hover {
+    background: #e4e6eb;
+}
+
+/* Hiển thị menu button khi hover - CHỈ TRÊN DESKTOP */
+@media (min-width: 769px) {
+    .comment-item:hover .comment-menu-btn {
+        display: flex;
+    }
+
+    /* Điều chỉnh vị trí cho comment của người khác */
+    .comment-item.other .comment-menu-btn {
+        right: -35px;
+    }
+
+    /* Điều chỉnh vị trí cho comment của mình */
+    .comment-item.mine .comment-menu-btn {
+        right: auto;
+        left: -35px;
+    }
+}
+
+/* Dropdown menu xóa */
+.comment-dropdown {
+    position: absolute;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+    z-index: 1000;
+    min-width: 44px;
+    display: none;
+}
+
+.comment-dropdown.show {
+    display: block;
+}
+
+/* Vị trí dropdown cho comment người khác */
+.comment-item.other .comment-dropdown {
+    top: 100%;
+    right: -35px;
+    margin-top: 5px;
+}
+
+/* Vị trí dropdown cho comment của mình */
+.comment-item.mine .comment-dropdown {
+    top: 100%;
+    left: -35px;
+    margin-top: 5px;
+}
+
+.comment-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    color: #050505;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
+}
+
+.comment-dropdown-item:hover {
+    background: #f2f2f2;
+}
+
+.comment-dropdown-item.delete {
+    color: #dc3545;
+}
+
+.comment-dropdown-item.delete:hover {
+    background: #fee;
 }
 
 /* Comment Attachment */
@@ -936,5 +1041,74 @@ body {
     }
     .lightbox-download, .lightbox-info {
         bottom: 10px;
+    }
+}
+
+/* ========================================
+   DRAG & DROP ZONE
+   ======================================== */
+.comments-body {
+    position: relative;
+}
+
+.drop-zone-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 400px;
+    padding: 40px;
+    background: rgba(13, 110, 253, 0.95);
+    border: 3px dashed #ffffff;
+    border-radius: 16px;
+    text-align: center;
+    color: #ffffff;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.drop-zone-indicator i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.drop-zone-indicator p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.comments-body.drag-over .drop-zone-indicator {
+    opacity: 1;
+}
+
+/* Link styling in comments */
+.comment-text a {
+    color: #0d6efd;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.comment-text a:hover {
+    color: #0b5ed7;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .drop-zone-indicator {
+        width: 90%;
+        padding: 30px 20px;
+    }
+
+    .drop-zone-indicator i {
+        font-size: 2.5rem;
+    }
+
+    .drop-zone-indicator p {
+        font-size: 1rem;
     }
 }

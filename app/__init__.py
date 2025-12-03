@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -206,12 +206,6 @@ def create_app(config_class=Config):
             print("Scheduler enabled in Flask app")
     else:
         print("Scheduler disabled - run separately via systemd service")
-
-    @app.after_request
-    def no_cache_sw(response):
-        if request.path == '/static/sw.js':
-            response.headers['Cache-Control'] = 'no-store, max-age=0'
-        return response
 
     return app
 
