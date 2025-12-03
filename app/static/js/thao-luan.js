@@ -884,6 +884,38 @@ document.addEventListener('click', function(event) {
 });
 
 // ============================================
+// LINKIFY EXISTING COMMENTS ON PAGE LOAD
+// ============================================
+function linkifyExistingComments() {
+    console.log('🔗 Linkifying existing comments...');
+
+    let linkifiedCount = 0;
+
+    document.querySelectorAll('.comment-text').forEach(element => {
+        // Lấy text content (không phải innerHTML để tránh double-linkify)
+        const originalText = element.textContent;
+
+        // Chỉ linkify nếu có URL
+        if (/(https?:\/\/[^\s]+)/g.test(originalText)) {
+            // Linkify và cập nhật
+            element.innerHTML = linkifyText(originalText);
+            linkifiedCount++;
+        }
+
+        // Gắn lại event click để toggle time
+        const commentItem = element.closest('.comment-item');
+        if (commentItem) {
+            const commentId = parseInt(commentItem.dataset.id);
+            element.onclick = (e) => handleCommentClick(e, commentId);
+        }
+    });
+
+    if (linkifiedCount > 0) {
+        console.log(`✅ Linkified ${linkifiedCount} comments`);
+    }
+}
+
+// ============================================
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -894,6 +926,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize file input handler
     initFileInput();
+
+    // Bấm vào link được
+    linkifyExistingComments();
 
     // Start real-time comments
     startRealtimeComments();
