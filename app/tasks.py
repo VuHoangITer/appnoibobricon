@@ -541,51 +541,12 @@ def create_task():
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
 
-        # =====  XỬ LÝ RECURRING - Hỗ trợ cả interval và weekly =====
+        # Recurrence: CHỈ Director/Manager
         recurrence_enabled = False
-        recurrence_type = 'interval'
         recurrence_interval_days = 7
-        recurrence_weekdays = None
-        recurrence_time_obj = None
-        recurrence_duration_days = 2
-
         if current_user.can_assign_tasks():
             recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
-
-            if recurrence_enabled:
-                recurrence_type = request.form.get('recurrence_type', 'interval')
-
-                if recurrence_type == 'interval':
-                    # CŨ - interval based
-                    recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
-
-                elif recurrence_type == 'weekly':
-                    # MỚI - weekly based
-                    weekdays_list = request.form.getlist('recurrence_weekdays[]')  # ['0', '2', '4']
-
-                    if not weekdays_list:
-                        flash('Vui lòng chọn ít nhất 1 ngày trong tuần.', 'danger')
-                        return redirect(url_for('tasks.create_task'))
-
-                    # Lưu dạng '0,2,4'
-                    recurrence_weekdays = ','.join(weekdays_list)
-
-                    # Lấy thời gian
-                    recurrence_time_str = request.form.get('recurrence_time')  # '09:00'
-                    if recurrence_time_str:
-                        try:
-                            from datetime import time as dt_time
-                            hour, minute = recurrence_time_str.split(':')
-                            recurrence_time_obj = dt_time(int(hour), int(minute))
-                        except:
-                            flash('Thời gian không hợp lệ.', 'danger')
-                            return redirect(url_for('tasks.create_task'))
-                    else:
-                        flash('Vui lòng chọn thời gian tạo nhiệm vụ.', 'danger')
-                        return redirect(url_for('tasks.create_task'))
-
-                    # Lấy duration
-                    recurrence_duration_days = int(request.form.get('recurrence_duration_days', 2))
+            recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
 
         # Validate
         if not title:
@@ -615,7 +576,8 @@ def create_task():
             if current_user.role in ['hr', 'accountant', 'manager']:
                 requires_approval = True
         # Director tự tạo task => KHÔNG cần duyệt
-        # Task được cấp trên giao => KHÔNG cần duyệt=
+        # Task được cấp trên giao => KHÔNG cần duyệt
+        # ===== KẾT THÚC KIỂM TRA =====
 
         # Create task
         task = Task(
@@ -627,20 +589,16 @@ def create_task():
             is_urgent=is_urgent,
             is_important=is_important,
             is_recurring=is_recurring,
-            requires_approval=requires_approval,
-            approved=None if requires_approval else True,
+            requires_approval=requires_approval,  # Đánh dấu cần duyệt
+            approved=None if requires_approval else True,  # None = chờ duyệt, True = không cần duyệt
             recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
-            recurrence_type=recurrence_type if recurrence_enabled else 'interval',
-            recurrence_interval_days=recurrence_interval_days if recurrence_type == 'interval' else None,
-            recurrence_weekdays=recurrence_weekdays if recurrence_type == 'weekly' else None,
-            recurrence_time=recurrence_time_obj if recurrence_type == 'weekly' else None,
-            recurrence_duration_days=recurrence_duration_days if recurrence_type == 'weekly' else 2,
+            recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
             last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
         )
         db.session.add(task)
         db.session.flush()
 
-        # ===== ✅ BIẾN ĐỂ KIỂM TRA ĐÃ FLASH MESSAGE CHƯA =====
+        # =====  BIẾN ĐỂ KIỂM TRA ĐÃ FLASH MESSAGE CHƯA =====
         has_flashed = False
 
         # Handle assignments
@@ -654,7 +612,7 @@ def create_task():
             )
             db.session.add(assignment)
 
-            # ===== ✅ GỬI THÔNG BÁO CHO NGƯỜI PHÊ DUYỆT =====
+            # =====  GỬI THÔNG BÁO CHO NGƯỜI PHÊ DUYỆT =====
             if requires_approval:  # Nếu task cần phê duyệt
                 approvers = []  # Danh sách người được quyền duyệt
 
@@ -694,7 +652,6 @@ def create_task():
                 # Flash message cho user biết đang chờ duyệt
                 flash('Công việc đã được tạo và đang chờ phê duyệt.', 'info')
                 has_flashed = True
-            # ===== KẾT THÚC LOGIC THÔNG BÁO =====
 
         elif assign_type == 'user' and assign_to_user_id:
             if current_user.can_assign_tasks():
@@ -788,10 +745,10 @@ def create_task():
                 db.session.rollback()
                 return redirect(url_for('tasks.list_tasks'))
 
-        # ===== ✅ COMMIT DATABASE =====
+        # =====  COMMIT DATABASE =====
         db.session.commit()
 
-        # ===== ✅ FLASH MESSAGE NẾU CHƯA FLASH =====
+        # =====  FLASH MESSAGE NẾU CHƯA FLASH =====
         if not has_flashed:
             flash('Tạo nhiệm vụ thành công.', 'success')
 
