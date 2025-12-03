@@ -552,7 +552,7 @@ body {
                 </div>
                 {% if completion_report.completion_time %}
                 <p class="mb-2 small">
-                    <strong>Thời gian:</strong>
+                    <strong>Thời gian làm việc:</strong>
                     {% set days = (completion_report.completion_time // 1440) %}
                     {% set hours = ((completion_report.completion_time % 1440) // 60) %}
                     {% set minutes = (completion_report.completion_time % 60) %}

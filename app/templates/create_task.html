@@ -87,20 +87,106 @@
                                 </label>
                             </div>
 
+                            <!-- OPTIONS CHỈ HIỆN KHI BẬT -->
                             <div id="recurrence_options" style="display: none;">
-                                <div class="mb-2">
+
+                                <!-- CHỌN LOẠI: INTERVAL hay WEEKLY -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Chọn kiểu lặp lại:</label>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="recurrence_type" id="type_interval" value="interval" checked>
+                                        <label class="form-check-label" for="type_interval">
+                                            📅 Chu kỳ cố định (7/14/30 ngày)
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="radio" name="recurrence_type" id="type_weekly" value="weekly">
+                                        <label class="form-check-label" for="type_weekly">
+                                            📆 Lặp theo ngày trong tuần
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- INTERVAL OPTIONS (cũ) -->
+                                <div id="interval_options" class="mb-3">
                                     <label class="form-label small">Chu kỳ lặp lại:</label>
                                     <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
                                         <option value="7" selected>Hàng tuần (7 ngày)</option>
                                         <option value="14">2 tuần (14 ngày)</option>
                                         <option value="30">Hàng tháng (30 ngày)</option>
                                     </select>
+                                    <div class="alert alert-info small mt-2 mb-0">
+                                        <i class="bi bi-info-circle"></i>
+                                        Khi bật, hệ thống sẽ tự động tạo nhiệm vụ mới theo chu kỳ đã chọn.
+                                    </div>
                                 </div>
-                                <div class="alert alert-info small mb-0">
-                                    <i class="bi bi-info-circle"></i>
-                                    Khi bật, hệ thống sẽ tự động tạo nhiệm vụ mới theo chu kỳ đã chọn.
-                                    Hạn hoàn thành sẽ tự động cộng thêm số ngày tương ứng.
+
+                                <!-- WEEKLY OPTIONS  -->
+                                <div id="weekly_options" style="display: none;">
+
+                                    <!-- Chọn các ngày -->
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Chọn các ngày trong tuần:</label>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="0" id="day_mon">
+                                                <label class="form-check-label" for="day_mon">Thứ 2</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="1" id="day_tue">
+                                                <label class="form-check-label" for="day_tue">Thứ 3</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="2" id="day_wed">
+                                                <label class="form-check-label" for="day_wed">Thứ 4</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="3" id="day_thu">
+                                                <label class="form-check-label" for="day_thu">Thứ 5</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="4" id="day_fri">
+                                                <label class="form-check-label" for="day_fri">Thứ 6</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="5" id="day_sat">
+                                                <label class="form-check-label" for="day_sat">Thứ 7</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="recurrence_weekdays[]" value="6" id="day_sun">
+                                                <label class="form-check-label" for="day_sun">Chủ nhật</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chọn giờ -->
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">⏰ Thời gian tạo nhiệm vụ:</label>
+                                        <input type="time" class="form-control form-control-sm" name="recurrence_time" id="recurrence_time" value="09:00">
+                                        <small class="text-muted">Nhiệm vụ sẽ được tự động tạo vào giờ này (khuyên chọn giờ tròn)</small>
+                                    </div>
+
+                                    <!-- Thời hạn hoàn thành -->
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">📅 Hạn hoàn thành sau:</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" name="recurrence_duration_days" id="recurrence_duration_days" value="2" min="1" max="30">
+                                            <span class="input-group-text">ngày</span>
+                                        </div>
+                                        <small class="text-muted">Nhiệm vụ phải hoàn thành trong bao nhiêu ngày</small>
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div class="alert alert-info small mb-0">
+                                        <i class="bi bi-info-circle"></i>
+                                        <span id="weekly_preview">
+                                            Nhiệm vụ sẽ tự động tạo vào các ngày đã chọn lúc 09:00, hạn hoàn thành sau 2 ngày.
+                                        </span>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -215,11 +301,63 @@
 
 {% block scripts %}
 <script>
-    // Recurrence toggle
     {% if current_user.can_assign_tasks() %}
-    document.getElementById('recurrence_enabled').addEventListener('change', function() {
-        document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
+    // =====  RECURRENCE TOGGLE =====
+    const recurrenceEnabled = document.getElementById('recurrence_enabled');
+    const recurrenceOptions = document.getElementById('recurrence_options');
+    const typeInterval = document.getElementById('type_interval');
+    const typeWeekly = document.getElementById('type_weekly');
+    const intervalOptions = document.getElementById('interval_options');
+    const weeklyOptions = document.getElementById('weekly_options');
+
+    // Bật/tắt options
+    recurrenceEnabled.addEventListener('change', function() {
+        recurrenceOptions.style.display = this.checked ? 'block' : 'none';
     });
+
+    // Chuyển đổi giữa interval và weekly
+    function toggleRecurrenceType() {
+        if (typeInterval.checked) {
+            intervalOptions.style.display = 'block';
+            weeklyOptions.style.display = 'none';
+        } else if (typeWeekly.checked) {
+            intervalOptions.style.display = 'none';
+            weeklyOptions.style.display = 'block';
+        }
+    }
+
+    typeInterval.addEventListener('change', toggleRecurrenceType);
+    typeWeekly.addEventListener('change', toggleRecurrenceType);
+
+    // =====  PREVIEW WEEKLY RECURRENCE =====
+    const weekdayCheckboxes = document.querySelectorAll('input[name="recurrence_weekdays[]"]');
+    const recurrenceTime = document.getElementById('recurrence_time');
+    const recurrenceDuration = document.getElementById('recurrence_duration_days');
+    const weeklyPreview = document.getElementById('weekly_preview');
+
+    function updateWeeklyPreview() {
+        const selectedDays = Array.from(weekdayCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => {
+                const labels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+                return labels[parseInt(cb.value)];
+            });
+
+        const time = recurrenceTime.value || '09:00';
+        const duration = recurrenceDuration.value || '2';
+
+        if (selectedDays.length === 0) {
+            weeklyPreview.textContent = 'Vui lòng chọn ít nhất 1 ngày trong tuần.';
+            weeklyPreview.parentElement.className = 'alert alert-warning small mb-0';
+        } else {
+            weeklyPreview.textContent = `Task sẽ tự động tạo vào ${selectedDays.join(', ')} lúc ${time}, hạn hoàn thành sau ${duration} ngày.`;
+            weeklyPreview.parentElement.className = 'alert alert-info small mb-0';
+        }
+    }
+
+    weekdayCheckboxes.forEach(cb => cb.addEventListener('change', updateWeeklyPreview));
+    recurrenceTime.addEventListener('change', updateWeeklyPreview);
+    recurrenceDuration.addEventListener('input', updateWeeklyPreview);
     {% endif %}
 
     // Character counter for title

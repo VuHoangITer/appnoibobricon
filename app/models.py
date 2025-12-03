@@ -130,6 +130,12 @@ class Task(db.Model):
     last_recurrence_date = db.Column(db.DateTime, nullable=True)
     parent_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
 
+    # Recurring theo ngày trong tuần
+    recurrence_type = db.Column(db.String(20), default='interval')  # 'interval' hoặc 'weekly'
+    recurrence_weekdays = db.Column(db.String(50), nullable=True)  # '0,2,4' = T2, T4, T6 (0=Monday, 6=Sunday)
+    recurrence_time = db.Column(db.Time, nullable=True)  # Giờ phút tạo task (VD: 09:00)
+    recurrence_duration_days = db.Column(db.Integer, default=2)  # Hạn hoàn thành sau X ngày
+
     # ===== HỆ THỐNG PHÊ DUYỆT =====
     requires_approval = db.Column(db.Boolean, default=False)  # Task có cần phê duyệt không?
     approved = db.Column(db.Boolean, default=None)  # None = chờ duyệt, True = đã duyệt, False = từ chối

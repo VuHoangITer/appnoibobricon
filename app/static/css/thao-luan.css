@@ -221,8 +221,7 @@ body {
 .comment-menu-btn {
     position: absolute;
     right: -35px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 8px;
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -251,12 +250,14 @@ body {
     /* Điều chỉnh vị trí cho comment của người khác */
     .comment-item.other .comment-menu-btn {
         right: -35px;
+        top: 8px;
     }
 
     /* Điều chỉnh vị trí cho comment của mình */
     .comment-item.mine .comment-menu-btn {
         right: auto;
         left: -35px;
+        top: 8px;
     }
 }
 
@@ -278,16 +279,14 @@ body {
 
 /* Vị trí dropdown cho comment người khác */
 .comment-item.other .comment-dropdown {
-    top: 100%;
+    top: 38px;
     right: -35px;
-    margin-top: 5px;
 }
 
 /* Vị trí dropdown cho comment của mình */
 .comment-item.mine .comment-dropdown {
-    top: 100%;
+    top: 38px;
     left: -35px;
-    margin-top: 5px;
 }
 
 .comment-dropdown-item {

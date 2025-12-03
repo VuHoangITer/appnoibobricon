@@ -541,12 +541,51 @@ def create_task():
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
 
-        # Recurrence: CHỈ Director/Manager
+        # =====  XỬ LÝ RECURRING - Hỗ trợ cả interval và weekly =====
         recurrence_enabled = False
+        recurrence_type = 'interval'
         recurrence_interval_days = 7
+        recurrence_weekdays = None
+        recurrence_time_obj = None
+        recurrence_duration_days = 2
+
         if current_user.can_assign_tasks():
             recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
-            recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+
+            if recurrence_enabled:
+                recurrence_type = request.form.get('recurrence_type', 'interval')
+
+                if recurrence_type == 'interval':
+                    # CŨ - interval based
+                    recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+
+                elif recurrence_type == 'weekly':
+                    # MỚI - weekly based
+                    weekdays_list = request.form.getlist('recurrence_weekdays[]')  # ['0', '2', '4']
+
+                    if not weekdays_list:
+                        flash('Vui lòng chọn ít nhất 1 ngày trong tuần.', 'danger')
+                        return redirect(url_for('tasks.create_task'))
+
+                    # Lưu dạng '0,2,4'
+                    recurrence_weekdays = ','.join(weekdays_list)
+
+                    # Lấy thời gian
+                    recurrence_time_str = request.form.get('recurrence_time')  # '09:00'
+                    if recurrence_time_str:
+                        try:
+                            from datetime import time as dt_time
+                            hour, minute = recurrence_time_str.split(':')
+                            recurrence_time_obj = dt_time(int(hour), int(minute))
+                        except:
+                            flash('Thời gian không hợp lệ.', 'danger')
+                            return redirect(url_for('tasks.create_task'))
+                    else:
+                        flash('Vui lòng chọn thời gian tạo nhiệm vụ.', 'danger')
+                        return redirect(url_for('tasks.create_task'))
+
+                    # Lấy duration
+                    recurrence_duration_days = int(request.form.get('recurrence_duration_days', 2))
 
         # Validate
         if not title:
@@ -567,7 +606,7 @@ def create_task():
                     flash('Định dạng ngày giờ không hợp lệ.', 'danger')
                     return redirect(url_for('tasks.create_task'))
 
-        # ===== ✅ KIỂM TRA CẦN PHÊ DUYỆT =====
+        # =====  KIỂM TRA CẦN PHÊ DUYỆT =====
         # Chỉ task tự giao cho mình MỚI cần phê duyệt
         requires_approval = False
 
@@ -576,8 +615,7 @@ def create_task():
             if current_user.role in ['hr', 'accountant', 'manager']:
                 requires_approval = True
         # Director tự tạo task => KHÔNG cần duyệt
-        # Task được cấp trên giao => KHÔNG cần duyệt
-        # ===== KẾT THÚC KIỂM TRA =====
+        # Task được cấp trên giao => KHÔNG cần duyệt=
 
         # Create task
         task = Task(
@@ -589,12 +627,14 @@ def create_task():
             is_urgent=is_urgent,
             is_important=is_important,
             is_recurring=is_recurring,
-            # ===== ✅ THÊM 2 FIELD PHÊ DUYỆT =====
-            requires_approval=requires_approval,  # Đánh dấu cần duyệt
-            approved=None if requires_approval else True,  # None = chờ duyệt, True = không cần duyệt
-            # ===== KẾT THÚC =====
+            requires_approval=requires_approval,
+            approved=None if requires_approval else True,
             recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
-            recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+            recurrence_type=recurrence_type if recurrence_enabled else 'interval',
+            recurrence_interval_days=recurrence_interval_days if recurrence_type == 'interval' else None,
+            recurrence_weekdays=recurrence_weekdays if recurrence_type == 'weekly' else None,
+            recurrence_time=recurrence_time_obj if recurrence_type == 'weekly' else None,
+            recurrence_duration_days=recurrence_duration_days if recurrence_type == 'weekly' else 2,
             last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
         )
         db.session.add(task)
