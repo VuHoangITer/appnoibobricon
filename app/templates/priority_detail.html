@@ -267,6 +267,119 @@
     }
 }
 
+/* ================= UNREAD MESSAGES – MINIMAL ============ */
+
+/* Banner tổng hợp tin nhắn chưa đọc */
+.unread-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #f9fafb;
+    color: var(--ed-text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.unread-summary:hover {
+    background: #f3f4f6;
+    border-color: var(--ed-primary);
+}
+
+.unread-summary-icon {
+    font-size: 1.4rem;
+    /* bỏ animation pulse cho tối giản */
+}
+
+.unread-summary-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.unread-summary-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+}
+
+.unread-summary-subtitle {
+    font-size: 0.8rem;
+    color: var(--ed-muted);
+}
+
+/* Badge số tin nhắn – đơn giản, không blur, không viền dày */
+.unread-summary-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: #e7f1ff;
+    color: var(--ed-primary);
+    border: 1px solid #d0e2ff;
+}
+
+/* Trạng thái khi đang filter theo unread */
+.unread-summary.active {
+    background: #eef4ff;
+    border-color: var(--ed-primary);
+}
+
+/* Highlight task có tin nhắn chưa đọc – tối giản */
+.task-card.has-unread {
+    border-color: var(--ed-primary);
+    box-shadow: none;
+}
+
+/* Chỉ thêm chấm nhỏ ở header cho task có unread, không đổi nền */
+.task-card.has-unread .task-card-header {
+    position: relative;
+}
+
+.task-card.has-unread .task-card-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ed-primary);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .unread-summary {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .unread-summary-icon {
+        font-size: 1.3rem;
+    }
+
+    .unread-summary-title {
+        font-size: 0.9rem;
+    }
+
+    .unread-summary-subtitle {
+        font-size: 0.78rem;
+    }
+
+    .unread-summary-badge {
+        font-size: 0.9rem;
+        padding: 3px 8px;
+    }
+}
+
 
 /* Floating Create Task Button */
 .create-task-btn {
@@ -784,6 +897,22 @@
 <div class="task-header-container">
     {% include 'components/task_header.html' %}
 </div>
+{% if total_unread_messages > 0 %}
+<div class="unread-summary" onclick="toggleUnreadFilter()" id="unreadSummary">
+    <div class="unread-summary-icon">
+        💬
+    </div>
+    <div class="unread-summary-text">
+        <div class="unread-summary-title">TIN NHẮN CHƯA ĐỌC</div>
+        <div class="unread-summary-subtitle">
+            {{ tasks_with_unread }} nhiệm vụ có tin nhắn mới
+        </div>
+    </div>
+    <div class="unread-summary-badge">
+        {{ total_unread_messages }}
+    </div>
+</div>
+{% endif %}
 <!-- Priority Header -->
 <div class="priority-header">
     <!-- BÊN TRÁI: trạng thái chính -->
@@ -861,8 +990,9 @@
 {% if tasks %}
 <div class="task-cards-container">
     {% for task in tasks %}
-    <div class="task-card"
+    <div class="task-card {% if task.unread_comment_count > 0 %}has-unread{% endif %}"
          data-task-id="{{ task.id }}"
+         data-has-unread="{{ 'true' if task.unread_comment_count > 0 else 'false' }}"
          data-status="{% if task.status == 'DONE' %}completed{% elif task | is_overdue %}overdue{% else %}on-time{% endif %}"
          data-rating="{{ task.performance_rating or 'none' }}">
 
@@ -1148,13 +1278,62 @@ function startCountdowns() {
     });
 }
 
+// ============================================================
+// =====  FILTER THEO TIN NHẮN CHƯA ĐỌC =====
+// ============================================================
+let unreadFilterActive = false;
+
+function toggleUnreadFilter() {
+    const summary = document.getElementById('unreadSummary');
+    const cards = document.querySelectorAll('.task-card');
+
+    unreadFilterActive = !unreadFilterActive;
+
+    if (unreadFilterActive) {
+        // Bật filter
+        summary.classList.add('active');
+
+        // Tắt các filter khác
+        currentFilter = null;
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // Chỉ hiện task có tin nhắn chưa đọc
+        cards.forEach(card => {
+            if (card.dataset.hasUnread === 'true') {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    } else {
+        // Tắt filter
+        summary.classList.remove('active');
+
+        // Hiện lại tất cả
+        cards.forEach(card => {
+            card.style.display = 'flex';
+        });
+    }
+}
+
 // ========================================
 // FILTER TASKS
 // ========================================
 let currentFilter = null;
 
 function toggleFilter(filterType) {
-    const buttons = document.querySelectorAll('[data-filter]'); // gồm cả icon & số
+    // Tắt unread filter khi dùng filter khác
+    if (unreadFilterActive) {
+        unreadFilterActive = false;
+        const summary = document.getElementById('unreadSummary');
+        if (summary) {
+            summary.classList.remove('active');
+        }
+    }
+
+    const buttons = document.querySelectorAll('[data-filter]');
     const cards = document.querySelectorAll('.task-card');
 
     if (currentFilter === filterType) {

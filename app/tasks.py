@@ -1487,9 +1487,9 @@ def priority_detail():
     from sqlalchemy import case, func
     from app.models import TaskComment, TaskCommentRead
 
-    # ===== ✅ EAGER LOAD CREATOR =====
+    # ===== BASE QUERY =====
     base_query = db.session.query(Task).options(
-        joinedload(Task.creator)  # Giảm query N+1
+        joinedload(Task.creator)
     ).join(
         TaskAssignment, Task.id == TaskAssignment.task_id
     ).filter(
@@ -1539,6 +1539,45 @@ def priority_detail():
         flash('Loại công việc không hợp lệ.', 'danger')
         return redirect(url_for('hub.workflow_hub'))
 
+    # ===== ✅ ĐẾM TỔNG TIN NHẮN CHƯA ĐỌC TRƯỚC KHI PHÂN TRANG =====
+    all_task_ids = [t.id for t in base_query.all()]
+
+    total_unread_messages = 0
+    tasks_with_unread = 0
+
+    if all_task_ids:
+        # Tổng comment (trừ comment của chính user)
+        total_comments_subq = db.session.query(
+            TaskComment.task_id,
+            func.count(TaskComment.id).label('total')
+        ).filter(
+            TaskComment.task_id.in_(all_task_ids),
+            TaskComment.user_id != current_user.id
+        ).group_by(TaskComment.task_id).subquery()
+
+        # Comment đã đọc
+        read_comments_subq = db.session.query(
+            TaskCommentRead.task_id,
+            func.count(TaskCommentRead.comment_id).label('read')
+        ).filter(
+            TaskCommentRead.task_id.in_(all_task_ids),
+            TaskCommentRead.user_id == current_user.id
+        ).group_by(TaskCommentRead.task_id).subquery()
+
+        # Tính tổng unread
+        results = db.session.query(
+            (func.coalesce(total_comments_subq.c.total, 0) -
+             func.coalesce(read_comments_subq.c.read, 0)).label('unread')
+        ).select_from(total_comments_subq).outerjoin(
+            read_comments_subq,
+            total_comments_subq.c.task_id == read_comments_subq.c.task_id
+        ).all()
+
+        for (unread,) in results:
+            if unread > 0:
+                total_unread_messages += unread
+                tasks_with_unread += 1
+
     # ===== ĐẾM TỔNG SỐ (TỐI ƯU) =====
     now = datetime.utcnow()
 
@@ -1573,11 +1612,10 @@ def priority_detail():
     tasks = pagination.items
     task_ids = [task.id for task in tasks]
 
-    # ===== ✅ BATCH LOAD UNREAD COUNTS =====
+    # ===== BATCH LOAD UNREAD COUNTS CHỈ CHO TRANG HIỆN TẠI =====
     unread_counts = {}
 
     if task_ids:
-        # Tổng comment (trừ comment của chính user)
         total_comments_subq = db.session.query(
             TaskComment.task_id,
             func.count(TaskComment.id).label('total')
@@ -1586,7 +1624,6 @@ def priority_detail():
             TaskComment.user_id != current_user.id
         ).group_by(TaskComment.task_id).subquery()
 
-        # Comment đã đọc
         read_comments_subq = db.session.query(
             TaskCommentRead.task_id,
             func.count(TaskCommentRead.comment_id).label('read')
@@ -1595,7 +1632,6 @@ def priority_detail():
             TaskCommentRead.user_id == current_user.id
         ).group_by(TaskCommentRead.task_id).subquery()
 
-        # Tính unread
         results = db.session.query(
             total_comments_subq.c.task_id,
             (func.coalesce(total_comments_subq.c.total, 0) -
@@ -1607,9 +1643,8 @@ def priority_detail():
 
         unread_counts = {task_id: max(0, unread) for task_id, unread in results}
 
-    # ===== BATCH LOAD ASSIGNMENTS CHO TẤT CẢ TASKS =====
+    # ===== BATCH LOAD ASSIGNMENTS =====
     if task_ids:
-        from sqlalchemy.orm import joinedload
         all_assignments = db.session.query(TaskAssignment).options(
             joinedload(TaskAssignment.user)
         ).filter(
@@ -1617,14 +1652,12 @@ def priority_detail():
             TaskAssignment.accepted == True
         ).all()
 
-        # Tạo dictionary: task_id -> list of assignments
         assignments_by_task = {}
         for assignment in all_assignments:
             if assignment.task_id not in assignments_by_task:
                 assignments_by_task[assignment.task_id] = []
             assignments_by_task[assignment.task_id].append(assignment)
 
-        # Gán vào tasks
         for task in tasks:
             task._cached_assignments = assignments_by_task.get(task.id, [])
 
@@ -1643,7 +1676,9 @@ def priority_detail():
                            on_time_count=on_time_count,
                            overdue_count=overdue_count,
                            tag=tag,
-                           status=status)
+                           status=status,
+                           total_unread_messages=total_unread_messages,
+                           tasks_with_unread=tasks_with_unread)
 
 
 @bp.route('/<int:task_id>/quick-update-status', methods=['POST'])
@@ -1877,6 +1912,16 @@ def add_comment(task_id):
         if 'file' in request.files:
             files = request.files.getlist('file')  # Lấy nhiều files
 
+            now_utc = datetime.utcnow()
+            month_folder = now_utc.strftime('%Y_%m')  # Format: 2024_12
+
+            upload_folder = os.path.join(
+                current_app.root_path,
+                'uploads',
+                f'comment_attachments_{month_folder}'
+            )
+            os.makedirs(upload_folder, exist_ok=True)
+
             for file in files:
                 if file and file.filename != '':
                     if not allowed_file(file.filename):
@@ -1893,9 +1938,6 @@ def add_comment(task_id):
                     # Save file
                     filename = secure_filename(file.filename)
                     unique_filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
-
-                    upload_folder = os.path.join(current_app.root_path, 'uploads', 'comment_attachments')
-                    os.makedirs(upload_folder, exist_ok=True)
 
                     file_path = os.path.join(upload_folder, unique_filename)
                     file.save(file_path)
