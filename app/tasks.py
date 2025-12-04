@@ -569,35 +569,38 @@ def create_task():
                     return redirect(url_for('tasks.create_task'))
 
         # =====  KIỂM TRA CẦN PHÊ DUYỆT =====
-        # Chỉ task tự giao cho mình MỚI cần phê duyệt
         requires_approval = False
-
-        if assign_type == 'self':  # Nếu user tự giao cho mình
-            # HR, Accountant, Manager tự tạo task => cần duyệt
+        if assign_type == 'self':
             if current_user.role in ['hr', 'accountant', 'manager']:
                 requires_approval = True
-        # Director tự tạo task => KHÔNG cần duyệt
-        # Task được cấp trên giao => KHÔNG cần duyệt
-        # ===== KẾT THÚC KIỂM TRA =====
 
-        # Create task
-        task = Task(
-            title=title,
-            description=description,
-            creator_id=current_user.id,
-            due_date=due_date,
-            status='PENDING',
-            is_urgent=is_urgent,
-            is_important=is_important,
-            is_recurring=is_recurring,
-            requires_approval=requires_approval,  # Đánh dấu cần duyệt
-            approved=None if requires_approval else True,  # None = chờ duyệt, True = không cần duyệt
-            recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
-            recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
-            last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
-        )
-        db.session.add(task)
-        db.session.flush()
+        # ===== KIỂM TRA XEM CÓ PHẢI "TÁCH RIÊNG" KHÔNG =====
+        create_original_task = True
+        if assign_type == 'multiple' and assign_to_multiple:
+            create_separate = request.form.get('create_separate_tasks') == 'on'
+            if create_separate and current_user.can_assign_tasks():
+                create_original_task = False  # ❌ KHÔNG tạo task gốc
+
+        # ===== TẠO TASK GỐC (chỉ khi KHÔNG phải "tách riêng") =====
+        task = None
+        if create_original_task:
+            task = Task(
+                title=title,
+                description=description,
+                creator_id=current_user.id,
+                due_date=due_date,
+                status='PENDING',
+                is_urgent=is_urgent,
+                is_important=is_important,
+                is_recurring=is_recurring,
+                requires_approval=requires_approval,
+                approved=None if requires_approval else True,
+                recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
+                recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+                last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
+            )
+            db.session.add(task)
+            db.session.flush()
 
         # =====  BIẾN ĐỂ KIỂM TRA ĐÃ FLASH MESSAGE CHƯA =====
         has_flashed = False
@@ -614,32 +617,25 @@ def create_task():
             db.session.add(assignment)
 
             # =====  GỬI THÔNG BÁO CHO NGƯỜI PHÊ DUYỆT =====
-            if requires_approval:  # Nếu task cần phê duyệt
-                approvers = []  # Danh sách người được quyền duyệt
+            if requires_approval:
+                approvers = []
 
-                # ===== XÁC ĐỊNH AI ĐƯỢC QUYỀN DUYỆT =====
                 if current_user.role == 'hr':
-                    # HR tự tạo => Manager HOẶC Director duyệt
                     approvers = User.query.filter(
                         User.role.in_(['manager', 'director']),
                         User.is_active == True
                     ).all()
-
                 elif current_user.role == 'accountant':
-                    # Accountant tự tạo => CHỈ Director duyệt
                     approvers = User.query.filter(
                         User.role == 'director',
                         User.is_active == True
                     ).all()
-
                 elif current_user.role == 'manager':
-                    # Manager tự tạo => CHỈ Director duyệt
                     approvers = User.query.filter(
                         User.role == 'director',
                         User.is_active == True
                     ).all()
 
-                # ===== GỬI THÔNG BÁO CHO TẤT CẢ NGƯỜI DUYỆT =====
                 for approver in approvers:
                     notif = Notification(
                         user_id=approver.id,
@@ -650,7 +646,6 @@ def create_task():
                     )
                     db.session.add(notif)
 
-                # Flash message cho user biết đang chờ duyệt
                 flash('Công việc đã được tạo và đang chờ phê duyệt.', 'info')
                 has_flashed = True
 
@@ -728,8 +723,8 @@ def create_task():
                         if not assigned_user:
                             continue
 
-                        # Tạo tiêu đề mới: "Tiêu đề gốc - Tên người"
-                        new_title = f"{title} - {assigned_user.full_name}"
+                        # ✅ GIỮ NGUYÊN TIÊU ĐỀ GỐC, KHÔNG THÊM TÊN NGƯỜI
+                        new_title = title
 
                         # Tạo task riêng
                         separate_task = Task(
@@ -741,7 +736,7 @@ def create_task():
                             is_urgent=is_urgent,
                             is_important=is_important,
                             is_recurring=is_recurring,
-                            requires_approval=False,  # Task giao từ trên xuống không cần duyệt
+                            requires_approval=False,
                             approved=True,
                             recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
                             recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
@@ -778,7 +773,7 @@ def create_task():
                     flash(f'✅ Đã tạo {len(created_tasks)} nhiệm vụ riêng cho từng người.', 'success')
                     has_flashed = True
 
-                    # Redirect về danh sách tasks thay vì 1 task cụ thể
+                    # ✅ QUAN TRỌNG: Return ngay, không tạo task gốc
                     return redirect(url_for('tasks.list_tasks'))
 
                 else:
@@ -821,7 +816,11 @@ def create_task():
         if not has_flashed:
             flash('Tạo nhiệm vụ thành công.', 'success')
 
-        return redirect(url_for('tasks.task_detail', task_id=task.id))
+        # ✅ CHỈ redirect đến task.id NẾU có task gốc
+        if task:
+            return redirect(url_for('tasks.task_detail', task_id=task.id))
+        else:
+            return redirect(url_for('tasks.list_tasks'))
 
     # GET request
     users = []

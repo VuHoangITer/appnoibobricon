@@ -10,32 +10,244 @@
         font-size: 0.8rem;
     }
 }
+/* ===========================
+   TẠO TASK MỚI – MINIMAL STYLE
+   =========================== */
+
+/* Nền tổng thể nhẹ nhàng, không quá đậm */
+body {
+    background-color: #f5f5f7;
+}
+
+/* Card chính */
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    background-color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+/* Card header tối giản */
+.card-header {
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d58fdab;
+}
+
+.card-header h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #111827;
+}
+/* Card body gọn gàng */
+.card-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* Nhãn form tối giản */
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.35rem;
+}
+
+/* Input, textarea, select – minimal */
+.form-control,
+.form-select {
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.92rem;
+    padding: 0.45rem 0.7rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    outline: none;
+    background-color: #ffffff;
+}
+
+/* Textarea mô tả */
+#description {
+    resize: vertical;
+    min-height: 190px;
+    line-height: 1.5;
+}
+
+/* Nhỏ gọn từng khối form */
+.mb-3 {
+    margin-bottom: 0.9rem !important;
+}
+
+/* Char counter trong title */
+#char_count {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+/* Badge trong tags */
+#tags_section .badge {
+    border-radius: 999px;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.55rem;
+}
+
+/* Khung phân loại nhiệm vụ & multiple users */
+#tags_section .border,
+#assign_multiple_container {
+    border-radius: 10px !important;
+    border-color: #e5e7eb !important;
+    background-color: #f9fafb !important;
+}
+
+/* Checkbox & radio text nhỏ gọn */
+.form-check-label {
+    font-size: 0.88rem;
+    color: #374151;
+}
+
+/* Nhóm phân công nhiệm vụ – khoảng cách hợp lý */
+.col-lg-6 .form-check {
+    margin-bottom: 0.25rem;
+}
+
+/* Button hành động tối giản */
+.btn {
+    border-radius: 999px;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.9rem;
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #6b7280;
+    border-color: #6b7280;
+}
+
+.btn-secondary:hover {
+    background-color: #4b5563;
+    border-color: #4b5563;
+}
+
+/* Nút nhỏ tóm tắt AI dưới textarea */
+#quickSummaryAI {
+    border-radius: 999px;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.7rem;
+}
+
+/* Đường kẻ dưới nút hành động */
+hr.my-3 {
+    margin-top: 1.2rem !important;
+    margin-bottom: 1.2rem !important;
+    border-color: #e5e7eb;
+}
+
+/* Modal cảnh báo & AI – bo tròn, tối giản */
+.modal-content {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+}
+
+.modal-header {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-footer {
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Toast tối giản góc phải */
+.toast {
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+/* Tối ưu bố cục desktop – card không quá rộng */
+@media (min-width: 992px) {
+    .card {
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .card-body {
+        padding: 1.5rem 2rem 1.75rem;
+    }
+}
+
+/* Mobile: giữ mọi thứ thoáng, dễ đọc */
+@media (max-width: 768px) {
+    .card {
+        border-radius: 0;
+        box-shadow: none;
+        border-left: none;
+        border-right: none;
+    }
+
+    .card-body {
+        padding: 1rem 1rem 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.86rem;
+    }
+}
+
 </style>
 {% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-plus-circle"></i> Nhiệm vụ mới</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div class="card">
+    <div class="card-header">
+        <h4>Nhiệm vụ mới</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
-            <div class="mb-3">
-                <label for="title" class="form-label">Tiêu đề *</label>
-                <div style="position: relative;">
-                    <input type="text" class="form-control" id="title" name="title" required maxlength="35" style="padding-right: 50px;">
-                    <small class="text-muted" style="position: absolute; right: 10px; top: 35%; transform: translateY(-50%); pointer-events: none; font-size: 0.8rem; font-weight: 200;">
-                        <span id="char_count">35</span>
-                    </small>
-                </div>
-            </div>
+            <!-- LAYOUT 2 CỘT -->
+            <div class="row">
+                <!-- CỘT TRÁI: Thông tin cơ bản -->
+                <div class="col-lg-6">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Tiêu đề *</label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-control" id="title" name="title" required maxlength="35" style="padding-right: 50px;">
+                            <small class="text-muted" style="position: absolute; right: 10px; top: 35%; transform: translateY(-50%); pointer-events: none; font-size: 0.8rem; font-weight: 200;">
+                                <span id="char_count">35</span>
+                            </small>
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Mô tả</label>
-                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="12"></textarea>
                     </div>
 
                     <div class="mb-3">
@@ -43,20 +255,23 @@
                         <input type="datetime-local" class="form-control" id="due_date" name="due_date">
                         <small class="text-muted">Chọn cả ngày và giờ hạn hoàn thành</small>
                     </div>
+                </div>
 
+                <!-- CỘT PHẢI: Thời hạn & Phân công -->
+                <div class="col-lg-6">
                     <!-- Tags - Hiện cho TẤT CẢ user khi tự giao cho mình -->
                     <div class="mb-3" id="tags_section" style="display: none;">
                         <label class="form-label">
                             <i class="bi bi-tags"></i> Phân Loại Nhiệm Vụ
                         </label>
-                        <div class="border rounded p-3 bg-light">
+                        <div class="border rounded p-2 bg-light">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="is_urgent" id="is_urgent">
                                 <label class="form-check-label" for="is_urgent">
                                     <span class="badge bg-danger">
                                         <i class="bi bi-exclamation-triangle-fill"></i> KHẨN CẤP
                                     </span>
-                                    <small class="text-muted ms-2">Nhiệm vụ cần xử lý ngay</small>
+                                    <small class="text-muted ms-2">Xử lý ngay</small>
                                 </label>
                             </div>
 
@@ -66,7 +281,7 @@
                                     <span class="badge bg-warning text-dark">
                                         <i class="bi bi-star-fill"></i> QUAN TRỌNG
                                     </span>
-                                    <small class="text-muted ms-2">Nhiệm vụ nằm trong kế hoạch</small>
+                                    <small class="text-muted ms-2">Trong kế hoạch</small>
                                 </label>
                             </div>
 
@@ -76,91 +291,79 @@
                                     <span class="badge bg-info text-dark">
                                         <i class="bi bi-arrow-repeat"></i> LẶP LẠI
                                     </span>
-                                    <small class="text-muted ms-2">Nhiệm vụ định kỳ, lặp lại</small>
+                                    <small class="text-muted ms-2">Định kỳ</small>
                                 </label>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Recurrence - CHỈ cho Director/Manager -->
+                                        <!-- Recurrence - CHỈ cho Director/Manager -->
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
                             <i class="bi bi-arrow-clockwise"></i> Tự động lặp lại
                         </label>
-                        <div class="border rounded p-3 bg-light">
+                        <div class="border rounded p-2 bg-light">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="recurrence_enabled" id="recurrence_enabled">
                                 <label class="form-check-label" for="recurrence_enabled">
-                                    <strong>Bật tự động giao lại nhiệm vụ</strong>
+                                    Bật tự động giao lại
                                 </label>
                             </div>
 
                             <div id="recurrence_options" style="display: none;">
-                                <div class="mb-2">
-                                    <label class="form-label small">Chu kỳ lặp lại:</label>
-                                    <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
-                                        <option value="7" selected>Hàng tuần (7 ngày)</option>
-                                        <option value="14">2 tuần (14 ngày)</option>
-                                        <option value="30">Hàng tháng (30 ngày)</option>
-                                    </select>
-                                </div>
-                                <div class="alert alert-info small mb-0">
-                                    <i class="bi bi-info-circle"></i>
-                                    Khi bật, hệ thống sẽ tự động tạo nhiệm vụ mới theo chu kỳ đã chọn.
-                                    Hạn hoàn thành sẽ tự động cộng thêm số ngày tương ứng.
-                                </div>
+                                <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
+                                    <option value="7" selected>Hàng tuần (7 ngày)</option>
+                                    <option value="14">2 tuần (14 ngày)</option>
+                                    <option value="30">Hàng tháng (30 ngày)</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                     {% endif %}
-
-                    <!-- ASSIGNMENT OPTIONS -->
                     <div class="mb-3">
-                        <label class="form-label">Giao cho</label>
+                        <label class="form-label"><i class="bi bi-people"></i> Phân Công Nhiệm Vụ</label>
 
                         <!-- Option 1: Self -->
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_self" value="self" checked>
                             <label class="form-check-label" for="assign_self">
-                                Tự Giao cho mình
+                                <strong>Bản Thân</strong>
                             </label>
                         </div>
 
                         {% if current_user.can_assign_tasks() %}
                         <!-- Option 2: Single User -->
-                        <div class="form-check">
+                        <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_user" value="user">
                             <label class="form-check-label" for="assign_user">
-                                Giao cho 1 người cụ thể
+                                <strong>Cá Nhân Cụ Thể</strong>
                             </label>
                         </div>
-                        <select class="form-select mt-2" id="assign_to_user" name="assign_to_user" disabled>
+                        <select class="form-select form-select-sm mt-2" id="assign_to_user" name="assign_to_user" disabled>
                             <option value="">-- Chọn người --</option>
                             {% for user in users %}
                             <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role | role_vn }})</option>
                             {% endfor %}
                         </select>
 
-                        <div class="form-check mt-3">
+                        <!-- Option 3: Multiple -->
+                        <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_multiple" value="multiple">
                             <label class="form-check-label" for="assign_multiple">
-                                <strong>Giao cho nhiều người tùy chọn</strong>
+                                <strong>Nhiều Người Tùy Chọn</strong>
                             </label>
                         </div>
-                        <div id="assign_multiple_container" class="mt-2 border rounded p-3 bg-light" style="display: none;">
+                        <div id="assign_multiple_container" class="mt-2 border rounded p-2 bg-light" style="display: none;">
                             <!-- Tùy chọn: Tạo task riêng hay chung -->
-                            <div class="alert alert-info mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="create_separate_tasks" id="create_separate_tasks" disabled>
-                                    <label class="form-check-label" for="create_separate_tasks">
-                                        <i class="bi bi-files"></i> <strong>Nhiệm vụ cùng chủ đề/người</strong>
-                                    </label>
-                                </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" name="create_separate_tasks" id="create_separate_tasks" disabled>
+                                <label class="form-check-label" for="create_separate_tasks">
+                                    <i class="bi bi-files"></i> Tách riêng
+                                </label>
                             </div>
 
                             <!-- Danh sách người dùng -->
-                            <div style="max-height: 250px; overflow-y: auto;">
+                            <div style="max-height: 350px; overflow-y: auto; border-top: 1px solid #dee2e6; padding-top: 8px;">
                                 {% for user in users %}
                                 <div class="form-check">
                                     <input class="form-check-input user-checkbox" type="checkbox"
@@ -169,7 +372,7 @@
                                            id="user_{{ user.id }}"
                                            disabled>
                                     <label class="form-check-label" for="user_{{ user.id }}">
-                                        <strong>{{ user.full_name }}</strong>
+                                        {{ user.full_name }}
                                     </label>
                                 </div>
                                 {% endfor %}
@@ -177,13 +380,13 @@
                         </div>
 
                         <!-- Option 4: Group -->
-                        <div class="form-check mt-3">
+                        <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="assign_type" id="assign_group" value="group">
                             <label class="form-check-label" for="assign_group">
-                                Giao cho cả nhóm
+                                <strong>Nhóm</strong>
                             </label>
                         </div>
-                        <select class="form-select mt-2" id="assign_to_group" name="assign_to_group" disabled>
+                        <select class="form-select form-select-sm mt-2" id="assign_to_group" name="assign_to_group" disabled>
                             <option value="">-- Chọn nhóm --</option>
                             <option value="manager">Trưởng phòng</option>
                             <option value="accountant">Kế toán</option>
@@ -191,16 +394,17 @@
                         </select>
                         {% endif %}
                     </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Tạo nhiệm vụ
-                        </button>
-                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">Hủy</a>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- NÚT HÀNH ĐỘNG -->
+            <hr class="my-3">
+            <div class="d-flex gap-2 justify-content-center">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Tạo nhiệm vụ
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 <!-- Modal cảnh báo mô tả quá dài -->
@@ -376,7 +580,6 @@
         <button type="button" class="btn btn-sm btn-outline-primary" id="quickSummaryAI">
             <i class="bi bi-robot"></i> Tóm tắt bằng AI
         </button>
-        <small class="text-muted ms-2">Giúp rút gọn mô tả dài</small>
     `;
     descriptionTextarea.parentNode.appendChild(aiButtonContainer);
 
