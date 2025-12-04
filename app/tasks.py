@@ -714,32 +714,100 @@ def create_task():
                     db.session.rollback()
                     return redirect(url_for('tasks.create_task'))
 
-                # Giao cho từng người được chọn
-                for user_id_str in assign_to_multiple:
-                    user_id = int(user_id_str)
+                # ===== KIỂM TRA CÓ TẠO TASK RIÊNG HAY KHÔNG =====
+                create_separate = request.form.get('create_separate_tasks') == 'on'
 
-                    assignment = TaskAssignment(
-                        task_id=task.id,
-                        user_id=user_id,
-                        assigned_by=current_user.id,
-                        accepted=True,
-                        accepted_at=datetime.utcnow(),
-                        seen=False
-                    )
-                    db.session.add(assignment)
+                if create_separate:
+                    # ===== TẠO TASK RIÊNG CHO TỪNG NGƯỜI =====
+                    created_tasks = []
 
-                    # Gửi notification cho từng người
-                    notif = Notification(
-                        user_id=user_id,
-                        type='task_assigned',
-                        title='Nhiệm vụ mới được giao',
-                        body=f'{current_user.full_name} đã giao nhiệm vụ "{title}" cho bạn.',
-                        link=f'/tasks/{task.id}'
-                    )
-                    db.session.add(notif)
+                    for user_id_str in assign_to_multiple:
+                        user_id = int(user_id_str)
+                        assigned_user = User.query.get(user_id)
 
-                flash(f'Đã giao nhiệm vụ cho {len(assign_to_multiple)} người.', 'success')
-                has_flashed = True
+                        if not assigned_user:
+                            continue
+
+                        # Tạo tiêu đề mới: "Tiêu đề gốc - Tên người"
+                        new_title = f"{title} - {assigned_user.full_name}"
+
+                        # Tạo task riêng
+                        separate_task = Task(
+                            title=new_title,
+                            description=description,
+                            creator_id=current_user.id,
+                            due_date=due_date,
+                            status='PENDING',
+                            is_urgent=is_urgent,
+                            is_important=is_important,
+                            is_recurring=is_recurring,
+                            requires_approval=False,  # Task giao từ trên xuống không cần duyệt
+                            approved=True,
+                            recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
+                            recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+                            last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
+                        )
+                        db.session.add(separate_task)
+                        db.session.flush()
+
+                        # Tạo assignment
+                        assignment = TaskAssignment(
+                            task_id=separate_task.id,
+                            user_id=user_id,
+                            assigned_by=current_user.id,
+                            accepted=True,
+                            accepted_at=datetime.utcnow(),
+                            seen=False
+                        )
+                        db.session.add(assignment)
+
+                        # Gửi notification
+                        notif = Notification(
+                            user_id=user_id,
+                            type='task_assigned',
+                            title='Nhiệm vụ mới được giao',
+                            body=f'{current_user.full_name} đã giao nhiệm vụ "{new_title}" cho bạn.',
+                            link=f'/tasks/{separate_task.id}'
+                        )
+                        db.session.add(notif)
+
+                        created_tasks.append(separate_task)
+
+                    db.session.commit()
+
+                    flash(f'✅ Đã tạo {len(created_tasks)} nhiệm vụ riêng cho từng người.', 'success')
+                    has_flashed = True
+
+                    # Redirect về danh sách tasks thay vì 1 task cụ thể
+                    return redirect(url_for('tasks.list_tasks'))
+
+                else:
+                    # ===== TẠO 1 TASK CHUNG (LOGIC CŨ) =====
+                    for user_id_str in assign_to_multiple:
+                        user_id = int(user_id_str)
+
+                        assignment = TaskAssignment(
+                            task_id=task.id,
+                            user_id=user_id,
+                            assigned_by=current_user.id,
+                            accepted=True,
+                            accepted_at=datetime.utcnow(),
+                            seen=False
+                        )
+                        db.session.add(assignment)
+
+                        # Gửi notification cho từng người
+                        notif = Notification(
+                            user_id=user_id,
+                            type='task_assigned',
+                            title='Nhiệm vụ mới được giao',
+                            body=f'{current_user.full_name} đã giao nhiệm vụ "{title}" cho bạn.',
+                            link=f'/tasks/{task.id}'
+                        )
+                        db.session.add(notif)
+
+                    flash(f'Đã giao nhiệm vụ cho {len(assign_to_multiple)} người.', 'success')
+                    has_flashed = True
 
             else:
                 flash('Bạn không có quyền giao nhiệm vụ cho nhiều người.', 'danger')

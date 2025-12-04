@@ -148,19 +148,32 @@
                                 <strong>Giao cho nhiều người tùy chọn</strong>
                             </label>
                         </div>
-                        <div id="assign_multiple_container" class="mt-2 border rounded p-3 bg-light" style="display: none; max-height: 300px; overflow-y: auto;">
-                            {% for user in users %}
-                            <div class="form-check">
-                                <input class="form-check-input user-checkbox" type="checkbox"
-                                       name="assign_to_multiple[]"
-                                       value="{{ user.id }}"
-                                       id="user_{{ user.id }}"
-                                       disabled>
-                                <label class="form-check-label" for="user_{{ user.id }}">
-                                    <strong>{{ user.full_name }}</strong>
-                                </label>
+                        <div id="assign_multiple_container" class="mt-2 border rounded p-3 bg-light" style="display: none;">
+                            <!-- Tùy chọn: Tạo task riêng hay chung -->
+                            <div class="alert alert-info mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="create_separate_tasks" id="create_separate_tasks" disabled>
+                                    <label class="form-check-label" for="create_separate_tasks">
+                                        <i class="bi bi-files"></i> <strong>Nhiệm vụ cùng chủ đề/người</strong>
+                                    </label>
+                                </div>
                             </div>
-                            {% endfor %}
+
+                            <!-- Danh sách người dùng -->
+                            <div style="max-height: 250px; overflow-y: auto;">
+                                {% for user in users %}
+                                <div class="form-check">
+                                    <input class="form-check-input user-checkbox" type="checkbox"
+                                           name="assign_to_multiple[]"
+                                           value="{{ user.id }}"
+                                           id="user_{{ user.id }}"
+                                           disabled>
+                                    <label class="form-check-label" for="user_{{ user.id }}">
+                                        <strong>{{ user.full_name }}</strong>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
 
                         <!-- Option 4: Group -->
@@ -515,6 +528,8 @@
             document.getElementById('assign_to_group').disabled = true;
             document.getElementById('assign_multiple_container').style.display = 'none';
             document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = true);
+            // Disable checkbox "Tạo nhiệm vụ riêng"
+            document.getElementById('create_separate_tasks').disabled = true;
 
             // ===== HIỆN/ẨN PHẦN TAGS =====
             const tagsSection = document.getElementById('tags_section');
@@ -539,6 +554,7 @@
             } else if (this.value === 'multiple') {
                 document.getElementById('assign_multiple_container').style.display = 'block';
                 document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = false);
+                document.getElementById('create_separate_tasks').disabled = false;
             }
         });
     });
