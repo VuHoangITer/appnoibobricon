@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa Task{% endblock %}
+{% block page_title %}Chỉnh sửa Công việc{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e1e5ee;
+    --ed-text: #1f2933;
+    --ed-primary: #0d6efd;
+    --ed-radius-lg: 16px;
+}
+
+body {
+    background: var(--ed-bg);
+}
+
+.card {
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    background-color: var(--ed-card-bg);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--ed-text);
+    margin-bottom: 0.5rem;
+}
+
+.card-header {
+    background: #4ba5ff;
+    border-bottom: 1px solid var(--ed-border);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Chỉnh sửa: {{ task.title }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <!-- Mô tả -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label">
+                            <i class="bi bi-file-text"></i> Mô tả
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="5" placeholder="Nhập mô tả chi tiết...">{{ task.description or '' }}</textarea>
+                        <small class="text-muted">Mô tả chi tiết về nhiệm vụ</small>
+                    </div>
+
+                    <!-- Hạn hoàn thành -->
+                    <div class="mb-4">
+                        <label for="due_date" class="form-label">
+                            <i class="bi bi-calendar-event"></i> Hạn hoàn thành
+                        </label>
+                        <input type="datetime-local" class="form-control" id="due_date" 
+                               name="due_date" value="{{ vn_due_date or '' }}">
+                        <small class="text-muted">Để trống nếu không có hạn cụ thể</small>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Recurrence Settings -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="recurrence_enabled" 
+                                   id="recurrence_enabled" 
+                                   {% if task.recurrence_enabled %}checked{% endif %}
+                                   onchange="toggleRecurrenceSettings()">
+                            <label class="form-check-label" for="recurrence_enabled">
+                                <i class="bi bi-arrow-repeat"></i> 
+                                <strong>Tự động lặp lại nhiệm vụ</strong>
+                            </label>
+                        </div>
+                        
+                        <div id="recurrence_settings" 
+                             style="display: {% if task.recurrence_enabled %}block{% else %}none{% endif %};" 
+                             class="ms-4 p-3 bg-light rounded">
+                            <label for="recurrence_interval_days" class="form-label">
+                                Chu kỳ lặp lại:
+                            </label>
+                            <select class="form-select" name="recurrence_interval_days" id="recurrence_interval_days">
+                                <option value="7" {% if task.recurrence_interval_days == 7 %}selected{% endif %}>
+                                    Hàng tuần (7 ngày)
+                                </option>
+                                <option value="14" {% if task.recurrence_interval_days == 14 %}selected{% endif %}>
+                                    2 tuần (14 ngày)
+                                </option>
+                                <option value="30" {% if task.recurrence_interval_days == 30 %}selected{% endif %}>
+                                    Hàng tháng (30 ngày)
+                                </option>
+                            </select>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle"></i> 
+                                Nhiệm vụ sẽ tự động tạo bản sao mới sau mỗi chu kỳ
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleRecurrenceSettings() {
+    const checkbox = document.getElementById('recurrence_enabled');
+    const settings = document.getElementById('recurrence_settings');
+    settings.style.display = checkbox.checked ? 'block' : 'none';
+}
+</script>
+{% endblock %}

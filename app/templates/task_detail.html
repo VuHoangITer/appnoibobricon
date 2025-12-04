@@ -202,6 +202,14 @@ body {
                     <span class="badge bg-{{ task.status | status_badge }}" style="font-size: 0.9rem;">
                         {{ task.status | status_vn }}
                     </span>
+                    {% if current_user.role == 'director' %}
+                        <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+                           class="btn btn-warning btn-sm rounded-circle"
+                           style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"
+                           title="Chỉnh sửa nhiệm vụ">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    {% endif %}
                     {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
                     <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}"
                           onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');" class="mb-0">

@@ -2375,3 +2375,58 @@ def view_comment_attachment_public(token):
     response.headers['Access-Control-Allow-Origin'] = '*'
 
     return response
+
+
+@bp.route('/<int:task_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required(['director'])
+def edit_task(task_id):
+    """Chỉnh sửa task - CHỈ Director"""
+    task = Task.query.get_or_404(task_id)
+
+    if request.method == 'POST':
+        # Cập nhật mô tả
+        task.description = request.form.get('description')
+
+        # Cập nhật due_date
+        due_date_str = request.form.get('due_date')
+        if due_date_str:
+            try:
+                vn_datetime = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+                task.due_date = vn_to_utc(vn_datetime)
+            except:
+                try:
+                    vn_datetime = datetime.strptime(due_date_str, '%Y-%m-%d')
+                    task.due_date = vn_to_utc(vn_datetime)
+                except:
+                    flash('Định dạng ngày giờ không hợp lệ.', 'danger')
+                    return redirect(url_for('tasks.edit_task', task_id=task_id))
+        else:
+            task.due_date = None
+
+        # Cập nhật recurrence
+        task.recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
+        if task.recurrence_enabled:
+            task.recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+        else:
+            task.recurrence_interval_days = None
+
+        task.updated_at = datetime.utcnow()
+
+        try:
+            db.session.commit()
+            flash('✅ Cập nhật nhiệm vụ thành công!', 'success')
+            return redirect(url_for('tasks.task_detail', task_id=task_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'❌ Lỗi: {str(e)}', 'danger')
+            return redirect(url_for('tasks.edit_task', task_id=task_id))
+
+    # GET request
+    vn_due_date = None
+    if task.due_date:
+        vn_due_date = utc_to_vn(task.due_date).strftime('%Y-%m-%dT%H:%M')
+
+    return render_template('edit_task.html',
+                           task=task,
+                           vn_due_date=vn_due_date)
