@@ -2,7 +2,16 @@
 
 {% block title %}Tạo task mới{% endblock %}
 {% block page_title %}Tạo Công việc Mới{% endblock %}
-
+{% block extra_css %}
+<style>
+@media (max-width: 768px) {
+    .alert {
+        padding: 12px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-md-8 offset-md-2">
@@ -204,8 +213,83 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-pencil"></i> Chỉnh sửa lại
                 </button>
+                <button type="button" class="btn btn-info" id="useSummaryAI">
+                    <i class="bi bi-robot"></i> Dùng AI tóm tắt
+                </button>
                 <button type="button" class="btn btn-warning" data-bs-dismiss="modal" id="continueAnyway">
                     <i class="bi bi-check-circle"></i> Tiếp tục tạo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal AI Summary -->
+<div class="modal fade" id="aiSummaryModal" tabindex="-1" aria-labelledby="aiSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="aiSummaryModalLabel">
+                    <i class="bi bi-robot"></i> AI Tóm Tắt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading -->
+                <div id="aiLoading" style="display: none;" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang xử lý...</span>
+                    </div>
+                    <p class="mt-3 text-muted">AI đang phân tích... (~3 giây)</p>
+                </div>
+
+                <!-- Success -->
+                <div id="aiSuccess" style="display: none;">
+                    <div class="alert alert-info mb-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <i class="bi bi-file-text"></i> <strong>Gốc:</strong> <span id="originalWordCount"></span> từ
+                            </div>
+                            <div>
+                                <i class="bi bi-stars"></i> <strong>Tóm tắt:</strong> <span id="summaryWordCount"></span> từ
+                            </div>
+                            <div>
+                                <i class="bi bi-check-circle text-success"></i> <strong>Tiết kiệm:</strong> <span id="savedWords" class="text-success"></span> từ
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-primary">
+                            <i class="bi bi-magic"></i> Bản tóm tắt AI:
+                        </label>
+                        <textarea class="form-control" id="aiSummaryText" rows="5"
+                                  style="font-size: 1rem; line-height: 1.5;"></textarea>
+                        <small class="text-muted">Có thể chỉnh sửa trước khi áp dụng</small>
+                    </div>
+
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-speedometer2"></i>
+                        Xử lý trong <strong id="aiElapsed"></strong> giây
+                    </div>
+                </div>
+
+                <!-- Error -->
+                <div id="aiError" style="display: none;">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Lỗi:</strong> <span id="aiErrorMessage"></span>
+                    </div>
+                    <p class="text-muted mb-0">
+                        <small>Có thể do: mạng chậm, quá nhiều yêu cầu, hoặc API key chưa đúng.</small>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Đóng
+                </button>
+                <button type="button" class="btn btn-primary" id="applySummary" style="display: none;">
+                    <i class="bi bi-check-circle"></i> Áp dụng
                 </button>
             </div>
         </div>
@@ -215,14 +299,18 @@
 
 {% block scripts %}
 <script>
-    // Recurrence toggle
+    // ============================================
+    // RECURRENCE TOGGLE
+    // ============================================
     {% if current_user.can_assign_tasks() %}
     document.getElementById('recurrence_enabled').addEventListener('change', function() {
         document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
     });
     {% endif %}
 
-    // Character counter for title
+    // ============================================
+    // CHARACTER COUNTER FOR TITLE
+    // ============================================
     const titleInput = document.getElementById('title');
     const charCount = document.getElementById('char_count');
 
@@ -232,19 +320,55 @@
         charCount.style.color = remaining < 20 ? 'red' : '';
     });
 
-    // ===== WORD COUNTER CHO MÔ TẢ (CHỈ ÁP DỤNG CHO NON-DIRECTOR) =====
-    {% if current_user.role != 'director' %}
+    // ============================================
+    // WORD COUNTER & AI SUMMARY (TẤT CẢ ROLES)
+    // ============================================
     const descriptionTextarea = document.getElementById('description');
     let wordCountWarningShown = false;
-    let allowSubmitWithLongDescription = false; // FLAG ĐỂ BỎ QUA VALIDATION
+    let allowSubmitWithLongDescription = false;
 
-    // Hàm đếm từ (tách theo khoảng trắng và loại bỏ khoảng trắng thừa)
+    // Hàm đếm từ
     function countWords(text) {
         text = text.trim();
         if (text === '') return 0;
         return text.split(/\s+/).length;
     }
 
+    // Hàm hiển thị toast thông báo
+    function showToast(message, type = 'success') {
+        const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+        const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-header ${bgColor} text-white">
+                    <i class="bi bi-${icon} me-2"></i>
+                    <strong class="me-auto">${type === 'success' ? 'Thành công' : 'Lỗi'}</strong>
+                    <button type="button" class="btn-close btn-close-white" onclick="this.closest('.p-3').remove()"></button>
+                </div>
+                <div class="toast-body">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ✅ THÊM: NÚT "TÓM TẮT BẰNG AI" NGAY DƯỚI TEXTAREA (CHO TẤT CẢ)
+    // Tạo nút AI Summary dưới textarea description
+    const aiButtonContainer = document.createElement('div');
+    aiButtonContainer.className = 'mt-2';
+    aiButtonContainer.innerHTML = `
+        <button type="button" class="btn btn-sm btn-outline-primary" id="quickSummaryAI">
+            <i class="bi bi-robot"></i> Tóm tắt bằng AI
+        </button>
+        <small class="text-muted ms-2">Giúp rút gọn mô tả dài</small>
+    `;
+    descriptionTextarea.parentNode.appendChild(aiButtonContainer);
+
+    // ===== CHỈ DIRECTOR KHÔNG BỊ CẢNH BÁO =====
+    {% if current_user.role != 'director' %}
     // Kiểm tra khi người dùng nhập
     descriptionTextarea.addEventListener('input', function() {
         const wordCount = countWords(this.value);
@@ -260,32 +384,130 @@
         // Reset cờ nếu người dùng giảm xuống dưới 80 từ
         if (wordCount <= 80) {
             wordCountWarningShown = false;
-            allowSubmitWithLongDescription = false; // Reset flag khi đã sửa
+            allowSubmitWithLongDescription = false;
         }
     });
 
-    // ===== KIỂM TRA LẠI KHI SUBMIT FORM =====
+    // ===== KIỂM TRA KHI SUBMIT FORM =====
     document.querySelector('form').addEventListener('submit', function(e) {
         const wordCount = countWords(descriptionTextarea.value);
 
         // Nếu vượt 80 từ VÀ chưa được phép submit
         if (wordCount > 80 && !allowSubmitWithLongDescription) {
-            e.preventDefault(); // Chặn submit
+            e.preventDefault();
             document.getElementById('currentWordCount').textContent = wordCount;
             const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
             modal.show();
 
             // Nếu người dùng chọn "Tiếp tục tạo", cho phép submit
             document.getElementById('continueAnyway').onclick = function() {
-                allowSubmitWithLongDescription = true; // Đặt flag = true
-                document.querySelector('form').submit(); // Submit lại
+                allowSubmitWithLongDescription = true;
+                document.querySelector('form').submit();
             };
         }
-        // Nếu đã được phép hoặc <= 80 từ → submit bình thường
     });
     {% endif %}
 
-    // Assignment type toggle
+    // ============================================
+    // AI SUMMARY HANDLER (TẤT CẢ ROLES)
+    // ============================================
+    function openAISummaryModal() {
+        const description = descriptionTextarea.value.trim();
+
+        if (!description) {
+            showToast('Không có nội dung để tóm tắt!', 'error');
+            return;
+        }
+
+        const wordCount = countWords(description);
+
+        if (wordCount < 30) {
+            showToast('Mô tả quá ngắn (dưới 30 từ), không cần tóm tắt', 'error');
+            return;
+        }
+
+        // Mở modal AI
+        const aiModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+        aiModal.show();
+
+        // Reset states
+        document.getElementById('aiLoading').style.display = 'block';
+        document.getElementById('aiSuccess').style.display = 'none';
+        document.getElementById('aiError').style.display = 'none';
+        document.getElementById('applySummary').style.display = 'none';
+
+        // ✅ GỌI API
+        fetch('/tasks/api/summarize-description', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ description: description })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('aiLoading').style.display = 'none';
+
+            if (data.success) {
+                // Hiển thị kết quả thành công
+                document.getElementById('originalWordCount').textContent = data.original_word_count;
+                document.getElementById('summaryWordCount').textContent = data.summary_word_count;
+                document.getElementById('savedWords').textContent = (data.original_word_count - data.summary_word_count);
+                document.getElementById('aiSummaryText').value = data.summary;
+                document.getElementById('aiElapsed').textContent = data.elapsed || '?';
+
+                document.getElementById('aiSuccess').style.display = 'block';
+                document.getElementById('applySummary').style.display = 'block';
+            } else {
+                // Hiển thị lỗi
+                document.getElementById('aiErrorMessage').textContent = data.error || 'Lỗi không xác định';
+                document.getElementById('aiError').style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error('AI API Error:', err);
+            document.getElementById('aiLoading').style.display = 'none';
+            document.getElementById('aiErrorMessage').textContent = 'Không thể kết nối server. Kiểm tra mạng và thử lại.';
+            document.getElementById('aiError').style.display = 'block';
+        });
+    }
+
+    // ===== XỬ LÝ NÚT "TÓM TẮT BẰNG AI" (NÚT DƯỚI TEXTAREA) =====
+    document.getElementById('quickSummaryAI').addEventListener('click', openAISummaryModal);
+
+    // ===== XỬ LÝ NÚT "DÙNG AI TÓM TẮT" (TRONG MODAL CẢNH BÁO) =====
+    {% if current_user.role != 'director' %}
+    document.getElementById('useSummaryAI').addEventListener('click', function() {
+        // Đóng modal cảnh báo
+        const warningModal = bootstrap.Modal.getInstance(document.getElementById('descriptionWarningModal'));
+        if (warningModal) warningModal.hide();
+
+        // Mở modal AI
+        openAISummaryModal();
+    });
+    {% endif %}
+
+    // ===== ÁP DỤNG BẢN TÓM TẮT AI =====
+    document.getElementById('applySummary').addEventListener('click', function() {
+        const summary = document.getElementById('aiSummaryText').value.trim();
+
+        if (summary) {
+            descriptionTextarea.value = summary;
+
+            // Reset flags
+            wordCountWarningShown = false;
+            allowSubmitWithLongDescription = true;
+
+            // Đóng modal
+            const aiModal = bootstrap.Modal.getInstance(document.getElementById('aiSummaryModal'));
+            if (aiModal) aiModal.hide();
+        }
+    });
+
+    // ============================================
+    // ASSIGNMENT TYPE TOGGLE
+    // ============================================
     document.querySelectorAll('input[name="assign_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
             // Disable tất cả
@@ -321,8 +543,14 @@
         });
     });
 
-    // ===== TRIGGER LẦN ĐẦU KHI LOAD TRANG =====
-    // Mặc định "self" được chọn → hiện tags
-    document.getElementById('tags_section').style.display = 'block';
+    // ============================================
+    // INIT ON PAGE LOAD
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mặc định "self" được chọn → hiện tags
+        document.getElementById('tags_section').style.display = 'block';
+
+        console.log('✅ Create Task Page Loaded - AI Summary enabled for all roles');
+    });
 </script>
 {% endblock %}

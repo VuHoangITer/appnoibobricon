@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, case, func
 from app.utils import vn_to_utc, utc_to_vn, vn_now
 from werkzeug.exceptions import abort
+from app.ai_service import summarize_description
 
 bp = Blueprint('tasks', __name__)
 
@@ -761,6 +762,71 @@ def create_task():
 
     return render_template('create_task.html', users=users)
 
+
+@bp.route('/api/summarize-description', methods=['POST'])
+@login_required
+def api_summarize_description():
+    """
+    API để tóm tắt mô tả công việc bằng AI
+
+    Request JSON:
+        {
+            "description": "Văn bản dài cần tóm tắt..."
+        }
+
+    Response JSON:
+        {
+            "success": true,
+            "summary": "Bản tóm tắt ngắn gọn",
+            "original_word_count": 120,
+            "summary_word_count": 45,
+            "elapsed": 2.3
+        }
+    """
+    try:
+        data = request.get_json()
+        description = data.get('description', '').strip()
+
+        if not description:
+            return jsonify({
+                'success': False,
+                'error': 'Không có nội dung để tóm tắt'
+            }), 400
+
+        # Kiểm tra độ dài tối thiểu
+        word_count = len(description.split())
+
+        if word_count < 30:
+            return jsonify({
+                'success': False,
+                'error': 'Mô tả quá ngắn (dưới 30 từ), không cần tóm tắt'
+            }), 400
+
+        # ✅ GỌI AI SERVICE
+        result = summarize_description(description, max_words=50)
+
+        if result['success']:
+            summary_word_count = len(result['summary'].split())
+
+            return jsonify({
+                'success': True,
+                'summary': result['summary'],
+                'original_word_count': word_count,
+                'summary_word_count': summary_word_count,
+                'elapsed': result.get('elapsed', 0)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+
+    except Exception as e:
+        print(f"[ERROR] AI Summary API: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Lỗi server. Vui lòng thử lại.'
+        }), 500
 
 #  Route để cập nhật tags
 @bp.route('/<int:task_id>/update-tags', methods=['POST'])

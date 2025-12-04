@@ -34,3 +34,7 @@ class Config:
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'pdf,docx,xlsx,png,jpg,jpeg').split(','))
     WTF_CSRF_ENABLED = True
     VERSION = '2.5.1'
+
+    # ✅ AI Summary - Groq (FREE & FAST)
+    GROQ_API_KEY = os.environ.get('GROQ_API_KEY') or 'your-groq-api-key-here'
+    AI_TIMEOUT = 10  # Timeout 10 giây để tránh chờ quá lâu
