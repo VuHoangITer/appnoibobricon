@@ -7,13 +7,38 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hub-style.css') }}?v={{ config.VERSION }}">
 <style>
+    /* ✅ SỬ DỤNG CONFIG ĐỘNG */
     body {
-        background-image: url('{{ versioned_static("images/hinh-nen.png") }}') !important;
+        {% if system_config and system_config.hub_background_filename %}
+        background-image: url('{{ versioned_static("images/" + system_config.hub_background_filename) }}') !important;
+        {% else %}
+        background-color: #e5e7eb !important;
+        background-image: none !important;
+        {% endif %}
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
     }
 
     @supports (-webkit-touch-callout: none) {
         body::before {
-            background-image: url('{{ versioned_static("images/hinh-nen.png") }}') !important;
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            {% if system_config and system_config.hub_background_filename %}
+            background-image: url('{{ versioned_static("images/" + system_config.hub_background_filename) }}') !important;
+            {% else %}
+            background-color: #e5e7eb !important;
+            background-image: none !important;
+            {% endif %}
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
     }
 </style>
@@ -58,9 +83,9 @@
         {% if current_user.role == 'director' %}
         <div class="hub-icon-card" onclick="showModule('account')">
             <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <i class="bi bi-person-circle"></i>
+                <i class="bi bi-gear-fill"></i>
             </div>
-            <span class="hub-icon-label">Tài Khoản</span>
+            <span class="hub-icon-label">Hệ Thống</span>
         </div>
         {% endif %}
     </div>
@@ -121,7 +146,11 @@
         <div class="module-content">
             <div class="performance-header">
                 <div class="performance-logo">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BRICON Logo">
+                    {% if system_config %}
+                    <img src="{{ url_for('static', filename='images/' + system_config.logo_filename) }}" alt="BRICON Logo">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BRICON Logo">
+                    {% endif %}
                 </div>
                 <div class="performance-right">
                     <h5 class="performance-title">TO DO BRICON</h5>
@@ -410,7 +439,7 @@
         </div>
     </div>
 
-    <!-- MODULE 4: TÀI KHOẢN -->
+    <!-- MODULE 4: HỆ THỐNG -->
     {% if current_user.role == 'director' %}
     <div id="module-account" class="module-container">
         <div class="sidebar-overlay" onclick="toggleSidebar('account')"></div>
@@ -418,8 +447,8 @@
         <div class="module-sidebar" id="sidebar-account">
             <div class="module-sidebar-header">
                 <div class="module-sidebar-title">
-                    <i class="bi bi-person-circle" style="color: #fa709a;"></i>
-                    <span>Tài Khoản</span>
+                    <i class="bi bi-gear-fill" style="color: #3b82f6;"></i>
+                    <span>Hệ Thống</span>
                 </div>
                 <button class="back-to-hub-btn" onclick="backToHub()">
                     <i class="bi bi-x-lg"></i>
@@ -429,11 +458,11 @@
             <div class="sidebar-menu">
                 <a href="{{ url_for('auth.users') }}" class="sidebar-menu-item">
                     <i class="bi bi-people" style="color: #89f7fe;"></i>
-                    <span>Quản Lý TK</span>
+                    <span>Tài Khoản</span>
                 </a>
-                <a href="{{ url_for('auth.register') }}" class="sidebar-menu-item">
-                    <i class="bi bi-person-plus-fill" style="color: #fddb92;"></i>
-                    <span>Tạo Tài Khoản</span>
+                <a href="{{ url_for('system_config.system_settings') }}" class="sidebar-menu-item">
+                    <i class="bi bi-palette-fill" style="color: #667eea;"></i>
+                    <span>Cài Đặt Giao Diện</span>
                 </a>
             </div>
         </div>

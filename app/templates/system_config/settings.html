@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}Cài Đặt Hệ Thống{% endblock %}
+{% block page_title %}Cài Đặt Hệ Thống{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --ed-bg: #f5f7fb;
+    --ed-card-bg: #ffffff;
+    --ed-border: #e5e7eb;
+    --ed-text: #111827;
+    --ed-muted: #6b7280;
+    --ed-primary: #2563eb;
+    --ed-radius-lg: 12px;
+    --ed-radius-md: 8px;
+}
+
+body {
+    background: var(--ed-bg);
+    color: var(--ed-text);
+    font-size: 0.95rem;
+}
+
+/* Card tối giản */
+.card {
+    border-radius: var(--ed-radius-lg);
+    border: 1px solid var(--ed-border);
+    background-color: var(--ed-card-bg);
+    box-shadow: none;
+    margin-bottom: 1.25rem;
+}
+
+/* Header card trắng, chỉ gạch dưới nhẹ */
+.card-header {
+    background: #ffffff;
+    color: var(--ed-text);
+    border-bottom: 1px solid var(--ed-border);
+    padding: 0.9rem 1.25rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-header i {
+    font-size: 1rem;
+    color: var(--ed-muted);
+}
+
+.card-body {
+    padding: 1.25rem 1.25rem 1.3rem;
+}
+
+/* Alert nhẹ, không quá "ồn" */
+.alert {
+    border-radius: var(--ed-radius-md);
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert i {
+    margin-top: 2px;
+}
+
+/* Ảnh xem trước */
+.preview-image {
+    display: block;
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 10px;
+    border: 1px solid var(--ed-border);
+    background: #f9fafb;
+    padding: 16px;
+    object-fit: contain;
+}
+
+/* Placeholder khi chưa có ảnh */
+.preview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    border-radius: 10px;
+    border: 1px solid var(--ed-border);
+    background: #f3f4f6;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.text-muted.small {
+    color: var(--ed-muted) !important;
+}
+
+/* Button kiểu pill, màu nhẹ */
+.btn {
+    border-radius: 999px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Primary */
+.btn-primary {
+    background: var(--ed-primary);
+    border-color: var(--ed-primary);
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+/* Secondary */
+.btn-secondary {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #111827;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* Reset (danger nhưng vẫn minimal) */
+.btn-reset {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.btn-reset:hover {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* HR nhẹ */
+hr {
+    margin: 1.5rem 0;
+    border-color: var(--ed-border);
+    opacity: 1;
+}
+
+/* Hàng reset căn gọn, không bị "nặng" */
+.settings-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.settings-footer p {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .preview-image {
+        max-height: 220px;
+        padding: 12px;
+    }
+
+    .preview-placeholder {
+        min-height: 150px;
+    }
+
+    .settings-footer {
+        align-items: flex-start;
+    }
+
+    .settings-footer .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Alert Info -->
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+                <strong>Lưu ý:</strong> Thay đổi logo và background sẽ áp dụng cho toàn hệ thống ngay lập tức.
+            </div>
+        </div>
+
+        <!-- ========== LOGO SETTINGS ========== -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-image"></i> Logo Hệ Thống
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Logo hiện tại:</label>
+                            <div class="mb-3">
+                                {% if config.logo_filename %}
+                                <img src="{{ url_for('static', filename='images/' + config.logo_filename) }}"
+                                     alt="Logo"
+                                     class="preview-image">
+                                {% else %}
+                                <div class="preview-placeholder">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-image" style="font-size: 2.5rem;"></i>
+                                        <p class="mt-2 mb-0">Chưa có logo</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small">
+                                <i class="bi bi-file-earmark"></i>
+                                {{ config.logo_filename if config.logo_filename else 'Không có' }}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="logo" class="form-label">
+                                <i class="bi bi-upload"></i> Upload logo mới
+                            </label>
+                            <input type="file"
+                                   class="form-control mb-3"
+                                   id="logo"
+                                   name="logo"
+                                   accept="image/png,image/jpeg,image/webp,image/gif">
+                            <small class="text-muted d-block mb-3">
+                                Định dạng: PNG, JPG, WEBP, GIF (tối đa 5MB)
+                            </small>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Cập nhật logo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="settings-footer">
+                    <div>
+                        <p><strong>Reset về mặc định</strong></p>
+                        <small class="text-muted">Xóa logo, hiển thị placeholder</small>
+                    </div>
+                    <form method="POST" action="{{ url_for('system_config.reset_logo') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-reset"
+                                onclick="return confirm('Xác nhận xóa logo?')">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset logo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== BACKGROUND SETTINGS ========== -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-image-fill"></i> Background Hub
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Background hiện tại:</label>
+                            <div class="mb-3">
+                                {% if config.hub_background_filename %}
+                                <img src="{{ url_for('static', filename='images/' + config.hub_background_filename) }}"
+                                     alt="Background"
+                                     class="preview-image">
+                                {% else %}
+                                <div class="preview-placeholder">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                        <p class="mt-2 mb-0">Chưa có background</p>
+                                        <small>Nền xám mặc định</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small">
+                                <i class="bi bi-file-earmark"></i>
+                                {{ config.hub_background_filename if config.hub_background_filename else 'Không có (nền xám)' }}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="background" class="form-label">
+                                <i class="bi bi-upload"></i> Upload background mới
+                            </label>
+                            <input type="file"
+                                   class="form-control mb-3"
+                                   id="background"
+                                   name="background"
+                                   accept="image/png,image/jpeg,image/webp,image/gif">
+                            <small class="text-muted d-block mb-3">
+                                Định dạng: PNG, JPG, WEBP, GIF (tối đa 10MB)<br>
+                                Khuyến nghị: 1920x1080px
+                            </small>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Cập nhật background
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="settings-footer">
+                    <div>
+                        <p><strong>Reset về mặc định</strong></p>
+                        <small class="text-muted">Xóa background, hiển thị nền xám</small>
+                    </div>
+                    <form method="POST" action="{{ url_for('system_config.reset_background') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-reset"
+                                onclick="return confirm('Xác nhận xóa background?')">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset background
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SYSTEM INFO ========== -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-square"></i> Thông tin hệ thống
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">
+                    <strong>Người cập nhật cuối:</strong>
+                    {{ config.updater.full_name if config.updater else 'Chưa có' }}
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('hub.workflow_hub') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại Hub
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

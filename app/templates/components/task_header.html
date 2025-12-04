@@ -5,7 +5,11 @@
 <div class="performance-header">
     <div class="performance-logo">
         <a href="{{ url_for('hub.workflow_hub') }}">
+            {% if system_config %}
+            <img src="{{ url_for('static', filename='images/' + system_config.logo_filename) }}" alt="BRICON Logo">
+            {% else %}
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="BRICON Logo">
+            {% endif %}
         </a>
     </div>
 

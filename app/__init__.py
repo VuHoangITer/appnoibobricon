@@ -38,8 +38,24 @@ def create_app(config_class=Config):
     init_cache_buster(app)
 
     # THÊM: Register built-in Python functions to Jinja2
-    from datetime import datetime, timedelta  # ← SỬA: Thêm timedelta
-    app.jinja_env.globals.update(min=min, max=max, timedelta=timedelta)  # ← SỬA: Thêm timedelta
+    from datetime import datetime, timedelta
+    app.jinja_env.globals.update(min=min, max=max, timedelta=timedelta)
+
+    # ===== ✅ THÊM: Context processor để inject system config =====
+    @app.context_processor
+    def inject_system_config():
+        """Inject system config vào tất cả templates"""
+        from app.models import SystemConfig
+        try:
+            config = SystemConfig.get_config()
+            return {
+                'system_config': config
+            }
+        except:
+            # Nếu database chưa migration, trả về giá trị mặc định
+            return {
+                'system_config': None
+            }
 
     # Register template filters for timezone
     from app.utils import utc_to_vn
@@ -167,6 +183,10 @@ def create_app(config_class=Config):
 
     from app.seasonal_effects import bp as seasonal_effects_bp
     app.register_blueprint(seasonal_effects_bp, url_prefix='/seasonal-effects')
+
+    # ✅ THÊM: System Config Blueprint
+    from app.system_config import bp as system_config_bp
+    app.register_blueprint(system_config_bp, url_prefix='/system-config')
 
     # Dashboard route
     @app.route('/')

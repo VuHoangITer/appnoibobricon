@@ -940,6 +940,40 @@ class SeasonalEffectConfig(db.Model):
     def __repr__(self):
         return f'<SeasonalEffectConfig updated_at={self.updated_at}>'
 
+
+class SystemConfig(db.Model):
+    """Cấu hình hệ thống - Logo, Background, Theme"""
+    __tablename__ = 'system_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Logo
+    logo_filename = db.Column(db.String(255), default='logo.png')
+
+    # Background
+    hub_background_filename = db.Column(db.String(255), default='hinh-nen.png')
+
+    # Metadata
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    updater = db.relationship('User', foreign_keys=[updated_by])
+
+    @staticmethod
+    def get_config():
+        """Lấy config hiện tại (chỉ có 1 record duy nhất)"""
+        config = SystemConfig.query.first()
+        if not config:
+            # Tạo config mặc định
+            config = SystemConfig(
+                logo_filename='logo.png',
+                hub_background_filename='hinh-nen.png'
+            )
+            db.session.add(config)
+            db.session.commit()
+        return config
+
+    def __repr__(self):
+        return f'<SystemConfig logo={self.logo_filename} bg={self.hub_background_filename}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

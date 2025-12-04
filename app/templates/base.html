@@ -64,7 +64,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
 
     <!-- Preload Logo Image -->
+    {% if system_config %}
+    <link rel="preload" href="{{ url_for('static', filename='images/' + system_config.logo_filename) }}" as="image">
+    {% else %}
     <link rel="preload" href="{{ url_for('static', filename='images/logo.png') }}" as="image">
+    {% endif %}
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#0d6efd">
@@ -288,9 +292,15 @@
         <nav class="top-navbar">
             <div class="navbar-left">
                 <a href="{{ url_for('hub.workflow_hub') }}" class="navbar-logo-link" title="Về Trang Chủ">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}"
-                         alt="BRICON Logo"
+                    {% if system_config %}
+                    <img src="{{ url_for('static', filename='images/' + system_config.logo_filename) }}"
+                         alt="Logo"
                          class="navbar-logo">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                         alt="Logo"
+                         class="navbar-logo">
+                    {% endif %}
                 </a>
             </div>
             <div class="navbar-right">
