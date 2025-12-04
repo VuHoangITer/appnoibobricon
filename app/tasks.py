@@ -2445,11 +2445,46 @@ def view_comment_attachment_public(token):
 
 @bp.route('/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
-@role_required(['director'])
 def edit_task(task_id):
-    """Chỉnh sửa task - CHỈ Director"""
+    """
+    Chỉnh sửa task
+    - Director: Chỉnh sửa TẤT CẢ nhiệm vụ
+    - Manager: Chỉnh sửa nhiều loại nhiệm vụ:
+        + Task do HR tạo
+        + Task do chính Manager tạo
+        + Task được giao cho HR (KHÔNG bao gồm kế toán)
+    - HR/Accountant: Không có quyền
+    """
     task = Task.query.get_or_404(task_id)
 
+    # ===== KIỂM TRA QUYỀN =====
+    can_edit = False
+
+    if current_user.role == 'director':
+        # Director chỉnh sửa được tất cả
+        can_edit = True
+
+    elif current_user.role == 'manager':
+        # 1. Task do HR tạo
+        if task.creator.role == 'hr':
+            can_edit = True
+
+        # 2. Task do chính Manager tạo
+        elif task.creator_id == current_user.id:
+            can_edit = True
+
+        # 3. Task được giao cho HR (CHỈ HR, không bao gồm kế toán)
+        else:
+            for assignment in task.assignments:
+                if assignment.user.role == 'hr':
+                    can_edit = True
+                    break
+
+    if not can_edit:
+        flash('Bạn không có quyền chỉnh sửa nhiệm vụ này.', 'danger')
+        return redirect(url_for('tasks.task_detail', task_id=task_id))
+
+    # ===== XỬ LÝ POST REQUEST =====
     if request.method == 'POST':
         # Cập nhật mô tả
         task.description = request.form.get('description')
@@ -2488,7 +2523,7 @@ def edit_task(task_id):
             flash(f'❌ Lỗi: {str(e)}', 'danger')
             return redirect(url_for('tasks.edit_task', task_id=task_id))
 
-    # GET request
+    # ===== XỬ LÝ GET REQUEST =====
     vn_due_date = None
     if task.due_date:
         vn_due_date = utc_to_vn(task.due_date).strftime('%Y-%m-%dT%H:%M')

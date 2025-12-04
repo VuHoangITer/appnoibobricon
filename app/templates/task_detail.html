@@ -202,7 +202,35 @@ body {
                     <span class="badge bg-{{ task.status | status_badge }}" style="font-size: 0.9rem;">
                         {{ task.status | status_vn }}
                     </span>
+
+                    <!-- ===== NÚT EDIT  ===== -->
+                    {% set can_edit = false %}
+
+                    {# Director: sửa được tất cả #}
                     {% if current_user.role == 'director' %}
+                        {% set can_edit = true %}
+
+                    {# Manager: sửa được nhiều loại task #}
+                    {% elif current_user.role == 'manager' %}
+                        {# 1. Task do HR tạo #}
+                        {% if task.creator.role == 'hr' %}
+                            {% set can_edit = true %}
+
+                        {# 2. Task do chính Manager tạo #}
+                        {% elif task.creator_id == current_user.id %}
+                            {% set can_edit = true %}
+
+                        {# 3. Task được giao cho HR (CHỈ HR, không bao gồm kế toán) - bất kể ai tạo #}
+                        {% else %}
+                            {% for assignment in task.assignments %}
+                                {% if assignment.user.role == 'hr' %}
+                                    {% set can_edit = true %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endif %}
+
+                    {% if can_edit %}
                         <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
                            class="btn btn-warning btn-sm rounded-circle"
                            style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"
@@ -210,6 +238,8 @@ body {
                             <i class="bi bi-pencil"></i>
                         </a>
                     {% endif %}
+
+                    <!-- NÚT XÓA - GIỮ NGUYÊN LOGIC CŨ -->
                     {% if task.creator_id == current_user.id or current_user.role in ['director', 'manager'] %}
                     <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}"
                           onsubmit="return confirm('Bạn có chắc muốn xóa nhiệm vụ này?');" class="mb-0">
