@@ -927,6 +927,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize file input handler
     initFileInput();
 
+    // Dán ảnh
+    initPasteListener();
+
     // Bấm vào link được
     linkifyExistingComments();
 
@@ -978,6 +981,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// ============================================
+// PASTE IMAGE FROM CLIPBOARD
+// ============================================
+function initPasteListener() {
+    const commentInput = document.getElementById('commentInput');
+
+    if (!commentInput) return;
+
+    commentInput.addEventListener('paste', function(e) {
+        const items = e.clipboardData.items;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault(); // Ngăn paste text
+
+                const blob = items[i].getAsFile();
+
+                // Đặt tên file với timestamp
+                const fileName = `screenshot_${Date.now()}.png`;
+                const file = new File([blob], fileName, { type: blob.type });
+
+                // ✅ THÊM VÀO selectedFiles array (giống logic chọn file)
+                selectedFiles.push(file);
+
+                // ✅ Update button text
+                updateAttachButtonText();
+
+                // ✅ Render preview
+                if (selectedFiles.length === 1) {
+                    // Single image preview
+                    filePreviewName.textContent = file.name;
+                    filePreviewSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        document.getElementById('multipleImagePreview').style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Multiple files - render grid
+                    renderMultipleImagePreview();
+                }
+
+                filePreview.style.display = 'block';
+
+                console.log('✅ Pasted image from clipboard:', fileName);
+                showToast('📸 Đã dán ảnh', 'success');
+                break;
+            }
+        }
+    });
+}
 
 // ============================================
 // DRAG & DROP FILE UPLOAD
