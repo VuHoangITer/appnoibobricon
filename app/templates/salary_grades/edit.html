@@ -46,14 +46,14 @@
 
                     <h5 class="mb-3"><i class="bi bi-award"></i> Lương Năng Lực Mặc Định</h5>
                     <p class="text-muted">Các khoản lương năng lực này sẽ tự động được điền khi tạo bảng lương.</p>
-                    
+
                     <div id="capacity-container" class="mb-4">
                         {% set bonuses = grade.get_capacity_bonuses() %}
                         {% if bonuses %}
                             {% for bonus in bonuses %}
                             <div class="capacity-item row mb-2">
                                 <div class="col-md-7">
-                                    <input type="text" class="form-control" name="capacity_content[]" 
+                                    <input type="text" class="form-control" name="capacity_content[]"
                                            value="{{ bonus.content }}" placeholder="Nội dung">
                                 </div>
                                 <div class="col-md-4">
@@ -70,7 +70,7 @@
                         {% else %}
                             <div class="capacity-item row mb-2">
                                 <div class="col-md-7">
-                                    <input type="text" class="form-control" name="capacity_content[]" 
+                                    <input type="text" class="form-control" name="capacity_content[]"
                                            placeholder="Nội dung">
                                 </div>
                                 <div class="col-md-4">

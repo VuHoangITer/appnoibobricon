@@ -360,15 +360,15 @@ function calculate() {
     const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
     const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
     const respSalary = parseFloat(document.getElementById('responsibility_salary').value) || 0;
-    
+
     // Lương cơ bản/ngày
     const basicPerDay = workDays > 0 ? basicSalary / workDays : 0;
     document.getElementById('display_basic_per_day').textContent = formatMoney(basicPerDay);
-    
+
     // Lương trách nhiệm/ngày
     const respPerDay = workDays > 0 ? respSalary / workDays : 0;
     document.getElementById('display_resp_per_day').textContent = formatMoney(respPerDay);
-    
+
     // Lương chính
     const mainSalary = (basicPerDay + respPerDay) * actualDays;
     document.getElementById('display_main_salary').textContent = formatMoney(mainSalary);
