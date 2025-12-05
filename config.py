@@ -33,8 +33,8 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_FILE_SIZE', 15728640))
     ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'pdf,docx,xlsx,png,jpg,jpeg').split(','))
     WTF_CSRF_ENABLED = True
-    VERSION = '2.5.3'
+    VERSION = '2.5.4'
 
     #  AI Summary - Groq
     GROQ_API_KEY = os.environ.get('GROQ_API_KEY') or 'your-groq-api-key-here'
-    AI_TIMEOUT = 10  # Timeout 10 giây để tránh chờ quá lâu
+    AI_TIMEOUT = 10

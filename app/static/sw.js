@@ -1,5 +1,5 @@
 // ========== VERSION CONTROL ==========
-const VERSION = '2.5.3';
+const VERSION = '2.5.4';
 
 self.addEventListener('install', event => {
   console.log('Service Worker installed');
