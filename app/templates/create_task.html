@@ -296,7 +296,7 @@ hr.my-3 {
                             </div>
                         </div>
                     </div>
-                                        <!-- Recurrence - CHỈ cho Director/Manager -->
+                    <!-- Recurrence - CHỈ cho Director/Manager -->
                     {% if current_user.can_assign_tasks() %}
                     <div class="mb-3">
                         <label class="form-label">
@@ -310,12 +310,61 @@ hr.my-3 {
                                 </label>
                             </div>
 
+                            <!-- ===== ✅ THÊM MỚI: CHỌN LOẠI LẶP LẠI ===== -->
                             <div id="recurrence_options" style="display: none;">
-                                <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
-                                    <option value="7" selected>Hàng tuần (7 ngày)</option>
-                                    <option value="14">2 tuần (14 ngày)</option>
-                                    <option value="30">Hàng tháng (30 ngày)</option>
+                                <label class="form-label mt-2"><strong>Loại lặp lại:</strong></label>
+                                <select class="form-select form-select-sm mb-3" name="recurrence_type" id="recurrence_type" onchange="toggleRecurrenceMode()">
+                                    <option value="interval">Theo khoảng cách (ngày)</option>
+                                    <option value="weekly">Theo các ngày trong tuần</option>
                                 </select>
+
+                                <!-- MODE 1: Theo khoảng cách (GIỮ NGUYÊN CODE CŨ) -->
+                                <div id="interval_mode">
+                                    <label class="form-label"><strong>Chu kỳ:</strong></label>
+                                    <select class="form-select form-select-sm" name="recurrence_interval_days" id="recurrence_interval_days">
+                                        <option value="7" selected>Hàng tuần (7 ngày)</option>
+                                        <option value="14">2 tuần (14 ngày)</option>
+                                        <option value="30">Hàng tháng (30 ngày)</option>
+                                    </select>
+                                </div>
+
+                                <!-- MODE 2: Theo ngày trong tuần (MỚI) -->
+                                <div id="weekly_mode" style="display: none;">
+                                    <label class="form-label"><strong>Chọn các ngày:</strong></label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="1" id="weekday_1">
+                                            <label class="form-check-label" for="weekday_1">Thứ 2</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="2" id="weekday_2">
+                                            <label class="form-check-label" for="weekday_2">Thứ 3</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="3" id="weekday_3">
+                                            <label class="form-check-label" for="weekday_3">Thứ 4</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="4" id="weekday_4">
+                                            <label class="form-check-label" for="weekday_4">Thứ 5</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="5" id="weekday_5">
+                                            <label class="form-check-label" for="weekday_5">Thứ 6</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="6" id="weekday_6">
+                                            <label class="form-check-label" for="weekday_6">Thứ 7</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="weekdays[]" value="0" id="weekday_0">
+                                            <label class="form-check-label" for="weekday_0">Chủ nhật</label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">
+                                        <i class="bi bi-info-circle"></i> Nhiệm vụ sẽ tự động tạo vào các ngày đã chọn mỗi tuần
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -516,260 +565,281 @@ hr.my-3 {
 
 {% block scripts %}
 <script>
-    // ============================================
-    // RECURRENCE TOGGLE
-    // ============================================
-    {% if current_user.can_assign_tasks() %}
-    document.getElementById('recurrence_enabled').addEventListener('change', function() {
-        document.getElementById('recurrence_options').style.display = this.checked ? 'block' : 'none';
-    });
-    {% endif %}
+// ============================================
+// RECURRENCE TOGGLE & MODE TOGGLE (MỚI)
+// ============================================
+{% if current_user.can_assign_tasks() %}
+// Bật/tắt recurrence options
+document.getElementById('recurrence_enabled').addEventListener('change', function() {
+    const options = document.getElementById('recurrence_options');
+    options.style.display = this.checked ? 'block' : 'none';
 
-    // ============================================
-    // CHARACTER COUNTER FOR TITLE
-    // ============================================
-    const titleInput = document.getElementById('title');
-    const charCount = document.getElementById('char_count');
-
-    titleInput.addEventListener('input', function() {
-        const remaining = 35 - this.value.length;
-        charCount.textContent = remaining;
-        charCount.style.color = remaining < 20 ? 'red' : '';
-    });
-
-    // ============================================
-    // WORD COUNTER & AI SUMMARY (TẤT CẢ ROLES)
-    // ============================================
-    const descriptionTextarea = document.getElementById('description');
-    let wordCountWarningShown = false;
-    let allowSubmitWithLongDescription = false;
-
-    // Hàm đếm từ
-    function countWords(text) {
-        text = text.trim();
-        if (text === '') return 0;
-        return text.split(/\s+/).length;
+    // Reset về mode interval khi bật
+    if (this.checked) {
+        document.getElementById('recurrence_type').value = 'interval';
+        toggleRecurrenceMode();
     }
+});
 
-    // Hàm hiển thị toast thông báo
-    function showToast(message, type = 'success') {
-        const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
-        const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
-        const toast = document.createElement('div');
-        toast.className = 'position-fixed bottom-0 end-0 p-3';
-        toast.style.zIndex = '9999';
-        toast.innerHTML = `
-            <div class="toast show" role="alert">
-                <div class="toast-header ${bgColor} text-white">
-                    <i class="bi bi-${icon} me-2"></i>
-                    <strong class="me-auto">${type === 'success' ? 'Thành công' : 'Lỗi'}</strong>
-                    <button type="button" class="btn-close btn-close-white" onclick="this.closest('.p-3').remove()"></button>
-                </div>
-                <div class="toast-body">${message}</div>
+// ✅ HÀM MỚI: Toggle giữa interval mode và weekly mode
+function toggleRecurrenceMode() {
+    const recurrenceType = document.getElementById('recurrence_type').value;
+    const intervalMode = document.getElementById('interval_mode');
+    const weeklyMode = document.getElementById('weekly_mode');
+
+    if (recurrenceType === 'weekly') {
+        intervalMode.style.display = 'none';
+        weeklyMode.style.display = 'block';
+    } else {
+        intervalMode.style.display = 'block';
+        weeklyMode.style.display = 'none';
+    }
+}
+{% endif %}
+
+// ============================================
+// CHARACTER COUNTER FOR TITLE
+// ============================================
+const titleInput = document.getElementById('title');
+const charCount = document.getElementById('char_count');
+
+titleInput.addEventListener('input', function() {
+    const remaining = 35 - this.value.length;
+    charCount.textContent = remaining;
+    charCount.style.color = remaining < 20 ? 'red' : '';
+});
+
+// ============================================
+// WORD COUNTER & AI SUMMARY (TẤT CẢ ROLES)
+// ============================================
+const descriptionTextarea = document.getElementById('description');
+let wordCountWarningShown = false;
+let allowSubmitWithLongDescription = false;
+
+// Hàm đếm từ
+function countWords(text) {
+    text = text.trim();
+    if (text === '') return 0;
+    return text.split(/\s+/).length;
+}
+
+// Hàm hiển thị toast thông báo
+function showToast(message, type = 'success') {
+    const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+    const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header ${bgColor} text-white">
+                <i class="bi bi-${icon} me-2"></i>
+                <strong class="me-auto">${type === 'success' ? 'Thành công' : 'Lỗi'}</strong>
+                <button type="button" class="btn-close btn-close-white" onclick="this.closest('.p-3').remove()"></button>
             </div>
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    // ✅ THÊM: NÚT "TÓM TẮT BẰNG AI" NGAY DƯỚI TEXTAREA (CHO TẤT CẢ)
-    // Tạo nút AI Summary dưới textarea description
-    const aiButtonContainer = document.createElement('div');
-    aiButtonContainer.className = 'mt-2';
-    aiButtonContainer.innerHTML = `
-        <button type="button" class="btn btn-sm btn-outline-primary" id="quickSummaryAI">
-            <i class="bi bi-robot"></i> Tóm tắt bằng AI
-        </button>
+            <div class="toast-body">${message}</div>
+        </div>
     `;
-    descriptionTextarea.parentNode.appendChild(aiButtonContainer);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-    // ===== CHỈ DIRECTOR KHÔNG BỊ CẢNH BÁO =====
-    {% if current_user.role != 'director' %}
-    // Kiểm tra khi người dùng nhập
-    descriptionTextarea.addEventListener('input', function() {
-        const wordCount = countWords(this.value);
+// ✅ THÊM: NÚT "TÓM TẮT BẰNG AI" NGAY DƯỚI TEXTAREA (CHO TẤT CẢ)
+const aiButtonContainer = document.createElement('div');
+aiButtonContainer.className = 'mt-2';
+aiButtonContainer.innerHTML = `
+    <button type="button" class="btn btn-sm btn-outline-primary" id="quickSummaryAI">
+        <i class="bi bi-robot"></i> Tóm tắt bằng AI
+    </button>
+`;
+descriptionTextarea.parentNode.appendChild(aiButtonContainer);
 
-        // Nếu vượt 80 từ và chưa hiện cảnh báo
-        if (wordCount > 80 && !wordCountWarningShown) {
-            document.getElementById('currentWordCount').textContent = wordCount;
-            const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
-            modal.show();
-            wordCountWarningShown = true;
-        }
+// ===== CHỈ DIRECTOR KHÔNG BỊ CẢNH BÁO =====
+{% if current_user.role != 'director' %}
+// Kiểm tra khi người dùng nhập
+descriptionTextarea.addEventListener('input', function() {
+    const wordCount = countWords(this.value);
 
-        // Reset cờ nếu người dùng giảm xuống dưới 80 từ
-        if (wordCount <= 80) {
-            wordCountWarningShown = false;
-            allowSubmitWithLongDescription = false;
-        }
-    });
-
-    // ===== KIỂM TRA KHI SUBMIT FORM =====
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const wordCount = countWords(descriptionTextarea.value);
-
-        // Nếu vượt 80 từ VÀ chưa được phép submit
-        if (wordCount > 80 && !allowSubmitWithLongDescription) {
-            e.preventDefault();
-            document.getElementById('currentWordCount').textContent = wordCount;
-            const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
-            modal.show();
-
-            // Nếu người dùng chọn "Tiếp tục tạo", cho phép submit
-            document.getElementById('continueAnyway').onclick = function() {
-                allowSubmitWithLongDescription = true;
-                document.querySelector('form').submit();
-            };
-        }
-    });
-    {% endif %}
-
-    // ============================================
-    // AI SUMMARY HANDLER (TẤT CẢ ROLES)
-    // ============================================
-    function openAISummaryModal() {
-        const description = descriptionTextarea.value.trim();
-
-        if (!description) {
-            showToast('Không có nội dung để tóm tắt!', 'error');
-            return;
-        }
-
-        const wordCount = countWords(description);
-
-        if (wordCount < 30) {
-            showToast('Mô tả quá ngắn (dưới 30 từ), không cần tóm tắt', 'error');
-            return;
-        }
-
-        // Mở modal AI
-        const aiModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
-        aiModal.show();
-
-        // Reset states
-        document.getElementById('aiLoading').style.display = 'block';
-        document.getElementById('aiSuccess').style.display = 'none';
-        document.getElementById('aiError').style.display = 'none';
-        document.getElementById('applySummary').style.display = 'none';
-
-        // ✅ GỌI API
-        fetch('/tasks/api/summarize-description', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ description: description })
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('aiLoading').style.display = 'none';
-
-            if (data.success) {
-                // Hiển thị kết quả thành công
-                document.getElementById('originalWordCount').textContent = data.original_word_count;
-                document.getElementById('summaryWordCount').textContent = data.summary_word_count;
-                document.getElementById('savedWords').textContent = (data.original_word_count - data.summary_word_count);
-                document.getElementById('aiSummaryText').value = data.summary;
-                document.getElementById('aiElapsed').textContent = data.elapsed || '?';
-
-                document.getElementById('aiSuccess').style.display = 'block';
-                document.getElementById('applySummary').style.display = 'block';
-            } else {
-                // Hiển thị lỗi
-                document.getElementById('aiErrorMessage').textContent = data.error || 'Lỗi không xác định';
-                document.getElementById('aiError').style.display = 'block';
-            }
-        })
-        .catch(err => {
-            console.error('AI API Error:', err);
-            document.getElementById('aiLoading').style.display = 'none';
-            document.getElementById('aiErrorMessage').textContent = 'Không thể kết nối server. Kiểm tra mạng và thử lại.';
-            document.getElementById('aiError').style.display = 'block';
-        });
+    // Nếu vượt 80 từ và chưa hiện cảnh báo
+    if (wordCount > 80 && !wordCountWarningShown) {
+        document.getElementById('currentWordCount').textContent = wordCount;
+        const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
+        modal.show();
+        wordCountWarningShown = true;
     }
 
-    // ===== XỬ LÝ NÚT "TÓM TẮT BẰNG AI" (NÚT DƯỚI TEXTAREA) =====
-    document.getElementById('quickSummaryAI').addEventListener('click', openAISummaryModal);
+    // Reset cờ nếu người dùng giảm xuống dưới 80 từ
+    if (wordCount <= 80) {
+        wordCountWarningShown = false;
+        allowSubmitWithLongDescription = false;
+    }
+});
 
-    // ===== XỬ LÝ NÚT "DÙNG AI TÓM TẮT" (TRONG MODAL CẢNH BÁO) =====
-    {% if current_user.role != 'director' %}
-    document.getElementById('useSummaryAI').addEventListener('click', function() {
-        // Đóng modal cảnh báo
-        const warningModal = bootstrap.Modal.getInstance(document.getElementById('descriptionWarningModal'));
-        if (warningModal) warningModal.hide();
+// ===== KIỂM TRA KHI SUBMIT FORM =====
+document.querySelector('form').addEventListener('submit', function(e) {
+    const wordCount = countWords(descriptionTextarea.value);
 
-        // Mở modal AI
-        openAISummaryModal();
-    });
-    {% endif %}
+    // Nếu vượt 80 từ VÀ chưa được phép submit
+    if (wordCount > 80 && !allowSubmitWithLongDescription) {
+        e.preventDefault();
+        document.getElementById('currentWordCount').textContent = wordCount;
+        const modal = new bootstrap.Modal(document.getElementById('descriptionWarningModal'));
+        modal.show();
 
-    // ===== ÁP DỤNG BẢN TÓM TẮT AI =====
-    document.getElementById('applySummary').addEventListener('click', function() {
-        const summary = document.getElementById('aiSummaryText').value.trim();
-
-        if (summary) {
-            descriptionTextarea.value = summary;
-
-            // Reset flags
-            wordCountWarningShown = false;
+        // Nếu người dùng chọn "Tiếp tục tạo", cho phép submit
+        document.getElementById('continueAnyway').onclick = function() {
             allowSubmitWithLongDescription = true;
+            document.querySelector('form').submit();
+        };
+    }
+});
+{% endif %}
 
-            // Đóng modal
-            const aiModal = bootstrap.Modal.getInstance(document.getElementById('aiSummaryModal'));
-            if (aiModal) aiModal.hide();
+// ============================================
+// AI SUMMARY HANDLER (TẤT CẢ ROLES)
+// ============================================
+function openAISummaryModal() {
+    const description = descriptionTextarea.value.trim();
+
+    if (!description) {
+        showToast('Không có nội dung để tóm tắt!', 'error');
+        return;
+    }
+
+    const wordCount = countWords(description);
+
+    if (wordCount < 30) {
+        showToast('Mô tả quá ngắn (dưới 30 từ), không cần tóm tắt', 'error');
+        return;
+    }
+
+    // Mở modal AI
+    const aiModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+    aiModal.show();
+
+    // Reset states
+    document.getElementById('aiLoading').style.display = 'block';
+    document.getElementById('aiSuccess').style.display = 'none';
+    document.getElementById('aiError').style.display = 'none';
+    document.getElementById('applySummary').style.display = 'none';
+
+    // ✅ GỌI API
+    fetch('/tasks/api/summarize-description', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ description: description })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('aiLoading').style.display = 'none';
+
+        if (data.success) {
+            // Hiển thị kết quả thành công
+            document.getElementById('originalWordCount').textContent = data.original_word_count;
+            document.getElementById('summaryWordCount').textContent = data.summary_word_count;
+            document.getElementById('savedWords').textContent = (data.original_word_count - data.summary_word_count);
+            document.getElementById('aiSummaryText').value = data.summary;
+            document.getElementById('aiElapsed').textContent = data.elapsed || '?';
+
+            document.getElementById('aiSuccess').style.display = 'block';
+            document.getElementById('applySummary').style.display = 'block';
+        } else {
+            // Hiển thị lỗi
+            document.getElementById('aiErrorMessage').textContent = data.error || 'Lỗi không xác định';
+            document.getElementById('aiError').style.display = 'block';
+        }
+    })
+    .catch(err => {
+        console.error('AI API Error:', err);
+        document.getElementById('aiLoading').style.display = 'none';
+        document.getElementById('aiErrorMessage').textContent = 'Không thể kết nối server. Kiểm tra mạng và thử lại.';
+        document.getElementById('aiError').style.display = 'block';
+    });
+}
+
+// ===== XỬ LÝ NÚT "TÓM TẮT BẰNG AI" (NÚT DƯỚI TEXTAREA) =====
+document.getElementById('quickSummaryAI').addEventListener('click', openAISummaryModal);
+
+// ===== XỬ LÝ NÚT "DÙNG AI TÓM TẮT" (TRONG MODAL CẢNH BÁO) =====
+{% if current_user.role != 'director' %}
+document.getElementById('useSummaryAI').addEventListener('click', function() {
+    // Đóng modal cảnh báo
+    const warningModal = bootstrap.Modal.getInstance(document.getElementById('descriptionWarningModal'));
+    if (warningModal) warningModal.hide();
+
+    // Mở modal AI
+    openAISummaryModal();
+});
+{% endif %}
+
+// ===== ÁP DỤNG BẢN TÓM TẮT AI =====
+document.getElementById('applySummary').addEventListener('click', function() {
+    const summary = document.getElementById('aiSummaryText').value.trim();
+
+    if (summary) {
+        descriptionTextarea.value = summary;
+
+        // Reset flags
+        wordCountWarningShown = false;
+        allowSubmitWithLongDescription = true;
+
+        // Đóng modal
+        const aiModal = bootstrap.Modal.getInstance(document.getElementById('aiSummaryModal'));
+        if (aiModal) aiModal.hide();
+    }
+});
+
+// ============================================
+// ASSIGNMENT TYPE TOGGLE
+// ============================================
+document.querySelectorAll('input[name="assign_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Disable tất cả
+        document.getElementById('assign_to_user').disabled = true;
+        document.getElementById('assign_to_group').disabled = true;
+        document.getElementById('assign_multiple_container').style.display = 'none';
+        document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = true);
+        document.getElementById('create_separate_tasks').disabled = true;
+
+        // ===== HIỆN/ẨN PHẦN TAGS =====
+        const tagsSection = document.getElementById('tags_section');
+
+        if (this.value === 'self') {
+            // Tự giao cho mình → HIỆN tags cho TẤT CẢ user
+            tagsSection.style.display = 'block';
+        } else {
+            // Giao cho người khác → CHỈ hiện tags cho Director/Manager
+            {% if current_user.can_assign_tasks() %}
+            tagsSection.style.display = 'block';
+            {% else %}
+            tagsSection.style.display = 'none';
+            {% endif %}
+        }
+
+        // Enable theo lựa chọn
+        if (this.value === 'user') {
+            document.getElementById('assign_to_user').disabled = false;
+        } else if (this.value === 'group') {
+            document.getElementById('assign_to_group').disabled = false;
+        } else if (this.value === 'multiple') {
+            document.getElementById('assign_multiple_container').style.display = 'block';
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = false);
+            document.getElementById('create_separate_tasks').disabled = false;
         }
     });
+});
 
-    // ============================================
-    // ASSIGNMENT TYPE TOGGLE
-    // ============================================
-    document.querySelectorAll('input[name="assign_type"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            // Disable tất cả
-            document.getElementById('assign_to_user').disabled = true;
-            document.getElementById('assign_to_group').disabled = true;
-            document.getElementById('assign_multiple_container').style.display = 'none';
-            document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = true);
-            // Disable checkbox "Tạo nhiệm vụ riêng"
-            document.getElementById('create_separate_tasks').disabled = true;
+// ============================================
+// INIT ON PAGE LOAD
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Mặc định "self" được chọn → hiện tags
+    document.getElementById('tags_section').style.display = 'block';
 
-            // ===== HIỆN/ẨN PHẦN TAGS =====
-            const tagsSection = document.getElementById('tags_section');
-
-            if (this.value === 'self') {
-                // Tự giao cho mình → HIỆN tags cho TẤT CẢ user
-                tagsSection.style.display = 'block';
-            } else {
-                // Giao cho người khác → CHỈ hiện tags cho Director/Manager
-                {% if current_user.can_assign_tasks() %}
-                tagsSection.style.display = 'block';
-                {% else %}
-                tagsSection.style.display = 'none';
-                {% endif %}
-            }
-
-            // Enable theo lựa chọn
-            if (this.value === 'user') {
-                document.getElementById('assign_to_user').disabled = false;
-            } else if (this.value === 'group') {
-                document.getElementById('assign_to_group').disabled = false;
-            } else if (this.value === 'multiple') {
-                document.getElementById('assign_multiple_container').style.display = 'block';
-                document.querySelectorAll('.user-checkbox').forEach(cb => cb.disabled = false);
-                document.getElementById('create_separate_tasks').disabled = false;
-            }
-        });
-    });
-
-    // ============================================
-    // INIT ON PAGE LOAD
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mặc định "self" được chọn → hiện tags
-        document.getElementById('tags_section').style.display = 'block';
-
-        console.log('✅ Create Task Page Loaded - AI Summary enabled for all roles');
-    });
+    console.log('✅ Create Task Page Loaded - AI Summary & Recurrence Mode enabled');
+});
 </script>
 {% endblock %}

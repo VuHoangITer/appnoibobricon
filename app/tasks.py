@@ -542,12 +542,33 @@ def create_task():
         is_important = request.form.get('is_important') == 'on'
         is_recurring = request.form.get('is_recurring') == 'on'
 
-        # Recurrence: CHỈ Director/Manager
+        # ===== ✅ RECURRENCE: CHỈ Director/Manager - CẬP NHẬT =====
         recurrence_enabled = False
         recurrence_interval_days = 7
+        recurrence_type = 'interval'  # ✅ MỚI
+        recurrence_weekdays = None  # ✅ MỚI
+
         if current_user.can_assign_tasks():
             recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
-            recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+
+            if recurrence_enabled:
+                recurrence_type = request.form.get('recurrence_type', 'interval')
+
+                if recurrence_type == 'interval':
+                    # ===== LOGIC CŨ: Theo khoảng cách =====
+                    recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+
+                elif recurrence_type == 'weekly':
+                    # ===== ✅ LOGIC MỚI: Theo ngày trong tuần =====
+                    weekdays = request.form.getlist('weekdays[]')
+
+                    if not weekdays:
+                        flash('Vui lòng chọn ít nhất 1 ngày trong tuần để lặp lại.', 'warning')
+                        users = User.query.filter(User.is_active == True).order_by(User.full_name).all()
+                        return render_template('create_task.html', users=users)
+
+                    recurrence_weekdays = ','.join(weekdays)  # "1,3,5"
+                    recurrence_interval_days = None  # Không dùng interval cho weekly mode
 
         # Validate
         if not title:
@@ -596,7 +617,9 @@ def create_task():
                 requires_approval=requires_approval,
                 approved=None if requires_approval else True,
                 recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
+                recurrence_type=recurrence_type if recurrence_enabled else 'interval',  # ✅ MỚI
                 recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+                recurrence_weekdays=recurrence_weekdays if recurrence_enabled else None,  # ✅ MỚI
                 last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
             )
             db.session.add(task)
@@ -723,10 +746,9 @@ def create_task():
                         if not assigned_user:
                             continue
 
-                        # ✅ GIỮ NGUYÊN TIÊU ĐỀ GỐC, KHÔNG THÊM TÊN NGƯỜI
                         new_title = title
 
-                        # Tạo task riêng
+                        # ✅ Tạo task riêng với recurrence settings
                         separate_task = Task(
                             title=new_title,
                             description=description,
@@ -739,7 +761,9 @@ def create_task():
                             requires_approval=False,
                             approved=True,
                             recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
+                            recurrence_type=recurrence_type if recurrence_enabled else 'interval',  # ✅ MỚI
                             recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
+                            recurrence_weekdays=recurrence_weekdays if recurrence_enabled else None,  # ✅ MỚI
                             last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
                         )
                         db.session.add(separate_task)
@@ -773,7 +797,6 @@ def create_task():
                     flash(f'✅ Đã tạo {len(created_tasks)} nhiệm vụ riêng cho từng người.', 'success')
                     has_flashed = True
 
-                    # ✅ QUAN TRỌNG: Return ngay, không tạo task gốc
                     return redirect(url_for('tasks.list_tasks'))
 
                 else:
@@ -2572,12 +2595,33 @@ def edit_task(task_id):
         else:
             task.due_date = None
 
-        # Cập nhật recurrence
+        # ===== ✅ CẬP NHẬT RECURRENCE (LOGIC MỚI) =====
         task.recurrence_enabled = request.form.get('recurrence_enabled') == 'on'
+
         if task.recurrence_enabled:
-            task.recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+            recurrence_type = request.form.get('recurrence_type', 'interval')
+            task.recurrence_type = recurrence_type
+
+            if recurrence_type == 'interval':
+                # MODE 1: Theo khoảng cách
+                task.recurrence_interval_days = int(request.form.get('recurrence_interval_days', 7))
+                task.recurrence_weekdays = None
+
+            elif recurrence_type == 'weekly':
+                # MODE 2: Theo ngày trong tuần
+                weekdays = request.form.getlist('weekdays[]')
+
+                if not weekdays:
+                    flash('Vui lòng chọn ít nhất 1 ngày trong tuần.', 'warning')
+                    return redirect(url_for('tasks.edit_task', task_id=task_id))
+
+                task.recurrence_weekdays = ','.join(weekdays)
+                task.recurrence_interval_days = None
         else:
+            # Tắt recurrence → Reset tất cả
+            task.recurrence_type = 'interval'
             task.recurrence_interval_days = None
+            task.recurrence_weekdays = None
 
         task.updated_at = datetime.utcnow()
 

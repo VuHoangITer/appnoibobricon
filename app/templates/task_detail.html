@@ -410,13 +410,37 @@ body {
                         <i class="bi bi-arrow-repeat"></i> Tự động lặp lại
                     </h6>
                     <small class="text-muted">
-                        <strong>Chu kỳ:</strong>
-                        {% if task.recurrence_interval_days == 7 %}Hàng tuần
-                        {% elif task.recurrence_interval_days == 14 %}2 tuần
-                        {% elif task.recurrence_interval_days == 30 %}Hàng tháng
-                        {% else %}{{ task.recurrence_interval_days }} ngày{% endif %}
-                        {% if task.last_recurrence_date %}
-                        <br><strong>Lần tạo tiếp theo:</strong> {{ task.last_recurrence_date | add_days(task.recurrence_interval_days) | vn_datetime }}
+                        {% if task.recurrence_type == 'weekly' %}
+                            {# ===== ✅ WEEKLY MODE ===== #}
+                            <strong>Loại:</strong> Theo các ngày trong tuần
+                            <br>
+                            <strong>Các ngày:</strong>
+                            {% set weekday_names = {
+                                '0': 'Chủ nhật',
+                                '1': 'Thứ 2',
+                                '2': 'Thứ 3',
+                                '3': 'Thứ 4',
+                                '4': 'Thứ 5',
+                                '5': 'Thứ 6',
+                                '6': 'Thứ 7'
+                            } %}
+                            {% if task.recurrence_weekdays %}
+                                {% set weekdays = task.recurrence_weekdays.split(',') %}
+                                {% for day in weekdays %}
+                                    <span class="badge bg-info text-dark me-1">{{ weekday_names[day] }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            {# ===== INTERVAL MODE (CŨ) ===== #}
+                            <strong>Chu kỳ:</strong>
+                            {% if task.recurrence_interval_days == 7 %}Hàng tuần
+                            {% elif task.recurrence_interval_days == 14 %}2 tuần
+                            {% elif task.recurrence_interval_days == 30 %}Hàng tháng
+                            {% else %}{{ task.recurrence_interval_days }} ngày{% endif %}
+                            {% if task.last_recurrence_date %}
+                            <br><strong>Lần tạo tiếp theo:</strong>
+                            {{ task.last_recurrence_date | add_days(task.recurrence_interval_days) | vn_datetime }}
+                            {% endif %}
                         {% endif %}
                     </small>
                 </div>

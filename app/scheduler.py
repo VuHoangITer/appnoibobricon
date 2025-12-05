@@ -47,16 +47,39 @@ def cleanup_expired_links(app):
 
 
 def create_recurring_tasks(app):
-    """Tự động tạo task lặp lại hàng tuần"""
+    """
+    Tự động tạo task lặp lại
+    - Hỗ trợ 2 mode: 'interval' (theo khoảng cách) và 'weekly' (theo ngày trong tuần)
+    - Chạy mỗi giờ để đảm bảo không bỏ sót
+    """
     with app.app_context():
         from app import db
         from app.models import Task, TaskAssignment, User, Notification
         from datetime import datetime, timedelta
+        from app.utils import vn_now, utc_to_vn, vn_to_utc
 
         try:
-            now = datetime.utcnow()
+            # ===== LẤY THỜI GIAN HIỆN TẠI (GIỜ VN) =====
+            now_utc = datetime.utcnow()
+            now_vn = vn_now()  # Datetime object theo giờ VN
+            today_vn_date = now_vn.date()
+            today_weekday = now_vn.weekday()  # 0=Monday, 6=Sunday
 
-            # Tìm các task có bật recurring và đã đến lúc tạo mới
+            # ===== CHUYỂN ĐỔI WEEKDAY SANG FORMAT UI =====
+            # Python: 0=Mon, 1=Tue, ..., 6=Sun
+            # UI:     1=T2,  2=T3,  ..., 6=T7, 0=CN
+            weekday_map = {
+                0: '1',  # Monday    → Thứ 2
+                1: '2',  # Tuesday   → Thứ 3
+                2: '3',  # Wednesday → Thứ 4
+                3: '4',  # Thursday  → Thứ 5
+                4: '5',  # Friday    → Thứ 6
+                5: '6',  # Saturday  → Thứ 7
+                6: '0'  # Sunday    → Chủ nhật
+            }
+            today_weekday_str = weekday_map[today_weekday]
+
+            # ===== TÌM TẤT CẢ TASK CÓ BẬT RECURRING =====
             recurring_tasks = Task.query.filter(
                 Task.recurrence_enabled == True,
                 Task.is_recurring == True,
@@ -64,32 +87,78 @@ def create_recurring_tasks(app):
             ).all()
 
             created_count = 0
+            skipped_count = 0
 
             for original_task in recurring_tasks:
-                # Tính ngày tạo task tiếp theo
-                next_date = original_task.last_recurrence_date + timedelta(
-                    days=original_task.recurrence_interval_days
-                )
+                should_create = False
+                next_due_date = None
 
-                # Nếu đã đến lúc tạo task mới
-                if now >= next_date:
-                    # Tạo task mới
+                # ===== CHUYỂN last_recurrence_date SANG GIỜ VN =====
+                last_recurrence_vn = utc_to_vn(original_task.last_recurrence_date)
+                last_recurrence_date = last_recurrence_vn.date()
+
+                # ===== KIỂM TRA ĐÃ TẠO TASK HÔM NAY CHƯA =====
+                if last_recurrence_date >= today_vn_date:
+                    skipped_count += 1
+                    continue  # Đã tạo task hôm nay rồi, bỏ qua
+
+                # ===== MODE 1: INTERVAL (LOGIC CŨ) =====
+                if original_task.recurrence_type == 'interval':
+                    if not original_task.recurrence_interval_days:
+                        continue
+
+                    # Tính ngày tạo task tiếp theo
+                    next_date_vn = last_recurrence_vn + timedelta(days=original_task.recurrence_interval_days)
+
+                    # Nếu đã đến lúc tạo task mới
+                    if now_vn >= next_date_vn:
+                        should_create = True
+
+                        # Tính due_date mới (nếu có)
+                        if original_task.due_date:
+                            original_due_vn = utc_to_vn(original_task.due_date)
+                            time_diff = original_due_vn - last_recurrence_vn
+                            next_due_date_vn = next_date_vn + time_diff
+                            next_due_date = vn_to_utc(next_due_date_vn)
+
+                # ===== MODE 2: WEEKLY (LOGIC MỚI) =====
+                elif original_task.recurrence_type == 'weekly':
+                    if not original_task.recurrence_weekdays:
+                        continue
+
+                    # Lấy danh sách ngày cần tạo task
+                    weekdays_list = original_task.recurrence_weekdays.split(',')  # ['1', '3', '5']
+
+                    # Kiểm tra hôm nay có phải ngày cần tạo task không
+                    if today_weekday_str in weekdays_list:
+                        should_create = True
+
+                        # Tính due_date mới (nếu có)
+                        if original_task.due_date:
+                            original_due_vn = utc_to_vn(original_task.due_date)
+                            # Giữ nguyên giờ từ task gốc, chỉ đổi ngày
+                            next_due_date_vn = now_vn.replace(
+                                hour=original_due_vn.hour,
+                                minute=original_due_vn.minute,
+                                second=original_due_vn.second,
+                                microsecond=0
+                            )
+                            next_due_date = vn_to_utc(next_due_date_vn)
+
+                # ===== TẠO TASK MỚI =====
+                if should_create:
                     new_task = Task(
                         title=original_task.title,
                         description=original_task.description,
                         creator_id=original_task.creator_id,
+                        due_date=next_due_date,
                         status='PENDING',
                         is_urgent=original_task.is_urgent,
                         is_important=original_task.is_important,
                         is_recurring=original_task.is_recurring,
                         recurrence_enabled=False,  # Task con không tự động lặp
-                        parent_task_id=original_task.id,  # Liên kết với task gốc
+                        parent_task_id=original_task.id,
                     )
-
-                    # Cộng thêm due_date nếu có
-                    if original_task.due_date:
-                        days_diff = (original_task.due_date - original_task.last_recurrence_date).days
-                        new_task.due_date = next_date + timedelta(days=days_diff)
 
                     db.session.add(new_task)
                     db.session.flush()
@@ -107,7 +176,7 @@ def create_recurring_tasks(app):
                             assigned_by=orig_assign.assigned_by,
                             assigned_group=orig_assign.assigned_group,
                             accepted=True,
-                            accepted_at=now
+                            accepted_at=now_utc
                         )
                         db.session.add(new_assignment)
 
@@ -115,25 +184,27 @@ def create_recurring_tasks(app):
                         notif = Notification(
                             user_id=orig_assign.user_id,
                             type='task_assigned',
-                            title=' Nhiệm vụ lặp lại mới',
+                            title='🔁 Nhiệm vụ lặp lại mới',
                             body=f'Nhiệm vụ "{new_task.title}" đã được tự động giao lại cho bạn.',
                             link=f'/tasks/{new_task.id}'
                         )
                         db.session.add(notif)
 
-                    # Cập nhật last_recurrence_date của task gốc
-                    original_task.last_recurrence_date = next_date
+                    # ===== CẬP NHẬT last_recurrence_date =====
+                    original_task.last_recurrence_date = now_utc
                     created_count += 1
 
             db.session.commit()
 
             if created_count > 0:
-                print(f" [{datetime.now()}] Recurring Tasks: Đã tạo {created_count} nhiệm vụ lặp lại mới")
+                print(f"✅ [{datetime.now()}] Recurring Tasks: Đã tạo {created_count} nhiệm vụ lặp lại mới")
             else:
-                print(f"  [{datetime.now()}] Recurring Tasks: Chưa đến lúc tạo task mới")
+                print(f"ℹ️  [{datetime.now()}] Recurring Tasks: Không có task nào cần tạo (skipped: {skipped_count})")
 
         except Exception as e:
             print(f"❌ [{datetime.now()}] Lỗi tạo recurring tasks: {str(e)}")
+            import traceback
+            traceback.print_exc()
             db.session.rollback()
 
 
