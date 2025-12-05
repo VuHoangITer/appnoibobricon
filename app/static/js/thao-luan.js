@@ -40,6 +40,9 @@ function initializeDOMElements() {
         const id = parseInt(el.getAttribute('data-id'));
         knownCommentIds.add(id);
     });
+    if (commentInput) {
+        initAutoResize();
+    }
 }
 
 // ============================================
@@ -916,6 +919,47 @@ function linkifyExistingComments() {
 }
 
 // ============================================
+// AUTO-RESIZE TEXTAREA
+// ============================================
+function initAutoResize() {
+    // Set chiều cao ban đầu
+    commentInput.style.height = 'auto';
+    commentInput.style.overflowY = 'hidden';
+
+    // Lắng nghe sự kiện input
+    commentInput.addEventListener('input', function() {
+        // Reset về auto để tính lại
+        this.style.height = 'auto';
+
+        // Giới hạn chiều cao tối đa (120px = ~4 dòng)
+        const maxHeight = 120;
+        const newHeight = Math.min(this.scrollHeight, maxHeight);
+
+        this.style.height = newHeight + 'px';
+
+        // Nếu vượt quá maxHeight thì hiện scrollbar
+        if (this.scrollHeight > maxHeight) {
+            this.style.overflowY = 'auto';
+        } else {
+            this.style.overflowY = 'hidden';
+        }
+    });
+
+    // Reset chiều cao khi gửi tin nhắn
+    const originalAddComment = window.addComment;
+    window.addComment = function() {
+        originalAddComment();
+        // Reset sau khi gửi
+        setTimeout(() => {
+            if (commentInput) {
+                commentInput.style.height = 'auto';
+                commentInput.style.overflowY = 'hidden';
+            }
+        }, 100);
+    };
+}
+
+// ============================================
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -941,10 +985,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup event listeners
     if (commentInput) {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
         commentInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                addComment();
+            if (e.key === 'Enter') {
+                if (isMobile) {
+                    // Mobile: Enter = xuống dòng (không làm gì)
+                    return;
+                } else {
+                    // Desktop: Enter = gửi, Shift+Enter = xuống dòng
+                    if (!e.shiftKey) {
+                        e.preventDefault();
+                        addComment();
+                    }
+                }
             }
         });
     }
