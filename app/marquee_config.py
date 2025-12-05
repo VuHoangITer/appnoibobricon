@@ -35,7 +35,7 @@ def settings():
 
             db.session.commit()
             flash('Đã cập nhật cài đặt thông báo chạy ngang!', 'success')
-            return redirect(url_for('marquee_config.settings'))
+            return redirect(url_for('hub.workflow_hub'))
 
         except Exception as e:
             db.session.rollback()
