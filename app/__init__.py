@@ -184,9 +184,12 @@ def create_app(config_class=Config):
     from app.seasonal_effects import bp as seasonal_effects_bp
     app.register_blueprint(seasonal_effects_bp, url_prefix='/seasonal-effects')
 
-    # ✅ THÊM: System Config Blueprint
+    #  System Config Blueprint
     from app.system_config import bp as system_config_bp
     app.register_blueprint(system_config_bp, url_prefix='/system-config')
+
+    from app import marquee_config
+    app.register_blueprint(marquee_config.bp)
 
     # Dashboard route
     @app.route('/')

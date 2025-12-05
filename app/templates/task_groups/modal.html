@@ -1,0 +1,61 @@
+<!-- Modal Chi Tiết Task Group -->
+<div class="task-group-modal" id="taskGroupModal">
+    <div class="task-group-modal-overlay" onclick="closeGroupModal()"></div>
+
+    <div class="task-group-modal-content">
+        <!-- Header -->
+        <div class="task-group-modal-header">
+            <div class="modal-header-left">
+                <i class="bi bi-list-check"></i>
+                <h3 id="modalGroupTitle">Loading...</h3>
+            </div>
+            <button class="modal-close-btn" onclick="closeGroupModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Body với 2 cột -->
+        <div class="task-group-modal-body">
+
+            <!-- Cột trái: Checklist -->
+            <div class="modal-left-panel">
+                <div class="modal-section-header">
+                    <i class="bi bi-list-task"></i>
+                    <span>Danh sách công việc</span>
+                </div>
+
+                <div class="checklist-container" id="modalChecklistContainer">
+                    <!-- Items sẽ được load bằng JS -->
+                </div>
+            </div>
+
+            <!-- Cột phải: Trao đổi -->
+            <div class="modal-right-panel">
+                <div class="modal-section-header">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Trao đổi</span>
+                    <span class="item-title-badge" id="currentItemBadge"></span>
+                </div>
+
+                <!-- Messages container -->
+                <div class="modal-messages-container" id="modalMessagesContainer">
+                    <div class="no-item-selected">
+                        <i class="bi bi-chat-square-dots"></i>
+                        <p>Chọn một mục để xem trao đổi</p>
+                    </div>
+                </div>
+
+                <!-- Input message -->
+                <div class="modal-message-input" id="modalMessageInput" style="display: none;">
+                    <textarea placeholder="Nhập tin nhắn..."
+                              id="messageTextarea"
+                              rows="2"></textarea>
+                    <button class="send-message-btn" onclick="sendItemMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block title %}Cài Đặt Thông Báo Chạy Ngang{% endblock %}
+
+{% block page_title %}Cài Đặt Thông Báo Chạy Ngang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-bottom: 24px;
+    }
+
+    .settings-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        margin-bottom: 20px;
+    }
+
+    .settings-card h4,
+    .settings-card h5 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        font-size: 1rem;
+    }
+
+    textarea#text {
+        font-size: 0.95rem;
+    }
+
+    small.text-muted {
+        font-size: 0.8rem;
+    }
+
+    .icon-picker {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+        gap: 8px;
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin-top: 8px;
+    }
+
+    .icon-option {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, transform 0.15s ease;
+        font-size: 1.2rem;
+    }
+
+    .icon-option:hover {
+        border-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .icon-option.active {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.1);
+    }
+
+    .preview-box {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 16px;
+        border: 1px dashed #e5e7eb;
+    }
+
+    .preview-marquee {
+        border-radius: 8px;
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .preview-text {
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .preview-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .preview-icon i {
+        font-size: 0.9rem;
+    }
+
+    /* Theme presets */
+    .preview-marquee.theme-success {
+        background: #16a34a;
+        border-color: #16a34a;
+    }
+    .preview-marquee.theme-success .preview-text {
+        color: #f9fafb;
+    }
+    .preview-marquee.theme-success .preview-icon i {
+        color: #f9fafb;
+    }
+
+    .preview-marquee.theme-warning {
+        background: #ffdd4a;
+        border-color: #ffdd4a;
+    }
+    .preview-marquee.theme-warning .preview-text {
+        color: #78350f;
+    }
+    .preview-marquee.theme-warning .preview-icon i {
+        color: #78350f;
+    }
+
+    .preview-marquee.theme-info {
+        background: #0ea5e9;
+        border-color: #0ea5e9;
+    }
+    .preview-marquee.theme-info .preview-text {
+        color: #f0f9ff;
+    }
+    .preview-marquee.theme-info .preview-icon i {
+        color: #f0f9ff;
+    }
+
+    .preview-marquee.theme-danger {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+    .preview-marquee.theme-danger .preview-text {
+        color: #fef2f2;
+    }
+    .preview-marquee.theme-danger .preview-icon i {
+        color: #fef2f2;
+    }
+
+    .theme-selector,
+    .speed-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+    }
+
+    .theme-option,
+    .speed-option {
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+        background: #ffffff;
+        font-size: 0.9rem;
+    }
+
+    .theme-option:hover,
+    .speed-option:hover {
+        border-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .theme-option.active,
+    .speed-option.active {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .theme-option input,
+    .speed-option input {
+        display: none;
+    }
+
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-switch {
+        flex: 1;
+    }
+
+    .form-switch .form-check-input {
+        width: 2.6rem;
+        height: 1.3rem;
+        cursor: pointer;
+    }
+
+    .form-switch .form-check-label {
+        font-weight: 500;
+        color: #111827;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    /* ✅ COLOR PICKER STYLES */
+    .color-picker-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .color-picker-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .color-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition: border-color 0.2s ease;
+    }
+
+    .color-input-wrapper:hover {
+        border-color: #2563eb;
+    }
+
+    .color-input-wrapper input[type="color"] {
+        width: 50px;
+        height: 40px;
+        border: 2px solid #ffffff;
+        border-radius: 6px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .color-input-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .color-input-wrapper input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+
+    .color-value-display {
+        flex: 1;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #374151;
+        text-transform: uppercase;
+    }
+
+    .color-reset-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .color-reset-btn:hover {
+        background: #e5e7eb;
+        border-color: #9ca3af;
+    }
+
+    .btn.btn-primary.btn-lg {
+        font-size: 0.95rem;
+        padding: 0.55rem 1rem;
+    }
+
+    .btn.btn-secondary.btn-lg {
+        font-size: 0.95rem;
+        padding: 0.55rem 1rem;
+    }
+
+    @media (max-width: 576px) {
+        .settings-card {
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .switch-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .preview-text {
+            font-size: 0.9rem;
+        }
+
+        .color-picker-group {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-card">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h4 class="mb-0">
+                <i class="bi bi-megaphone-fill text-primary"></i>
+                Cấu Hình Thông Báo Chạy Ngang
+            </h4>
+            <a href="{{ url_for('hub.workflow_hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay Lại
+            </a>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <!-- Enable/Disable Switch -->
+            <div class="switch-container mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="is_enabled" name="is_enabled"
+                           {% if config.is_enabled %}checked{% endif %}>
+                    <label class="form-check-label" for="is_enabled">
+                        Hiển thị thông báo chạy ngang
+                    </label>
+                </div>
+                <span class="badge bg-{{ 'success' if config.is_enabled else 'secondary' }}">
+                    {{ 'Đang Bật' if config.is_enabled else 'Đang Tắt' }}
+                </span>
+            </div>
+
+            <!-- Text Content -->
+            <div class="mb-4">
+                <label for="text" class="form-label">
+                    <i class="bi bi-chat-text-fill text-primary"></i>
+                    Nội Dung Thông Báo
+                </label>
+                <textarea class="form-control form-control-lg" id="text" name="text" rows="3"
+                          required placeholder="Nhập nội dung thông báo..."
+                          oninput="updatePreview()">{{ config.text }}</textarea>
+            </div>
+
+            <!-- Icon Selection -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-bookmark-star-fill text-warning"></i>
+                    Chọn Icon
+                </label>
+                <input type="hidden" id="icon" name="icon" value="{{ config.icon }}">
+                <div class="icon-picker" id="iconPicker">
+                    {% set icons = [
+                        'bi-info-circle-fill',
+                        'bi-megaphone-fill',
+                        'bi-bell-fill',
+                        'bi-star-fill',
+                        'bi-fire',
+                        'bi-lightning-fill',
+                        'bi-heart-fill',
+                        'bi-rocket-takeoff-fill',
+                        'bi-emoji-smile-fill',
+                        'bi-trophy-fill',
+                        'bi-gift-fill',
+                        'bi-balloon-fill',
+                        'bi-brightness-high-fill',
+                        'bi-patch-check-fill'
+                    ] %}
+                    {% for icon_class in icons %}
+                    <div class="icon-option {% if icon_class == config.icon %}active{% endif %}"
+                         data-icon="{{ icon_class }}" onclick="selectIcon('{{ icon_class }}')">
+                        <i class="bi {{ icon_class }}"></i>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Theme Selection -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-palette-fill text-info"></i>
+                    Chọn Theme Mẫu (hoặc tùy chỉnh màu bên dưới)
+                </label>
+                <div class="theme-selector">
+                    {% set themes = [
+                        {'value': 'default', 'label': 'Mặc Định', 'color': '#ffffff'},
+                        {'value': 'success', 'label': 'Xanh Lá', 'color': '#43e97b'},
+                        {'value': 'warning', 'label': 'Vàng', 'color': '#ffdd4a'},
+                        {'value': 'info', 'label': 'Xanh Dương', 'color': '#4facfe'},
+                        {'value': 'danger', 'label': 'Đỏ', 'color': '#ff416c'},
+                        {'value': 'custom', 'label': 'Tùy Chỉnh', 'color': '#000000'}
+                    ] %}
+                    {% for theme in themes %}
+                        <label class="theme-option {% if theme.value == config.theme %}active{% endif %}">
+                            <input type="radio" name="theme" value="{{ theme.value }}"
+                                   {% if theme.value == config.theme %}checked{% endif %}
+                                   onchange="updatePreview()">
+                            <div class="theme-label">
+                                <i class="bi bi-circle-fill" style="color: {{ theme.color }}"></i>
+                                <span>{{ theme.label }}</span>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ✅ CUSTOM COLOR PICKERS -->
+            <div class="mb-4" id="customColorSection" style="display: {% if config.theme == 'custom' %}block{% else %}none{% endif %};">
+                <label class="form-label">
+                    <i class="bi bi-droplet-fill text-purple"></i>
+                    Tùy Chỉnh Màu Sắc
+                </label>
+                <div class="color-picker-group">
+                    <!-- Background Color -->
+                    <div class="color-picker-item">
+                        <small class="text-muted">Màu Nền</small>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="custom_bg_color" name="custom_bg_color"
+                                   value="{{ config.custom_bg_color or '#ffffff' }}"
+                                   oninput="updatePreview()">
+                            <span class="color-value-display" id="bgColorValue">{{ config.custom_bg_color or '#FFFFFF' }}</span>
+                            <button type="button" class="color-reset-btn" onclick="resetColor('bg', '#ffffff')">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Text Color -->
+                    <div class="color-picker-item">
+                        <small class="text-muted">Màu Chữ</small>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="custom_text_color" name="custom_text_color"
+                                   value="{{ config.custom_text_color or '#111827' }}"
+                                   oninput="updatePreview()">
+                            <span class="color-value-display" id="textColorValue">{{ config.custom_text_color or '#111827' }}</span>
+                            <button type="button" class="color-reset-btn" onclick="resetColor('text', '#111827')">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Icon Color -->
+                    <div class="color-picker-item">
+                        <small class="text-muted">Màu Icon</small>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="custom_icon_color" name="custom_icon_color"
+                                   value="{{ config.custom_icon_color or '#111827' }}"
+                                   oninput="updatePreview()">
+                            <span class="color-value-display" id="iconColorValue">{{ config.custom_icon_color or '#111827' }}</span>
+                            <button type="button" class="color-reset-btn" onclick="resetColor('icon', '#111827')">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    <i class="bi bi-info-circle"></i> Click vào ô màu để chọn màu tùy ý
+                </small>
+            </div>
+
+            <!-- Speed Selection -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-speedometer2 text-success"></i>
+                    Tốc Độ Chạy
+                </label>
+                <div class="speed-selector">
+                    {% set speeds = [
+                        {'value': 'slow', 'label': 'Chậm', 'icon': 'bi-speedometer'},
+                        {'value': 'normal', 'label': 'Bình Thường', 'icon': 'bi-speedometer2'},
+                        {'value': 'fast', 'label': 'Nhanh', 'icon': 'bi-lightning-fill'}
+                    ] %}
+                    {% for speed in speeds %}
+                    <label class="speed-option {% if speed.value == config.speed %}active{% endif %}">
+                        <input type="radio" name="speed" value="{{ speed.value }}"
+                               {% if speed.value == config.speed %}checked{% endif %}>
+                        <div>
+                            <i class="bi {{ speed.icon }}"></i><br>
+                            {{ speed.label }}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-box">
+                <label class="form-label">
+                    <i class="bi bi-eye-fill text-primary"></i>
+                    Xem Trước
+                </label>
+                <div id="previewMarquee" class="preview-marquee">
+                    <div class="preview-text">
+                        <span class="preview-icon">
+                            <i class="bi {{ config.icon }}" id="previewIcon"></i>
+                        </span>
+                        <span id="previewText">{{ config.text }}</span>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    * Trên trang thực tế, chữ sẽ chạy ngang liên tục
+                </small>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                    <i class="bi bi-check-circle-fill"></i> Lưu Cài Đặt
+                </button>
+                <a href="{{ url_for('hub.workflow_hub') }}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Icon selection
+function selectIcon(iconClass) {
+    document.getElementById('icon').value = iconClass;
+
+    document.querySelectorAll('.icon-option').forEach(opt => {
+        opt.classList.remove('active');
+    });
+    document.querySelector(`[data-icon="${iconClass}"]`).classList.add('active');
+
+    updatePreview();
+}
+
+// Theme selection
+document.querySelectorAll('input[name="theme"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.classList.remove('active');
+        });
+        this.closest('.theme-option').classList.add('active');
+
+        // Show/hide custom color section
+        const customSection = document.getElementById('customColorSection');
+        if (this.value === 'custom') {
+            customSection.style.display = 'block';
+        } else {
+            customSection.style.display = 'none';
+        }
+
+        updatePreview();
+    });
+});
+
+// Speed selection
+document.querySelectorAll('input[name="speed"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.speed-option').forEach(opt => {
+            opt.classList.remove('active');
+        });
+        this.closest('.speed-option').classList.add('active');
+    });
+});
+
+// ✅ Update color value displays
+document.getElementById('custom_bg_color').addEventListener('input', function() {
+    document.getElementById('bgColorValue').textContent = this.value.toUpperCase();
+});
+
+document.getElementById('custom_text_color').addEventListener('input', function() {
+    document.getElementById('textColorValue').textContent = this.value.toUpperCase();
+});
+
+document.getElementById('custom_icon_color').addEventListener('input', function() {
+    document.getElementById('iconColorValue').textContent = this.value.toUpperCase();
+});
+
+// ✅ Reset color function
+function resetColor(type, defaultValue) {
+    const input = document.getElementById(`custom_${type}_color`);
+    const display = document.getElementById(`${type}ColorValue`);
+
+    input.value = defaultValue;
+    display.textContent = defaultValue.toUpperCase();
+
+    updatePreview();
+}
+
+// Update preview
+function updatePreview() {
+    const text = document.getElementById('text').value;
+    const icon = document.getElementById('icon').value;
+    const theme = document.querySelector('input[name="theme"]:checked').value;
+
+    const previewMarquee = document.getElementById('previewMarquee');
+    const previewIcon = document.getElementById('previewIcon'); // chính là <i>
+    const previewText = document.getElementById('previewText');
+
+    // Update text + icon class
+    previewText.textContent = text || 'Nhập nội dung để xem trước...';
+    previewIcon.className = 'bi ' + icon;
+
+    // Reset class + inline style trước
+    previewMarquee.className = 'preview-marquee';
+    previewMarquee.style.background = '';
+    previewMarquee.style.borderColor = '';
+    previewText.style.color = '';
+    previewIcon.style.color = '';
+
+    if (theme === 'custom') {
+        // lấy màu custom
+        const bgColor   = document.getElementById('custom_bg_color').value;
+        const textColor = document.getElementById('custom_text_color').value;
+        const iconColor = document.getElementById('custom_icon_color').value;
+
+        previewMarquee.style.background  = bgColor;
+        previewMarquee.style.borderColor = bgColor;
+        previewText.style.color          = textColor;
+        previewIcon.style.color          = iconColor;
+    } else {
+        // dùng theme preset
+        if (theme !== 'default') {
+            previewMarquee.classList.add('theme-' + theme);
+        }
+    }
+}
+
+// Initialize preview on load
+document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

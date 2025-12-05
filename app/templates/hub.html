@@ -190,6 +190,40 @@
                 </div>
                 </div>
             </div>
+            <!--  MARQUEE NOTIFICATION  -->
+            {% if marquee_config and marquee_config.is_enabled %}
+            <div class="marquee-container {{ marquee_config.get_theme_class() }}"
+                 {% if marquee_config.theme == 'custom' %}
+                 style="background: {{ marquee_config.custom_bg_color }}; border-color: {{ marquee_config.custom_bg_color }};"
+                 {% endif %}>
+                <div class="marquee-wrapper {{ marquee_config.get_speed_class() }}">
+                    <span class="preview-icon"
+                          {% if marquee_config.theme == 'custom' %}
+                          style="color: {{ marquee_config.custom_icon_color }};"
+                          {% endif %}>
+                        <i class="bi {{ marquee_config.icon }}"></i>
+                    </span>
+                    <span class="marquee-text"
+                          {% if marquee_config.theme == 'custom' %}
+                          style="color: {{ marquee_config.custom_text_color }};"
+                          {% endif %}>
+                        {{ marquee_config.text }}
+                    </span>
+                </div>
+
+                {% if marquee_config.theme == 'custom' %}
+                <style>
+                    /* Dynamic fade gradients for custom theme */
+                    .marquee-container[style*="{{ marquee_config.custom_bg_color }}"]::before {
+                        background: linear-gradient(to right, {{ marquee_config.custom_bg_color }}, transparent);
+                    }
+                    .marquee-container[style*="{{ marquee_config.custom_bg_color }}"]::after {
+                        background: linear-gradient(to left, {{ marquee_config.custom_bg_color }}, transparent);
+                    }
+                </style>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <!-- PERFORMANCE SECTION + TABLE -->
             <div class="performance-section">
@@ -463,6 +497,10 @@
                 <a href="{{ url_for('system_config.system_settings') }}" class="sidebar-menu-item">
                     <i class="bi bi-palette-fill" style="color: #667eea;"></i>
                     <span>Cài Đặt Giao Diện</span>
+                </a>
+                <a href="{{ url_for('marquee_config.settings') }}" class="sidebar-menu-item">
+                    <i class="bi bi-megaphone-fill" style="color: #f093fb;"></i>
+                    <span>Thông Báo Chạy Ngang</span>
                 </a>
             </div>
         </div>

@@ -20,7 +20,7 @@ with app.app_context():
         role='director',
         is_active=True
     )
-    director.set_password('director123')
+    director.set_password('123')
     db.session.add(director)
 
     manager = User(
@@ -78,7 +78,7 @@ with app.app_context():
     print("-" * 50)
     print("Director:")
     print("  Email: director@company.com")
-    print("  Password: director123")
+    print("  Password: 123")
     print("\nManager:")
     print("  Email: manager@company.com")
     print("  Password: manager123")

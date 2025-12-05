@@ -977,6 +977,70 @@ class SystemConfig(db.Model):
     def __repr__(self):
         return f'<SystemConfig logo={self.logo_filename} bg={self.hub_background_filename}>'
 
+
+class MarqueeConfig(db.Model):
+    """Cấu hình chữ chạy ngang"""
+    __tablename__ = 'marquee_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Nội dung
+    text = db.Column(db.Text, nullable=False, default='Chào mừng đến với hệ thống quản lý công việc!')
+    icon = db.Column(db.String(50), default='bi-info-circle-fill')
+
+    # Hiển thị
+    is_enabled = db.Column(db.Boolean, default=True)
+
+    # Theme màu sắc
+    theme = db.Column(db.String(20), default='default')
+
+    # Tốc độ
+    speed = db.Column(db.String(20), default='normal')  # slow, normal, fast
+
+    custom_bg_color = db.Column(db.String(7), default='#ffffff')  # Màu nền
+    custom_text_color = db.Column(db.String(7), default='#111827')  # Màu chữ
+    custom_icon_color = db.Column(db.String(7), default='#111827')  # Màu icon
+
+    # Metadata
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    updater = db.relationship('User', foreign_keys=[updated_by])
+
+    @staticmethod
+    def get_config():
+        """Lấy config hiện tại (chỉ có 1 record duy nhất)"""
+        config = MarqueeConfig.query.first()
+        if not config:
+            # Tạo config mặc định
+            config = MarqueeConfig(
+                text=' Chào mừng đến với hệ thống quản lý công việc BRICON! ',
+                icon='bi-info-circle-fill',
+                is_enabled=True,
+                theme='default',
+                speed='normal'
+            )
+            db.session.add(config)
+            db.session.commit()
+        return config
+
+    def get_speed_class(self):
+        """Trả về class CSS cho tốc độ"""
+        if self.speed == 'slow':
+            return 'slow'
+        elif self.speed == 'fast':
+            return 'fast'
+        return ''
+
+    def get_theme_class(self):
+        """Trả về class CSS cho theme"""
+        if self.theme and self.theme != 'default':
+            return f'theme-{self.theme}'
+        return ''
+
+    def __repr__(self):
+        return f'<MarqueeConfig enabled={self.is_enabled}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

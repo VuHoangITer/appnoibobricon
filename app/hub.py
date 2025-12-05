@@ -221,7 +221,7 @@ def workflow_hub():
     # ========================================
     tasks_need_rating = 0
     my_tasks_need_rating = 0
-    tasks_need_approval = 0  # ✅ KHỞI TẠO BIẾN NGAY TỪ ĐẦU
+    tasks_need_approval = 0
 
     if current_user.role in ['director', 'manager']:
         tasks_need_rating = Task.query.filter(
@@ -235,13 +235,11 @@ def workflow_hub():
             Task.performance_rating == None
         ).count()
 
-        # ✅ GÁN GIÁ TRỊ CHO tasks_need_approval
         query = Task.query.filter(
             Task.requires_approval == True,
-            Task.approved == None  # Chỉ đếm task CHỜ DUYỆT
+            Task.approved == None
         )
 
-        # Manager chỉ thấy tasks của HR
         if current_user.role == 'manager':
             query = query.join(User, Task.creator_id == User.id).filter(
                 User.role == 'hr'
@@ -287,11 +285,17 @@ def workflow_hub():
         total_users = User.query.count()
         active_users = User.query.filter_by(is_active=True).count()
 
-    # ✅ Performance table - filter theo role
+    # ========================================
+    # PERFORMANCE DATA
+    # ========================================
     initial_performance = get_team_performance_data()
-
-    # ✅ Top & Bottom users - lấy từ toàn bộ team
     initial_top_bottom = get_top_bottom_users_data()
+
+    # ========================================
+    # ✅ MARQUEE CONFIG - THÊM MỚI
+    # ========================================
+    from app.models import MarqueeConfig
+    marquee_config = MarqueeConfig.get_config()
 
     return render_template('hub.html',
                            my_pending_tasks=my_pending_tasks,
@@ -310,7 +314,8 @@ def workflow_hub():
                            total_users=total_users,
                            active_users=active_users,
                            initial_performance=initial_performance,
-                           initial_top_bottom=initial_top_bottom
+                           initial_top_bottom=initial_top_bottom,
+                           marquee_config=marquee_config  # ✅ THÊM MỚI
                            )
 
 

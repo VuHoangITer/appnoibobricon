@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Nhóm Nhiệm Vụ{% endblock %}
+{% block page_title %}📋 Tạo Nhóm Nhiệm Vụ{% endblock %}
+
+{% block extra_css %}
+<style>
+.create-group-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1f2933;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section-title i {
+    color: #667eea;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Tags */
+.tags-group {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.tag-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.tag-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Items List */
+.items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.item-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.item-number {
+    background: #667eea;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.remove-item-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.remove-item-btn:hover {
+    background: #bb2d3b;
+}
+
+.item-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.add-item-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.add-item-btn:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+/* Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-secondary:hover {
+    background: #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .create-group-container {
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-group-container">
+    <form method="POST" id="createGroupForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Section 1: Thông tin chung -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-info-circle"></i>
+                <span>Thông tin chung</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tiêu đề nhóm <span style="color: #dc3545;">*</span></label>
+                <input type="text"
+                       name="title"
+                       class="form-input"
+                       placeholder="VD: Báo cáo tháng 12"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mô tả</label>
+                <textarea name="description"
+                          class="form-textarea"
+                          placeholder="Mô tả chi tiết về nhóm nhiệm vụ này..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Giao cho <span style="color: #dc3545;">*</span></label>
+                <select name="assigned_to" class="form-select" required>
+                    <option value="">-- Chọn người --</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Thẻ ưu tiên</label>
+                <div class="tags-group">
+                    <label class="tag-checkbox">
+                        <input type="checkbox" name="is_urgent">
+                        <span>🔥 Khẩn cấp</span>
+                    </label>
+                    <label class="tag-checkbox">
+                        <input type="checkbox" name="is_important">
+                        <span>⭐ Quan trọng</span>
+                    </label>
+                    <label class="tag-checkbox">
+                        <input type="checkbox" name="is_recurring">
+                        <span>🔁 Lặp lại</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Danh sách công việc -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-list-check"></i>
+                <span>Danh sách công việc</span>
+            </div>
+
+            <div class="items-container" id="itemsContainer">
+                <!-- Item mẫu -->
+                <div class="item-card" data-item-index="0">
+                    <div class="item-header">
+                        <div class="item-number">1</div>
+                        <button type="button" class="remove-item-btn" onclick="removeItem(0)">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </div>
+
+                    <div class="item-inputs">
+                        <input type="text"
+                               name="item_title_0"
+                               class="form-input"
+                               placeholder="Tên công việc *"
+                               required>
+
+                        <textarea name="item_description_0"
+                                  class="form-textarea"
+                                  placeholder="Mô tả (không bắt buộc)"
+                                  style="min-height: 60px;"></textarea>
+
+                        <input type="datetime-local"
+                               name="item_due_date_0"
+                               class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="add-item-btn" onclick="addItem()">
+                <i class="bi bi-plus-circle"></i>
+                <span>Thêm công việc</span>
+            </button>
+        </div>
+
+        <!-- Hidden field: số lượng items -->
+        <input type="hidden" name="item_count" id="itemCount" value="1">
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.history.back()">
+                <i class="bi bi-x-circle"></i> Hủy
+            </button>
+            <button type="submit" class="btn-primary">
+                <i class="bi bi-check-circle"></i> Tạo nhóm
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let itemCount = 1;
+
+function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const newIndex = itemCount;
+
+    const itemCard = document.createElement('div');
+    itemCard.className = 'item-card';
+    itemCard.dataset.itemIndex = newIndex;
+
+    itemCard.innerHTML = `
+        <div class="item-header">
+            <div class="item-number">${newIndex + 1}</div>
+            <button type="button" class="remove-item-btn" onclick="removeItem(${newIndex})">
+                <i class="bi bi-trash"></i> Xóa
+            </button>
+        </div>
+
+        <div class="item-inputs">
+            <input type="text"
+                   name="item_title_${newIndex}"
+                   class="form-input"
+                   placeholder="Tên công việc *"
+                   required>
+
+            <textarea name="item_description_${newIndex}"
+                      class="form-textarea"
+                      placeholder="Mô tả (không bắt buộc)"
+                      style="min-height: 60px;"></textarea>
+
+            <input type="datetime-local"
+                   name="item_due_date_${newIndex}"
+                   class="form-input">
+        </div>
+    `;
+
+    container.appendChild(itemCard);
+    itemCount++;
+
+    // Update hidden field
+    document.getElementById('itemCount').value = itemCount;
+
+    // Update numbers
+    updateItemNumbers();
+}
+
+function removeItem(index) {
+    const items = document.querySelectorAll('.item-card');
+
+    if (items.length <= 1) {
+        alert('Phải có ít nhất 1 công việc!');
+        return;
+    }
+
+    const item = document.querySelector(`[data-item-index="${index}"]`);
+    item.remove();
+
+    updateItemNumbers();
+}
+
+function updateItemNumbers() {
+    const items = document.querySelectorAll('.item-card');
+    items.forEach((item, index) => {
+        const numberEl = item.querySelector('.item-number');
+        numberEl.textContent = index + 1;
+    });
+}
+
+// Validate form
+document.getElementById('createGroupForm').addEventListener('submit', function(e) {
+    const items = document.querySelectorAll('.item-card');
+
+    if (items.length === 0) {
+        e.preventDefault();
+        alert('Vui lòng thêm ít nhất 1 công việc!');
+        return false;
+    }
+});
+</script>
+{% endblock %}
