@@ -35,6 +35,88 @@ body {
     background: #4ba5ff;
     border-bottom: 1px solid var(--ed-border);
 }
+/* ============================================
+   CHECKLIST MANAGER
+   ============================================ */
+
+.checklist-manager-section {
+    margin-top: 1rem;
+}
+
+.checklist-items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.checklist-item-input {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.checklist-item-input input {
+    flex: 1;
+}
+
+.checklist-item-remove {
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #dc3545;
+    background: white;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checklist-item-remove:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.checklist-add-btn {
+    width: 100%;
+    padding: 0.45rem;
+    border: 1px dashed #0d6efd;
+    background: white;
+    color: #0d6efd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.checklist-add-btn:hover {
+    background: #e7f1ff;
+}
+
+.existing-checklist-item {
+    background: #e8f5e9;
+    border: 1px solid #22c55e;
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.existing-checklist-item.has-progress {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+.existing-checklist-text {
+    font-size: 0.9rem;
+    color: #1f2933;
+}
+
+.existing-checklist-status {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 4px;
+}
 </style>
 {% endblock %}
 
@@ -94,7 +176,7 @@ body {
                              style="display: {% if task.recurrence_enabled %}block{% else %}none{% endif %};"
                              class="ms-4 p-3 bg-light rounded">
 
-                            <!-- ===== ✅ THÊM MỚI: CHỌN LOẠI LẶP LẠI ===== -->
+                            <!-- =====  CHỌN LOẠI LẶP LẠI ===== -->
                             <label class="form-label"><strong>Loại lặp lại:</strong></label>
                             <select class="form-select form-select-sm mb-3" name="recurrence_type" id="recurrence_type" onchange="toggleRecurrenceMode()">
                                 <option value="interval" {% if task.recurrence_type == 'interval' or not task.recurrence_type %}selected{% endif %}>
@@ -171,6 +253,61 @@ body {
                                 <i class="bi bi-info-circle"></i>
                                 Nhiệm vụ sẽ tự động tạo bản sao mới theo lịch đã chọn
                             </small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ===== QUẢN LÝ CHECKLIST ===== -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-list-check"></i> Quản lý Checklist
+                        </h6>
+
+                        <!-- Hiển thị checklist hiện có -->
+                        {% if task.checklists %}
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Checklist hiện có:</strong></label>
+                            {% for item in task.checklists %}
+                            <div class="existing-checklist-item {% if item.status != 'PENDING' %}has-progress{% endif %}">
+                                <div>
+                                    <div class="existing-checklist-text">
+                                        <i class="bi bi-check2-square"></i> {{ item.title }}
+                                    </div>
+                                    <div class="existing-checklist-status">
+                                        {% if item.status == 'APPROVED' %}
+                                            ✅ Đã duyệt
+                                        {% elif item.status == 'WAITING_APPROVAL' %}
+                                            ⏳ Chờ duyệt
+                                        {% elif item.status == 'REJECTED' %}
+                                            ❌ Từ chối
+                                        {% else %}
+                                            ⭕ Chưa làm
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if item.status == 'PENDING' %}
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="deleteChecklist({{ item.id }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% else %}
+                                <span class="badge bg-warning">Đang xử lý</span>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Thêm checklist mới -->
+                        <div class="checklist-manager-section">
+                            <label class="form-label"><strong>Thêm checklist mới:</strong></label>
+                            <div id="new_checklist_items" class="checklist-items-container">
+                                <!-- Items sẽ được thêm bằng JavaScript -->
+                            </div>
+                            <button type="button" class="checklist-add-btn" onclick="addNewChecklistItem()">
+                                <i class="bi bi-plus-lg"></i> Thêm mục mới
+                            </button>
                         </div>
                     </div>
 
@@ -398,6 +535,66 @@ document.getElementById('applySummary').addEventListener('click', function() {
         if (aiModal) aiModal.hide();
     }
 });
+
+// ============================================
+// CHECKLIST MANAGER
+// ============================================
+let newChecklistCounter = 0;
+
+function addNewChecklistItem() {
+    newChecklistCounter++;
+    const container = document.getElementById('new_checklist_items');
+
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'checklist-item-input';
+    itemDiv.id = `new_checklist_item_${newChecklistCounter}`;
+    itemDiv.innerHTML = `
+        <input type="text"
+               class="form-control form-control-sm"
+               name="new_checklist_items[]"
+               placeholder="Nhập nội dung checklist..."
+               required>
+        <button type="button"
+                class="checklist-item-remove"
+                onclick="removeNewChecklistItem(${newChecklistCounter})">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+
+    container.appendChild(itemDiv);
+}
+
+function removeNewChecklistItem(id) {
+    const item = document.getElementById(`new_checklist_item_${id}`);
+    if (item) {
+        item.remove();
+    }
+}
+
+function deleteChecklist(checklistId) {
+    if (!confirm('Xóa checklist này? Chỉ xóa được checklist chưa bắt đầu.')) return;
+
+    fetch(`/tasks/{{ task.id }}/checklist/${checklistId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã xóa checklist', 'success');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xóa'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'error');
+    });
+}
 
 // ============================================
 // INIT

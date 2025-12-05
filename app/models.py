@@ -134,11 +134,11 @@ class Task(db.Model):
     recurrence_weekdays = db.Column(db.String(50), nullable=True)
 
     # ===== HỆ THỐNG PHÊ DUYỆT =====
-    requires_approval = db.Column(db.Boolean, default=False)  # Task có cần phê duyệt không?
-    approved = db.Column(db.Boolean, default=None)  # None = chờ duyệt, True = đã duyệt, False = từ chối
-    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Người duyệt
-    approved_at = db.Column(db.DateTime, nullable=True)  # Thời gian duyệt
-    approval_note = db.Column(db.Text, nullable=True)  # Ghi chú khi duyệt/từ chối
+    requires_approval = db.Column(db.Boolean, default=False)
+    approved = db.Column(db.Boolean, default=None)
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    approval_note = db.Column(db.Text, nullable=True)
 
     # Quan hệ đệ quy (task cha – task con)
     child_tasks = db.relationship(
@@ -176,6 +176,14 @@ class Task(db.Model):
         cascade='all, delete-orphan'
     )
 
+    # ✅ THÊM DÒNG NÀY VÀO ĐÂY - ĐÚNG VỊ TRÍ
+    checklists = db.relationship(
+        'TaskChecklist',
+        back_populates='task',
+        cascade='all, delete-orphan',
+        order_by='TaskChecklist.order'
+    )
+
     completion_reports = db.relationship(
         'TaskCompletionReport',
         back_populates='task',
@@ -201,6 +209,40 @@ class Task(db.Model):
         db.Index('idx_task_updated_at', 'updated_at'),
         db.Index('idx_task_completed_overdue', 'completed_overdue'),
     )
+
+    def is_assigned_to(self, user_id):
+        """Kiểm tra user có được assign vào task này không"""
+        from app.models import TaskAssignment
+        assignment = TaskAssignment.query.filter_by(
+            task_id=self.id,
+            user_id=user_id,
+            accepted=True
+        ).first()
+        return assignment is not None
+
+    def get_checklist_progress(self):
+        """Tính tiến độ checklist"""
+        if not self.checklists:
+            return {'total': 0, 'approved': 0, 'percentage': 100}
+
+        total = len(self.checklists)
+        approved = sum(1 for item in self.checklists if item.status == 'APPROVED')
+        percentage = int((approved / total) * 100) if total > 0 else 0
+
+        return {
+            'total': total,
+            'approved': approved,
+            'waiting': sum(1 for item in self.checklists if item.status == 'WAITING_APPROVAL'),
+            'pending': sum(1 for item in self.checklists if item.status == 'PENDING'),
+            'rejected': sum(1 for item in self.checklists if item.status == 'REJECTED'),
+            'percentage': percentage,
+            'is_complete': approved == total
+        }
+
+    def can_complete(self):
+        """Kiểm tra có thể hoàn thành task không (tất cả checklist đã approved)"""
+        progress = self.get_checklist_progress()
+        return progress['is_complete']
 
     def __repr__(self):
         return f'<Task {self.title}>'
@@ -1040,6 +1082,40 @@ class MarqueeConfig(db.Model):
 
     def __repr__(self):
         return f'<MarqueeConfig enabled={self.is_enabled}>'
+
+
+# ============================================
+# TASK CHECKLIST MODEL
+# ============================================
+
+class TaskChecklist(db.Model):
+    __tablename__ = 'task_checklists'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False)
+    title = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text)
+    order = db.Column(db.Integer, default=0)
+
+    # Trạng thái
+    status = db.Column(db.String(20), default='PENDING')  # PENDING, WAITING_APPROVAL, APPROVED, REJECTED
+
+    # Người làm đánh dấu hoàn thành
+    completed_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    completed_at = db.Column(db.DateTime)
+
+    # Người duyệt
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    approved_at = db.Column(db.DateTime)
+    rejection_reason = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    task = db.relationship('Task', back_populates='checklists')
+    completed_by_user = db.relationship('User', foreign_keys=[completed_by])
+    approved_by_user = db.relationship('User', foreign_keys=[approved_by])
 
 @login_manager.user_loader
 def load_user(user_id):

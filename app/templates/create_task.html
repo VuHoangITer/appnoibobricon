@@ -219,7 +219,61 @@ hr.my-3 {
         font-size: 0.86rem;
     }
 }
+/* ============================================
+   CHECKLIST CREATOR
+   ============================================ */
 
+.checklist-creator-section {
+    margin-top: 1rem;
+}
+
+.checklist-items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.checklist-item-input {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.checklist-item-input input {
+    flex: 1;
+}
+
+.checklist-item-remove {
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #dc3545;
+    background: white;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checklist-item-remove:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.checklist-add-btn {
+    width: 100%;
+    padding: 0.45rem;
+    border: 1px dashed #0d6efd;
+    background: white;
+    color: #0d6efd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.checklist-add-btn:hover {
+    background: #e7f1ff;
+}
 </style>
 {% endblock %}
 {% block content %}
@@ -257,7 +311,7 @@ hr.my-3 {
                     </div>
                 </div>
 
-                <!-- CỘT PHẢI: Thời hạn & Phân công -->
+                <!-- CỘT PHẢI -->
                 <div class="col-lg-6">
                     <!-- Tags - Hiện cho TẤT CẢ user khi tự giao cho mình -->
                     <div class="mb-3" id="tags_section" style="display: none;">
@@ -310,7 +364,7 @@ hr.my-3 {
                                 </label>
                             </div>
 
-                            <!-- ===== ✅ THÊM MỚI: CHỌN LOẠI LẶP LẠI ===== -->
+                            <!-- =====  CHỌN LOẠI LẶP LẠI ===== -->
                             <div id="recurrence_options" style="display: none;">
                                 <label class="form-label mt-2"><strong>Loại lặp lại:</strong></label>
                                 <select class="form-select form-select-sm mb-3" name="recurrence_type" id="recurrence_type" onchange="toggleRecurrenceMode()">
@@ -369,6 +423,29 @@ hr.my-3 {
                         </div>
                     </div>
                     {% endif %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-list-check"></i> Checklist
+                        </label>
+                        <div class="border rounded p-2 bg-light checklist-creator-section">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enable_checklist" onchange="toggleChecklist()">
+                                <label class="form-check-label" for="enable_checklist">
+                                    Thêm checklist
+                                </label>
+                            </div>
+
+                            <div id="checklist_container" style="display: none;">
+                                <div id="checklist_items" class="checklist-items-container">
+                                    <!-- Checklist items sẽ được thêm bằng JavaScript -->
+                                </div>
+
+                                <button type="button" class="checklist-add-btn" onclick="addChecklistItem()">
+                                    <i class="bi bi-plus-lg"></i> Thêm mục
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label"><i class="bi bi-people"></i> Phân Công Nhiệm Vụ</label>
 
@@ -831,6 +908,52 @@ document.querySelectorAll('input[name="assign_type"]').forEach(radio => {
         }
     });
 });
+
+// ============================================
+// CHECKLIST CREATOR
+// ============================================
+let checklistCounter = 0;
+
+function toggleChecklist() {
+    const checkbox = document.getElementById('enable_checklist');
+    const container = document.getElementById('checklist_container');
+    container.style.display = checkbox.checked ? 'block' : 'none';
+
+    // Thêm item đầu tiên nếu chưa có
+    if (checkbox.checked && document.getElementById('checklist_items').children.length === 0) {
+        addChecklistItem();
+    }
+}
+
+function addChecklistItem() {
+    checklistCounter++;
+    const container = document.getElementById('checklist_items');
+
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'checklist-item-input';
+    itemDiv.id = `checklist_item_${checklistCounter}`;
+    itemDiv.innerHTML = `
+        <input type="text"
+               class="form-control form-control-sm"
+               name="checklist_items[]"
+               placeholder="Nhập nội dung checklist..."
+               required>
+        <button type="button"
+                class="checklist-item-remove"
+                onclick="removeChecklistItem(${checklistCounter})">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+
+    container.appendChild(itemDiv);
+}
+
+function removeChecklistItem(id) {
+    const item = document.getElementById(`checklist_item_${id}`);
+    if (item) {
+        item.remove();
+    }
+}
 
 // ============================================
 // INIT ON PAGE LOAD

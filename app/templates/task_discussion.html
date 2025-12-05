@@ -77,6 +77,95 @@
                 <div class="task-requirement-label">YÊU CẦU:</div>
                 <div style="white-space: pre-wrap;">{{ task.description or 'Không có mô tả' }}</div>
             </div>
+            {% if task.checklists %}
+                <div class="checklist-section-discussion">
+                    <div class="checklist-header-discussion">
+                        <div class="checklist-title-discussion">
+                            <i class="bi bi-list-check"></i>
+                            <strong>Checklist ({{ task.checklists|length }})</strong>
+                        </div>
+                        <div class="checklist-progress-discussion">
+                            <span class="progress-text">
+                                {{ task.get_checklist_progress().approved }}/{{ task.get_checklist_progress().total }}
+                            </span>
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-fill"
+                                     style="width: {{ task.get_checklist_progress().percentage }}%"></div>
+                            </div>
+                            <span class="progress-percentage
+                                {% if task.get_checklist_progress().is_complete %}complete{% else %}incomplete{% endif %}">
+                                {{ task.get_checklist_progress().percentage }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="checklist-items-discussion">
+                        {% for item in task.checklists %}
+                        <div class="checklist-item-discussion {{ item.status.lower() }}"
+                             data-checklist-id="{{ item.id }}">
+                            <!-- ✅ CHỈ CÓ NỘI DUNG + STATUS BADGE (BỎ ICON CHECKBOX) -->
+                            <div class="checklist-item-main">
+                                <div class="checklist-item-content">
+                                    <div class="checklist-item-title">{{ item.title }}</div>
+                                    {% if item.description %}
+                                    <div class="checklist-item-desc">{{ item.description }}</div>
+                                    {% endif %}
+
+                                    {% if item.status == 'REJECTED' and item.rejection_reason %}
+                                    <div class="checklist-rejection-reason">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        <strong>Lý do từ chối:</strong> {{ item.rejection_reason }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="checklist-status-badge {{ item.status.lower() }}">
+                                    {% if item.status == 'APPROVED' %}
+                                        <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                                    {% elif item.status == 'WAITING_APPROVAL' %}
+                                        <i class="bi bi-clock-fill"></i> Chờ duyệt
+                                    {% elif item.status == 'REJECTED' %}
+                                        <i class="bi bi-x-circle-fill"></i> Từ chối
+                                    {% else %}
+                                        <i class="bi bi-circle"></i> Chưa làm
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            {% if item.status == 'PENDING' and task.is_assigned_to(current_user.id) %}
+                            <div class="checklist-item-actions">
+                                <button class="checklist-btn btn-complete"
+                                        onclick="completeChecklistDiscussion({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-check-lg"></i> Hoàn thành
+                                </button>
+                            </div>
+
+                            {% elif item.status == 'WAITING_APPROVAL' and current_user.role in ['manager', 'director'] %}
+                            <div class="checklist-item-actions">
+                                <button class="checklist-btn btn-approve"
+                                        onclick="approveChecklistDiscussion({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-check-lg"></i> Duyệt
+                                </button>
+                                <button class="checklist-btn btn-reject"
+                                        onclick="rejectChecklistDiscussion({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-x-lg"></i> Từ chối
+                                </button>
+                            </div>
+
+                            {% elif item.status == 'REJECTED' and task.is_assigned_to(current_user.id) %}
+                            <div class="checklist-item-actions">
+                                <button class="checklist-btn btn-reset"
+                                        onclick="resetChecklistDiscussion({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Làm lại
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             {% if current_user.role in ['director', 'manager'] %}
                 {% if task.status in ['DONE', 'IN_PROGRESS'] %}
                 <div style="text-align: center; margin-top: 12px;">

@@ -1300,3 +1300,151 @@ document.addEventListener('click', function(e) {
         closeRedoModal();
     }
 });
+// ============================================
+// CHECKLIST FUNCTIONS - DISCUSSION PAGE
+// ============================================
+
+function completeChecklistDiscussion(taskId, checklistId) {
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã gửi yêu cầu duyệt', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function approveChecklistDiscussion(taskId, checklistId) {
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: 'approve'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã duyệt checklist', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function rejectChecklistDiscussion(taskId, checklistId) {
+    const reason = prompt('Nhập lý do từ chối (tùy chọn):');
+
+    if (reason === null) return; // User clicked Cancel
+
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: 'reject',
+            rejection_reason: reason || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã từ chối checklist', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function resetChecklistDiscussion(taskId, checklistId) {
+    if (!confirm('Bạn muốn làm lại checklist này?')) return;
+
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/reset`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã reset checklist', 'success');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}

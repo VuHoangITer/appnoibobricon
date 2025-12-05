@@ -174,6 +174,246 @@ body {
         flex-direction: row;
     }
 }
+/* ============================================
+   CHECKLIST SECTION
+   ============================================ */
+
+.checklist-section {
+    margin-top: 1rem;
+}
+
+.checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.checklist-header h6 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checklist-progress-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checklist-progress-text-inline {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.checklist-progress-bar-inline {
+    flex: 1;
+    min-width: 120px;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.checklist-progress-fill-inline {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+/* Checklist Items List */
+.checklist-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checklist-item-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+}
+
+.checklist-item-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.checklist-item-card.approved {
+    background: #e8f5e9;
+    border-color: #22c55e;
+}
+
+.checklist-item-card.waiting {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+.checklist-item-card.rejected {
+    background: #ffebee;
+    border-color: #dc3545;
+}
+
+.checklist-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.checklist-checkbox-inline {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checklist-item-card.approved .checklist-checkbox-inline {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+.checklist-item-card.waiting .checklist-checkbox-inline {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: white;
+}
+
+.checklist-checkbox-inline i {
+    font-size: 0.8rem;
+}
+
+.checklist-item-text {
+    flex: 1;
+}
+
+.checklist-item-title-inline {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1f2933;
+    margin-bottom: 4px;
+}
+
+.checklist-item-desc-inline {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.checklist-item-status-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.checklist-item-status-inline.pending {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.checklist-item-status-inline.waiting {
+    background: #fff8e1;
+    color: #f59e0b;
+}
+
+.checklist-item-status-inline.approved {
+    background: #e8f5e9;
+    color: #22c55e;
+}
+
+.checklist-item-status-inline.rejected {
+    background: #ffebee;
+    color: #dc3545;
+}
+
+.checklist-item-rejection-inline {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: white;
+    border-left: 3px solid #dc3545;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    color: #dc3545;
+}
+
+.checklist-item-actions-inline {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+}
+
+.checklist-action-btn-inline {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.checklist-action-btn-inline:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.checklist-action-btn-inline.btn-complete {
+    background: #0d6efd;
+    color: white;
+}
+
+.checklist-action-btn-inline.btn-approve {
+    background: #22c55e;
+    color: white;
+}
+
+.checklist-action-btn-inline.btn-reject {
+    background: #dc3545;
+    color: white;
+}
+
+.checklist-action-btn-inline.btn-reset {
+    background: #6c757d;
+    color: white;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .checklist-item-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .checklist-item-actions-inline {
+        flex-wrap: wrap;
+    }
+
+    .checklist-action-btn-inline {
+        flex: 1;
+        min-width: 45%;
+        justify-content: center;
+    }
+}
 </style>
 {% endblock %}
 
@@ -376,6 +616,99 @@ body {
 
                 <hr>
 
+                <!-- ===== CHECKLIST SECTION ===== -->
+                {% if task.checklists %}
+                <div class="checklist-section">
+                    <div class="checklist-header">
+                        <h6><i class="bi bi-list-check"></i> Checklist ({{ task.checklists|length }})</h6>
+                        <div class="checklist-progress-inline">
+                            <span class="checklist-progress-text-inline">
+                                {{ task.get_checklist_progress().approved }}/{{ task.get_checklist_progress().total }}
+                            </span>
+                            <div class="checklist-progress-bar-inline">
+                                <div class="checklist-progress-fill-inline"
+                                     style="width: {{ task.get_checklist_progress().percentage }}%"></div>
+                            </div>
+                            <span class="checklist-progress-text-inline"
+                                  style="color: {% if task.get_checklist_progress().is_complete %}#22c55e{% else %}#f59e0b{% endif %}">
+                                {{ task.get_checklist_progress().percentage }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="checklist-items-list">
+                        {% for item in task.checklists %}
+                        <div class="checklist-item-card {{ item.status.lower() }}" data-checklist-id="{{ item.id }}">
+                            <div class="checklist-item-row">
+                                <div class="checklist-checkbox-inline">
+                                    {% if item.status == 'APPROVED' %}
+                                        <i class="bi bi-check-lg"></i>
+                                    {% elif item.status == 'WAITING_APPROVAL' %}
+                                        <i class="bi bi-hourglass-split"></i>
+                                    {% endif %}
+                                </div>
+
+                                <div class="checklist-item-text">
+                                    <div class="checklist-item-title-inline">{{ item.title }}</div>
+                                    {% if item.description %}
+                                    <div class="checklist-item-desc-inline">{{ item.description }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="checklist-item-status-inline {{ item.status.lower() }}">
+                                    {% if item.status == 'APPROVED' %}
+                                        <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                                    {% elif item.status == 'WAITING_APPROVAL' %}
+                                        <i class="bi bi-clock-fill"></i> Chờ duyệt
+                                    {% elif item.status == 'REJECTED' %}
+                                        <i class="bi bi-x-circle-fill"></i> Từ chối
+                                    {% else %}
+                                        <i class="bi bi-circle"></i> Chưa làm
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if item.status == 'REJECTED' and item.rejection_reason %}
+                            <div class="checklist-item-rejection-inline">
+                                <strong>Lý do từ chối:</strong> {{ item.rejection_reason }}
+                            </div>
+                            {% endif %}
+
+                            <!-- Action buttons -->
+                            {% if item.status == 'PENDING' and task.is_assigned_to(current_user.id) %}
+                            <div class="checklist-item-actions-inline">
+                                <button class="checklist-action-btn-inline btn-complete"
+                                        onclick="completeChecklistItemInline({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-check-lg"></i> Hoàn thành
+                                </button>
+                            </div>
+                            {% elif item.status == 'WAITING_APPROVAL' and current_user.role in ['manager', 'director'] %}
+                            <div class="checklist-item-actions-inline">
+                                <button class="checklist-action-btn-inline btn-approve"
+                                        onclick="approveChecklistItemInline({{ task.id }}, {{ item.id }}, 'approve')">
+                                    <i class="bi bi-check-lg"></i> Duyệt
+                                </button>
+                                <button class="checklist-action-btn-inline btn-reject"
+                                        onclick="rejectChecklistItemInline({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-x-lg"></i> Từ chối
+                                </button>
+                            </div>
+                            {% elif item.status == 'REJECTED' and task.is_assigned_to(current_user.id) %}
+                            <div class="checklist-item-actions-inline">
+                                <button class="checklist-action-btn-inline btn-reset"
+                                        onclick="resetChecklistItemInline({{ task.id }}, {{ item.id }})">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Làm lại
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <hr>
+                {% endif %}
+
                 <!-- Thông tin cơ bản -->
                 <div class="row">
                     <div class="col-6 mb-2">
@@ -528,14 +861,63 @@ body {
                 function handleStatusChange() {
                     const statusSelect = document.getElementById('status');
                     const completionNoteDiv = document.getElementById('completionNoteDiv');
+                    const submitBtn = statusSelect.closest('form').querySelector('button[type="submit"]');
                     const currentStatus = '{{ task.status }}';
+
                     if (statusSelect.value === 'DONE' && currentStatus !== 'DONE') {
                         completionNoteDiv.style.display = 'block';
+
+                        // ✅ KIỂM TRA CHECKLIST
+                        {% if task.checklists %}
+                        const checklistProgress = {{ task.get_checklist_progress() | tojson }};
+                        if (!checklistProgress.is_complete) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
+                            submitBtn.classList.remove('btn-primary');
+                            submitBtn.classList.add('btn-secondary');
+
+                            showToast(`❌ Chưa hoàn thành checklist! (${checklistProgress.approved}/${checklistProgress.total} đã duyệt)`, 'warning');
+                            return;
+                        }
+                        {% endif %}
+
+                        // Nếu checklist OK hoặc không có checklist
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i>';
+                        submitBtn.classList.remove('btn-secondary');
+                        submitBtn.classList.add('btn-primary');
                     } else {
                         completionNoteDiv.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i>';
+                        submitBtn.classList.remove('btn-secondary');
+                        submitBtn.classList.add('btn-primary');
                     }
                 }
-                document.addEventListener('DOMContentLoaded', handleStatusChange);
+
+                // Thêm validation khi submit form
+                document.addEventListener('DOMContentLoaded', function() {
+                    handleStatusChange();
+
+                    const statusForm = document.querySelector('form[action="{{ url_for("tasks.update_status", task_id=task.id) }}"]');
+                    if (statusForm) {
+                        statusForm.addEventListener('submit', function(e) {
+                            const statusSelect = document.getElementById('status');
+                            const currentStatus = '{{ task.status }}';
+
+                            if (statusSelect.value === 'DONE' && currentStatus !== 'DONE') {
+                                {% if task.checklists %}
+                                const checklistProgress = {{ task.get_checklist_progress() | tojson }};
+                                if (!checklistProgress.is_complete) {
+                                    e.preventDefault();
+                                    showToast(`❌ Không thể hoàn thành! Vẫn còn ${checklistProgress.total - checklistProgress.approved}/${checklistProgress.total} checklist chưa được duyệt`, 'danger');
+                                    return false;
+                                }
+                                {% endif %}
+                            }
+                        });
+                    }
+                });
                 </script>
             </div>
         </div>
@@ -798,6 +1180,153 @@ function rejectSelfTask(taskId) {
     .catch(err => {
         console.error('Error:', err);
         showToast('❌ Có lỗi xảy ra', 'danger');
+    });
+}
+
+// ============================================
+// CHECKLIST FUNCTIONS (INLINE - TASK DETAIL)
+// ============================================
+
+function completeChecklistItemInline(taskId, checklistId) {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã gửi yêu cầu duyệt', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Hoàn thành';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Hoàn thành';
+    });
+}
+
+function approveChecklistItemInline(taskId, checklistId, action) {
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã duyệt checklist', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function rejectChecklistItemInline(taskId, checklistId) {
+    const reason = prompt('Nhập lý do từ chối (tùy chọn):');
+
+    if (reason === null) return;
+
+    const btn = event.target.closest('button');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: 'reject',
+            rejection_reason: reason || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã từ chối checklist', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function resetChecklistItemInline(taskId, checklistId) {
+    if (!confirm('Bạn muốn làm lại checklist này?')) return;
+
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${taskId}/checklist/reset`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã reset checklist', 'success');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast('❌ ' + (data.error || 'Không thể xử lý'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Làm lại';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Làm lại';
     });
 }
 

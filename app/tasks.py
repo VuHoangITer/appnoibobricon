@@ -600,7 +600,10 @@ def create_task():
         if assign_type == 'multiple' and assign_to_multiple:
             create_separate = request.form.get('create_separate_tasks') == 'on'
             if create_separate and current_user.can_assign_tasks():
-                create_original_task = False  # ❌ KHÔNG tạo task gốc
+                create_original_task = False
+
+        # =====  LẤY CHECKLIST ITEMS TRƯỚC (BÊN NGOÀI IF) =====
+        checklist_items = request.form.getlist('checklist_items[]')
 
         # ===== TẠO TASK GỐC (chỉ khi KHÔNG phải "tách riêng") =====
         task = None
@@ -617,13 +620,26 @@ def create_task():
                 requires_approval=requires_approval,
                 approved=None if requires_approval else True,
                 recurrence_enabled=recurrence_enabled if current_user.can_assign_tasks() else False,
-                recurrence_type=recurrence_type if recurrence_enabled else 'interval',  # ✅ MỚI
+                recurrence_type=recurrence_type if recurrence_enabled else 'interval',
                 recurrence_interval_days=recurrence_interval_days if recurrence_enabled else None,
-                recurrence_weekdays=recurrence_weekdays if recurrence_enabled else None,  # ✅ MỚI
+                recurrence_weekdays=recurrence_weekdays if recurrence_enabled else None,
                 last_recurrence_date=datetime.utcnow() if recurrence_enabled else None
             )
             db.session.add(task)
             db.session.flush()
+
+            # ===== ✅ TẠO CHECKLIST CHO TASK GỐC (BỎ ĐIỀU KIỆN can_assign_tasks) =====
+            if checklist_items:
+                from app.models import TaskChecklist
+                for idx, item_title in enumerate(checklist_items):
+                    item_title = item_title.strip()
+                    if item_title:
+                        checklist_item = TaskChecklist(
+                            task_id=task.id,
+                            title=item_title,
+                            order=idx
+                        )
+                        db.session.add(checklist_item)
 
         # =====  BIẾN ĐỂ KIỂM TRA ĐÃ FLASH MESSAGE CHƯA =====
         has_flashed = False
@@ -768,6 +784,19 @@ def create_task():
                         )
                         db.session.add(separate_task)
                         db.session.flush()
+
+                        # ===== TẠO CHECKLIST CHO TASK RIÊNG =====
+                        if checklist_items:
+                            from app.models import TaskChecklist
+                            for idx, item_title in enumerate(checklist_items):
+                                item_title = item_title.strip()
+                                if item_title:
+                                    checklist_item = TaskChecklist(
+                                        task_id=separate_task.id,
+                                        title=item_title,
+                                        order=idx
+                                    )
+                                    db.session.add(checklist_item)
 
                         # Tạo assignment
                         assignment = TaskAssignment(
@@ -1763,6 +1792,8 @@ def priority_detail():
     )
 
     tasks = pagination.items
+    for task in tasks:
+        task._checklist_progress = task.get_checklist_progress()
     task_ids = [task.id for task in tasks]
 
     # ===== BATCH LOAD UNREAD COUNTS CHỈ CHO TRANG HIỆN TẠI =====
@@ -1846,17 +1877,23 @@ def quick_update_status(task_id):
     if new_status not in ['IN_PROGRESS', 'DONE']:
         return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
 
-    # ===== CHECK PHÊ DUYỆT =====
-    # Nếu task cần phê duyệt và chưa được duyệt => KHÔNG cho phép
+    # ===== ✅ KIỂM TRA CHECKLIST KHI HOÀN THÀNH =====
+    if new_status == 'DONE':
+        if not task.can_complete():
+            progress = task.get_checklist_progress()
+            return jsonify({
+                'success': False,
+                'error': f'Chưa hoàn thành checklist! ({progress["approved"]}/{progress["total"]} đã duyệt)'
+            }), 400
+
+    # ===== CHECK PHÊ DUYỆT (GIỮ NGUYÊN CODE CŨ) =====
     if task.requires_approval and task.approved is None:
-        # CHỈ DIRECTOR mới được bypass
         if current_user.role != 'director':
             return jsonify({
                 'success': False,
                 'error': 'Công việc chưa được phê duyệt. Vui lòng chờ phê duyệt.'
             }), 403
 
-    # Nếu task bị TỪ CHỐI => KHÔNG cho phép
     if task.requires_approval and task.approved is False:
         return jsonify({
             'success': False,
@@ -1906,7 +1943,6 @@ def quick_update_status(task_id):
             task.rated_by = creator.id
             task.rated_at = now
         elif current_user.role == 'manager' and creator.role == 'director':
-            # Gửi thông báo
             notif = Notification(
                 user_id=creator.id,
                 type='task_completed',
@@ -2625,6 +2661,22 @@ def edit_task(task_id):
 
         task.updated_at = datetime.utcnow()
 
+        # ===== ✅ THÊM CHECKLIST MỚI =====
+        new_checklist_items = request.form.getlist('new_checklist_items[]')
+        if new_checklist_items:
+            from app.models import TaskChecklist
+            current_max_order = db.session.query(func.max(TaskChecklist.order)).filter_by(task_id=task_id).scalar() or 0
+
+            for idx, item_title in enumerate(new_checklist_items):
+                item_title = item_title.strip()
+                if item_title:
+                    checklist_item = TaskChecklist(
+                        task_id=task_id,
+                        title=item_title,
+                        order=current_max_order + idx + 1
+                    )
+                    db.session.add(checklist_item)
+
         try:
             db.session.commit()
             flash('✅ Cập nhật nhiệm vụ thành công!', 'success')
@@ -2700,3 +2752,242 @@ def redo_task(task_id):
         db.session.rollback()
         print(f"Error in redo_task: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================
+# CHECKLIST ROUTES
+# ============================================
+
+@bp.route('/<int:task_id>/checklists', methods=['GET'])
+@login_required
+def get_task_checklists(task_id):
+    """Lấy danh sách checklist của task"""
+    task = Task.query.get_or_404(task_id)
+
+    # Kiểm tra quyền xem
+    if not (task.is_assigned_to(current_user.id) or
+            current_user.role in ['manager', 'director'] or
+            task.created_by == current_user.id):
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    checklists = []
+    can_manage = current_user.role in ['manager', 'director']
+    can_complete = task.is_assigned_to(current_user.id)
+
+    for item in task.checklists:
+        checklists.append({
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'status': item.status,
+            'order': item.order,
+            'rejection_reason': item.rejection_reason,
+            'completed_by_name': item.completed_by_user.full_name if item.completed_by_user else None,
+            'approved_by_name': item.approved_by_user.full_name if item.approved_by_user else None,
+            'can_complete': can_complete,
+            'can_manage': can_manage
+        })
+
+    return jsonify({
+        'success': True,
+        'checklists': checklists,
+        'can_manage': can_manage,
+        'can_complete': can_complete
+    })
+
+
+@bp.route('/<int:task_id>/checklist/complete', methods=['POST'])
+@login_required
+def complete_checklist_item(task_id):
+    """Nhân viên đánh dấu hoàn thành checklist item"""
+    from app.models import TaskChecklist
+
+    task = Task.query.get_or_404(task_id)
+
+    # Kiểm tra quyền
+    if not task.is_assigned_to(current_user.id):
+        return jsonify({'success': False, 'error': 'Bạn không có quyền'}), 403
+
+    data = request.get_json()
+    checklist_id = data.get('checklist_id')
+
+    checklist_item = TaskChecklist.query.get_or_404(checklist_id)
+
+    if checklist_item.task_id != task_id:
+        return jsonify({'success': False, 'error': 'Invalid checklist item'}), 400
+
+    if checklist_item.status != 'PENDING':
+        return jsonify({'success': False, 'error': 'Checklist đã được xử lý'}), 400
+
+    # Cập nhật trạng thái chờ duyệt
+    checklist_item.status = 'WAITING_APPROVAL'
+    checklist_item.completed_by = current_user.id
+    checklist_item.completed_at = datetime.utcnow()
+
+    db.session.commit()
+
+    # Gửi thông báo cho manager/director
+    managers = User.query.filter(
+        User.role.in_(['manager', 'director']),
+        User.is_active == True
+    ).all()
+
+    for manager in managers:
+        notif = Notification(
+            user_id=manager.id,
+            type='checklist_approval',
+            title='🔔 Checklist cần duyệt',
+            body=f'{current_user.full_name} đã hoàn thành checklist "{checklist_item.title}" trong nhiệm vụ "{task.title}"',
+            link=f'/tasks/{task_id}'
+        )
+        db.session.add(notif)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã gửi yêu cầu duyệt',
+        'checklist_id': checklist_id,
+        'status': 'WAITING_APPROVAL'
+    })
+
+
+@bp.route('/<int:task_id>/checklist/approve', methods=['POST'])
+@login_required
+def approve_checklist_item(task_id):
+    """Manager/Director duyệt checklist item"""
+    from app.models import TaskChecklist
+
+    if current_user.role not in ['manager', 'director']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    task = Task.query.get_or_404(task_id)
+    data = request.get_json()
+    checklist_id = data.get('checklist_id')
+    action = data.get('action')  # 'approve' hoặc 'reject'
+    rejection_reason = data.get('rejection_reason', '')
+
+    checklist_item = TaskChecklist.query.get_or_404(checklist_id)
+
+    if checklist_item.task_id != task_id:
+        return jsonify({'success': False, 'error': 'Invalid'}), 400
+
+    if checklist_item.status != 'WAITING_APPROVAL':
+        return jsonify({'success': False, 'error': 'Không ở trạng thái chờ duyệt'}), 400
+
+    if action == 'approve':
+        checklist_item.status = 'APPROVED'
+        checklist_item.approved_by = current_user.id
+        checklist_item.approved_at = datetime.utcnow()
+        message = 'Đã duyệt checklist'
+
+        # Thông báo cho người làm
+        if checklist_item.completed_by:
+            notif = Notification(
+                user_id=checklist_item.completed_by,
+                type='checklist_approved',
+                title='✅ Checklist được duyệt',
+                body=f'{current_user.full_name} đã duyệt checklist "{checklist_item.title}"',
+                link=f'/tasks/{task_id}'
+            )
+            db.session.add(notif)
+
+    elif action == 'reject':
+        # ✅ LƯU USER_ID TRƯỚC KHI RESET
+        completed_by_user_id = checklist_item.completed_by
+
+        checklist_item.status = 'REJECTED'
+        checklist_item.approved_by = current_user.id
+        checklist_item.approved_at = datetime.utcnow()
+        checklist_item.rejection_reason = rejection_reason
+
+        # Reset để nhân viên làm lại
+        checklist_item.completed_by = None
+        checklist_item.completed_at = None
+
+        message = 'Đã từ chối checklist'
+
+        # ✅ DÙNG USER_ID ĐÃ LƯU
+        if completed_by_user_id:
+            notif = Notification(
+                user_id=completed_by_user_id,  # ✅ DÙNG BIẾN ĐÃ LƯU
+                type='checklist_rejected',
+                title='❌ Checklist bị từ chối',
+                body=f'{current_user.full_name} đã từ chối checklist "{checklist_item.title}"' +
+                     (f' - Lý do: {rejection_reason}' if rejection_reason else ''),
+                link=f'/tasks/{task_id}'
+            )
+            db.session.add(notif)
+    else:
+        return jsonify({'success': False, 'error': 'Invalid action'}), 400
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': message,
+        'checklist_id': checklist_id,
+        'status': checklist_item.status
+    })
+
+
+@bp.route('/<int:task_id>/checklist/reset', methods=['POST'])
+@login_required
+def reset_checklist_item(task_id):
+    """Nhân viên reset checklist bị reject để làm lại"""
+    from app.models import TaskChecklist
+
+    task = Task.query.get_or_404(task_id)
+
+    if not task.is_assigned_to(current_user.id):
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    data = request.get_json()
+    checklist_id = data.get('checklist_id')
+
+    checklist_item = TaskChecklist.query.get_or_404(checklist_id)
+
+    if checklist_item.status != 'REJECTED':
+        return jsonify({'success': False, 'error': 'Chỉ reset được checklist bị từ chối'}), 400
+
+    # Reset về PENDING
+    checklist_item.status = 'PENDING'
+    checklist_item.approved_by = None
+    checklist_item.approved_at = None
+    checklist_item.rejection_reason = None
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã reset checklist',
+        'checklist_id': checklist_id,
+        'status': 'PENDING'
+    })
+
+
+@bp.route('/<int:task_id>/checklist/<int:checklist_id>/delete', methods=['POST'])
+@login_required
+def delete_checklist_item(task_id, checklist_id):
+    """Xóa checklist item - chỉ xóa được PENDING"""
+    from app.models import TaskChecklist
+
+    task = Task.query.get_or_404(task_id)
+
+    # Kiểm tra quyền (chỉ creator hoặc director/manager)
+    if task.created_by != current_user.id and current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    checklist_item = TaskChecklist.query.get_or_404(checklist_id)
+
+    if checklist_item.task_id != task_id:
+        return jsonify({'success': False, 'error': 'Invalid'}), 400
+
+    # Chỉ xóa được khi PENDING
+    if checklist_item.status != 'PENDING':
+        return jsonify({'success': False, 'error': 'Không thể xóa checklist đang xử lý'}), 400
+
+    db.session.delete(checklist_item)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Đã xóa checklist'})

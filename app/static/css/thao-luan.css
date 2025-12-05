@@ -1294,3 +1294,340 @@ body {
         padding: 20px;
     }
 }
+/* ============================================
+   CHECKLIST SECTION - DISCUSSION PAGE (OPTIMIZED)
+   ============================================ */
+
+.checklist-section-discussion {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+.checklist-header-discussion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.checklist-title-discussion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    color: #1f2933;
+}
+
+.checklist-title-discussion i {
+    font-size: 1.1rem;
+    color: #0d6efd;
+}
+
+.checklist-progress-discussion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.checklist-progress-discussion .progress-text {
+    font-weight: 600;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.progress-bar-wrapper {
+    width: 100px;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.progress-percentage {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.progress-percentage.complete {
+    color: #22c55e;
+}
+
+.progress-percentage.incomplete {
+    color: #f59e0b;
+}
+
+/* Checklist Items */
+.checklist-items-discussion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checklist-item-discussion {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.checklist-item-discussion:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.checklist-item-discussion.approved {
+    background: #e8f5e9;
+    border-color: #22c55e;
+}
+
+.checklist-item-discussion.waiting_approval {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+.checklist-item-discussion.rejected {
+    background: #ffebee;
+    border-color: #dc3545;
+}
+
+/* ✅ MAIN LAYOUT - FLEX ROW, NO WRAP ON MOBILE */
+.checklist-item-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.checklist-item-content {
+    flex: 1;
+    min-width: 0; /* Cho phép text wrap nếu cần */
+}
+
+.checklist-item-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1f2933;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+}
+
+.checklist-item-desc {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.checklist-rejection-reason {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: white;
+    border-left: 3px solid #dc3545;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    color: #dc3545;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.checklist-rejection-reason i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* ✅ STATUS BADGE - LUÔN Ở BÊN PHẢI, KHÔNG DROP XUỐNG */
+.checklist-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0; /* Không co lại */
+    align-self: flex-start; /* Căn trên cùng */
+}
+
+.checklist-status-badge i {
+    font-size: 0.85rem;
+}
+
+.checklist-status-badge.approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.checklist-status-badge.waiting_approval {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.checklist-status-badge.rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.checklist-status-badge.pending {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Action Buttons */
+.checklist-item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+}
+
+.checklist-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.checklist-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.checklist-btn i {
+    font-size: 0.9rem;
+}
+
+.checklist-btn.btn-complete {
+    background: #0d6efd;
+    color: white;
+}
+
+.checklist-btn.btn-complete:hover {
+    background: #0b5ed7;
+}
+
+.checklist-btn.btn-approve {
+    background: #22c55e;
+    color: white;
+}
+
+.checklist-btn.btn-approve:hover {
+    background: #16a34a;
+}
+
+.checklist-btn.btn-reject {
+    background: #dc3545;
+    color: white;
+}
+
+.checklist-btn.btn-reject:hover {
+    background: #bb2d3b;
+}
+
+.checklist-btn.btn-reset {
+    background: #6c757d;
+    color: white;
+}
+
+.checklist-btn.btn-reset:hover {
+    background: #5c636a;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE - GIỮ 1 HÀNG
+   ============================================ */
+@media (max-width: 768px) {
+    .checklist-header-discussion {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .checklist-progress-discussion {
+        width: 100%;
+    }
+
+    .progress-bar-wrapper {
+        flex: 1;
+    }
+
+    /* ✅ MOBILE VẪN GIỮ FLEX ROW */
+    .checklist-item-main {
+        display: flex;
+        flex-direction: row; /* FORCE ROW */
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Title + Desc nhỏ lại 1 chút */
+    .checklist-item-title {
+        font-size: 0.9rem;
+    }
+
+    .checklist-item-desc {
+        font-size: 0.8rem;
+    }
+
+    /* Badge nhỏ lại trên mobile */
+    .checklist-status-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .checklist-status-badge i {
+        font-size: 0.8rem;
+    }
+
+    /* Buttons wrap xuống dòng nếu cần */
+    .checklist-item-actions {
+        flex-wrap: wrap;
+    }
+
+    .checklist-btn {
+        flex: 1;
+        min-width: 45%;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+}
+
+/* ✅ MOBILE CỰC NHỎ (< 400px) - VẪN GIỮ 1 HÀNG */
+@media (max-width: 400px) {
+    .checklist-item-main {
+        gap: 6px;
+    }
+
+    .checklist-item-title {
+        font-size: 0.85rem;
+    }
+
+    .checklist-status-badge {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+
+    .checklist-status-badge i {
+        display: none; /* Ẩn icon để tiết kiệm không gian */
+    }
+}
