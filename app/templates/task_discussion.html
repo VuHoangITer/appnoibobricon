@@ -61,11 +61,11 @@
                         <div class="task-rating-display">
                             {% if task.performance_rating == 'good' %}
                                 <div class="rating-icon-display good">
-                                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                                    <i class="bi bi-check-circle-fill"></i>
                                 </div>
                             {% elif task.performance_rating == 'bad' %}
                                 <div class="rating-icon-display bad">
-                                    <i class="bi bi-hand-thumbs-down-fill"></i>
+                                    <i class="bi bi-x-circle-fill"></i>
                                 </div>
                             {% endif %}
                         </div>
@@ -77,6 +77,16 @@
                 <div class="task-requirement-label">YÊU CẦU:</div>
                 <div style="white-space: pre-wrap;">{{ task.description or 'Không có mô tả' }}</div>
             </div>
+            {% if current_user.role in ['director', 'manager'] %}
+                {% if task.status in ['DONE', 'IN_PROGRESS'] %}
+                <div style="text-align: center; margin-top: 12px;">
+                    <button class="btn-redo-task" onclick="showRedoModal()" title="Yêu cầu làm lại">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Làm lại</span>
+                    </button>
+                </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 
@@ -276,6 +286,38 @@
             <i class="bi bi-download"></i>
             <span>Tải về</span>
         </button>
+    </div>
+</div>
+<!-- ===== MODAL YÊU CẦU LÀM LẠI ===== -->
+<div class="redo-modal" id="redoModal">
+    <div class="redo-modal-content">
+        <div class="redo-modal-header">
+            <h3>Yêu cầu làm lại</h3>
+            <button onclick="closeRedoModal()" class="modal-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <div class="redo-modal-body">
+            <label for="newDeadline">Thời hạn hoàn thành mới:</label>
+            <input type="datetime-local"
+                   id="newDeadline"
+                   class="form-control"
+                   required>
+
+            <label for="redoReason" class="mt-3">Lý do (tùy chọn):</label>
+            <textarea id="redoReason"
+                      class="form-control"
+                      rows="3"
+                      placeholder="Ví dụ: Báo cáo chưa đầy đủ, cần bổ sung thêm..."></textarea>
+        </div>
+
+        <div class="redo-modal-actions">
+            <button onclick="confirmRedo()" class="btn-confirm">
+                <i class="bi bi-check-lg"></i>
+                Xác nhận
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}

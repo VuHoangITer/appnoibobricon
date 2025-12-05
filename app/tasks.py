@@ -2642,3 +2642,61 @@ def edit_task(task_id):
     return render_template('edit_task.html',
                            task=task,
                            vn_due_date=vn_due_date)
+
+
+@bp.route('/<int:task_id>/redo', methods=['POST'])
+@login_required
+def redo_task(task_id):
+    """
+    Yêu cầu làm lại task: Chuyển về IN_PROGRESS + deadline mới
+    CHỈ Director/Manager
+    """
+    if current_user.role not in ['director', 'manager']:
+        return jsonify({'success': False, 'error': 'Không có quyền'}), 403
+
+    task = Task.query.get_or_404(task_id)
+
+    data = request.get_json()
+    new_deadline_str = data.get('new_deadline')
+    reason = data.get('reason', '')
+
+    if not new_deadline_str:
+        return jsonify({'success': False, 'error': 'Thiếu thời hạn mới'}), 400
+
+    try:
+        # Parse datetime (frontend gửi local time)
+        new_deadline_local = datetime.strptime(new_deadline_str, '%Y-%m-%dT%H:%M')
+        new_deadline_utc = vn_to_utc(new_deadline_local)
+
+        # Cập nhật task
+        task.status = 'IN_PROGRESS'
+        task.due_date = new_deadline_utc
+        task.performance_rating = None  # Reset rating
+        task.completed_at = None
+        task.completed_overdue = None
+
+        # Gửi thông báo cho assignees
+        assignments = TaskAssignment.query.filter_by(task_id=task_id, accepted=True).all()
+
+        for assignment in assignments:
+            notif = Notification(
+                user_id=assignment.user_id,
+                type='task_redo',
+                title='⚠️ Yêu cầu làm lại nhiệm vụ',
+                body=f'{current_user.full_name} yêu cầu làm lại "{task.title}". Thời hạn mới: {new_deadline_local.strftime("%d/%m/%Y %H:%M")}',
+                link=f'/tasks/{task_id}'
+            )
+            db.session.add(notif)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Đã chuyển về trạng thái ĐANG LÀM',
+            'new_deadline': new_deadline_local.strftime('%d/%m/%Y %H:%M')
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in redo_task: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500

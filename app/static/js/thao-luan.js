@@ -1206,3 +1206,97 @@ if (isPWA) {
         }
     });
 }
+// ============================================
+// YÊU CẦU LÀM LẠI
+// ============================================
+function showRedoModal() {
+    const modal = document.getElementById('redoModal');
+    const deadlineInput = document.getElementById('newDeadline');
+
+    // Set min datetime = now
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Convert to local
+    deadlineInput.min = now.toISOString().slice(0, 16);
+
+    // Set default = 24h from now
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    deadlineInput.value = tomorrow.toISOString().slice(0, 16);
+
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRedoModal() {
+    const modal = document.getElementById('redoModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+
+    // Clear inputs
+    document.getElementById('newDeadline').value = '';
+    document.getElementById('redoReason').value = '';
+}
+
+function confirmRedo() {
+    const deadlineInput = document.getElementById('newDeadline');
+    const reasonInput = document.getElementById('redoReason');
+
+    if (!deadlineInput.value) {
+        alert('Vui lòng chọn thời hạn mới');
+        return;
+    }
+
+    const newDeadline = deadlineInput.value;
+    const reason = reasonInput.value.trim();
+
+    // Disable button
+    const confirmBtn = event.target.closest('button');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${window.CONFIG.TASK_ID}/redo`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CONFIG.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            new_deadline: newDeadline,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✅ Đã chuyển về trạng thái ĐANG LÀM', 'success');
+
+            // Tự động gửi comment thông báo
+            if (reason) {
+                commentInput.value = `⚠️ YÊU CẦU LÀM LẠI\nLý do: ${reason}\nThời hạn mới: ${new Date(newDeadline).toLocaleString('vi-VN')}`;
+                addComment();
+            }
+
+            // Reload sau 1s
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast('❌ ' + (data.error || 'Có lỗi xảy ra'), 'danger');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-check-lg"></i> Xác nhận';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Có lỗi xảy ra', 'danger');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="bi bi-check-lg"></i> Xác nhận';
+    });
+}
+
+// Close modal khi click bên ngoài
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('redoModal');
+    if (e.target === modal) {
+        closeRedoModal();
+    }
+});

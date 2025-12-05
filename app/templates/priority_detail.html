@@ -46,43 +46,6 @@
     white-space: nowrap;
 }
 
-.priority-status-box {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-}
-
-/* HOÀN THÀNH – xanh lá */
-.priority-status-box.status-box-done {
-    border: 2px solid #22c55e;
-    background: rgba(34, 197, 94, 0.08);
-    color: #22c55e;
-}
-
-/* KHẨN CẤP – đỏ */
-.priority-status-box.status-box-urgent {
-    border: 2px solid #dc3545;
-    background: rgba(220, 53, 69, 0.08);
-    color: #dc3545;
-}
-
-/* QUAN TRỌNG – vàng */
-.priority-status-box.status-box-important {
-    border: 2px solid #eab308; /* hoặc #ffc107 */
-    background: rgba(234, 179, 8, 0.08);
-    color: #eab308;
-}
-
-/* LẶP LẠI – xanh dương */
-.priority-status-box.status-box-recurring {
-    border: 2px solid #0d6efd;
-    background: rgba(13, 110, 253, 0.08);
-    color: #0d6efd;
-}
 
 .priority-status-text {
     font-weight: 700;
@@ -207,63 +170,113 @@
     text-shadow: 0 0 16px rgba(37, 99, 235, 0.25);
 }
 
-/* ====== Responsive: MOBILE - LAYOUT DỌC ====== */
+/* ====== Responsive: MOBILE - LAYOUT 1 DÒNG ====== */
 @media (max-width: 768px) {
     .priority-header {
-        padding: 12px 14px;
-        gap: 12px;
-        /* Chuyển sang layout dọc */
-        flex-direction: column;
-        align-items: stretch;
+        padding: 8px 10px;
+        gap: 8px;
+        /* Giữ 1 dòng ngang */
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
     }
 
-    /* Dòng 1: HOÀN THÀNH - Căn giữa */
+    /* Trái: HOÀN THÀNH + icon rating - dùng wrapper thật */
     .priority-header-left {
-        justify-content: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .priority-status-text {
-        font-size: 1.9rem;
-        letter-spacing: 0.06em;
+        font-size: 0.9rem;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
     }
 
-    .priority-status-box {
-        width: 18px;
-        height: 18px;
-        font-size: 0.8rem;
-    }
-
-    /* Dòng 2: 2 icon rating - Căn giữa */
+    /* Icon rating nằm ngay bên dưới trong cùng column - KHÔNG dùng absolute */
     .priority-header-center {
-        justify-content: center;
-        gap: 20px;
+        display: flex;
+        gap: 10px;
+        margin-top: -2px;
+    }
+
+    /* Ẩn center ở vị trí gốc, hiển thị nó bên trong left */
+    .priority-header > .priority-header-center {
+        display: none;
+    }
+
+    /* Tạo pseudo-element để hiển thị center bên trong left */
+    .priority-header-left::after {
+        content: '';
+        display: block;
+        width: 100%;
+    }
+
+    /* Thực tế ta cần JavaScript hoặc restructure HTML, nhưng dùng CSS Grid thay thế */
+    .priority-header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        gap: 4px 8px;
+        align-items: center;
+    }
+
+    .priority-header-left {
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: start;
+    }
+
+    .priority-header-center {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+        display: flex !important;
+        gap: 10px;
+        margin: 0;
+    }
+
+    .priority-header-right {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        justify-self: end;
+        align-self: center;
     }
 
     .rating-icon-circle {
-        width: 32px;
-        height: 32px;
+        width: 20px;
+        height: 20px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
     }
 
     .rating-icon-circle i {
-        font-size: 1.1rem;
+        font-size: 0.75rem;
     }
 
-    /* Dòng 3: Đúng hạn / Quá hạn - Căn giữa */
-    .priority-header-right {
-        justify-content: center;
-    }
-
+    /* Stats */
     .priority-stats {
-        gap: 30px;
+        gap: 14px;
     }
 
-    .priority-stat-number-big {
-        font-size: 1.8rem;
+    .priority-stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
     }
 
     .priority-stat-label-top {
-        font-size: 0.75rem;
-        letter-spacing: 0.12em;
+        font-size: 0.58rem;
+        letter-spacing: 0.08em;
+        margin-bottom: 0;
+    }
+
+    .priority-stat-number-big {
+        font-size: 1.15rem;
+        font-weight: 700;
     }
 }
 
@@ -465,6 +478,12 @@
 .view-detail-icon i {
     font-size: 0.95rem;
     color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
 }
 
 /* Responsive cho icon */
@@ -620,7 +639,7 @@
 .task-countdown,
 .task-countdown-static {
     text-align: center;
-    padding: 8px 14px;
+    padding: 2px 4px;
     background: #f9fafb;
     border: 1px solid #e2e8f0;
     border-radius: var(--ed-radius-pill);
@@ -644,20 +663,45 @@
 }
 
 /* Rating Badge trong countdown static */
+.task-countdown-static {
+    text-align: center;
+    padding: 4px 8px;
+    background: #f9fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--ed-radius-pill);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+}
+
 .task-rating-badge {
-    display: inline-block;
-    font-size: 1.2rem;
-    margin-top: 0;
-    border-radius: 0;
-    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
 }
 
 .task-rating-badge.good {
-    color: var(--ed-success);
+    color: #22c55e;
 }
 
 .task-rating-badge.bad {
-    color: var(--ed-danger);
+    color: #dc3545;
+}
+
+.task-rating-badge i {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
 }
 
 /* Task Actions */
@@ -890,6 +934,191 @@
         font-size: 0.9rem;
     }
 }
+/* ============================================
+   NÚT ĐÁNH GIÁ
+   ============================================ */
+.task-btn-evaluate {
+    border-color: #ffffff;
+    background: #78aefc;
+    color: #000000;
+}
+
+.task-btn-evaluate:hover {
+    background: #138496;
+}
+
+.task-btn-rated {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   MODAL ĐÁNH GIÁ
+   ============================================ */
+.rating-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.rating-modal.show {
+    display: flex;
+}
+
+.rating-modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.rating-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #17a2b8;
+    padding-bottom: 12px;
+}
+
+.rating-modal-header h3 {
+    margin: 0;
+    color: #17a2b8;
+    font-size: 1.3rem;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.modal-close-btn:hover {
+    background: #f0f2f5;
+}
+
+.rating-modal-body {
+    text-align: center;
+}
+
+.rating-modal-question {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 24px;
+}
+
+.rating-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.rating-option {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 24px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.rating-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.rating-option.good {
+    border-color: #22c55e;
+}
+
+.rating-option.good:hover {
+    background: #e8f5e9;
+    border-color: #22c55e;
+}
+
+.rating-option.bad {
+    border-color: #dc3545;
+}
+
+.rating-option.bad:hover {
+    background: #ffebee;
+    border-color: #dc3545;
+}
+
+.rating-option-icon {
+    font-size: 3rem;
+}
+
+.rating-option.good .rating-option-icon {
+    color: #22c55e;
+}
+
+.rating-option.bad .rating-option-icon {
+    color: #dc3545;
+}
+
+.rating-option-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+@media (max-width: 768px) {
+    .rating-modal-content {
+        max-width: 380px;
+        padding: 20px;
+    }
+
+    .rating-modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .rating-modal-question {
+        font-size: 0.95rem;
+        margin-bottom: 18px;
+    }
+
+    .rating-options {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .rating-option {
+        padding: 18px 12px;
+    }
+
+    .rating-option-icon {
+        font-size: 2.2rem;
+    }
+
+    .rating-option-text {
+        font-size: 1rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -917,23 +1146,6 @@
 <div class="priority-header">
     <!-- BÊN TRÁI: trạng thái chính -->
     <div class="priority-header-left">
-        <div class="priority-status-box
-            {% if status == 'DONE' %}
-                status-box-done
-            {% elif tag == 'urgent' %}
-                status-box-urgent
-            {% elif tag == 'important' %}
-                status-box-important
-            {% elif tag == 'recurring' %}
-                status-box-recurring
-            {% endif %}
-        ">
-            {% if status == 'DONE' %}
-                <i class="bi bi-check-lg"></i>
-            {% else %}
-                {{ priority_icon }}
-            {% endif %}
-        </div>
         <div class="priority-status-text
             {% if status == 'DONE' %}
                 status-done
@@ -1054,24 +1266,24 @@
 
                     <!-- Countdown hoặc Rating -->
                     <div class="task-right-section">
-                        {% if task.due_date %}
-                            {% if task.status == 'DONE' %}
-                                {% if task.performance_rating %}
-                                <div class="task-countdown-static">
-                                    <div class="task-rating-badge {{ task.performance_rating }}">
-                                        {% if task.performance_rating == 'good' %}
-                                            <i class="bi bi-hand-thumbs-up-fill"></i>
-                                        {% elif task.performance_rating == 'bad' %}
-                                            <i class="bi bi-hand-thumbs-down-fill"></i>
-                                        {% endif %}
-                                    </div>
+                        {% if task.status == 'DONE' %}
+                            <!-- Hiển thị rating nếu đã đánh giá -->
+                            {% if task.performance_rating %}
+                            <div class="task-countdown-static">
+                                <div class="task-rating-badge {{ task.performance_rating }}">
+                                    {% if task.performance_rating == 'good' %}
+                                         <i class="bi bi-check-circle-fill"></i>
+                                    {% elif task.performance_rating == 'bad' %}
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
-                            {% else %}
-                                <div class="task-countdown" data-due-date="{{ task.vn_due_date.strftime('%Y-%m-%dT%H:%M:%S') }}+07:00">
-                                    <div class="countdown-timer">--:--:--</div>
-                                </div>
+                            </div>
                             {% endif %}
+                        {% elif task.due_date %}
+                            <!-- Hiển thị countdown cho task chưa DONE -->
+                            <div class="task-countdown" data-due-date="{{ task.vn_due_date.strftime('%Y-%m-%dT%H:%M:%S') }}+07:00">
+                                <div class="countdown-timer">--:--:--</div>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -1099,16 +1311,15 @@
 
                 {% elif task.status == 'DONE' %}
                     {% if current_user.role in ['director', 'manager'] %}
-                        <button class="task-btn task-btn-rate-good"
-                                onclick="quickRateTask({{ task.id }}, 'good')"
-                                {% if task.performance_rating == 'good' %}disabled{% endif %}>
-                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                        <!-- Chỉ hiện nút khi CHƯA đánh giá -->
+                        {% if not task.performance_rating %}
+                        <button class="task-btn task-btn-evaluate"
+                                onclick="showRatingModal({{ task.id }})">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Đánh giá</span>
                         </button>
-                        <button class="task-btn task-btn-rate-bad"
-                                onclick="quickRateTask({{ task.id }}, 'bad')"
-                                {% if task.performance_rating == 'bad' %}disabled{% endif %}>
-                            <i class="bi bi-hand-thumbs-down-fill"></i>
-                        </button>
+                        {% endif %}
+                        <!-- Đã đánh giá → KHÔNG HIỆN GÌ -->
                     {% endif %}
                 {% endif %}
 
@@ -1216,6 +1427,37 @@
         title="Tạo công việc mới">
     <i class="bi bi-plus-lg"></i>
 </button>
+<!-- ===== MODAL ĐÁNH GIÁ ===== -->
+<div class="rating-modal" id="ratingModal">
+    <div class="rating-modal-content">
+        <div class="rating-modal-header">
+            <h3>Đánh giá nhiệm vụ</h3>
+            <button onclick="closeRatingModal()" class="modal-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <div class="rating-modal-body">
+            <p class="rating-modal-question">Nhân viên hoàn thành nhiệm vụ như thế nào?</p>
+
+            <div class="rating-options">
+                <button class="rating-option good" onclick="selectRating('good')">
+                    <div class="rating-option-icon">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="rating-option-text">Tốt</div>
+                </button>
+
+                <button class="rating-option bad" onclick="selectRating('bad')">
+                    <div class="rating-option-icon">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div class="rating-option-text">Chưa tốt</div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -1236,14 +1478,14 @@ function startCountdowns() {
 
             // ===== XỬ LÝ KHI QUÁ HẠN: HIỂN THỊ THỜI GIAN ÂM =====
             if (diff <= 0) {
-                const overdueDiff = Math.abs(diff); // Lấy giá trị tuyệt đối
+                const overdueDiff = Math.abs(diff);
 
                 const days = Math.floor(overdueDiff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((overdueDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((overdueDiff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((overdueDiff % (1000 * 60)) / 1000);
 
-                let timeString = '-'; // Thêm dấu trừ
+                let timeString = '-';
                 if (days > 0) {
                     timeString += `${days}d:${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(seconds).padStart(2, '0')}s`;
                 } else {
@@ -1279,7 +1521,7 @@ function startCountdowns() {
 }
 
 // ============================================================
-// =====  FILTER THEO TIN NHẮN CHƯA ĐỌC =====
+// FILTER THEO TIN NHẮN CHƯA ĐỌC
 // ============================================================
 let unreadFilterActive = false;
 
@@ -1290,16 +1532,12 @@ function toggleUnreadFilter() {
     unreadFilterActive = !unreadFilterActive;
 
     if (unreadFilterActive) {
-        // Bật filter
         summary.classList.add('active');
-
-        // Tắt các filter khác
         currentFilter = null;
         document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.classList.remove('active');
         });
 
-        // Chỉ hiện task có tin nhắn chưa đọc
         cards.forEach(card => {
             if (card.dataset.hasUnread === 'true') {
                 card.style.display = 'flex';
@@ -1308,10 +1546,7 @@ function toggleUnreadFilter() {
             }
         });
     } else {
-        // Tắt filter
         summary.classList.remove('active');
-
-        // Hiện lại tất cả
         cards.forEach(card => {
             card.style.display = 'flex';
         });
@@ -1324,7 +1559,6 @@ function toggleUnreadFilter() {
 let currentFilter = null;
 
 function toggleFilter(filterType) {
-    // Tắt unread filter khi dùng filter khác
     if (unreadFilterActive) {
         unreadFilterActive = false;
         const summary = document.getElementById('unreadSummary');
@@ -1411,12 +1645,6 @@ function quickUpdateStatus(taskId, newStatus) {
 // QUICK RATE TASK
 // ========================================
 function quickRateTask(taskId, rating) {
-    const btn = event.target.closest('button');
-    const originalHTML = btn.innerHTML;
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
     fetch(`/tasks/${taskId}/quick-rate`, {
         method: 'POST',
         headers: {
@@ -1428,21 +1656,50 @@ function quickRateTask(taskId, rating) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Reload để cập nhật UI
             location.reload();
         } else {
             alert('Lỗi: ' + (data.error || 'Không thể đánh giá'));
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Có lỗi xảy ra. Vui lòng thử lại.');
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
     });
 }
+
+// ========================================
+// RATING MODAL
+// ========================================
+let currentRatingTaskId = null;
+
+function showRatingModal(taskId) {
+    currentRatingTaskId = taskId;
+    const modal = document.getElementById('ratingModal');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRatingModal() {
+    const modal = document.getElementById('ratingModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+    currentRatingTaskId = null;
+}
+
+function selectRating(rating) {
+    if (!currentRatingTaskId) return;
+
+    quickRateTask(currentRatingTaskId, rating);
+    closeRatingModal();
+}
+
+// Close modal khi click bên ngoài
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('ratingModal');
+    if (e.target === modal) {
+        closeRatingModal();
+    }
+});
 
 // ========================================
 // INIT
