@@ -223,7 +223,15 @@ class Task(db.Model):
     def get_checklist_progress(self):
         """Tính tiến độ checklist"""
         if not self.checklists:
-            return {'total': 0, 'approved': 0, 'percentage': 100}
+            return {
+                'total': 0,
+                'approved': 0,
+                'waiting': 0,
+                'pending': 0,
+                'rejected': 0,
+                'percentage': 100,
+                'is_complete': True
+            }
 
         total = len(self.checklists)
         approved = sum(1 for item in self.checklists if item.status == 'APPROVED')

@@ -1871,15 +1871,13 @@ def quick_update_status(task_id):
     """
     API cập nhật nhanh trạng thái task (cho nút Bắt đầu/Hoàn thành)
     """
-    from app.models import TaskCompletionReport  # ✅ THÊM IMPORT Ở ĐÂY
-
     task = Task.query.get_or_404(task_id)
     new_status = request.json.get('status')
 
     if new_status not in ['IN_PROGRESS', 'DONE']:
         return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
 
-    # KIỂM TRA CHECKLIST KHI HOÀN THÀNH
+    # =====  KIỂM TRA CHECKLIST KHI HOÀN THÀNH =====
     if new_status == 'DONE':
         if not task.can_complete():
             progress = task.get_checklist_progress()
@@ -1888,7 +1886,7 @@ def quick_update_status(task_id):
                 'error': f'Chưa hoàn thành checklist! ({progress["approved"]}/{progress["total"]} đã duyệt)'
             }), 400
 
-    # CHECK PHÊ DUYỆT
+    # ===== CHECK PHÊ DUYỆT (GIỮ NGUYÊN CODE CŨ) =====
     if task.requires_approval and task.approved is None:
         if current_user.role != 'director':
             return jsonify({
@@ -1927,6 +1925,7 @@ def quick_update_status(task_id):
             completion_time = int(time_delta.total_seconds() / 60)
 
         # Tạo báo cáo
+        from app.models import TaskCompletionReport
         completion_report = TaskCompletionReport(
             task_id=task.id,
             completed_by=current_user.id,
@@ -1937,7 +1936,7 @@ def quick_update_status(task_id):
         )
         db.session.add(completion_report)
 
-        # Logic đánh giá tự động
+        # Logic đánh giá tự động (giống như route update_status)
         creator = task.creator
         if current_user.role == 'director' and creator.role == 'manager':
             task.performance_rating = 'good'
@@ -2992,36 +2991,3 @@ def delete_checklist_item(task_id, checklist_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Đã xóa checklist'})
-
-
-@bp.route('/test-quick-update/<int:task_id>', methods=['GET'])
-@login_required
-def test_quick_update(task_id):
-    """Test route để debug"""
-    try:
-        from app.models import TaskCompletionReport
-
-        task = Task.query.get_or_404(task_id)
-
-        # Test basic info
-        result = {
-            'task_id': task.id,
-            'title': task.title,
-            'status': task.status,
-            'creator': task.creator.full_name if task.creator else None,
-            'due_date': str(task.due_date) if task.due_date else None,
-            'can_complete': task.can_complete(),
-            'checklist_progress': task.get_checklist_progress(),
-            'current_user': current_user.full_name,
-            'current_user_role': current_user.role
-        }
-
-        return jsonify({'success': True, 'data': result})
-
-    except Exception as e:
-        import traceback
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }), 500
