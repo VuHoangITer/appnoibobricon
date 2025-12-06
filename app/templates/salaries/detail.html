@@ -261,6 +261,11 @@
       color: #000 !important;
       font-weight: bold;
     }
+
+    .responsibility-total-row {
+      font-weight: bold;
+      background: linear-gradient(to right, #e8f5e9 0%, #c8e6c9 100%) !important;
+    }
   }
 
   .no-print {
@@ -380,7 +385,7 @@
               </td>
             </tr>
 
-            <!-- ===== MỚI: Hiển thị các khoản lương trách nhiệm ===== -->
+            <!-- =====  Hiển thị các khoản lương trách nhiệm ===== -->
             {% set responsibilities = salary.get_responsibilities() %}
             {% if responsibilities %}
             <tr>
@@ -649,27 +654,37 @@
         </td>
       </tr>
 
-      <!-- ===== MỚI: In các khoản lương trách nhiệm ===== -->
-      {% set responsibilities = salary.get_responsibilities() %}
-      {% if responsibilities %}
-      {% for resp in responsibilities %}
-      <tr class="item-row">
-        <td class="label-cell">b{{ loop.index }}. {{ resp.content }}</td>
-        <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format(resp.amount) }}
-        </td>
-        <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format(resp.amount / salary.work_days_in_month) }}
-        </td>
-        <td class="value-cell" style="text-align: center">
-          {{ salary.actual_work_days }}
-        </td>
-        <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format((resp.amount / salary.work_days_in_month) * salary.actual_work_days) }}
-        </td>
-      </tr>
-      {% endfor %}
-      {% endif %}
+        <!-- ===== In các khoản lương trách nhiệm ===== -->
+        {% set responsibilities = salary.get_responsibilities() %}
+        {% if responsibilities %}
+
+        <!-- Thêm tiêu đề "Lương Trách Nhiệm" -->
+        <tr class="subsection-header">
+          <td colspan="4">Lương Trách Nhiệm</td>
+          <td style="text-align: right">
+            {{ "{:,.0f}".format(salary.get_total_responsibility_salary() / salary.work_days_in_month * salary.actual_work_days) }}
+          </td>
+        </tr>
+
+        <!-- In từng khoản lương trách nhiệm b1, b2, b3... -->
+        {% for resp in responsibilities %}
+        <tr class="item-row">
+          <td class="label-cell">b{{ loop.index }}. {{ resp.content }}</td>
+          <td class="value-cell" style="text-align: right">
+            {{ "{:,.0f}".format(resp.amount) }}
+          </td>
+          <td class="value-cell" style="text-align: right">
+            {{ "{:,.0f}".format(resp.amount / salary.work_days_in_month) }}
+          </td>
+          <td class="value-cell" style="text-align: center">
+            {{ salary.actual_work_days }}
+          </td>
+          <td class="value-cell" style="text-align: right">
+            {{ "{:,.0f}".format((resp.amount / salary.work_days_in_month) * salary.actual_work_days) }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
 
       <!-- P3. LƯƠNG NĂNG LỰC -->
       {% set capacity_bonuses = salary.get_capacity_bonuses() %}
