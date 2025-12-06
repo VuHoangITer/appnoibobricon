@@ -66,20 +66,60 @@
                         </div>
                     </div>
 
-                    <!-- Lương cơ bản và trách nhiệm -->
+                    <!-- Lương cơ bản -->
                     <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương cơ bản</h5>
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="basic_salary" class="form-label">Lương cơ bản/tháng (₫) *</label>
                             <input type="number" class="form-control calc-input" id="basic_salary"
                                    name="basic_salary" step="1" value="{{ salary.basic_salary }}" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="responsibility_salary" class="form-label">Lương trách nhiệm/tháng (₫)</label>
-                            <input type="number" class="form-control calc-input" id="responsibility_salary"
-                                   name="responsibility_salary" step="1" value="{{ salary.responsibility_salary }}">
-                        </div>
                     </div>
+
+                    <!-- ===== MỚI: Lương trách nhiệm (nhiều khoản) ===== -->
+                    <h5 class="mb-3"><i class="bi bi-briefcase-fill"></i> Lương trách nhiệm</h5>
+                    <div id="responsibility-container" class="mb-4">
+                        {% set responsibilities = salary.get_responsibilities() %}
+                        {% if responsibilities %}
+                            {% for resp in responsibilities %}
+                            <div class="responsibility-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="responsibility_content[]"
+                                           value="{{ resp.content }}" placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control calc-input responsibility-amount"
+                                           name="responsibility_amount[]" value="{{ resp.amount }}"
+                                           placeholder="Số tiền" step="1">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="responsibility-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="responsibility_content[]"
+                                           placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control calc-input responsibility-amount"
+                                           name="responsibility_amount[]" placeholder="Số tiền" step="1" value="0">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-responsibility">
+                        <i class="bi bi-plus-circle"></i> Thêm lương trách nhiệm
+                    </button>
 
                     <!-- Lương năng lực -->
                     <h5 class="mb-3"><i class="bi bi-award"></i> Lương năng lực</h5>
@@ -182,7 +222,7 @@
                                     <span id="display_basic_per_day" class="float-end">0 ₫</span>
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <strong>Lương trách nhiệm/ngày:</strong>
+                                    <strong>Tổng lương trách nhiệm/ngày:</strong>
                                     <span id="display_resp_per_day" class="float-end">0 ₫</span>
                                 </div>
                             </div>
@@ -255,7 +295,7 @@ for (let year = currentYear - 5; year <= currentYear + 5; year++) {
     yearSelect.appendChild(option);
 }
 
-// Parse existing month value (format: YYYY-MM)
+// Parse existing month value (format: MM-YYYY)
 const existingMonth = document.getElementById('month').value;
 if (existingMonth) {
     const parts = existingMonth.split('-');
@@ -264,7 +304,6 @@ if (existingMonth) {
         document.getElementById('year_select').value = parts[1];
     }
 } else {
-    // Set current date as default
     yearSelect.value = currentYear;
     const currentMonth = new Date().getMonth() + 1;
     document.getElementById('month_select').value = currentMonth;
@@ -282,9 +321,40 @@ function updateMonthField() {
 
 document.getElementById('month_select').addEventListener('change', updateMonthField);
 document.getElementById('year_select').addEventListener('change', updateMonthField);
-
-// Initialize on load
 updateMonthField();
+
+// ===== MỚI: Add/Remove responsibility rows =====
+document.getElementById('add-responsibility').addEventListener('click', function() {
+    const container = document.getElementById('responsibility-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'responsibility-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="responsibility_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input responsibility-amount"
+                   name="responsibility_amount[]" placeholder="Số tiền" step="1" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+    attachCalculateEvent();
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-responsibility')) {
+        const item = e.target.closest('.responsibility-item');
+        if (document.querySelectorAll('.responsibility-item').length > 1) {
+            item.remove();
+            calculate();
+        }
+    }
+});
 
 // Add capacity bonus row
 document.getElementById('add-capacity').addEventListener('click', function() {
@@ -354,19 +424,24 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Calculate function
+// ===== CẬP NHẬT: Calculate function với nhiều khoản trách nhiệm =====
 function calculate() {
     const workDays = parseFloat(document.getElementById('work_days_in_month').value) || 0;
     const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
     const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
-    const respSalary = parseFloat(document.getElementById('responsibility_salary').value) || 0;
 
     // Lương cơ bản/ngày
     const basicPerDay = workDays > 0 ? basicSalary / workDays : 0;
     document.getElementById('display_basic_per_day').textContent = formatMoney(basicPerDay);
 
+    // ===== MỚI: Tính tổng lương trách nhiệm từ nhiều khoản =====
+    let totalResp = 0;
+    document.querySelectorAll('.responsibility-amount').forEach(input => {
+        totalResp += parseFloat(input.value) || 0;
+    });
+
     // Lương trách nhiệm/ngày
-    const respPerDay = workDays > 0 ? respSalary / workDays : 0;
+    const respPerDay = workDays > 0 ? totalResp / workDays : 0;
     document.getElementById('display_resp_per_day').textContent = formatMoney(respPerDay);
 
     // Lương chính

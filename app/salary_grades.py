@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Salary, User, SalaryShareLink, SalaryShareLinkAccess, Employee, SalaryGrade, WorkDaysConfig
+from app.models import SalaryGrade, Employee
 from app.decorators import role_required
-from datetime import datetime, timedelta
-import json
+from datetime import datetime
 
 bp = Blueprint('salary_grades', __name__)
 
@@ -27,8 +26,18 @@ def create_grade():
         try:
             name = request.form.get('name', '').strip()
             basic_salary = float(request.form.get('basic_salary', 0))
-            responsibility_salary = float(request.form.get('responsibility_salary', 0))
             description = request.form.get('description', '').strip()
+
+            # ===== MỚI: Parse RESPONSIBILITIES =====
+            responsibility_contents = request.form.getlist('responsibility_content[]')
+            responsibility_amounts = request.form.getlist('responsibility_amount[]')
+            responsibilities = []
+            for i in range(len(responsibility_contents)):
+                if responsibility_contents[i].strip():
+                    responsibilities.append({
+                        'content': responsibility_contents[i],
+                        'amount': float(responsibility_amounts[i]) if responsibility_amounts[i] else 0
+                    })
 
             # Parse capacity bonuses
             capacity_contents = request.form.getlist('capacity_content[]')
@@ -50,11 +59,12 @@ def create_grade():
             grade = SalaryGrade(
                 name=name,
                 basic_salary=basic_salary,
-                responsibility_salary=responsibility_salary,
                 description=description,
                 created_by=current_user.id
             )
 
+            # ===== MỚI: Set responsibilities =====
+            grade.set_responsibilities(responsibilities)
             grade.set_capacity_bonuses(capacity_bonuses)
 
             db.session.add(grade)
@@ -90,8 +100,18 @@ def edit_grade(grade_id):
         try:
             name = request.form.get('name', '').strip()
             basic_salary = float(request.form.get('basic_salary', 0))
-            responsibility_salary = float(request.form.get('responsibility_salary', 0))
             description = request.form.get('description', '').strip()
+
+            # ===== MỚI: Parse RESPONSIBILITIES =====
+            responsibility_contents = request.form.getlist('responsibility_content[]')
+            responsibility_amounts = request.form.getlist('responsibility_amount[]')
+            responsibilities = []
+            for i in range(len(responsibility_contents)):
+                if responsibility_contents[i].strip():
+                    responsibilities.append({
+                        'content': responsibility_contents[i],
+                        'amount': float(responsibility_amounts[i]) if responsibility_amounts[i] else 0
+                    })
 
             # Parse capacity bonuses
             capacity_contents = request.form.getlist('capacity_content[]')
@@ -115,8 +135,10 @@ def edit_grade(grade_id):
 
             grade.name = name
             grade.basic_salary = basic_salary
-            grade.responsibility_salary = responsibility_salary
             grade.description = description
+
+            # ===== MỚI: Set responsibilities =====
+            grade.set_responsibilities(responsibilities)
             grade.set_capacity_bonuses(capacity_bonuses)
             grade.updated_at = datetime.utcnow()
 
@@ -162,7 +184,7 @@ def api_get_grade(grade_id):
         'id': grade.id,
         'name': grade.name,
         'basic_salary': grade.basic_salary,
-        'responsibility_salary': grade.responsibility_salary,
+        'responsibilities': grade.get_responsibilities(),  # MỚI
         'capacity_bonuses': grade.get_capacity_bonuses()
     })
 
@@ -177,5 +199,5 @@ def api_get_all_grades():
         'id': g.id,
         'name': g.name,
         'basic_salary': g.basic_salary,
-        'responsibility_salary': g.responsibility_salary
+        'total_responsibility': g.get_total_responsibility_salary()  # MỚI
     } for g in grades])

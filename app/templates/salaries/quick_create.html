@@ -25,7 +25,7 @@
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1"><strong>Lương cơ bản:</strong> {{ "{:,.0f}".format(employee.salary_grade.basic_salary) }} ₫</p>
-                        <p class="mb-1"><strong>Lương trách nhiệm:</strong> {{ "{:,.0f}".format(employee.salary_grade.responsibility_salary) }} ₫</p>
+                        <p class="mb-1"><strong>Tổng lương trách nhiệm:</strong> {{ "{:,.0f}".format(employee.salary_grade.get_total_responsibility_salary()) }} ₫</p>
                     </div>
                 </div>
             </div>
@@ -187,9 +187,9 @@
 
 {% block scripts %}
 <script>
-// Employee salary data from backend
+// ===== THAY ĐỔI: Lấy tổng lương từ backend =====
 const basicSalary = {{ employee.salary_grade.basic_salary }};
-const respSalary = {{ employee.salary_grade.responsibility_salary }};
+const totalRespSalary = {{ employee.salary_grade.get_total_responsibility_salary() }};
 
 // Populate year dropdown
 const yearSelect = document.getElementById('year_select');
@@ -269,7 +269,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Calculate
+// ===== THAY ĐỔI: Calculate dùng totalRespSalary =====
 function calculate() {
     const workDays = window.workDaysInMonth || 0;
     const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
@@ -277,7 +277,8 @@ function calculate() {
     document.getElementById('display_actual').textContent = actualDays + ' ngày';
 
     if (workDays > 0 && actualDays > 0) {
-        const perDay = (basicSalary + respSalary) / workDays;
+        // Dùng totalRespSalary thay vì respSalary
+        const perDay = (basicSalary + totalRespSalary) / workDays;
         const mainSalary = perDay * actualDays;
         document.getElementById('display_main').textContent = formatMoney(mainSalary);
 

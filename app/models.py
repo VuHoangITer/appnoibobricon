@@ -374,7 +374,9 @@ class Salary(db.Model):
     actual_work_days = db.Column(db.Float, nullable=False)
 
     basic_salary = db.Column(db.Float, nullable=False)
-    responsibility_salary = db.Column(db.Float, default=0)
+
+    # ===== THAY ĐỔI: responsibility_salary giờ là JSON array =====
+    responsibility_data = db.Column(db.Text, default='[]')  # Thay vì Float
 
     capacity_bonuses = db.Column(db.Text)
     deductions = db.Column(db.Text)
@@ -391,7 +393,6 @@ class Salary(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships - GIỮ NGUYÊN vì không có conflict
     creator = db.relationship('User', foreign_keys=[created_by])
     share_links = db.relationship(
         'SalaryShareLink',
@@ -400,6 +401,41 @@ class Salary(db.Model):
         cascade='all, delete-orphan'
     )
 
+    # ===== MỚI: Methods cho Responsibility =====
+    def get_responsibilities(self):
+        """Lấy danh sách lương trách nhiệm"""
+        if self.responsibility_data:
+            try:
+                return json.loads(self.responsibility_data)
+            except:
+                return []
+        return []
+
+    def set_responsibilities(self, responsibilities_list):
+        """Set danh sách lương trách nhiệm"""
+        self.responsibility_data = json.dumps(responsibilities_list, ensure_ascii=False)
+
+    def get_total_responsibility_salary(self):
+        """Tính tổng lương trách nhiệm"""
+        responsibilities = self.get_responsibilities()
+        return sum(item.get('amount', 0) for item in responsibilities)
+
+    # ===== BACKWARD COMPATIBILITY =====
+    @property
+    def responsibility_salary(self):
+        """Trả về tổng lương trách nhiệm (để code cũ vẫn chạy)"""
+        return self.get_total_responsibility_salary()
+
+    @responsibility_salary.setter
+    def responsibility_salary(self, value):
+        """Set lương trách nhiệm từ 1 giá trị"""
+        if isinstance(value, (int, float)) and value > 0:
+            self.set_responsibilities([{
+                'content': 'Lương trách nhiệm',
+                'amount': value
+            }])
+
+    # ===== GIỮ NGUYÊN: Methods khác =====
     def get_capacity_bonuses(self):
         if self.capacity_bonuses:
             try:
@@ -409,7 +445,7 @@ class Salary(db.Model):
         return []
 
     def set_capacity_bonuses(self, bonuses_list):
-        self.capacity_bonuses = json.dumps(bonuses_list)
+        self.capacity_bonuses = json.dumps(bonuses_list, ensure_ascii=False)
 
     def get_deductions(self):
         if self.deductions:
@@ -420,19 +456,32 @@ class Salary(db.Model):
         return []
 
     def set_deductions(self, deductions_list):
-        self.deductions = json.dumps(deductions_list)
+        self.deductions = json.dumps(deductions_list, ensure_ascii=False)
 
     def calculate(self):
+        """Tính toán lương - CẬP NHẬT"""
+        # Lương cơ bản/ngày
         self.basic_salary_per_day = self.basic_salary / self.work_days_in_month if self.work_days_in_month > 0 else 0
-        self.responsibility_salary_per_day = self.responsibility_salary / self.work_days_in_month if self.work_days_in_month > 0 else 0
+
+        # Lương trách nhiệm/ngày - Tính từ TỔNG các khoản trách nhiệm
+        total_resp = self.get_total_responsibility_salary()
+        self.responsibility_salary_per_day = total_resp / self.work_days_in_month if self.work_days_in_month > 0 else 0
+
+        # Lương chính
         self.main_salary = (self.basic_salary_per_day + self.responsibility_salary_per_day) * self.actual_work_days
 
+        # Lương năng lực
         bonuses = self.get_capacity_bonuses()
         self.total_capacity_bonus = sum(item.get('amount', 0) for item in bonuses)
+
+        # Tổng thu nhập
         self.total_income = self.main_salary + self.total_capacity_bonus
 
+        # Khấu trừ
         deductions = self.get_deductions()
         self.total_deduction = sum(item.get('amount', 0) for item in deductions)
+
+        # Thực lĩnh
         self.net_salary = self.total_income - self.total_deduction
 
     def __repr__(self):
@@ -654,8 +703,11 @@ class SalaryGrade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     basic_salary = db.Column(db.Float, nullable=False)
-    responsibility_salary = db.Column(db.Float, default=0)
-    capacity_bonuses = db.Column(db.Text)  # JSON
+
+    # ===== THAY ĐỔI: responsibility_salary giờ là JSON array =====
+    responsibility_data = db.Column(db.Text, default='[]')  # Thay vì Float
+
+    capacity_bonuses = db.Column(db.Text)  # JSON - giữ nguyên
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -670,6 +722,41 @@ class SalaryGrade(db.Model):
         lazy='dynamic'
     )
 
+    # ===== MỚI: Methods cho Responsibility =====
+    def get_responsibilities(self):
+        """Lấy danh sách lương trách nhiệm"""
+        if self.responsibility_data:
+            try:
+                return json.loads(self.responsibility_data)
+            except:
+                return []
+        return []
+
+    def set_responsibilities(self, responsibilities_list):
+        """Set danh sách lương trách nhiệm"""
+        self.responsibility_data = json.dumps(responsibilities_list, ensure_ascii=False)
+
+    def get_total_responsibility_salary(self):
+        """Tính tổng lương trách nhiệm"""
+        responsibilities = self.get_responsibilities()
+        return sum(item.get('amount', 0) for item in responsibilities)
+
+    # ===== BACKWARD COMPATIBILITY - quan trọng! =====
+    @property
+    def responsibility_salary(self):
+        """Trả về tổng lương trách nhiệm (để code cũ vẫn chạy)"""
+        return self.get_total_responsibility_salary()
+
+    @responsibility_salary.setter
+    def responsibility_salary(self, value):
+        """Set lương trách nhiệm từ 1 giá trị (để migrate data cũ)"""
+        if isinstance(value, (int, float)) and value > 0:
+            self.set_responsibilities([{
+                'content': 'Lương trách nhiệm',
+                'amount': value
+            }])
+
+    # ===== GIỮ NGUYÊN: Methods cho Capacity Bonuses =====
     def get_capacity_bonuses(self):
         if self.capacity_bonuses:
             try:
@@ -679,7 +766,7 @@ class SalaryGrade(db.Model):
         return []
 
     def set_capacity_bonuses(self, bonuses_list):
-        self.capacity_bonuses = json.dumps(bonuses_list)
+        self.capacity_bonuses = json.dumps(bonuses_list, ensure_ascii=False)
 
     def __repr__(self):
         return f'<SalaryGrade {self.name}>'

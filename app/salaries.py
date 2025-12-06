@@ -10,7 +10,7 @@ import json
 bp = Blueprint('salaries', __name__)
 
 
-# ========== HELPER FUNCTIONS ==========
+# ========== HELPER FUNCTIONS (giữ nguyên) ==========
 def get_client_ip(request):
     """Lấy địa chỉ IP thực của client"""
     if request.headers.get('X-Forwarded-For'):
@@ -76,16 +76,10 @@ def parse_user_agent(user_agent_string):
 def log_share_link_access(share_link, request):
     """Ghi log truy cập link chia sẻ"""
     try:
-        # Lấy IP
         ip_address = get_client_ip(request)
-
-        # Lấy user agent
         user_agent = request.headers.get('User-Agent', '')
-
-        # Parse user agent
         device_info = parse_user_agent(user_agent)
 
-        # Tạo log
         access_log = SalaryShareLinkAccess(
             share_link_id=share_link.id,
             ip_address=ip_address,
@@ -103,68 +97,26 @@ def log_share_link_access(share_link, request):
 
         return access_log
     except Exception as e:
-        # Không crash app nếu logging fail
         print(f"Error logging access: {str(e)}")
         return None
 
 
-def mark_deductions_as_deducted(salary, deductions):
-    """
-    Đánh dấu các khoản phạt và tạm ứng đã được trừ lương
-
-    Args:
-        salary: Salary object vừa được tạo
-        deductions: List các deduction từ form
-    """
-    try:
-        for deduction in deductions:
-            content = deduction.get('content', '')
-
-            # Check if it's a penalty (format: "Phạt: ... (penalty_ID)")
-            if content.startswith('Phạt:') and 'penalty_' in content:
-                # Extract penalty ID from data attribute (will be handled in form)
-                # This is just a backup check
-                pass
-
-            # Check if it's an advance (format: "Tạm ứng: ... (advance_ID)")
-            elif content.startswith('Tạm ứng:') and 'advance_' in content:
-                # Extract advance ID from data attribute (will be handled in form)
-                pass
-
-        # Better approach: Get IDs from form data directly
-        # We'll handle this in the create routes
-
-    except Exception as e:
-        print(f"Error marking deductions: {str(e)}")
-
-
 def process_and_mark_deductions(employee_name, deductions, salary_id):
-    """
-    Xử lý và đánh dấu penalties/advances đã trừ lương
-
-    Args:
-        employee_name: Tên nhân viên
-        deductions: List deductions từ form (có thể chứa penalty_id, advance_id)
-        salary_id: ID của bảng lương vừa tạo
-    """
+    """Xử lý và đánh dấu penalties/advances đã trừ lương"""
     try:
-        # Lấy tất cả penalties chưa trừ của nhân viên
         pending_penalties = Penalty.query.filter_by(
             employee_name=employee_name,
             is_deducted=False
         ).all()
 
-        # Lấy tất cả advances chưa trừ của nhân viên
         pending_advances = Advance.query.filter_by(
             employee_name=employee_name,
             is_deducted=False
         ).all()
 
-        # Đánh dấu tất cả penalties chưa trừ
         for penalty in pending_penalties:
             penalty.mark_as_deducted(salary_id)
 
-        # Đánh dấu tất cả advances chưa trừ
         for advance in pending_advances:
             advance.mark_as_deducted(salary_id)
 
@@ -172,12 +124,12 @@ def process_and_mark_deductions(employee_name, deductions, salary_id):
 
         total_marked = len(pending_penalties) + len(pending_advances)
         if total_marked > 0:
-            print(
-                f"Marked {len(pending_penalties)} penalties and {len(pending_advances)} advances as deducted for {employee_name}")
+            print(f"Marked {len(pending_penalties)} penalties and {len(pending_advances)} advances as deducted for {employee_name}")
 
     except Exception as e:
         print(f"Error processing deductions: {str(e)}")
         db.session.rollback()
+
 
 # ========== ROUTES ==========
 @bp.route('/')
@@ -185,7 +137,6 @@ def process_and_mark_deductions(employee_name, deductions, salary_id):
 @role_required(['director', 'accountant'])
 def list_salaries():
     """Danh sách bảng lương"""
-    # Filter by month and employee name
     month_filter = request.args.get('month', '')
     name_filter = request.args.get('employee_name', '')
 
@@ -223,17 +174,14 @@ def create_salary():
     """Tạo bảng lương mới"""
     if request.method == 'POST':
         try:
-            # Lấy thông tin nhân viên
             employee_id = request.form.get('employee_id')
             employee_name = request.form.get('employee_name', '').strip()
 
-            # Nếu chọn từ danh sách nhân viên có sẵn
             if employee_id:
                 employee = Employee.query.get(int(employee_id))
                 if employee:
                     employee_name = employee.full_name
 
-            # Validate employee name
             if not employee_name:
                 flash('Vui lòng nhập tên nhân viên.', 'danger')
                 return redirect(url_for('salaries.create_salary'))
@@ -242,7 +190,17 @@ def create_salary():
             work_days_in_month = float(request.form.get('work_days_in_month'))
             actual_work_days = float(request.form.get('actual_work_days'))
             basic_salary = float(request.form.get('basic_salary'))
-            responsibility_salary = float(request.form.get('responsibility_salary', 0))
+
+            # ===== MỚI: Parse RESPONSIBILITIES =====
+            responsibility_contents = request.form.getlist('responsibility_content[]')
+            responsibility_amounts = request.form.getlist('responsibility_amount[]')
+            responsibilities = []
+            for i in range(len(responsibility_contents)):
+                if responsibility_contents[i].strip():
+                    responsibilities.append({
+                        'content': responsibility_contents[i],
+                        'amount': float(responsibility_amounts[i]) if responsibility_amounts[i] else 0
+                    })
 
             # Parse capacity bonuses
             capacity_contents = request.form.getlist('capacity_content[]')
@@ -266,7 +224,7 @@ def create_salary():
                         'amount': float(deduction_amounts[i]) if deduction_amounts[i] else 0
                     })
 
-            # Check if salary for this employee and month already exists
+            # Check existing
             existing = Salary.query.filter_by(employee_name=employee_name, month=month).first()
             if existing:
                 flash(f'Bảng lương cho nhân viên {employee_name} trong tháng {month} đã tồn tại.', 'danger')
@@ -279,10 +237,11 @@ def create_salary():
                 work_days_in_month=work_days_in_month,
                 actual_work_days=actual_work_days,
                 basic_salary=basic_salary,
-                responsibility_salary=responsibility_salary,
                 created_by=current_user.id
             )
 
+            # ===== MỚI: Set responsibilities =====
+            salary.set_responsibilities(responsibilities)
             salary.set_capacity_bonuses(capacity_bonuses)
             salary.set_deductions(deductions)
             salary.calculate()
@@ -300,7 +259,6 @@ def create_salary():
             return redirect(url_for('salaries.create_salary'))
 
     # GET request
-    # Lấy danh sách nhân viên và cấp bậc lương
     employees = Employee.query.filter_by(is_active=True).order_by(Employee.full_name).all()
     salary_grades = SalaryGrade.query.filter_by(is_active=True).order_by(SalaryGrade.name).all()
 
@@ -309,7 +267,6 @@ def create_salary():
                            salary_grades=salary_grades)
 
 
-# Route tạo lương nhanh cho nhân viên có sẵn
 @bp.route('/quick-create/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
 @role_required(['director', 'accountant'])
@@ -326,7 +283,18 @@ def quick_create_salary(employee_id):
             month = request.form.get('month')
             actual_work_days = float(request.form.get('actual_work_days'))
 
-            # Parse deductions (if any)
+            # Parse capacity bonuses (có thể chỉnh sửa)
+            capacity_contents = request.form.getlist('capacity_content[]')
+            capacity_amounts = request.form.getlist('capacity_amount[]')
+            capacity_bonuses = []
+            for i in range(len(capacity_contents)):
+                if capacity_contents[i].strip():
+                    capacity_bonuses.append({
+                        'content': capacity_contents[i],
+                        'amount': float(capacity_amounts[i]) if capacity_amounts[i] else 0
+                    })
+
+            # Parse deductions
             deduction_contents = request.form.getlist('deduction_content[]')
             deduction_amounts = request.form.getlist('deduction_amount[]')
             deductions = []
@@ -360,12 +328,12 @@ def quick_create_salary(employee_id):
                 work_days_in_month=work_days_in_month,
                 actual_work_days=actual_work_days,
                 basic_salary=grade.basic_salary,
-                responsibility_salary=grade.responsibility_salary,
                 created_by=current_user.id
             )
 
-            # Set capacity bonuses from grade
-            salary.set_capacity_bonuses(grade.get_capacity_bonuses())
+            # ===== MỚI: Set responsibilities từ grade =====
+            salary.set_responsibilities(grade.get_responsibilities())
+            salary.set_capacity_bonuses(capacity_bonuses)
             salary.set_deductions(deductions)
             salary.calculate()
 
@@ -381,7 +349,6 @@ def quick_create_salary(employee_id):
             flash(f'Có lỗi xảy ra: {str(e)}', 'danger')
             return redirect(url_for('salaries.quick_create_salary', employee_id=employee_id))
 
-    # GET request
     return render_template('salaries/quick_create.html', employee=employee)
 
 
@@ -405,7 +372,6 @@ def edit_salary(salary_id):
         try:
             employee_name = request.form.get('employee_name', '').strip()
 
-            # Validate employee name
             if not employee_name:
                 flash('Vui lòng nhập tên nhân viên.', 'danger')
                 return redirect(url_for('salaries.edit_salary', salary_id=salary_id))
@@ -415,7 +381,17 @@ def edit_salary(salary_id):
             salary.work_days_in_month = float(request.form.get('work_days_in_month'))
             salary.actual_work_days = float(request.form.get('actual_work_days'))
             salary.basic_salary = float(request.form.get('basic_salary'))
-            salary.responsibility_salary = float(request.form.get('responsibility_salary', 0))
+
+            # ===== MỚI: Parse RESPONSIBILITIES =====
+            responsibility_contents = request.form.getlist('responsibility_content[]')
+            responsibility_amounts = request.form.getlist('responsibility_amount[]')
+            responsibilities = []
+            for i in range(len(responsibility_contents)):
+                if responsibility_contents[i].strip():
+                    responsibilities.append({
+                        'content': responsibility_contents[i],
+                        'amount': float(responsibility_amounts[i]) if responsibility_amounts[i] else 0
+                    })
 
             # Parse capacity bonuses
             capacity_contents = request.form.getlist('capacity_content[]')
@@ -439,6 +415,8 @@ def edit_salary(salary_id):
                         'amount': float(deduction_amounts[i]) if deduction_amounts[i] else 0
                     })
 
+            # ===== MỚI: Set responsibilities =====
+            salary.set_responsibilities(responsibilities)
             salary.set_capacity_bonuses(capacity_bonuses)
             salary.set_deductions(deductions)
             salary.calculate()
@@ -453,7 +431,6 @@ def edit_salary(salary_id):
             flash(f'Có lỗi xảy ra: {str(e)}', 'danger')
             return redirect(url_for('salaries.edit_salary', salary_id=salary_id))
 
-    # GET request
     return render_template('salaries/edit.html', salary=salary)
 
 
@@ -464,7 +441,6 @@ def delete_salary(salary_id):
     """Xóa bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
 
-    # Only creator, director or accountant can delete
     if current_user.role not in ['director', 'accountant'] and salary.created_by != current_user.id:
         flash('Bạn không có quyền xóa bảng lương này.', 'danger')
         return redirect(url_for('salaries.salary_detail', salary_id=salary_id))
@@ -476,15 +452,12 @@ def delete_salary(salary_id):
     return redirect(url_for('salaries.list_salaries'))
 
 
-# ========== SHARE LINK ROUTES ==========
+# ========== SHARE LINK ROUTES (giữ nguyên toàn bộ) ==========
 @bp.route('/<int:salary_id>/share-links')
 @login_required
 @role_required(['director', 'accountant'])
 def manage_share_links(salary_id):
-    """Quản lý các link chia sẻ"""
     salary = Salary.query.get_or_404(salary_id)
-
-    # Lấy tất cả share links
     share_links = SalaryShareLink.query.filter_by(
         salary_id=salary_id
     ).order_by(SalaryShareLink.created_at.desc()).all()
@@ -499,19 +472,16 @@ def manage_share_links(salary_id):
 @login_required
 @role_required(['director', 'accountant'])
 def create_share_link(salary_id):
-    """Tạo link chia sẻ bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
 
     try:
         days = int(request.form.get('days', 3))
         max_views = request.form.get('max_views')
 
-        # Validate days (1-30)
         if days < 1 or days > 30:
             flash('Số ngày phải từ 1 đến 30.', 'danger')
             return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
 
-        # Validate max_views
         if max_views:
             max_views = int(max_views)
             if max_views < 1:
@@ -520,7 +490,6 @@ def create_share_link(salary_id):
         else:
             max_views = None
 
-        # Tạo link chia sẻ
         expires_at = datetime.utcnow() + timedelta(days=days)
 
         share_link = SalaryShareLink(
@@ -545,10 +514,8 @@ def create_share_link(salary_id):
 @login_required
 @role_required(['director', 'accountant'])
 def revoke_share_link(link_id):
-    """Vô hiệu hóa link chia sẻ"""
     share_link = SalaryShareLink.query.get_or_404(link_id)
 
-    # Kiểm tra quyền
     if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
         flash('Bạn không có quyền vô hiệu hóa link này.', 'danger')
         return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
@@ -564,10 +531,8 @@ def revoke_share_link(link_id):
 @login_required
 @role_required(['director', 'accountant'])
 def delete_share_link(link_id):
-    """Xóa link chia sẻ"""
     share_link = SalaryShareLink.query.get_or_404(link_id)
 
-    # Kiểm tra quyền
     if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
         flash('Bạn không có quyền xóa link này.', 'danger')
         return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
@@ -580,20 +545,16 @@ def delete_share_link(link_id):
     return redirect(url_for('salaries.manage_share_links', salary_id=salary_id))
 
 
-# ========== MỚI: XEM LỊCH SỬ TRUY CẬP ==========
 @bp.route('/share-link/<int:link_id>/access-logs')
 @login_required
 @role_required(['director', 'accountant'])
 def view_access_logs(link_id):
-    """Xem lịch sử truy cập link chia sẻ"""
     share_link = SalaryShareLink.query.get_or_404(link_id)
 
-    # Kiểm tra quyền
     if current_user.role not in ['director', 'accountant'] and share_link.created_by != current_user.id:
         flash('Bạn không có quyền xem lịch sử này.', 'danger')
         return redirect(url_for('salaries.manage_share_links', salary_id=share_link.salary_id))
 
-    # Lấy tất cả access logs
     access_logs = share_link.access_logs.all()
 
     return render_template('salaries/access_logs.html',
@@ -605,46 +566,37 @@ def view_access_logs(link_id):
 
 @bp.route('/shared/<token>')
 def view_shared_salary(token):
-    """Xem bảng lương qua link chia sẻ (không cần đăng nhập)"""
     share_link = SalaryShareLink.query.filter_by(token=token).first()
 
     if not share_link:
         return render_template('salaries/share_error.html',
                                error='Link không tồn tại hoặc đã bị xóa.')
 
-    # THÊM: Tự động xóa nếu đã hết hạn
     if datetime.utcnow() > share_link.expires_at:
         db.session.delete(share_link)
         db.session.commit()
         return render_template('salaries/share_error.html',
                                error='Link đã hết hạn và đã bị xóa tự động.')
 
-    # Kiểm tra tính hợp lệ
     if not share_link.is_valid():
         reason = ''
         if not share_link.is_active:
             reason = 'Link đã bị vô hiệu hóa.'
         elif share_link.max_views and share_link.view_count >= share_link.max_views:
-            # THÊM: Tự động xóa nếu hết lượt xem
             db.session.delete(share_link)
             db.session.commit()
             reason = 'Link đã hết lượt xem và đã bị xóa tự động.'
 
         return render_template('salaries/share_error.html', error=reason)
 
-    # ===== THÊM MỚI: GHI LOG TRUY CẬP =====
     log_share_link_access(share_link, request)
-
-    # Tăng số lượt xem
     share_link.increment_view()
 
-    # THÊM: Tự động xóa nếu vừa hết lượt xem
     if share_link.max_views and share_link.view_count >= share_link.max_views:
         salary = share_link.salary
         db.session.delete(share_link)
         db.session.commit()
 
-        # Tính thời gian còn lại (cho hiển thị)
         time_left = share_link.expires_at - datetime.utcnow()
         hours_left = int(time_left.total_seconds() / 3600)
 
@@ -654,10 +606,7 @@ def view_shared_salary(token):
                                hours_left=hours_left,
                                is_last_view=True)
 
-    # Lấy thông tin bảng lương
     salary = share_link.salary
-
-    # Tính thời gian còn lại
     time_left = share_link.expires_at - datetime.utcnow()
     hours_left = int(time_left.total_seconds() / 3600)
 

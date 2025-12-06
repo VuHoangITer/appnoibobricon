@@ -31,9 +31,10 @@
 </div>
 {% endif %}
 
-<!-- Thông tin lương cơ bản -->
+<!-- Thông tin lương -->
 <div class="row mb-4">
-    <div class="col-md-6">
+    <!-- LƯƠNG CƠ BẢN -->
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-wallet2"></i> Lương Cơ Bản</h5>
@@ -44,20 +45,41 @@
                         <strong>Lương cơ bản/tháng:</strong>
                         <span class="text-primary fw-bold">{{ "{:,.0f}".format(grade.basic_salary) }} ₫</span>
                     </div>
-                    <div class="info-item">
-                        <strong>Lương trách nhiệm/tháng:</strong>
-                        <span class="text-info fw-bold">{{ "{:,.0f}".format(grade.responsibility_salary) }} ₫</span>
-                    </div>
-                    <div class="info-item" style="border-top: 2px solid #0d6efd; padding-top: 0.75rem; margin-top: 0.25rem;">
-                        <strong>Tổng lương cơ bản:</strong>
-                        <span class="fw-bold">{{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary) }} ₫</span>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
+    <!-- ===== MỚI: LƯƠNG TRÁCH NHIỆM ===== -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-briefcase-fill"></i> Lương Trách Nhiệm</h5>
+            </div>
+            <div class="card-body">
+                {% set responsibilities = grade.get_responsibilities() %}
+                {% if responsibilities %}
+                <div class="info-list">
+                    {% for resp in responsibilities %}
+                    <div class="info-item">
+                        <strong>{{ resp.content }}:</strong>
+                        <span>{{ "{:,.0f}".format(resp.amount) }} ₫</span>
+                    </div>
+                    {% endfor %}
+                    <div class="info-item" style="border-top: 2px solid #0dcaf0; padding-top: 0.75rem; margin-top: 0.25rem;">
+                        <strong>Tổng cộng:</strong>
+                        <span class="fw-bold">{{ "{:,.0f}".format(grade.get_total_responsibility_salary()) }} ₫</span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-3">Chưa có lương trách nhiệm</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- LƯƠNG NĂNG LỰC -->
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="bi bi-award"></i> Lương Năng Lực</h5>
@@ -91,9 +113,17 @@
         <h4 class="text-center mb-0">
             <i class="bi bi-cash-coin"></i> Tổng Thu Nhập Dự Kiến/Tháng (full công):
             <span class="text-success">
-                {{ "{:,.0f}".format(grade.basic_salary + grade.responsibility_salary + (grade.get_capacity_bonuses()|sum(attribute='amount'))) }} ₫
+                {% set total = grade.basic_salary + grade.get_total_responsibility_salary() + (grade.get_capacity_bonuses()|sum(attribute='amount')) %}
+                {{ "{:,.0f}".format(total) }} ₫
             </span>
         </h4>
+        <div class="text-center text-muted mt-2">
+            <small>
+                = Lương cơ bản ({{ "{:,.0f}".format(grade.basic_salary) }})
+                + Lương trách nhiệm ({{ "{:,.0f}".format(grade.get_total_responsibility_salary()) }})
+                + Lương năng lực ({{ "{:,.0f}".format(grade.get_capacity_bonuses()|sum(attribute='amount')) }})
+            </small>
+        </div>
     </div>
 </div>
 
@@ -191,7 +221,7 @@
 }
 
 .info-item strong {
-    flex: 0 0 40%;
+    flex: 0 0 60%;
     padding-right: 1rem;
     text-align: left;
 }
@@ -201,11 +231,8 @@
     text-align: right;
 }
 
-/* Mobile view - giữ nguyên layout ngang */
+/* Mobile view */
 @media (max-width: 768px) {
-    /* Không cần thay đổi gì, giữ nguyên layout desktop */
-
-    /* Styling cho bảng nhân viên trên mobile */
     .table-responsive table thead {
         display: none;
     }

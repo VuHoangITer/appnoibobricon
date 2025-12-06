@@ -31,7 +31,6 @@
                     <h5 class="mb-1">⚠️ Đây là lượt xem cuối cùng!</h5>
                     <p class="mb-0">
                         Link này đã hết lượt xem và <strong>đã bị xóa tự động</strong>.
-                        <br>Vui lòng lưu hoặc in bảng lương này ngay nếu bạn cần.
                     </p>
                 </div>
             </div>
@@ -87,18 +86,35 @@
                         <td width="60%"><strong>Lương cơ bản/tháng:</strong></td>
                         <td class="text-end">{{ "{:,.0f}".format(salary.basic_salary) }} ₫</td>
                     </tr>
-                    <tr>
-                        <td><strong>Lương trách nhiệm/tháng:</strong></td>
-                        <td class="text-end">{{ "{:,.0f}".format(salary.responsibility_salary) }} ₫</td>
-                    </tr>
                     <tr class="table-light">
                         <td>Lương cơ bản/ngày:</td>
                         <td class="text-end">{{ "{:,.0f}".format(salary.basic_salary_per_day) }} ₫</td>
+                    </tr>
+
+                    <!-- ===== MỚI: Hiển thị các khoản lương trách nhiệm ===== -->
+                    {% set responsibilities = salary.get_responsibilities() %}
+                    {% if responsibilities %}
+                    <tr>
+                        <td colspan="2"><strong>Lương trách nhiệm:</strong></td>
+                    </tr>
+                    {% for resp in responsibilities %}
+                    <tr>
+                        <td class="ps-4">{{ resp.content }}</td>
+                        <td class="text-end">{{ "{:,.0f}".format(resp.amount) }} ₫</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="table-light">
+                        <td>Tổng lương trách nhiệm/tháng:</td>
+                        <td class="text-end">
+                            <strong>{{ "{:,.0f}".format(salary.get_total_responsibility_salary()) }} ₫</strong>
+                        </td>
                     </tr>
                     <tr class="table-light">
                         <td>Lương trách nhiệm/ngày:</td>
                         <td class="text-end">{{ "{:,.0f}".format(salary.responsibility_salary_per_day) }} ₫</td>
                     </tr>
+                    {% endif %}
+
                     <tr class="table-primary">
                         <td><strong>Lương chính ({{ salary.actual_work_days }} ngày):</strong></td>
                         <td class="text-end"><strong>{{ "{:,.0f}".format(salary.main_salary) }} ₫</strong></td>
@@ -159,13 +175,6 @@
                             </tr>
                         </table>
                     </div>
-                </div>
-
-                <!-- Print Button -->
-                <div class="mt-4 text-center no-print">
-                    <button onclick="window.print()" class="btn btn-primary btn-lg">
-                        <i class="bi bi-printer"></i> In bảng lương
-                    </button>
                 </div>
             </div>
         </div>

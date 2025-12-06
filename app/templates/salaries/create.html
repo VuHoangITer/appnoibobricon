@@ -50,7 +50,7 @@
                                 <option value="{{ grade.id }}">{{ grade.name }}</option>
                                 {% endfor %}
                             </select>
-                            <small class="text-muted">Chọn để tự động điền lương cơ bản + năng lực</small>
+                            <small class="text-muted">Chọn để tự động điền lương cơ bản + trách nhiệm + năng lực</small>
                         </div>
 
                         <div class="col-md-6">
@@ -95,17 +95,34 @@
                     <!-- Lương cơ bản -->
                     <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương cơ bản</h5>
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="basic_salary" class="form-label">Lương cơ bản/tháng (₫) *</label>
                             <input type="number" class="form-control calc-input" id="basic_salary"
                                    name="basic_salary" step="1" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="responsibility_salary" class="form-label">Lương trách nhiệm/tháng (₫)</label>
-                            <input type="number" class="form-control calc-input" id="responsibility_salary"
-                                   name="responsibility_salary" step="1" value="0">
+                    </div>
+
+                    <!-- ===== MỚI: LƯƠNG TRÁCH NHIỆM ===== -->
+                    <h5 class="mb-3"><i class="bi bi-briefcase-fill"></i> Lương trách nhiệm</h5>
+                    <div id="responsibility-container" class="mb-4">
+                        <div class="responsibility-item row mb-2">
+                            <div class="col-md-7">
+                                <input type="text" class="form-control" name="responsibility_content[]" placeholder="Nội dung">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control calc-input responsibility-amount"
+                                       name="responsibility_amount[]" placeholder="Số tiền" step="1" value="0">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-responsibility">
+                        <i class="bi bi-plus-circle"></i> Thêm lương trách nhiệm
+                    </button>
 
                     <!-- Lương năng lực -->
                     <h5 class="mb-3"><i class="bi bi-award"></i> Lương năng lực</h5>
@@ -164,7 +181,7 @@
                                     <span id="display_basic_per_day" class="float-end">0 ₫</span>
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <strong>Lương trách nhiệm/ngày:</strong>
+                                    <strong>Tổng lương trách nhiệm/ngày:</strong>
                                     <span id="display_resp_per_day" class="float-end">0 ₫</span>
                                 </div>
                             </div>
@@ -251,8 +268,6 @@ function updateMonthField() {
     if (month && year) {
         const monthStr = month.padStart(2, '0');
         document.getElementById('month').value = `${monthStr}-${year}`;
-
-        // Auto-fetch work days
         fetchWorkDays(parseInt(month), parseInt(year));
     }
 }
@@ -273,7 +288,181 @@ async function fetchWorkDays(month, year) {
     }
 }
 
-// ========== AUTO-FILL PENALTIES & ADVANCES ==========
+// ===== AUTO-FILL FROM SALARY GRADE =====
+async function loadSalaryGrade(gradeId) {
+    try {
+        const response = await fetch(`/salary-grades/api/grade/${gradeId}`);
+        const data = await response.json();
+
+        // Fill basic salary
+        document.getElementById('basic_salary').value = data.basic_salary;
+
+        // ===== MỚI: Fill responsibilities =====
+        const respContainer = document.getElementById('responsibility-container');
+        respContainer.innerHTML = '';
+        const responsibilities = data.responsibilities || [];
+        if (responsibilities.length === 0) {
+            responsibilities.push({content: '', amount: 0});
+        }
+        responsibilities.forEach(resp => {
+            const row = createResponsibilityRow(resp.content, resp.amount);
+            respContainer.appendChild(row);
+        });
+
+        // Fill capacity bonuses
+        const container = document.getElementById('capacity-container');
+        container.innerHTML = '';
+        const bonuses = data.capacity_bonuses || [];
+        if (bonuses.length === 0) {
+            bonuses.push({content: '', amount: 0});
+        }
+        bonuses.forEach(bonus => {
+            const row = createCapacityRow(bonus.content, bonus.amount);
+            container.appendChild(row);
+        });
+
+        attachCalculateEvent();
+        calculate();
+
+    } catch (error) {
+        console.error('Error loading salary grade:', error);
+    }
+}
+
+// Employee select handler
+document.getElementById('employee_select').addEventListener('change', async function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const employeeId = this.value;
+
+    if (!employeeId) {
+        document.getElementById('employee_id').value = '';
+        document.getElementById('employee_name').value = '';
+        document.getElementById('salary_grade_select').value = '';
+        const container = document.getElementById('deduction-container');
+        container.innerHTML = '';
+        container.appendChild(createDeductionRow());
+        attachCalculateEvent();
+        return;
+    }
+
+    const employeeName = selectedOption.dataset.name;
+    const gradeId = selectedOption.dataset.gradeId;
+
+    document.getElementById('employee_id').value = employeeId;
+    document.getElementById('employee_name').value = employeeName;
+    document.getElementById('employee_name').readOnly = true;
+
+    if (gradeId) {
+        document.getElementById('salary_grade_select').value = gradeId;
+        await loadSalaryGrade(gradeId);
+    }
+
+    await loadPendingDeductions(employeeName);
+});
+
+// Salary grade select handler
+document.getElementById('salary_grade_select').addEventListener('change', async function() {
+    const gradeId = this.value;
+    if (gradeId) {
+        await loadSalaryGrade(gradeId);
+    }
+});
+
+// When typing manual name
+let nameTimeout;
+document.getElementById('employee_name').addEventListener('input', function() {
+    if (document.getElementById('employee_select').value) {
+        document.getElementById('employee_select').value = '';
+        document.getElementById('employee_id').value = '';
+        this.readOnly = false;
+    }
+
+    clearTimeout(nameTimeout);
+    nameTimeout = setTimeout(() => {
+        const name = this.value.trim();
+        if (name.length >= 3) {
+            loadPendingDeductions(name);
+        }
+    }, 500);
+});
+
+// ===== MỚI: RESPONSIBILITY FUNCTIONS =====
+function createResponsibilityRow(content = '', amount = 0) {
+    const div = document.createElement('div');
+    div.className = 'responsibility-item row mb-2';
+    div.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="responsibility_content[]"
+                   value="${content}" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input responsibility-amount"
+                   name="responsibility_amount[]" value="${amount}" placeholder="Số tiền" step="1">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    return div;
+}
+
+document.getElementById('add-responsibility').addEventListener('click', function() {
+    const container = document.getElementById('responsibility-container');
+    container.appendChild(createResponsibilityRow());
+    attachCalculateEvent();
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-responsibility')) {
+        const item = e.target.closest('.responsibility-item');
+        if (document.querySelectorAll('.responsibility-item').length > 1) {
+            item.remove();
+            calculate();
+        }
+    }
+});
+
+// ===== CAPACITY FUNCTIONS (giữ nguyên) =====
+function createCapacityRow(content = '', amount = 0) {
+    const div = document.createElement('div');
+    div.className = 'capacity-item row mb-2';
+    div.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="capacity_content[]"
+                   value="${content}" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control calc-input capacity-amount"
+                   name="capacity_amount[]" value="${amount}" placeholder="Số tiền" step="1">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-capacity">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    return div;
+}
+
+document.getElementById('add-capacity').addEventListener('click', function() {
+    const container = document.getElementById('capacity-container');
+    container.appendChild(createCapacityRow());
+    attachCalculateEvent();
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-capacity')) {
+        const item = e.target.closest('.capacity-item');
+        if (document.querySelectorAll('.capacity-item').length > 1) {
+            item.remove();
+            calculate();
+        }
+    }
+});
+
+// ===== DEDUCTION FUNCTIONS =====
 function createDeductionRow(content = '', amount = 0, dataId = '') {
     const div = document.createElement('div');
     div.className = 'deduction-item row mb-2';
@@ -302,19 +491,15 @@ async function loadPendingDeductions(employeeName) {
     if (!employeeName) return;
 
     try {
-        // Load penalties
         const penaltiesResp = await fetch(`/penalties/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
         const penalties = await penaltiesResp.json();
 
-        // Load advances
         const advancesResp = await fetch(`/advances/api/pending-by-employee/${encodeURIComponent(employeeName)}`);
         const advances = await advancesResp.json();
 
-        // Clear existing deductions
         const container = document.getElementById('deduction-container');
         container.innerHTML = '';
 
-        // Add penalties
         penalties.forEach(p => {
             const row = createDeductionRow(
                 `Phạt: ${p.reason} (${p.penalty_date})`,
@@ -324,7 +509,6 @@ async function loadPendingDeductions(employeeName) {
             container.appendChild(row);
         });
 
-        // Add advances
         advances.forEach(a => {
             const row = createDeductionRow(
                 `Tạm ứng: ${a.reason} (${a.advance_date})`,
@@ -334,11 +518,9 @@ async function loadPendingDeductions(employeeName) {
             container.appendChild(row);
         });
 
-        // Add empty row if no deductions
         if (penalties.length === 0 && advances.length === 0) {
             container.appendChild(createDeductionRow());
         } else {
-            // Show notification
             const totalDeductions = penalties.length + advances.length;
             const msg = document.createElement('div');
             msg.className = 'alert alert-info mb-3';
@@ -354,7 +536,6 @@ async function loadPendingDeductions(employeeName) {
 
     } catch (error) {
         console.error('Error loading deductions:', error);
-        // Add empty row on error
         const container = document.getElementById('deduction-container');
         if (container.children.length === 0) {
             container.appendChild(createDeductionRow());
@@ -363,138 +544,6 @@ async function loadPendingDeductions(employeeName) {
     }
 }
 
-// Employee select handler
-document.getElementById('employee_select').addEventListener('change', async function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const employeeId = this.value;
-
-    if (!employeeId) {
-        document.getElementById('employee_id').value = '';
-        document.getElementById('employee_name').value = '';
-        document.getElementById('salary_grade_select').value = '';
-
-        // Clear deductions
-        const container = document.getElementById('deduction-container');
-        container.innerHTML = '';
-        container.appendChild(createDeductionRow());
-        attachCalculateEvent();
-
-        return;
-    }
-
-    const employeeName = selectedOption.dataset.name;
-    const gradeId = selectedOption.dataset.gradeId;
-
-    document.getElementById('employee_id').value = employeeId;
-    document.getElementById('employee_name').value = employeeName;
-    document.getElementById('employee_name').readOnly = true;
-
-    if (gradeId) {
-        document.getElementById('salary_grade_select').value = gradeId;
-        await loadSalaryGrade(gradeId);
-    }
-
-    // Load pending deductions
-    await loadPendingDeductions(employeeName);
-});
-
-// When typing manual name, also load deductions
-let nameTimeout;
-document.getElementById('employee_name').addEventListener('input', function() {
-    if (document.getElementById('employee_select').value) {
-        document.getElementById('employee_select').value = '';
-        document.getElementById('employee_id').value = '';
-        this.readOnly = false;
-    }
-
-    // Debounce to avoid calling API continuously
-    clearTimeout(nameTimeout);
-    nameTimeout = setTimeout(() => {
-        const name = this.value.trim();
-        if (name.length >= 3) {
-            loadPendingDeductions(name);
-        }
-    }, 500);
-});
-
-// Salary grade auto-fill
-document.getElementById('salary_grade_select').addEventListener('change', async function() {
-    const gradeId = this.value;
-    if (gradeId) {
-        await loadSalaryGrade(gradeId);
-    }
-});
-
-async function loadSalaryGrade(gradeId) {
-    try {
-        const response = await fetch(`/salary-grades/api/grade/${gradeId}`);
-        const data = await response.json();
-
-        // Fill basic salaries
-        document.getElementById('basic_salary').value = data.basic_salary;
-        document.getElementById('responsibility_salary').value = data.responsibility_salary;
-
-        // Fill capacity bonuses
-        const container = document.getElementById('capacity-container');
-        container.innerHTML = '';
-
-        const bonuses = data.capacity_bonuses || [];
-        if (bonuses.length === 0) {
-            bonuses.push({content: '', amount: 0});
-        }
-
-        bonuses.forEach(bonus => {
-            const row = createCapacityRow(bonus.content, bonus.amount);
-            container.appendChild(row);
-        });
-
-        attachCalculateEvent();
-        calculate();
-
-    } catch (error) {
-        console.error('Error loading salary grade:', error);
-    }
-}
-
-function createCapacityRow(content = '', amount = 0) {
-    const div = document.createElement('div');
-    div.className = 'capacity-item row mb-2';
-    div.innerHTML = `
-        <div class="col-md-7">
-            <input type="text" class="form-control" name="capacity_content[]"
-                   value="${content}" placeholder="Nội dung">
-        </div>
-        <div class="col-md-4">
-            <input type="number" class="form-control calc-input capacity-amount"
-                   name="capacity_amount[]" value="${amount}" placeholder="Số tiền" step="1">
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-danger btn-sm remove-capacity">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
-    return div;
-}
-
-// Add/remove capacity rows
-document.getElementById('add-capacity').addEventListener('click', function() {
-    const container = document.getElementById('capacity-container');
-    container.appendChild(createCapacityRow());
-    attachCalculateEvent();
-});
-
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.remove-capacity')) {
-        const item = e.target.closest('.capacity-item');
-        if (document.querySelectorAll('.capacity-item').length > 1) {
-            item.remove();
-            calculate();
-        }
-    }
-});
-
-// Add/remove deduction rows
 document.getElementById('add-deduction').addEventListener('click', function() {
     const container = document.getElementById('deduction-container');
     const newRow = createDeductionRow();
@@ -505,7 +554,6 @@ document.getElementById('add-deduction').addEventListener('click', function() {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-deduction')) {
         const item = e.target.closest('.deduction-item');
-        // Don't allow removing if it's auto-filled
         if (!item.getAttribute('data-deduction-id')) {
             if (document.querySelectorAll('.deduction-item').length > 1) {
                 item.remove();
@@ -515,37 +563,49 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Calculate function
+// ===== CALCULATE FUNCTION - CẬP NHẬT =====
 function calculate() {
     const workDays = parseFloat(document.getElementById('work_days_in_month').value) || 0;
     const actualDays = parseFloat(document.getElementById('actual_work_days').value) || 0;
     const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
-    const respSalary = parseFloat(document.getElementById('responsibility_salary').value) || 0;
 
+    // Lương cơ bản/ngày
     const basicPerDay = workDays > 0 ? basicSalary / workDays : 0;
     document.getElementById('display_basic_per_day').textContent = formatMoney(basicPerDay);
 
-    const respPerDay = workDays > 0 ? respSalary / workDays : 0;
+    // ===== MỚI: Tính TỔNG lương trách nhiệm =====
+    let totalResp = 0;
+    document.querySelectorAll('.responsibility-amount').forEach(input => {
+        totalResp += parseFloat(input.value) || 0;
+    });
+
+    // Lương trách nhiệm/ngày
+    const respPerDay = workDays > 0 ? totalResp / workDays : 0;
     document.getElementById('display_resp_per_day').textContent = formatMoney(respPerDay);
 
+    // Lương chính
     const mainSalary = (basicPerDay + respPerDay) * actualDays;
     document.getElementById('display_main_salary').textContent = formatMoney(mainSalary);
 
+    // Tổng lương năng lực
     let totalCapacity = 0;
     document.querySelectorAll('.capacity-amount').forEach(input => {
         totalCapacity += parseFloat(input.value) || 0;
     });
     document.getElementById('display_capacity_bonus').textContent = formatMoney(totalCapacity);
 
+    // Tổng thu nhập
     const totalIncome = mainSalary + totalCapacity;
     document.getElementById('display_total_income').textContent = formatMoney(totalIncome);
 
+    // Tổng khấu trừ
     let totalDeduction = 0;
     document.querySelectorAll('.deduction-amount').forEach(input => {
         totalDeduction += parseFloat(input.value) || 0;
     });
     document.getElementById('display_total_deduction').textContent = formatMoney(totalDeduction);
 
+    // Lương thực lĩnh
     const netSalary = totalIncome - totalDeduction;
     document.getElementById('display_net_salary').textContent = formatMoney(netSalary);
 }

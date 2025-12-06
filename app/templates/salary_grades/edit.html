@@ -30,20 +30,62 @@
                         </div>
                     </div>
 
+                    <!-- LƯƠNG CƠ BẢN -->
                     <h5 class="mb-3"><i class="bi bi-wallet2"></i> Lương Cơ Bản</h5>
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="basic_salary" class="form-label">Lương Cơ Bản/Tháng (₫) *</label>
                             <input type="number" class="form-control" id="basic_salary"
                                    name="basic_salary" step="1000" required value="{{ grade.basic_salary }}">
                         </div>
-                        <div class="col-md-6">
-                            <label for="responsibility_salary" class="form-label">Lương Trách Nhiệm/Tháng (₫)</label>
-                            <input type="number" class="form-control" id="responsibility_salary"
-                                   name="responsibility_salary" step="1000" value="{{ grade.responsibility_salary }}">
-                        </div>
                     </div>
 
+                    <!-- ===== MỚI: LƯƠNG TRÁCH NHIỆM ===== -->
+                    <h5 class="mb-3"><i class="bi bi-briefcase-fill"></i> Lương Trách Nhiệm</h5>
+                    <p class="text-muted">Các khoản lương trách nhiệm theo từng công việc/vị trí cụ thể.</p>
+
+                    <div id="responsibility-container" class="mb-4">
+                        {% set responsibilities = grade.get_responsibilities() %}
+                        {% if responsibilities %}
+                            {% for resp in responsibilities %}
+                            <div class="responsibility-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="responsibility_content[]"
+                                           value="{{ resp.content }}" placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control responsibility-amount"
+                                           name="responsibility_amount[]" value="{{ resp.amount }}" step="1000">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="responsibility-item row mb-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="responsibility_content[]" placeholder="Nội dung">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" class="form-control responsibility-amount"
+                                           name="responsibility_amount[]" placeholder="Số tiền" step="1000" value="0">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mb-4" id="add-responsibility">
+                        <i class="bi bi-plus-circle"></i> Thêm Lương Trách Nhiệm
+                    </button>
+
+                    <!-- LƯƠNG NĂNG LỰC -->
                     <h5 class="mb-3"><i class="bi bi-award"></i> Lương Năng Lực Mặc Định</h5>
                     <p class="text-muted">Các khoản lương năng lực này sẽ tự động được điền khi tạo bảng lương.</p>
 
@@ -70,8 +112,7 @@
                         {% else %}
                             <div class="capacity-item row mb-2">
                                 <div class="col-md-7">
-                                    <input type="text" class="form-control" name="capacity_content[]"
-                                           placeholder="Nội dung">
+                                    <input type="text" class="form-control" name="capacity_content[]" placeholder="Nội dung">
                                 </div>
                                 <div class="col-md-4">
                                     <input type="number" class="form-control capacity-amount"
@@ -115,7 +156,40 @@
 
 {% block scripts %}
 <script>
-// Add capacity bonus row
+// ===== RESPONSIBILITY =====
+document.getElementById('add-responsibility').addEventListener('click', function() {
+    const container = document.getElementById('responsibility-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'responsibility-item row mb-2';
+    newRow.innerHTML = `
+        <div class="col-md-7">
+            <input type="text" class="form-control" name="responsibility_content[]" placeholder="Nội dung">
+        </div>
+        <div class="col-md-4">
+            <input type="number" class="form-control responsibility-amount"
+                   name="responsibility_amount[]" placeholder="Số tiền" step="1000" value="0">
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-responsibility">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-responsibility')) {
+        const item = e.target.closest('.responsibility-item');
+        if (document.querySelectorAll('.responsibility-item').length > 1) {
+            item.remove();
+        } else {
+            alert('Phải có ít nhất 1 dòng lương trách nhiệm!');
+        }
+    }
+});
+
+// ===== CAPACITY BONUSES =====
 document.getElementById('add-capacity').addEventListener('click', function() {
     const container = document.getElementById('capacity-container');
     const newRow = document.createElement('div');
@@ -137,7 +211,6 @@ document.getElementById('add-capacity').addEventListener('click', function() {
     container.appendChild(newRow);
 });
 
-// Remove capacity bonus row
 document.addEventListener('click', function(e) {
     if (e.target.closest('.remove-capacity')) {
         const item = e.target.closest('.capacity-item');

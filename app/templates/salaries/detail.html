@@ -304,7 +304,6 @@
           Bảng lương tháng {{ salary.month }}
         </h4>
         <div>
-          <!-- NÚT CHIA SẺ LINK -->
           <a
             href="{{ url_for('salaries.manage_share_links', salary_id=salary.id) }}"
             class="btn btn-success btn-sm me-2"
@@ -374,16 +373,31 @@
                 {{ "{:,.0f}".format(salary.basic_salary) }} ₫
               </td>
             </tr>
-            <tr>
-              <td><strong>Lương trách nhiệm/tháng:</strong></td>
-              <td class="text-end">
-                {{ "{:,.0f}".format(salary.responsibility_salary) }} ₫
-              </td>
-            </tr>
             <tr class="table-light">
               <td>Lương cơ bản/ngày:</td>
               <td class="text-end">
                 {{ "{:,.0f}".format(salary.basic_salary_per_day) }} ₫
+              </td>
+            </tr>
+
+            <!-- ===== MỚI: Hiển thị các khoản lương trách nhiệm ===== -->
+            {% set responsibilities = salary.get_responsibilities() %}
+            {% if responsibilities %}
+            <tr>
+              <td colspan="2"><strong>Lương trách nhiệm:</strong></td>
+            </tr>
+            {% for resp in responsibilities %}
+            <tr>
+              <td class="ps-4">{{ resp.content }}</td>
+              <td class="text-end">
+                {{ "{:,.0f}".format(resp.amount) }} ₫
+              </td>
+            </tr>
+            {% endfor %}
+            <tr class="table-light">
+              <td>Tổng lương trách nhiệm/tháng:</td>
+              <td class="text-end">
+                <strong>{{ "{:,.0f}".format(salary.get_total_responsibility_salary()) }} ₫</strong>
               </td>
             </tr>
             <tr class="table-light">
@@ -392,6 +406,8 @@
                 {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }} ₫
               </td>
             </tr>
+            {% endif %}
+
             <tr class="table-primary">
               <td>
                 <strong>Lương chính ({{ salary.actual_work_days }} ngày):</strong>
@@ -633,26 +649,31 @@
         </td>
       </tr>
 
+      <!-- ===== MỚI: In các khoản lương trách nhiệm ===== -->
+      {% set responsibilities = salary.get_responsibilities() %}
+      {% if responsibilities %}
+      {% for resp in responsibilities %}
       <tr class="item-row">
-        <td class="label-cell">b. Lương Trách Nhiệm</td>
+        <td class="label-cell">b{{ loop.index }}. {{ resp.content }}</td>
         <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format(salary.responsibility_salary) }}
+          {{ "{:,.0f}".format(resp.amount) }}
         </td>
         <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format(salary.responsibility_salary_per_day) }}
+          {{ "{:,.0f}".format(resp.amount / salary.work_days_in_month) }}
         </td>
         <td class="value-cell" style="text-align: center">
           {{ salary.actual_work_days }}
         </td>
         <td class="value-cell" style="text-align: right">
-          {{ "{:,.0f}".format(salary.responsibility_salary_per_day *
-          salary.actual_work_days) }}
+          {{ "{:,.0f}".format((resp.amount / salary.work_days_in_month) * salary.actual_work_days) }}
         </td>
       </tr>
+      {% endfor %}
+      {% endif %}
 
       <!-- P3. LƯƠNG NĂNG LỰC -->
-      {% set capacity_bonuses = salary.get_capacity_bonuses() %} {% if
-      capacity_bonuses %}
+      {% set capacity_bonuses = salary.get_capacity_bonuses() %}
+      {% if capacity_bonuses %}
       <tr class="subsection-header">
         <td colspan="4">Lương Năng Lực</td>
         <td style="text-align: right">
@@ -670,12 +691,14 @@
           {{ "{:,.0f}".format(bonus.amount) }}
         </td>
       </tr>
-      {% endfor %} {% endif %}
+      {% endfor %}
+      {% endif %}
     </tbody>
   </table>
 
   <!-- C. KHẤU TRỪ -->
-  {% set deductions = salary.get_deductions() %} {% if deductions %}
+  {% set deductions = salary.get_deductions() %}
+  {% if deductions %}
   <div class="section-title">C. CÁC KHOẢN KHẤU TRỪ</div>
   <table class="detail-table">
     <tbody>
