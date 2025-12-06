@@ -2992,3 +2992,36 @@ def delete_checklist_item(task_id, checklist_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Đã xóa checklist'})
+
+
+@bp.route('/test-quick-update/<int:task_id>', methods=['GET'])
+@login_required
+def test_quick_update(task_id):
+    """Test route để debug"""
+    try:
+        from app.models import TaskCompletionReport
+
+        task = Task.query.get_or_404(task_id)
+
+        # Test basic info
+        result = {
+            'task_id': task.id,
+            'title': task.title,
+            'status': task.status,
+            'creator': task.creator.full_name if task.creator else None,
+            'due_date': str(task.due_date) if task.due_date else None,
+            'can_complete': task.can_complete(),
+            'checklist_progress': task.get_checklist_progress(),
+            'current_user': current_user.full_name,
+            'current_user_role': current_user.role
+        }
+
+        return jsonify({'success': True, 'data': result})
+
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
