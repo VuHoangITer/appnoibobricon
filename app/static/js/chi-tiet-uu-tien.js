@@ -159,7 +159,14 @@ function quickUpdateStatus(taskId, newStatus) {
         },
         body: JSON.stringify({ status: newStatus })
     })
-    .then(response => response.json())
+    .then(response => {
+        // ✅ KIỂM TRA CONTENT-TYPE TRƯỚC KHI PARSE JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON. Có thể route không tồn tại hoặc có lỗi server.');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             location.reload();
@@ -171,7 +178,7 @@ function quickUpdateStatus(taskId, newStatus) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        alert('Có lỗi xảy ra: ' + error.message);
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -189,7 +196,14 @@ function quickRateTask(taskId, rating) {
         },
         body: JSON.stringify({ rating: rating })
     })
-    .then(response => response.json())
+    .then(response => {
+        // ✅ KIỂM TRA CONTENT-TYPE
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             location.reload();
@@ -199,7 +213,7 @@ function quickRateTask(taskId, rating) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        alert('Có lỗi xảy ra: ' + error.message);
     });
 }
 
@@ -261,17 +275,36 @@ function loadChecklistItems(taskId) {
     container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="bi bi-hourglass-split"></i> Đang tải...</div>';
 
     fetch(`/tasks/${taskId}/checklists`)
-        .then(response => response.json())
+        .then(response => {
+            // ✅ KIỂM TRA STATUS CODE
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // ✅ KIỂM TRA CONTENT-TYPE
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server trả về HTML thay vì JSON. Route có thể không tồn tại.');
+            }
+
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 renderChecklistItems(data.checklists, data.can_manage);
             } else {
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Không thể tải checklist</div>';
+                container.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc3545;">
+                    Không thể tải checklist: ${data.error || 'Unknown error'}
+                </div>`;
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Có lỗi xảy ra</div>';
+            console.error('Error loading checklist:', error);
+            container.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc3545;">
+                <i class="bi bi-exclamation-triangle"></i><br>
+                Có lỗi xảy ra: ${error.message}<br>
+                <small>Kiểm tra console để biết chi tiết</small>
+            </div>`;
         });
 }
 
@@ -381,7 +414,13 @@ function completeChecklistItem(checklistId) {
         },
         body: JSON.stringify({ checklist_id: checklistId })
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -394,7 +433,7 @@ function completeChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra');
+        alert('Có lỗi xảy ra: ' + error.message);
         btn.disabled = false;
     });
 }
@@ -416,7 +455,13 @@ function approveChecklistItem(checklistId, action) {
             action: action
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -429,7 +474,7 @@ function approveChecklistItem(checklistId, action) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra');
+        alert('Có lỗi xảy ra: ' + error.message);
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -457,7 +502,13 @@ function rejectChecklistItem(checklistId) {
             rejection_reason: reason || ''
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -470,7 +521,7 @@ function rejectChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra');
+        alert('Có lỗi xảy ra: ' + error.message);
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -491,7 +542,13 @@ function resetChecklistItem(checklistId) {
         },
         body: JSON.stringify({ checklist_id: checklistId })
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server trả về HTML thay vì JSON');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -503,7 +560,7 @@ function resetChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra');
+        alert('Có lỗi xảy ra: ' + error.message);
         btn.disabled = false;
     });
 }
