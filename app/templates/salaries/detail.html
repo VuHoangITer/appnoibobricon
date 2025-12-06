@@ -339,7 +339,7 @@
 </div>
 
 <!-- Print Title (only visible when printing) -->
-<div class="print-title">Phiếu Lương Nhân Viên {{ salary.employee_name }}</div>
+<div class="print-title">Phiếu Lương Nhân Viên Bricon</div>
 
 <div class="row no-print">
   <div class="col-md-10 offset-md-1">
@@ -681,7 +681,7 @@
 
       <!-- P1. LƯƠNG CHÍNH -->
       <tr class="subsection-header">
-        <td colspan="4">Lương Chính</td>
+        <td colspan="4">A. Lương Chính</td>
         <td style="text-align: right">
           {{ "{:,.0f}".format(salary.main_salary) }}
         </td>
@@ -710,7 +710,7 @@
 
         <!-- Thêm tiêu đề "Lương Trách Nhiệm" -->
         <tr class="subsection-header">
-          <td colspan="4">Lương Trách Nhiệm</td>
+          <td colspan="4">B. Lương Trách Nhiệm</td>
           <td style="text-align: right">
             {{ "{:,.0f}".format(salary.get_total_responsibility_salary() / salary.work_days_in_month * salary.actual_work_days) }}
           </td>
@@ -740,7 +740,7 @@
       {% set capacity_bonuses = salary.get_capacity_bonuses() %}
       {% if capacity_bonuses %}
       <tr class="subsection-header">
-        <td colspan="4">Lương Năng Lực</td>
+        <td colspan="4">C. Lương Năng Lực</td>
         <td style="text-align: right">
           {{ "{:,.0f}".format(salary.total_capacity_bonus) }}
         </td>
@@ -801,13 +801,6 @@
     </tbody>
   </table>
 
-  <!-- GHI CHÚ -->
-  <div class="note-section">
-    <strong>Ghi chú:</strong>
-    Vui lòng kiểm tra kỹ thông tin. Mọi thắc mắc liên hệ bộ phận nhân sự trong 3
-    ngày.
-  </div>
-
   <!-- FOOTER QUY ĐỊNH + NHÂN VIÊN XÁC NHẬN -->
   <div class="signature-section">
     <table class="footer-table">
@@ -854,7 +847,12 @@
       </tr>
     </table>
   </div>
-
+    <!-- GHI CHÚ -->
+  <div class="note-section">
+    <strong>Ghi chú:</strong>
+    Vui lòng kiểm tra kỹ thông tin. Mọi thắc mắc liên hệ bộ phận nhân sự trong 3
+    ngày.
+  </div>
 </div>
 
 <style>
