@@ -358,7 +358,13 @@ def quick_create_salary(employee_id):
 def salary_detail(salary_id):
     """Chi tiết bảng lương"""
     salary = Salary.query.get_or_404(salary_id)
-    return render_template('salaries/detail.html', salary=salary)
+
+    # Tìm nhân viên theo tên để lấy mã nhân viên
+    employee = Employee.query.filter_by(full_name=salary.employee_name).first()
+
+    return render_template('salaries/detail.html',
+                           salary=salary,
+                           employee=employee)
 
 
 @bp.route('/<int:salary_id>/edit', methods=['GET', 'POST'])

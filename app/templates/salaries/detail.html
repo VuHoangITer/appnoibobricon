@@ -4,7 +4,7 @@
 
 {% block content %}
 <style>
-  /* Mobile responsive styles */
+  /* ================= MOBILE ================= */
   @media (max-width: 768px) {
     .salary-info-table {
       font-size: 0.9rem;
@@ -64,6 +64,7 @@
     }
   }
 
+  /* ================= PRINT (A4) ================= */
   @media print {
     .no-print {
       display: none !important;
@@ -83,7 +84,9 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Banner đầu trang */
     .header-banner {
+      display: block;
       margin-bottom: 6px;
     }
     .header-banner img {
@@ -93,6 +96,7 @@
       object-fit: contain;
     }
 
+    /* Tiêu đề in */
     .print-title {
       display: block !important;
       background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
@@ -237,21 +241,6 @@
       font-style: italic;
     }
 
-    @page {
-      margin: 10mm;
-      size: A4;
-    }
-
-    .section-title:not(:first-child) {
-      margin-top: 6px;
-    }
-
-    .signature-section,
-    .note-section,
-    .footer-info {
-      page-break-inside: avoid;
-    }
-
     .total-row {
       page-break-after: avoid;
     }
@@ -266,25 +255,80 @@
       font-weight: bold;
       background: linear-gradient(to right, #e8f5e9 0%, #c8e6c9 100%) !important;
     }
+
+    /* ====== FOOTER QUY ĐỊNH + CHỮ KÝ NHÂN VIÊN ====== */
+    .footer-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    .footer-table td {
+      border: 1px solid #999;
+      vertical-align: top;
+    }
+
+    .footer-rules-cell {
+      padding: 6px 8px;
+      font-size: 8px;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .footer-rules-cell strong {
+      font-weight: 600;
+    }
+
+    .footer-sign-cell {
+      width: 32%;
+      text-align: center;
+      padding: 8px 6px;
+      font-size: 9px;
+    }
+
+    .footer-sign-date {
+      font-size: 9px;
+      margin-bottom: 18px;
+    }
+
+    .footer-sign-title {
+      font-weight: bold;
+      font-size: 10px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .footer-sign-note {
+      font-size: 8px;
+      font-style: italic;
+    }
+
+    @page {
+      margin: 10mm;
+      size: A4;
+    }
+
+    .section-title:not(:first-child) {
+      margin-top: 6px;
+    }
+
+    .signature-section,
+    .note-section,
+    .footer-info {
+      page-break-inside: avoid;
+    }
   }
 
-  .no-print {
-  }
-
+  /* Mặc định trên màn hình */
+  .no-print { }
   .print-title {
     display: none;
   }
-
   .header-banner {
     display: none;
   }
-
-  @media print {
-    .header-banner {
-      display: block;
-    }
-  }
 </style>
+
 
 <!-- Header Banner (only visible when printing) -->
 <div class="header-banner">
@@ -584,7 +628,13 @@
   <table class="info-table">
     <tr>
       <td class="label-cell">Mã Nhân Viên</td>
-      <td class="value-cell">{{ salary.id }}</td>
+      <td class="value-cell">
+        {% if employee and employee.employee_code %}
+          {{ employee.employee_code }}
+        {% else %}
+          Chưa có mã
+        {% endif %}
+      </td>
     </tr>
     <tr>
       <td class="label-cell">Tên Nhân Viên</td>
@@ -758,38 +808,53 @@
     ngày.
   </div>
 
-  <!-- CHỮ KÝ -->
+  <!-- FOOTER QUY ĐỊNH + NHÂN VIÊN XÁC NHẬN -->
   <div class="signature-section">
-    <table style="width: 100%">
+    <table class="footer-table">
       <tr>
-        <td style="width: 33%; text-align: center" class="signature-box">
-          <div class="signature-title">KẾ TOÁN</div>
-          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
-          <div style="height: 30px"></div>
-          <div class="signature-name">___________________</div>
+        <!-- Cột trái: Quy định làm việc -->
+        <td class="footer-rules-cell">
+          <strong>GIỜ LÀM VIỆC:</strong> Sáng: 08h00 - 11h30 &nbsp;&nbsp;
+          Chiều: 13h00 - 17h30<br>
+          <strong>CHẤM CÔNG:</strong> Bằng máy chấm công tại Công Ty. Đối với
+          NVKD có thể chấm công bằng CRM APP nếu không có lịch làm việc tại
+          Công Ty.<br>
+          <strong>NGÀY LÀM VIỆC:</strong> Từ thứ 2 đến Thứ 7 hàng tuần<br>
+          <strong>NGHỈ LỄ, TẾT:</strong> Theo thông báo của Ban Thư ký<br>
+          <strong>NGHỈ PHÉP KHÔNG LƯƠNG:</strong> Xin nghỉ phép trước 03 ngày
+          kể từ ngày nộp đơn cho Ban Thư Ký và phải được đồng ý mới được nghỉ.
+          Các trường hợp nghỉ bệnh, lo nghĩa vụ nhà nước phải có giấy tờ chứng
+          minh. Thời gian xin nghỉ phép không quá 4 ngày/lần.<br>
+          <strong>NGHỈ PHÉP CÓ LƯƠNG:</strong> 12 ngày/năm (theo mức lương vùng,
+          thanh toán vào cuối năm, áp dụng với nhân sự làm việc liên tục &gt;
+          12 tháng).<br>
+          <strong>THÔI VIỆC:</strong> Nộp đơn xin thôi việc trước 15 ngày và
+          được sự đồng ý từ BGĐ (nhận lương vào ngày 5 tháng tiếp theo). Trường
+          hợp nghỉ đột xuất, không bàn giao công việc mất 100% lương và hoa
+          hồng các ngày làm việc trước đó.<br>
+          <strong>PHẠT ĐI TRỄ, VỀ SỚM:</strong> Đi trễ 1s: phạt 200.000đ.
+          Trên 90 phút: phạt 1 ngày lương. Trường hợp đề xuất xin đi trễ nếu được
+          duyệt phải bổ sung đơn đề xuất.<br>
+          <strong>PHẠT KHÔNG CHẤM CÔNG, NGHỈ KHÔNG PHÉP:</strong> 5 ngày LCB.<br>
+          <strong>PHẠT NGHỈ QUÁ 12 NGÀY/NĂM</strong> (bao gồm phép + không
+          phép): Mất 100% thưởng Lương Tháng 13.
         </td>
-        <td style="width: 34%; text-align: center" class="signature-box">
-          <div class="signature-title">NHÂN VIÊN</div>
-          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
-          <div style="height: 30px"></div>
-          <div class="signature-name">{{ salary.employee_name }}</div>
-        </td>
-        <td style="width: 33%; text-align: center" class="signature-box">
-          <div class="signature-title">NGƯỜI LẬP PHIẾU</div>
-          <div class="signature-note">(Ký, ghi rõ họ tên)</div>
-          <div style="height: 30px"></div>
-          <div class="signature-name">{{ salary.creator.full_name }}</div>
+
+        <!-- Cột phải: Ngày, chữ ký nhân viên -->
+        <td class="footer-sign-cell">
+          <div class="footer-sign-date">
+            TP. HCM, Ngày {{ salary.created_at.strftime('%d') }}
+            Tháng {{ salary.created_at.strftime('%m') }}
+            Năm {{ salary.created_at.strftime('%Y') }}
+          </div>
+          <div class="footer-sign-title">NHÂN VIÊN XÁC NHẬN</div>
+          <div class="footer-sign-note">(Ký, ghi rõ họ và tên)</div>
+          <div style="height: 40px;"></div>
         </td>
       </tr>
     </table>
   </div>
 
-  <!-- FOOTER -->
-  <div class="footer-info">
-    TP. HCM, Ngày {{ salary.created_at.strftime('%d') }} Tháng {{
-    salary.created_at.strftime('%m') }} Năm {{ salary.created_at.strftime('%Y')
-    }}
-  </div>
 </div>
 
 <style>
