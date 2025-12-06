@@ -396,5 +396,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    window.CSRF_TOKEN = '{{ csrf_token() }}';
+</script>
 <script src="{{ url_for('static', filename='js/chi-tiet-uu-tien.js') }}?v={{ config.VERSION }}"></script>
 {% endblock %}

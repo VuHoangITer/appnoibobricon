@@ -1,44 +1,3 @@
-// ============================================
-// CSRF TOKEN - SAFE GETTER
-// ============================================
-function getCSRFToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    if (!meta) {
-        console.error('CSRF token meta tag not found');
-        return '';
-    }
-    return meta.content;
-}
-
-// ============================================
-// HÀM HỖ TRỢ: XỬ LÝ RESPONSE JSON AN TOÀN
-// ============================================
-async function handleResponse(response) {
-    // Lấy text trước để debug
-    const text = await response.text();
-    console.log('Response status:', response.status);
-    console.log('Response text:', text);
-
-    // Kiểm tra response có OK không (status 200-299)
-    if (!response.ok) {
-        // Thử parse JSON để lấy error message
-        try {
-            const errorData = JSON.parse(text);
-            throw new Error(errorData.error || errorData.message || `Lỗi ${response.status}: ${response.statusText}`);
-        } catch (e) {
-            // Nếu không parse được JSON, hiển thị raw text
-            throw new Error(`Lỗi ${response.status}: ${text || response.statusText}`);
-        }
-    }
-
-    // Parse JSON response nếu OK
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        throw new Error('Server không trả về JSON hợp lệ: ' + text);
-    }
-}
-
 // ========================================
 // COUNTDOWN TIMER
 // ========================================
@@ -183,27 +142,25 @@ function toggleFilter(filterType) {
 }
 
 // ========================================
-// QUICK UPDATE STATUS - ĐÃ SỬA LỖI
+// QUICK UPDATE STATUS
 // ========================================
-async function quickUpdateStatus(taskId, newStatus) {
+function quickUpdateStatus(taskId, newStatus) {
     const btn = event.target.closest('button');
     const originalHTML = btn.innerHTML;
 
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
 
-    try {
-        const response = await fetch(`/tasks/${taskId}/quick-update-status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ status: newStatus })
-        });
-
-        const data = await handleResponse(response);
-
+    fetch(`/tasks/${taskId}/quick-update-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             location.reload();
         } else {
@@ -211,39 +168,39 @@ async function quickUpdateStatus(taskId, newStatus) {
             btn.disabled = false;
             btn.innerHTML = originalHTML;
         }
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message + '\nVui lòng kiểm tra console để biết thêm chi tiết.');
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
-    }
+    });
 }
 
 // ========================================
-// QUICK RATE TASK - ĐÃ SỬA LỖI
+// QUICK RATE TASK
 // ========================================
-async function quickRateTask(taskId, rating) {
-    try {
-        const response = await fetch(`/tasks/${taskId}/quick-rate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ rating: rating })
-        });
-
-        const data = await handleResponse(response);
-
+function quickRateTask(taskId, rating) {
+    fetch(`/tasks/${taskId}/quick-rate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({ rating: rating })
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             location.reload();
         } else {
             alert('Lỗi: ' + (data.error || 'Không thể đánh giá'));
         }
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
-    }
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+    });
 }
 
 // ========================================
@@ -273,7 +230,7 @@ function selectRating(rating) {
 }
 
 // ============================================
-// CHECKLIST FUNCTIONS - ĐÃ SỬA LỖI
+// CHECKLIST FUNCTIONS
 // ============================================
 let currentChecklistTaskId = null;
 
@@ -299,23 +256,23 @@ function closeChecklistModal() {
     currentChecklistTaskId = null;
 }
 
-async function loadChecklistItems(taskId) {
+function loadChecklistItems(taskId) {
     const container = document.getElementById('checklistModalBody');
     container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="bi bi-hourglass-split"></i> Đang tải...</div>';
 
-    try {
-        const response = await fetch(`/tasks/${taskId}/checklists`);
-        const data = await handleResponse(response);
-
-        if (data.success) {
-            renderChecklistItems(data.checklists, data.can_manage);
-        } else {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Không thể tải checklist</div>';
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc3545;">Có lỗi xảy ra: ${error.message}</div>`;
-    }
+    fetch(`/tasks/${taskId}/checklists`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderChecklistItems(data.checklists, data.can_manage);
+            } else {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Không thể tải checklist</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Có lỗi xảy ra</div>';
+        });
 }
 
 function renderChecklistItems(checklists, canManage) {
@@ -411,24 +368,56 @@ function renderChecklistItems(checklists, canManage) {
     container.innerHTML = `<div class="checklist-items">${itemsHTML}</div>`;
 }
 
-async function completeChecklistItem(checklistId) {
+function completeChecklistItem(checklistId) {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+    fetch(`/tasks/${currentChecklistTaskId}/checklist/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadChecklistItems(currentChecklistTaskId);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Lỗi: ' + (data.error || 'Không thể xử lý'));
+            btn.disabled = false;
+            loadChecklistItems(currentChecklistTaskId);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra');
+        btn.disabled = false;
+    });
+}
+
+function approveChecklistItem(checklistId, action) {
     const btn = event.target.closest('button');
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
 
-    try {
-        const response = await fetch(`/tasks/${currentChecklistTaskId}/checklist/complete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ checklist_id: checklistId })
-        });
-
-        const data = await handleResponse(response);
-
+    fetch(`/tasks/${currentChecklistTaskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
             setTimeout(() => location.reload(), 1000);
@@ -437,52 +426,16 @@ async function completeChecklistItem(checklistId) {
             btn.disabled = false;
             btn.innerHTML = originalHTML;
         }
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
-    }
+    });
 }
 
-async function approveChecklistItem(checklistId, action) {
-    const btn = event.target.closest('button');
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
-
-    try {
-        const response = await fetch(`/tasks/${currentChecklistTaskId}/checklist/approve`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
-                checklist_id: checklistId,
-                action: action
-            })
-        });
-
-        const data = await handleResponse(response);
-
-        if (data.success) {
-            loadChecklistItems(currentChecklistTaskId);
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            alert('Lỗi: ' + (data.error || 'Không thể xử lý'));
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-    }
-}
-
-async function rejectChecklistItem(checklistId) {
+function rejectChecklistItem(checklistId) {
     const reason = prompt('Nhập lý do từ chối (tùy chọn):');
 
     if (reason === null) return;
@@ -492,22 +445,20 @@ async function rejectChecklistItem(checklistId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
 
-    try {
-        const response = await fetch(`/tasks/${currentChecklistTaskId}/checklist/approve`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({
-                checklist_id: checklistId,
-                action: 'reject',
-                rejection_reason: reason || ''
-            })
-        });
-
-        const data = await handleResponse(response);
-
+    fetch(`/tasks/${currentChecklistTaskId}/checklist/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            checklist_id: checklistId,
+            action: 'reject',
+            rejection_reason: reason || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
             setTimeout(() => location.reload(), 1000);
@@ -516,47 +467,45 @@ async function rejectChecklistItem(checklistId) {
             btn.disabled = false;
             btn.innerHTML = originalHTML;
         }
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
-    }
+    });
 }
 
-async function resetChecklistItem(checklistId) {
+function resetChecklistItem(checklistId) {
     if (!confirm('Bạn muốn làm lại checklist này?')) return;
 
     const btn = event.target.closest('button');
-    const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
 
-    try {
-        const response = await fetch(`/tasks/${currentChecklistTaskId}/checklist/reset`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ checklist_id: checklistId })
-        });
-
-        const data = await handleResponse(response);
-
+    fetch(`/tasks/${currentChecklistTaskId}/checklist/reset`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN
+        },
+        body: JSON.stringify({ checklist_id: checklistId })
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
         } else {
             alert('Lỗi: ' + (data.error || 'Không thể xử lý'));
             btn.disabled = false;
-            btn.innerHTML = originalHTML;
+            loadChecklistItems(currentChecklistTaskId);
         }
-    } catch (error) {
+    })
+    .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
-        btn.innerHTML = originalHTML;
-    }
+    });
 }
 
 // ========================================
