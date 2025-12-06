@@ -1,3 +1,15 @@
+// ============================================
+// CSRF TOKEN - SAFE GETTER
+// ============================================
+function getCSRFToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (!meta) {
+        console.error('CSRF token meta tag not found');
+        return '';
+    }
+    return meta.content;
+}
+
 // ========================================
 // COUNTDOWN TIMER
 // ========================================
@@ -155,18 +167,11 @@ function quickUpdateStatus(taskId, newStatus) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({ status: newStatus })
     })
-    .then(response => {
-        // ✅ KIỂM TRA CONTENT-TYPE TRƯỚC KHI PARSE JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON. Có thể route không tồn tại hoặc có lỗi server.');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             location.reload();
@@ -178,7 +183,7 @@ function quickUpdateStatus(taskId, newStatus) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -192,18 +197,11 @@ function quickRateTask(taskId, rating) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({ rating: rating })
     })
-    .then(response => {
-        // ✅ KIỂM TRA CONTENT-TYPE
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             location.reload();
@@ -213,7 +211,7 @@ function quickRateTask(taskId, rating) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
     });
 }
 
@@ -275,36 +273,17 @@ function loadChecklistItems(taskId) {
     container.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="bi bi-hourglass-split"></i> Đang tải...</div>';
 
     fetch(`/tasks/${taskId}/checklists`)
-        .then(response => {
-            // ✅ KIỂM TRA STATUS CODE
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            // ✅ KIỂM TRA CONTENT-TYPE
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Server trả về HTML thay vì JSON. Route có thể không tồn tại.');
-            }
-
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 renderChecklistItems(data.checklists, data.can_manage);
             } else {
-                container.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc3545;">
-                    Không thể tải checklist: ${data.error || 'Unknown error'}
-                </div>`;
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Không thể tải checklist</div>';
             }
         })
         .catch(error => {
-            console.error('Error loading checklist:', error);
-            container.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc3545;">
-                <i class="bi bi-exclamation-triangle"></i><br>
-                Có lỗi xảy ra: ${error.message}<br>
-                <small>Kiểm tra console để biết chi tiết</small>
-            </div>`;
+            console.error('Error:', error);
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">Có lỗi xảy ra</div>';
         });
 }
 
@@ -410,17 +389,11 @@ function completeChecklistItem(checklistId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({ checklist_id: checklistId })
     })
-    .then(response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -433,7 +406,7 @@ function completeChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
     });
 }
@@ -448,20 +421,14 @@ function approveChecklistItem(checklistId, action) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({
             checklist_id: checklistId,
             action: action
         })
     })
-    .then(response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -474,7 +441,7 @@ function approveChecklistItem(checklistId, action) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -494,7 +461,7 @@ function rejectChecklistItem(checklistId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({
             checklist_id: checklistId,
@@ -502,13 +469,7 @@ function rejectChecklistItem(checklistId) {
             rejection_reason: reason || ''
         })
     })
-    .then(response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -521,7 +482,7 @@ function rejectChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     });
@@ -538,17 +499,11 @@ function resetChecklistItem(checklistId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': window.CSRF_TOKEN
+            'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify({ checklist_id: checklistId })
     })
-    .then(response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server trả về HTML thay vì JSON');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             loadChecklistItems(currentChecklistTaskId);
@@ -560,7 +515,7 @@ function resetChecklistItem(checklistId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
+        alert('Có lỗi xảy ra');
         btn.disabled = false;
     });
 }

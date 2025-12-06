@@ -1871,13 +1871,15 @@ def quick_update_status(task_id):
     """
     API cập nhật nhanh trạng thái task (cho nút Bắt đầu/Hoàn thành)
     """
+    from app.models import TaskCompletionReport  # ✅ THÊM IMPORT Ở ĐÂY
+
     task = Task.query.get_or_404(task_id)
     new_status = request.json.get('status')
 
     if new_status not in ['IN_PROGRESS', 'DONE']:
         return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
 
-    # ===== ✅ KIỂM TRA CHECKLIST KHI HOÀN THÀNH =====
+    # KIỂM TRA CHECKLIST KHI HOÀN THÀNH
     if new_status == 'DONE':
         if not task.can_complete():
             progress = task.get_checklist_progress()
@@ -1886,7 +1888,7 @@ def quick_update_status(task_id):
                 'error': f'Chưa hoàn thành checklist! ({progress["approved"]}/{progress["total"]} đã duyệt)'
             }), 400
 
-    # ===== CHECK PHÊ DUYỆT (GIỮ NGUYÊN CODE CŨ) =====
+    # CHECK PHÊ DUYỆT
     if task.requires_approval and task.approved is None:
         if current_user.role != 'director':
             return jsonify({
@@ -1925,7 +1927,6 @@ def quick_update_status(task_id):
             completion_time = int(time_delta.total_seconds() / 60)
 
         # Tạo báo cáo
-        from app.models import TaskCompletionReport
         completion_report = TaskCompletionReport(
             task_id=task.id,
             completed_by=current_user.id,
@@ -1936,7 +1937,7 @@ def quick_update_status(task_id):
         )
         db.session.add(completion_report)
 
-        # Logic đánh giá tự động (giống như route update_status)
+        # Logic đánh giá tự động
         creator = task.creator
         if current_user.role == 'director' and creator.role == 'manager':
             task.performance_rating = 'good'
