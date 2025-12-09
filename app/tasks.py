@@ -2991,3 +2991,100 @@ def delete_checklist_item(task_id, checklist_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Đã xóa checklist'})
+
+
+@bp.route('/tv-display')
+@login_required
+@role_required(['director'])
+def tv_display():
+    """
+    Trang hiển thị trên Smart TV cho phòng kinh doanh
+    - CHỈ Director mới truy cập được
+    - Hiển thị thống kê tổng quan, không có thông tin nhạy cảm
+    - Auto-refresh mỗi 30 giây
+    """
+    from sqlalchemy import func, case
+    from app.models import TaskCompletionReport, News
+    from app.utils import utc_to_vn
+
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = now - timedelta(days=7)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # ===== 1. THỐNG KÊ TỔNG QUAN =====
+    stats = db.session.query(
+        func.count(Task.id).label('total_tasks'),
+        func.sum(case((Task.status == 'PENDING', 1), else_=0)).label('pending'),
+        func.sum(case((Task.status == 'IN_PROGRESS', 1), else_=0)).label('in_progress'),
+        func.sum(case((Task.status == 'DONE', 1), else_=0)).label('done'),
+        func.sum(case((and_(Task.is_urgent == True, Task.status != 'DONE'), 1), else_=0)).label('urgent'),
+        func.sum(case(((Task.due_date < func.now()) & (Task.status != 'DONE'), 1), else_=0)).label('overdue')
+    ).first()
+
+    total_tasks = stats.total_tasks or 0
+    pending = stats.pending or 0
+    in_progress = stats.in_progress or 0
+    done = stats.done or 0
+    urgent = stats.urgent or 0
+    overdue = stats.overdue or 0
+
+
+    # ===== 2. NHIỆM VỤ KHẨN CẤP ĐANG CHỜ XỬ LÝ =====
+    urgent_tasks = Task.query.filter(
+        Task.is_urgent == True,
+        Task.status.in_(['PENDING', 'IN_PROGRESS'])
+    ).order_by(Task.due_date.asc().nullslast()).limit(5).all()
+
+    # ===== 3. TOP PERFORMERS (7 NGÀY QUA) =====
+    top_performers = db.session.query(
+        User.full_name,
+        func.count(TaskCompletionReport.id).label('completed_count'),
+        func.sum(case((TaskCompletionReport.was_overdue == False, 1), else_=0)).label('on_time_count')
+    ).join(
+        TaskCompletionReport, User.id == TaskCompletionReport.completed_by
+    ).filter(
+        TaskCompletionReport.completed_at >= week_ago,
+        User.role.in_(['hr', 'accountant', 'manager'])
+    ).group_by(
+        User.id, User.full_name
+    ).order_by(
+        func.count(TaskCompletionReport.id).desc()
+    ).limit(5).all()
+
+    # ===== 4. TIN TỨC MỚI NHẤT =====
+    latest_news = News.query.order_by(News.created_at.desc()).limit(3).all()
+
+    # ===== 5. NHIỆM VỤ HOÀN THÀNH HÔM NAY =====
+    today_completed = TaskCompletionReport.query.filter(
+        TaskCompletionReport.completed_at >= today_start
+    ).count()
+
+    # ===== 6. NHIỆM VỤ HOÀN THÀNH THÁNG NÀY =====
+    month_completed = TaskCompletionReport.query.filter(
+        TaskCompletionReport.completed_at >= month_start
+    ).count()
+
+    # ===== 7. TỶ LỆ HOÀN THÀNH ĐÚNG HẠN (7 NGÀY QUA) =====
+    week_reports = TaskCompletionReport.query.filter(
+        TaskCompletionReport.completed_at >= week_ago
+    ).all()
+
+    on_time_this_week = sum(1 for r in week_reports if not r.was_overdue)
+    total_this_week = len(week_reports)
+    on_time_rate = int((on_time_this_week / total_this_week * 100)) if total_this_week > 0 else 0
+
+    return render_template('tv_display.html',
+                           total_tasks=total_tasks,
+                           pending=pending,
+                           in_progress=in_progress,
+                           done=done,
+                           urgent=urgent,
+                           overdue=overdue,
+                           urgent_tasks=urgent_tasks,
+                           top_performers=top_performers,
+                           latest_news=latest_news,
+                           today_completed=today_completed,
+                           month_completed=month_completed,
+                           on_time_rate=on_time_rate,
+                           total_this_week=total_this_week)

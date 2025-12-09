@@ -1,0 +1,728 @@
+{% extends "base.html" %}
+
+{% block title %}TV Display - BRICON Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --tv-bg: #f3f4f6;        /* nền xám rất nhạt */
+    --tv-card-bg: #ffffff;   /* thẻ trắng */
+    --tv-border: #e5e7eb;    /* viền xám nhạt */
+    --tv-text: #111827;      /* chữ đen mềm */
+    --tv-muted: #6b7280;     /* chữ mô tả xám */
+    --tv-accent: #111827;    /* nhấn đen/xám đậm */
+    --tv-danger: #dc2626;
+    --tv-success: #16a34a;
+}
+
+/* Ẩn navigation, full-screen TV */
+.top-navbar,
+.mobile-bottom-nav,
+.flash-container {
+    display: none !important;
+}
+
+.main-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+}
+
+/* ================== TV LAYOUT ================== */
+.tv-display-container {
+    height: 100vh;
+    background-color: var(--tv-bg);
+    color: var(--tv-text);
+    padding: 24px 28px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ===== HEADER ===== */
+.tv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--tv-border);
+    padding-bottom: 8px;
+}
+
+.tv-logo-section {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tv-logo {
+    width: auto;
+    height: 48px;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.tv-logo img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+.tv-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tv-title {
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--tv-accent);
+}
+
+.tv-subtitle {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--tv-muted);
+}
+
+.tv-time {
+    text-align: right;
+}
+
+.tv-clock {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--tv-text);
+}
+
+.tv-date {
+    font-size: 13px;
+    color: var(--tv-muted);
+    margin-top: 4px;
+}
+
+/* ===== STATS ROW ===== */
+.tv-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+}
+
+.tv-stat-card {
+    background-color: var(--tv-card-bg);
+    border-radius: 10px;
+    border: 1px solid var(--tv-border);
+    padding: 10px 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.tv-stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tv-stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--tv-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: var(--tv-accent);
+    background: #f9fafb;
+}
+
+.tv-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--tv-muted);
+}
+
+.tv-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* màu nhấn – giữ đơn giản */
+.stat-blue,
+.stat-yellow,
+.stat-purple,
+.stat-orange,
+.stat-green,
+.stat-red {
+    color: var(--tv-text) !important;
+}
+
+/* ===== CONTENT GRID ===== */
+.tv-content-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1.1fr;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+}
+
+.tv-column-left,
+.tv-column-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+}
+
+/* ===== SECTION CARD ===== */
+.tv-section {
+    background-color: var(--tv-card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--tv-border);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.tv-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--tv-text);
+}
+
+.tv-section-title i {
+    font-size: 16px;
+    color: var(--tv-accent);
+}
+
+.tv-section-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 13px;
+}
+
+.tv-section-content::-webkit-scrollbar {
+    width: 6px;
+}
+.tv-section-content::-webkit-scrollbar-track {
+    background: #e5e7eb;
+}
+.tv-section-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+}
+
+/* ===== TOP PERFORMERS ===== */
+.tv-performer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--tv-border);
+    background-color: #f9fafb;
+    margin-bottom: 6px;
+}
+
+.tv-performer-rank {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background-color: #111827;
+    color: #f9fafb;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tv-performer-info {
+    flex: 1;
+    margin-left: 8px;
+}
+
+.tv-performer-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tv-text);
+}
+
+.tv-performer-stats {
+    font-size: 12px;
+    color: var(--tv-muted);
+}
+
+.tv-performer-badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    color: var(--tv-text);
+    background: #f3f4f6;
+}
+
+/* ===== URGENT TASKS ===== */
+.tv-urgent-item {
+    padding: 8px 9px;
+    border-radius: 8px;
+    background-color: #fef2f2;
+    border-left: 4px solid var(--tv-danger);
+    border-right: 1px solid #fecaca;
+    border-top: 1px solid #fecaca;
+    border-bottom: 1px solid #fecaca;
+    margin-bottom: 6px;
+}
+
+.tv-urgent-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #b91c1c;
+}
+
+.tv-urgent-title i {
+    color: #b91c1c;
+}
+
+.tv-urgent-meta {
+    font-size: 12px;
+    color: #991b1b;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tv-urgent-meta i {
+    margin-right: 3px;
+}
+
+/* ===== TODAY / MONTH STATS ===== */
+.tv-today-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tv-today-box {
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--tv-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tv-today-box--green {
+    background-color: #ecfdf3;
+}
+.tv-today-box--blue {
+    background-color: #eff6ff;
+}
+.tv-today-box--purple {
+    background-color: #f5f3ff;
+}
+
+.tv-today-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tv-today-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--tv-text);
+}
+
+.tv-today-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--tv-muted);
+}
+
+.tv-today-icon {
+    font-size: 18px;
+    color: var(--tv-text);
+}
+
+/* ===== NEWS ===== */
+.tv-news-item {
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--tv-border);
+    background-color: #f9fafb;
+    margin-bottom: 6px;
+}
+
+.tv-news-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--tv-text);
+}
+
+.tv-news-time {
+    font-size: 11px;
+    color: var(--tv-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tv-news-time i {
+    color: var(--tv-muted);
+}
+
+/* ===== EMPTY ===== */
+.tv-empty-state {
+    text-align: center;
+    padding: 18px 8px;
+    color: var(--tv-muted);
+    font-size: 13px;
+}
+
+.tv-empty-state i {
+    font-size: 20px;
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+
+/* ===== REFRESH INDICATOR ===== */
+.tv-refresh-indicator {
+    position: fixed;
+    right: 20px;
+    bottom: 18px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background-color: #ffffff;
+    border: 1px solid var(--tv-border);
+    font-size: 12px;
+    color: var(--tv-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.tv-refresh-indicator i {
+    color: var(--tv-text);
+}
+
+/* ===== RESPONSIVE NHẸ (nếu không chạy trên TV full HD) ===== */
+@media (max-width: 1400px) {
+    .tv-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .tv-content-grid {
+        grid-template-columns: 1fr;
+    }
+    .tv-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .tv-time {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tv-display-container">
+    <!-- HEADER -->
+    <div class="tv-header">
+        <div class="tv-logo-section">
+            <div class="tv-logo">
+                {% if system_config %}
+                <img src="{{ url_for('static', filename='images/' + system_config.logo_filename) }}" alt="Logo BRICON">
+                {% else %}
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo BRICON">
+                {% endif %}
+            </div>
+        </div>
+        <div class="tv-time">
+            <div class="tv-clock" id="tvClock">--:--:--</div>
+            <div class="tv-date" id="tvDate">--</div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="tv-stats-grid">
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-list-check"></i></div>
+                <div class="tv-stat-label">Tổng nhiệm vụ</div>
+            </div>
+            <div class="tv-stat-value stat-blue">{{ total_tasks }}</div>
+        </div>
+
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-inbox"></i></div>
+                <div class="tv-stat-label">Chưa làm</div>
+            </div>
+            <div class="tv-stat-value stat-purple">{{ pending }}</div>
+        </div>
+
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="tv-stat-label">Đang làm</div>
+            </div>
+            <div class="tv-stat-value stat-yellow">{{ in_progress }}</div>
+        </div>
+
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="tv-stat-label">Hoàn thành</div>
+            </div>
+            <div class="tv-stat-value stat-green">{{ done }}</div>
+        </div>
+
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="tv-stat-label">Khẩn cấp</div>
+            </div>
+            <div class="tv-stat-value stat-red">{{ urgent }}</div>
+        </div>
+
+        <div class="tv-stat-card">
+            <div class="tv-stat-top">
+                <div class="tv-stat-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="tv-stat-label">Quá hạn</div>
+            </div>
+            <div class="tv-stat-value stat-orange">{{ overdue }}</div>
+        </div>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="tv-content-grid">
+        <!-- LEFT -->
+        <div class="tv-column-left">
+            <!-- TOP PERFORMERS -->
+            <div class="tv-section">
+                <div class="tv-section-title">
+                    <i class="bi bi-trophy-fill"></i>
+                    Top Performers (7 ngày qua)
+                </div>
+                <div class="tv-section-content">
+                    {% if top_performers %}
+                        {% for performer in top_performers %}
+                        <div class="tv-performer-item">
+                            <div class="tv-performer-rank">{{ loop.index }}</div>
+                            <div class="tv-performer-info">
+                                <div class="tv-performer-name">{{ performer.full_name }}</div>
+                                <div class="tv-performer-stats">
+                                    {{ performer.completed_count }} nhiệm vụ • {{ performer.on_time_count }} đúng hạn
+                                </div>
+                            </div>
+                            <div class="tv-performer-badge">
+                                {{ (performer.on_time_count / performer.completed_count * 100)|int }}%
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tv-empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>Chưa có dữ liệu</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- URGENT TASKS -->
+            <div class="tv-section">
+                <div class="tv-section-title">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    Nhiệm vụ khẩn cấp
+                </div>
+                <div class="tv-section-content">
+                    {% if urgent_tasks %}
+                        {% for task in urgent_tasks %}
+                        <div class="tv-urgent-item">
+                            <div class="tv-urgent-title">
+                                <i class="bi bi-fire"></i>
+                                {{ task.title }}
+                            </div>
+                            <div class="tv-urgent-meta">
+                                <span><i class="bi bi-person"></i>{{ task.creator.full_name }}</span>
+                                {% if task.due_date %}
+                                <span><i class="bi bi-calendar"></i>{{ task.due_date|vn_datetime }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tv-empty-state">
+                            <i class="bi bi-check-circle"></i>
+                            <p>Không có nhiệm vụ khẩn cấp</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="tv-column-right">
+            <!-- THỐNG KÊ -->
+            <div class="tv-section">
+                <div class="tv-section-title">
+                    <i class="bi bi-calendar-check"></i>
+                    Thống kê
+                </div>
+                <div class="tv-today-stats">
+                    <div class="tv-today-box tv-today-box--green">
+                        <div class="tv-today-main">
+                            <div class="tv-today-value">{{ today_completed }}</div>
+                            <div class="tv-today-label">Hoàn thành hôm nay</div>
+                        </div>
+                        <div class="tv-today-icon"><i class="bi bi-check2-circle"></i></div>
+                    </div>
+                    <div class="tv-today-box tv-today-box--blue">
+                        <div class="tv-today-main">
+                            <div class="tv-today-value">{{ month_completed }}</div>
+                            <div class="tv-today-label">Hoàn thành tháng này</div>
+                        </div>
+                        <div class="tv-today-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+                    </div>
+                    <div class="tv-today-box tv-today-box--purple">
+                        <div class="tv-today-main">
+                            <div class="tv-today-value">{{ on_time_rate }}%</div>
+                            <div class="tv-today-label">Đúng hạn (7 ngày)</div>
+                        </div>
+                        <div class="tv-today-icon"><i class="bi bi-alarm"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEWS -->
+            <div class="tv-section">
+                <div class="tv-section-title">
+                    <i class="bi bi-newspaper"></i>
+                    Tin tức mới nhất
+                </div>
+                <div class="tv-section-content">
+                    {% if latest_news %}
+                        {% for news in latest_news %}
+                        <div class="tv-news-item">
+                            <div class="tv-news-title">{{ news.title }}</div>
+                            <div class="tv-news-time">
+                                <i class="bi bi-clock"></i>
+                                {{ news.created_at|vn_datetime }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tv-empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>Chưa có tin tức</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REFRESH -->
+    <div class="tv-refresh-indicator">
+        <i class="bi bi-arrow-clockwise"></i>
+        Tự động cập nhật sau <span id="refreshCountdown">30</span>s
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Đồng hồ
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('tvClock').textContent = `${h}:${m}:${s}`;
+
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('tvDate').textContent = now.toLocaleDateString('vi-VN', options);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Auto refresh
+let refreshTimer = 30;
+function updateRefreshCountdown() {
+    const el = document.getElementById('refreshCountdown');
+    if (!el) return;
+    el.textContent = refreshTimer;
+    refreshTimer--;
+    if (refreshTimer < 0) location.reload();
+}
+setInterval(updateRefreshCountdown, 1000);
+updateRefreshCountdown();
+
+// Wake lock
+let wakeLock = null;
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) {
+        console.warn('Wake Lock not supported:', err);
+    }
+}
+requestWakeLock();
+document.addEventListener('visibilitychange', () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+    }
+});
+
+// Disable context menu
+document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+{% endblock %}
