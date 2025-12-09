@@ -1666,7 +1666,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 }
 /* ============================================
-   MARQUEE NOTIFICATION BAR
+   MARQUEE NOTIFICATION BAR – MINIMAL STYLE
    ============================================ */
 .marquee-container {
     width: 100%;
@@ -1679,6 +1679,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     position: relative;
 }
 
+/* Làm hiệu ứng fade 2 bên rất nhẹ, không “colorful” nữa */
 .marquee-container::before,
 .marquee-container::after {
     content: '';
@@ -1700,8 +1701,18 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
 }
 
-/* Animation cho máy tính */
-@keyframes marquee-desktop {
+.marquee-wrapper {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+}
+
+.marquee-wrapper:hover {
+    animation-play-state: paused;
+}
+
+@keyframes marquee {
     0% {
         transform: translateX(100%);
     }
@@ -1710,40 +1721,19 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     }
 }
 
-/* Animation cho điện thoại */
-@keyframes marquee-mobile {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
-}
-
-.marquee-wrapper {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    animation: marquee-desktop 20s linear infinite;
-    width: fit-content;
-}
-
-.marquee-wrapper:hover {
-    animation-play-state: paused;
-}
-
-.marquee-content {
-    display: inline-flex;
-    align-items: center;
-    padding-right: 100px;
-}
-
 .marquee-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-right: 10px;
     flex-shrink: 0;
+    width: auto;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .marquee-icon i {
@@ -1756,59 +1746,65 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     font-weight: 500;
     color: #111827;
     letter-spacing: 0.2px;
+    padding-right: 80px; /* Khoảng cách giữa các lần lặp */
 }
 
-/* Animation speed variants */
-.marquee-wrapper.slow {
-    animation-duration: 30s;
-}
-
-.marquee-wrapper.fast {
-    animation-duration: 12s;
-}
-
-/* Responsive */
+/* Responsive - Tablet */
 @media (max-width: 992px) {
     .marquee-container {
         padding: 8px 12px;
+        margin-bottom: 14px;
+        border-radius: 8px;
     }
+
     .marquee-text {
         font-size: 0.9rem;
-    }
-    .marquee-content {
-        padding-right: 80px;
-    }
-}
-
-@media (max-width: 768px) {
-    .marquee-wrapper {
-        animation: marquee-mobile 15s linear infinite;
-    }
-
-    .marquee-container {
-        padding: 6px 10px;
-    }
-    .marquee-text {
-        font-size: 0.88rem;
-    }
-    .marquee-content {
         padding-right: 60px;
     }
 }
 
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .marquee-container {
+        padding: 6px 10px;
+        margin-bottom: 12px;
+    }
+
+    .marquee-text {
+        font-size: 0.88rem;
+        padding-right: 50px;
+    }
+
+    .marquee-container::before,
+    .marquee-container::after {
+        width: 24px;
+    }
+}
+
+/* Responsive - Small Mobile */
 @media (max-width: 480px) {
     .marquee-container {
         padding: 6px 8px;
+        margin-bottom: 10px;
     }
+
     .marquee-text {
         font-size: 0.85rem;
+        padding-right: 40px;
     }
-    .marquee-content {
-        padding-right: 50px;
-    }
+
     .marquee-wrapper {
-        animation-duration: 12s;
+        animation-duration: 25s; /* Mobile chạy nhanh hơn chút */
     }
+}
+
+/* Animation variants */
+.marquee-wrapper.slow {
+    animation-duration: 45s;
+}
+
+.marquee-wrapper.fast {
+    animation-duration: 20s;
 }
 
 /* ===========================
@@ -1817,7 +1813,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 
 /* SUCCESS (xanh lá) */
 .marquee-container.theme-success {
-    background: #16a34a;
+    background: #16a34a;             /* nền xanh lá */
     border-color: #16a34a;
 }
 
@@ -1851,6 +1847,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     background: linear-gradient(to left, rgba(251,191,36,1), rgba(251,191,36,0));
 }
 
+/* chữ & icon dùng màu nâu đậm cho dễ đọc trên nền vàng */
 .marquee-container.theme-warning .marquee-text {
     color: #78350f;
 }
@@ -1876,6 +1873,7 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 .marquee-container.theme-info .marquee-text {
     color: #f0f9ff;
 }
+
 
 .marquee-container.theme-info .marquee-icon i {
     color: #f0f9ff;
