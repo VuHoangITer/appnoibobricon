@@ -1164,7 +1164,8 @@ function updateCellIfChanged(row, type, newCount, userId) {
         delete animationTimeouts[oldestKey];
     }
 
-    cell.classList.add('cell-updating');
+    cell.style.transform = 'scale(1.05)';
+    cell.style.transition = 'transform 0.2s ease';
 
     animationTimeouts[cellKey] = setTimeout(() => {
         const filterParams = new URLSearchParams();
@@ -1189,13 +1190,13 @@ function updateCellIfChanged(row, type, newCount, userId) {
             cell.textContent = newCount;
         }
 
-        cell.classList.remove('cell-updating');
-        cell.classList.add('cell-updated');
+        cell.style.transform = 'scale(1)';
 
         setTimeout(() => {
-            cell.classList.remove('cell-updated');
+            cell.style.transform = '';
+            cell.style.transition = '';
             delete animationTimeouts[cellKey];
-        }, 1000);
+        }, 200);
 
     }, CONFIG.ANIMATION_DURATION);
 }

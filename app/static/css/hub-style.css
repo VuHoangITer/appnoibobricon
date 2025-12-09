@@ -742,6 +742,9 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
     border-bottom: 1px solid #f0f0f0;
     vertical-align: middle;
     font-size: 1.6rem;
+
+    height: 70px;
+    min-height: 70px;
 }
 
 .performance-table tbody tr:hover {
@@ -1899,4 +1902,36 @@ a:not(.btn):not(.nav-link):not(.sidebar-brand) {
 
 .marquee-container.theme-danger .marquee-icon i {
     color: #fef2f2;
+}
+/* ============================================
+   FIX TV: LARGE SCREENS (1920px+)
+   ============================================ */
+@media (min-width: 1920px) {
+    /* ✅ Tăng chiều cao row cho TV */
+    .performance-table tbody td {
+        height: 80px;
+        min-height: 80px;
+    }
+
+    /* ✅ Scale fonts cho dễ đọc */
+    .performance-table {
+        font-size: 1.2rem;
+    }
+
+    .performance-table thead th,
+    .performance-table tbody td {
+        padding: 18px 15px;
+    }
+}
+
+/* FIX TV: 4K SCREENS (2560px+) */
+@media (min-width: 2560px) {
+    .performance-table tbody td {
+        height: 90px;
+        min-height: 90px;
+    }
+
+    .performance-table {
+        font-size: 1.4rem;
+    }
 }
