@@ -197,17 +197,36 @@
                  style="background: {{ marquee_config.custom_bg_color }}; border-color: {{ marquee_config.custom_bg_color }};"
                  {% endif %}>
                 <div class="marquee-wrapper {{ marquee_config.get_speed_class() }}">
-                    <span class="preview-icon"
-                          {% if marquee_config.theme == 'custom' %}
-                          style="color: {{ marquee_config.custom_icon_color }};"
-                          {% endif %}>
-                        <i class="bi {{ marquee_config.icon }}"></i>
+                    <!-- Bản copy 1 -->
+                    <span class="marquee-content">
+                        <span class="marquee-icon"
+                              {% if marquee_config.theme == 'custom' %}
+                              style="color: {{ marquee_config.custom_icon_color }};"
+                              {% endif %}>
+                            <i class="bi {{ marquee_config.icon }}"></i>
+                        </span>
+                        <span class="marquee-text"
+                            {% if marquee_config.theme == 'custom' %}
+                              style="color: {{ marquee_config.custom_text_color }};"
+                            {% endif %}>
+                            {{ marquee_config.text }}
+                        </span>
                     </span>
-                    <span class="marquee-text"
-                          {% if marquee_config.theme == 'custom' %}
-                          style="color: {{ marquee_config.custom_text_color }};"
-                          {% endif %}>
-                        {{ marquee_config.text }}
+
+                    <!-- Bản copy 2 - QUAN TRỌNG -->
+                    <span class="marquee-content">
+                        <span class="marquee-icon"
+                              {% if marquee_config.theme == 'custom' %}
+                              style="color: {{ marquee_config.custom_icon_color }};"
+                              {% endif %}>
+                            <i class="bi {{ marquee_config.icon }}"></i>
+                        </span>
+                        <span class="marquee-text"
+                            {% if marquee_config.theme == 'custom' %}
+                              style="color: {{ marquee_config.custom_text_color }};"
+                            {% endif %}>
+                            {{ marquee_config.text }}
+                        </span>
                     </span>
                 </div>
 
