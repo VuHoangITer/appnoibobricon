@@ -10,9 +10,14 @@
     --tv-border: #1f2937;
     --tv-text: #e5e7eb;
     --tv-muted: #9ca3af;
-    --tv-accent: #facc15;   /* Bricon yellow */
-    --tv-danger: #ef4444;
-    --tv-success: #22c55e;
+
+    /* Mỗi màu riêng biệt */
+    --stat-blue:   #3b82f6; /* xanh dương */
+    --stat-yellow: #facc15; /* vàng */
+    --stat-purple: #a855f7; /* tím */
+    --stat-orange: #fb923c; /* cam */
+    --stat-green:  #22c55e; /* xanh lá */
+    --stat-red:    #ef4444; /* đỏ */
 }
 
 /* Ẩn navigation, full-screen TV */
@@ -132,53 +137,49 @@
     padding: 10px 12px;
     box-sizing: border-box;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
 }
 
-.tv-stat-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.tv-stat-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    border: 1px solid var(--tv-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    color: var(--tv-accent);
-}
-
 .tv-stat-label {
-    font-size: 11px;
+    font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--tv-muted);
+    white-space: nowrap;
 }
 
 .tv-stat-value {
     font-size: 22px;
     font-weight: 700;
     line-height: 1.1;
+    flex-shrink: 0;
+    margin-left: auto
 }
 
 /* màu nhấn */
-.stat-blue,
-.stat-yellow,
-.stat-purple,
+.stat-blue {
+    color: var(--stat-blue) !important;
+}
+
+.stat-yellow {
+    color: var(--stat-yellow) !important;
+}
+
+.stat-purple {
+    color: var(--stat-purple) !important;
+}
+
 .stat-orange {
-    color: var(--tv-accent) !important;
+    color: var(--stat-orange) !important;
 }
+
 .stat-green {
-    color: var(--tv-success) !important;
+    color: var(--stat-green) !important;
 }
+
 .stat-red {
-    color: var(--tv-danger) !important;
+    color: var(--stat-red) !important;
 }
 
 /* ===== CONTENT GRID ===== */
@@ -262,7 +263,7 @@
     height: 26px;
     border-radius: 999px;
     background-color: var(--tv-accent);
-    color: #111827;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 600;
     display: flex;
@@ -484,50 +485,32 @@
     <!-- STATS -->
     <div class="tv-stats-grid">
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-list-check"></i></div>
-                <div class="tv-stat-label">Tổng nhiệm vụ</div>
-            </div>
+            <div class="tv-stat-label">Tổng NVụ</div>
             <div class="tv-stat-value stat-blue">{{ total_tasks }}</div>
         </div>
 
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-inbox"></i></div>
-                <div class="tv-stat-label">Chưa làm</div>
-            </div>
+            <div class="tv-stat-label">Chưa làm</div>
             <div class="tv-stat-value stat-purple">{{ pending }}</div>
         </div>
 
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                <div class="tv-stat-label">Đang làm</div>
-            </div>
+            <div class="tv-stat-label">Đang làm</div>
             <div class="tv-stat-value stat-yellow">{{ in_progress }}</div>
         </div>
 
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
-                <div class="tv-stat-label">Hoàn thành</div>
-            </div>
+            <div class="tv-stat-label">Hoàn thành</div>
             <div class="tv-stat-value stat-green">{{ done }}</div>
         </div>
 
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                <div class="tv-stat-label">Khẩn cấp</div>
-            </div>
+            <div class="tv-stat-label">Khẩn cấp</div>
             <div class="tv-stat-value stat-red">{{ urgent }}</div>
         </div>
 
         <div class="tv-stat-card">
-            <div class="tv-stat-top">
-                <div class="tv-stat-icon"><i class="bi bi-clock-history"></i></div>
-                <div class="tv-stat-label">Quá hạn</div>
-            </div>
+            <div class="tv-stat-label">Quá hạn</div>
             <div class="tv-stat-value stat-orange">{{ overdue }}</div>
         </div>
     </div>
