@@ -1,0 +1,881 @@
+{% extends "base.html" %}
+
+{% block title %}Bản đồ Chỉ tiêu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .map-container {
+        padding: 20px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    #map {
+        height: 650px;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .map-header h2 {
+        margin: 0;
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .map-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* CITY SELECTOR */
+    .city-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .city-selector label {
+        font-weight: 600;
+        color: #475569;
+        font-size: 14px;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .city-selector select {
+        padding: 8px 35px 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+        background: white;
+        cursor: pointer;
+        min-width: 150px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        transition: all 0.2s;
+    }
+
+    .city-selector select:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .city-selector select:hover {
+        border-color: #cbd5e1;
+    }
+
+    /* Loading indicator */
+    .map-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        color: #475569;
+    }
+
+    .map-loading .spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #0ea5e9;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .map-wrapper {
+        position: relative;
+    }
+
+    /* SEARCH BOX */
+    .search-container {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 45px 12px 45px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 5px;
+        display: none;
+        transition: color 0.2s;
+    }
+
+    .clear-search:hover {
+        color: #ef4444;
+    }
+
+    .clear-search.active {
+        display: block;
+    }
+
+    .search-results {
+        margin-top: 10px;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        display: none;
+    }
+
+    .search-results.active {
+        display: block;
+    }
+
+    .search-result-item {
+        padding: 12px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .search-result-item:hover {
+        background: #f0f9ff;
+    }
+
+    .search-result-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 14px;
+    }
+
+    .search-result-district {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .search-result-code {
+        font-size: 11px;
+        color: #94a3b8;
+        font-family: monospace;
+    }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        background: #f8fafc;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+
+    .stat-item i {
+        color: #0ea5e9;
+    }
+
+    .stat-value {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        border: 2px solid white;
+    }
+
+    .ward-popup {
+        min-width: 300px;
+        padding: 8px;
+    }
+
+    .popup-header {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #e2e8f0;
+    }
+
+    .popup-subheader {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 12px;
+        font-weight: 500;
+    }
+
+    .popup-targets {
+        margin-bottom: 12px;
+    }
+
+    .target-item.description {
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 14px;
+        border-left: 4px solid #f59e0b;
+        color: #92400e;
+        font-weight: 600;
+    }
+
+    .target-item.numeric {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 14px;
+        border-left: 4px solid #0ea5e9;
+    }
+
+    .target-name {
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .target-value {
+        font-weight: 700;
+        color: #0ea5e9;
+        font-size: 16px;
+    }
+
+    .popup-notes {
+        font-size: 13px;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 10px;
+        padding: 10px;
+        background: #fef3c7;
+        border-radius: 6px;
+        border-left: 3px solid #f59e0b;
+    }
+
+    .no-targets {
+        color: #94a3b8;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .ward-label {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        color: #1e293b !important;
+        text-shadow:
+            1px 1px 2px rgba(255,255,255,0.9),
+            -1px -1px 2px rgba(255,255,255,0.9),
+            1px -1px 2px rgba(255,255,255,0.9),
+            -1px 1px 2px rgba(255,255,255,0.9),
+            0 0 4px rgba(255,255,255,1) !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        pointer-events: none !important;
+    }
+
+    @media (max-width: 768px) {
+        #map {
+            height: 500px;
+        }
+
+        .map-container {
+            padding: 15px;
+        }
+
+        .map-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .city-selector {
+            width: 100%;
+        }
+
+        .city-selector select {
+            flex: 1;
+        }
+
+        .ward-popup {
+            min-width: 200px;
+        }
+
+        .ward-label {
+            font-size: 9px !important;
+        }
+
+        .stats-bar {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-container">
+    <div class="map-header">
+        <h2><i class="bi bi-geo-alt-fill text-danger"></i> Bản Đồ Chỉ Tiêu</h2>
+        <div class="map-controls">
+            <!-- CITY SELECTOR -->
+            <div class="city-selector">
+                <label><i class="bi bi-building"></i> Tỉnh/Thành:</label>
+                <select id="citySelect" onchange="changeCity(this.value)">
+                    <option value="TP.HCM" {% if current_city == 'TP.HCM' %}selected{% endif %}>TP. Hồ Chí Minh</option>
+                    <option value="Đồng Nai" {% if current_city == 'Đồng Nai' %}selected{% endif %}>Đồng Nai</option>
+                </select>
+            </div>
+
+            {% if can_edit %}
+            <a href="{{ url_for('map.manage_targets') }}?city={{ current_city }}" class="btn btn-primary">
+                <i class="bi bi-gear-fill"></i>
+            </a>
+            {% endif %}
+            <button class="btn btn-outline-secondary" onclick="resetMapView()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <i class="bi bi-map"></i>
+            <span>Phường/Xã: <span class="stat-value" id="totalWards">--</span></span>
+        </div>
+        <div class="stat-item">
+            <i class="bi bi-bar-chart"></i>
+            <span>Có chỉ tiêu: <span class="stat-value" id="wardsWithTargets">--</span></span>
+        </div>
+    </div>
+
+    <!-- SEARCH BOX -->
+    <div class="search-container">
+        <div class="search-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text"
+                   class="search-input"
+                   id="wardSearch"
+                   placeholder="Tìm phường/xã..."
+                   autocomplete="off">
+            <button class="clear-search" id="clearSearch" onclick="clearSearch()">
+                <i class="bi bi-x-circle-fill"></i>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="map-wrapper">
+        <div id="map"></div>
+        <div class="map-loading" id="mapLoading" style="display: none;">
+            <div class="spinner"></div>
+            <span>Đang tải bản đồ...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ========== CONFIGURATION ==========
+const CITY_CONFIG = {
+    'TP.HCM': {
+        name: 'TP. Hồ Chí Minh',
+        geojsonUrl: 'https://cdn.jsdelivr.net/gh/VuHoangITer/hcmc-geojson@v1/hcmc_wards.geojson',
+        center: [10.8231, 106.6297],
+        zoom: 11
+    },
+    'Đồng Nai': {
+        name: 'Đồng Nai',
+        geojsonUrl: 'https://cdn.jsdelivr.net/gh/VuHoangITer/hcmc-geojson@v2/dn_wards.geojson',
+        center: [10.9574, 106.8426],
+        zoom: 10
+    }
+};
+
+// ========== GLOBAL STATE ==========
+let currentCity = '{{ current_city }}';
+let targetsData = {{ targets_dict | tojson | safe }};
+let map = null;
+let wardLayer = null;
+let labelMarkers = [];
+let allWards = [];
+let wardLayers = {};
+
+const wardColors = [
+    '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3',
+    '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39',
+    '#FFC107', '#FF9800', '#FF5722', '#795548', '#607D8B'
+];
+
+// ========== UTILITIES ==========
+function formatWardName(name) {
+    return name
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^(.)/, (match) => match.toUpperCase());
+}
+
+// Tính điểm centroid nằm trong polygon (thay vì bounds center có thể lệch)
+function getPolygonCenter(layer) {
+    try {
+        const latlngs = layer.getLatLngs();
+
+        // Xử lý MultiPolygon - lấy polygon lớn nhất
+        let mainPolygon = latlngs;
+        if (Array.isArray(latlngs[0]) && Array.isArray(latlngs[0][0])) {
+            let maxArea = 0;
+            latlngs.forEach(poly => {
+                const polyBounds = L.latLngBounds(poly[0]);
+                const area = (polyBounds.getNorth() - polyBounds.getSouth()) *
+                            (polyBounds.getEast() - polyBounds.getWest());
+                if (area > maxArea) {
+                    maxArea = area;
+                    mainPolygon = poly[0];
+                }
+            });
+        } else if (Array.isArray(latlngs[0])) {
+            mainPolygon = latlngs[0];
+        }
+
+        // Tính centroid thực sự
+        let sumLat = 0, sumLng = 0, count = 0;
+        mainPolygon.forEach(point => {
+            sumLat += point.lat;
+            sumLng += point.lng;
+            count++;
+        });
+
+        return L.latLng(sumLat / count, sumLng / count);
+    } catch (e) {
+        return layer.getBounds().getCenter();
+    }
+}
+
+function getColorForWard(code) {
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) {
+        hash = code.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return wardColors[Math.abs(hash) % wardColors.length];
+}
+
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'd');
+}
+
+// ========== MAP FUNCTIONS ==========
+function initMap() {
+    const config = CITY_CONFIG[currentCity];
+
+    map = L.map('map', {
+        zoomControl: true,
+        attributionControl: true
+    }).setView(config.center, config.zoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 18,
+    }).addTo(map);
+}
+
+function resetMapView() {
+    const config = CITY_CONFIG[currentCity];
+    map.setView(config.center, config.zoom);
+}
+
+function showLoading(show) {
+    document.getElementById('mapLoading').style.display = show ? 'flex' : 'none';
+}
+
+function changeCity(city) {
+    // Redirect với city parameter
+    window.location.href = `{{ url_for('map.view_map') }}?city=${encodeURIComponent(city)}`;
+}
+
+function clearMap() {
+    // Remove ward layer
+    if (wardLayer) {
+        map.removeLayer(wardLayer);
+        wardLayer = null;
+    }
+
+    // Remove all label markers
+    labelMarkers.forEach(marker => {
+        if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+        }
+    });
+    labelMarkers = [];
+
+    // Clear data
+    allWards = [];
+    wardLayers = {};
+}
+
+function loadGeoJSON() {
+    const config = CITY_CONFIG[currentCity];
+
+    showLoading(true);
+    clearMap();
+
+    fetch(config.geojsonUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Cannot load GeoJSON file');
+            }
+            return response.json();
+        })
+        .then(geojsonData => {
+            console.log('✅ GeoJSON loaded:', geojsonData.features.length, 'wards');
+
+            // Store all wards for search
+            allWards = geojsonData.features.map(feature => ({
+                code: feature.properties.code,
+                name: feature.properties.name,
+                district: feature.properties.district
+            }));
+
+            // Update stats
+            document.getElementById('totalWards').textContent = allWards.length;
+            document.getElementById('wardsWithTargets').textContent = Object.keys(targetsData).length;
+
+            wardLayer = L.geoJSON(geojsonData, {
+                style: getFeatureStyle,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+            map.fitBounds(wardLayer.getBounds());
+
+            showLoading(false);
+            console.log('🗺️ Map initialized for', config.name);
+        })
+        .catch(error => {
+            console.error('❌ Error loading GeoJSON:', error);
+            showLoading(false);
+            alert('Lỗi khi tải bản đồ ' + config.name + '.\nVui lòng kiểm tra kết nối internet.');
+        });
+}
+
+function getFeatureStyle(feature) {
+    const code = feature.properties.code;
+    const color = getColorForWard(code);
+
+    return {
+        fillColor: color,
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.7
+    };
+}
+
+function onEachFeature(feature, layer) {
+    const name = feature.properties.name;
+    const code = feature.properties.code;
+    const district = feature.properties.district;
+
+    // Store layer reference for search
+    wardLayers[code] = layer;
+
+    layer.on('mouseover', function() {
+        this.setStyle({
+            fillOpacity: 0.9,
+            weight: 3,
+            color: '#fbbf24'
+        });
+        this.bringToFront();
+    });
+
+    layer.on('mouseout', function() {
+        this.setStyle({
+            fillOpacity: 0.7,
+            weight: 2,
+            color: 'white'
+        });
+    });
+
+    layer.on('click', function(e) {
+        const popupContent = createPopupContent(name, code, district);
+        layer.bindPopup(popupContent, {
+            maxWidth: 350,
+            className: 'custom-popup'
+        }).openPopup();
+
+        map.fitBounds(layer.getBounds(), {
+            padding: [50, 50],
+            maxZoom: 14
+        });
+    });
+
+    // Create label - dùng centroid thay vì bounds center
+    try {
+        const center = getPolygonCenter(layer);
+        const displayName = formatWardName(name);
+
+        const labelMarker = L.marker(center, {
+            icon: L.divIcon({
+                className: 'ward-label',
+                html: displayName,
+                iconSize: null
+            }),
+            interactive: false
+        });
+
+        labelMarkers.push(labelMarker);
+
+        map.on('zoomend', function() {
+            if (map.getZoom() >= 12) {
+                if (!map.hasLayer(labelMarker)) {
+                    labelMarker.addTo(map);
+                }
+            } else {
+                if (map.hasLayer(labelMarker)) {
+                    map.removeLayer(labelMarker);
+                }
+            }
+        });
+
+        if (map.getZoom() >= 12) {
+            labelMarker.addTo(map);
+        }
+    } catch (err) {
+        console.warn('Cannot create label for', name, err);
+    }
+}
+
+function createPopupContent(wardName, wardCode, districtName) {
+    const data = targetsData[wardCode];
+    const displayName = formatWardName(wardName);
+    const displayDistrict = formatWardName(districtName);
+
+    let html = `<div class="ward-popup">`;
+    html += `<div class="popup-header">${displayName}</div>`;
+    html += `<div class="popup-subheader"><i class="bi bi-map"></i> ${displayDistrict}</div>`;
+
+    if (data && data.targets && data.targets.length > 0) {
+        html += `<div class="popup-targets">`;
+
+        data.targets.forEach(target => {
+            if (target.value) {
+                html += `
+                    <div class="target-item numeric">
+                        <span class="target-name">${target.name}</span>
+                        <span class="target-value">${target.value} ${target.unit || ''}</span>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="target-item description">
+                        <i class="bi bi-check-circle"></i> ${target.name}
+                    </div>
+                `;
+            }
+        });
+
+        html += `</div>`;
+
+        if (data.notes) {
+            html += `<div class="popup-notes"><i class="bi bi-info-circle"></i> ${data.notes}</div>`;
+        }
+    } else {
+        html += `<div class="no-targets">Chưa có chỉ tiêu</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// ========== SEARCH FUNCTIONS ==========
+function searchWards(query) {
+    const searchResults = document.getElementById('searchResults');
+    const clearBtn = document.getElementById('clearSearch');
+
+    if (!query || query.length < 2) {
+        searchResults.classList.remove('active');
+        clearBtn.classList.remove('active');
+        return;
+    }
+
+    clearBtn.classList.add('active');
+
+    const normalizedQuery = normalizeText(query);
+    const results = allWards.filter(ward => {
+        const normalizedName = normalizeText(ward.name);
+        const normalizedDistrict = normalizeText(ward.district);
+        return normalizedName.includes(normalizedQuery) ||
+               normalizedDistrict.includes(normalizedQuery);
+    });
+
+    if (results.length === 0) {
+        searchResults.innerHTML = '<div class="no-results">Không tìm thấy phường/xã nào</div>';
+    } else {
+        searchResults.innerHTML = results.map(ward => `
+            <div class="search-result-item" onclick="zoomToWard('${ward.code}')">
+                <div class="search-result-name">${formatWardName(ward.name)}</div>
+                <div class="search-result-district">
+                    <i class="bi bi-map"></i> ${formatWardName(ward.district)}
+                </div>
+                <div class="search-result-code">Code: ${ward.code}</div>
+            </div>
+        `).join('');
+    }
+
+    searchResults.classList.add('active');
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('wardSearch');
+    const searchResults = document.getElementById('searchResults');
+    const clearBtn = document.getElementById('clearSearch');
+
+    searchInput.value = '';
+    searchResults.classList.remove('active');
+    clearBtn.classList.remove('active');
+    searchInput.focus();
+}
+
+function zoomToWard(wardCode) {
+    const layer = wardLayers[wardCode];
+    if (layer) {
+        const bounds = layer.getBounds();
+        map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 14
+        });
+
+        const ward = allWards.find(w => w.code === wardCode);
+        if (ward) {
+            const popupContent = createPopupContent(ward.name, ward.code, ward.district);
+            layer.bindPopup(popupContent, {
+                maxWidth: 350,
+                className: 'custom-popup'
+            }).openPopup();
+        }
+
+        clearSearch();
+    }
+}
+
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Init map
+    initMap();
+    loadGeoJSON();
+
+    // Search event listeners
+    const searchInput = document.getElementById('wardSearch');
+
+    searchInput.addEventListener('input', function(e) {
+        searchWards(e.target.value);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            clearSearch();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        const searchContainer = document.querySelector('.search-container');
+        if (!searchContainer.contains(e.target)) {
+            document.getElementById('searchResults').classList.remove('active');
+        }
+    });
+});
+</script>
+{% endblock %}

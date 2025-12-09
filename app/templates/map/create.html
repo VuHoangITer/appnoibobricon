@@ -1,0 +1,751 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Chỉ tiêu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 30px;
+    }
+    
+    .form-card h3 {
+        margin-bottom: 25px;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .form-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .target-item {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    
+    .target-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .target-number {
+        font-weight: 600;
+        color: #64748b;
+    }
+    
+    .remove-target-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        padding: 5px;
+        transition: all 0.2s;
+    }
+    
+    .remove-target-btn:hover {
+        color: #dc2626;
+        transform: scale(1.1);
+    }
+    
+    .add-target-btn {
+        width: 100%;
+        padding: 15px;
+        border: 2px dashed #cbd5e1;
+        background: white;
+        border-radius: 8px;
+        color: #64748b;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .add-target-btn:hover {
+        border-color: #0ea5e9;
+        color: #0ea5e9;
+        background: #f0f9ff;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+    }
+    
+    .ward-preview {
+        padding: 10px;
+        background: #f0f9ff;
+        border-left: 3px solid #0ea5e9;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    .help-text {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 5px;
+    }
+
+    .example-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 4px;
+        font-size: 11px;
+        margin-top: 8px;
+    }
+
+    /* City selector highlight */
+    .city-select-wrapper {
+        position: relative;
+    }
+
+    .city-select-wrapper select {
+        font-weight: 600;
+    }
+
+    .city-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    .city-badge.hcm {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .city-badge.dn {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    /* Custom Searchable Select */
+    .custom-select-wrapper {
+        position: relative;
+    }
+
+    .select-search-box {
+        position: relative;
+    }
+
+    .select-search-box i.bi-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .select-search-input {
+        padding-left: 40px;
+        padding-right: 40px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+
+    .select-search-input:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .clear-select-search {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.2s;
+    }
+
+    .clear-select-search:hover {
+        color: #ef4444;
+    }
+
+    .select-dropdown {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        max-height: 350px;
+        overflow-y: auto;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+    }
+
+    .select-dropdown-content {
+        padding: 5px;
+    }
+
+    .select-group {
+        margin-bottom: 8px;
+    }
+
+    .select-group-label {
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 4px;
+    }
+
+    .select-option {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+        margin-bottom: 2px;
+    }
+
+    .select-option:hover {
+        background: #f0f9ff;
+    }
+
+    .select-option.selected {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .select-option-name {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .select-option-district {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .select-option.selected .select-option-district {
+        color: rgba(255,255,255,0.8);
+    }
+
+    .select-option-code {
+        font-size: 11px;
+        color: #94a3b8;
+        font-family: monospace;
+    }
+
+    .select-option.selected .select-option-code {
+        color: rgba(255,255,255,0.7);
+    }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 15px;
+        }
+
+        .form-card {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <h3>
+            <i class="bi bi-plus-circle"></i> Tạo Chỉ Tiêu Mới
+            <span class="city-badge {{ 'hcm' if default_city == 'TP.HCM' else 'dn' }}" id="cityBadge">
+                {{ default_city }}
+            </span>
+        </h3>
+
+        <form method="POST" id="targetForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="target_count" id="targetCount" value="1">
+
+            <!-- Basic Info -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-geo-alt"></i> Thông tin phường
+                </div>
+
+                <!-- CITY SELECTOR -->
+                <div class="mb-3">
+                    <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                    <div class="city-select-wrapper">
+                        <select class="form-select"
+                                name="city"
+                                id="citySelect"
+                                onchange="onCityChange(this.value)">
+                            {% for city in supported_cities %}
+                            <option value="{{ city }}" {% if city == default_city %}selected{% endif %}>
+                                {{ city }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <small class="text-muted">Chọn tỉnh/thành trước khi tìm phường</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tìm và chọn phường <span class="text-danger">*</span></label>
+
+                    <div class="custom-select-wrapper">
+                        <div class="select-search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text"
+                                   class="form-control select-search-input"
+                                   id="wardSearchInput"
+                                   placeholder="Nhập tên phường/xã..."
+                                   autocomplete="off">
+                            <button type="button" class="clear-select-search" id="clearSelectSearch" style="display: none;">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </button>
+                        </div>
+
+                        <div class="select-dropdown" id="wardDropdown" style="display: none;">
+                            <div class="select-dropdown-content" id="wardDropdownContent">
+                                <!-- Options will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="wardCode" name="ward_code" required>
+                    <input type="hidden" id="wardName" name="ward_name">
+                    <input type="hidden" id="districtName" name="district_name">
+
+                    <div class="text-muted mt-2" id="loadingText">
+                        <i class="bi bi-hourglass-split"></i> Đang tải danh sách phường...
+                    </div>
+
+                    <div id="wardPreview" class="ward-preview" style="display: none;">
+                        <strong>Mã code:</strong> <code id="previewCode"></code><br>
+                        <strong>Tên phường:</strong> <span id="previewName"></span><br>
+                        <strong>Quận/Huyện:</strong> <span id="previewDistrict"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea class="form-control"
+                              name="notes"
+                              rows="2"
+                              placeholder="Ghi chú về khu vực này (không bắt buộc)"></textarea>
+                </div>
+            </div>
+
+            <!-- Targets -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-bar-chart"></i> Các chỉ tiêu
+                </div>
+
+                <div class="alert alert-info" style="font-size: 13px;">
+                    <i class="bi bi-info-circle"></i> <strong>Hướng dẫn:</strong>
+                    <ul class="mb-0 mt-2" style="padding-left: 20px;">
+                        <li><strong>Chỉ tiêu dạng mô tả:</strong> Chỉ cần nhập tên. VD: "Gọi hỏi thăm khách 2 lần"</li>
+                        <li><strong>Chỉ tiêu dạng số liệu:</strong> Nhập đầy đủ tên + giá trị + đơn vị. VD: "Doanh số" - "500" - "triệu"</li>
+                    </ul>
+                </div>
+
+                <div id="targetsContainer">
+                    <!-- Target items will be added here -->
+                </div>
+
+                <button type="button"
+                        class="add-target-btn"
+                        onclick="addTargetItem()">
+                    <i class="bi bi-plus-circle"></i> Thêm chỉ tiêu
+                </button>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('map.manage_targets', city=default_city) }}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let targetCounter = 0;
+let allWards = [];
+let currentSelectedWard = null;
+
+// ========== CITY CONFIG ==========
+const CITY_CONFIG = {
+    'TP.HCM': {
+        name: 'TP. Hồ Chí Minh',
+        geojsonUrl: 'https://cdn.jsdelivr.net/gh/VuHoangITer/hcmc-geojson@v1/hcmc_wards.geojson',
+        badgeClass: 'hcm'
+    },
+    'Đồng Nai': {
+        name: 'Đồng Nai',
+        geojsonUrl: 'https://cdn.jsdelivr.net/gh/VuHoangITer/hcmc-geojson@v2/dn_wards.geojson',
+        badgeClass: 'dn'
+    }
+};
+
+let currentCity = '{{ default_city }}';
+
+// ========== UTILITIES ==========
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'd');
+}
+
+function formatWardName(name) {
+    return name
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^(.)/, (match) => match.toUpperCase());
+}
+
+// ========== CITY CHANGE ==========
+function onCityChange(city) {
+    currentCity = city;
+
+    // Update badge
+    const badge = document.getElementById('cityBadge');
+    badge.textContent = city;
+    badge.className = 'city-badge ' + CITY_CONFIG[city].badgeClass;
+
+    // Clear current selection
+    clearSelectSearch();
+
+    // Reload wards
+    loadWards();
+}
+
+// ========== LOAD WARDS ==========
+function loadWards() {
+    const loadingText = document.getElementById('loadingText');
+    const config = CITY_CONFIG[currentCity];
+
+    loadingText.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang tải danh sách phường ' + config.name + '...';
+    loadingText.style.display = 'block';
+
+    fetch(config.geojsonUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Cannot load GeoJSON file');
+            }
+            return response.json();
+        })
+        .then(geojsonData => {
+            console.log('✅ GeoJSON loaded:', geojsonData.features.length, 'wards');
+
+            allWards = geojsonData.features.map(feature => ({
+                code: feature.properties.code,
+                name: feature.properties.name,
+                district: feature.properties.district
+            }));
+
+            allWards.sort((a, b) => a.name.localeCompare(b.name));
+
+            renderWardOptions();
+
+            loadingText.innerHTML = '<i class="bi bi-check-circle text-success"></i> Đã tải ' + allWards.length + ' phường/xã!';
+            setTimeout(() => loadingText.style.display = 'none', 2000);
+        })
+        .catch(error => {
+            console.error('❌ Error loading wards:', error);
+            loadingText.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i> Lỗi tải dữ liệu GeoJSON.';
+        });
+}
+
+// ========== WARD SELECT ==========
+function renderWardOptions(filteredWards = null) {
+    const dropdown = document.getElementById('wardDropdownContent');
+    const wards = filteredWards || allWards;
+
+    if (wards.length === 0) {
+        dropdown.innerHTML = '<div class="no-results">Không tìm thấy phường/xã nào</div>';
+        return;
+    }
+
+    // Group by district
+    const districtGroups = {};
+    wards.forEach(ward => {
+        if (!districtGroups[ward.district]) {
+            districtGroups[ward.district] = [];
+        }
+        districtGroups[ward.district].push(ward);
+    });
+
+    const sortedDistricts = Object.keys(districtGroups).sort();
+
+    let html = '';
+    sortedDistricts.forEach(district => {
+        html += `<div class="select-group">`;
+        html += `<div class="select-group-label">${formatWardName(district)}</div>`;
+
+        districtGroups[district].forEach(ward => {
+            const isSelected = currentSelectedWard && currentSelectedWard.code === ward.code ? 'selected' : '';
+            html += `
+                <div class="select-option ${isSelected}" onclick="selectWard('${ward.code}')">
+                    <div class="select-option-name">${formatWardName(ward.name)}</div>
+                    <div class="select-option-district">
+                        <i class="bi bi-map"></i> ${formatWardName(ward.district)}
+                    </div>
+                    <div class="select-option-code">Code: ${ward.code}</div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+    });
+
+    dropdown.innerHTML = html;
+}
+
+function selectWard(wardCode) {
+    const ward = allWards.find(w => w.code === wardCode);
+    if (!ward) return;
+
+    currentSelectedWard = ward;
+
+    // Update hidden inputs
+    document.getElementById('wardCode').value = ward.code;
+    document.getElementById('wardName').value = ward.name;
+    document.getElementById('districtName').value = ward.district;
+
+    // Update search input
+    document.getElementById('wardSearchInput').value = formatWardName(ward.name);
+
+    // Update preview
+    document.getElementById('previewCode').textContent = ward.code;
+    document.getElementById('previewName').textContent = formatWardName(ward.name);
+    document.getElementById('previewDistrict').textContent = formatWardName(ward.district);
+    document.getElementById('wardPreview').style.display = 'block';
+
+    // Hide dropdown
+    document.getElementById('wardDropdown').style.display = 'none';
+
+    // Show clear button
+    document.getElementById('clearSelectSearch').style.display = 'block';
+}
+
+function clearSelectSearch() {
+    document.getElementById('wardSearchInput').value = '';
+    document.getElementById('wardCode').value = '';
+    document.getElementById('wardName').value = '';
+    document.getElementById('districtName').value = '';
+    document.getElementById('wardPreview').style.display = 'none';
+    document.getElementById('clearSelectSearch').style.display = 'none';
+    currentSelectedWard = null;
+
+    renderWardOptions();
+    document.getElementById('wardDropdown').style.display = 'none';
+}
+
+function searchWards(query) {
+    const dropdown = document.getElementById('wardDropdown');
+    const clearBtn = document.getElementById('clearSelectSearch');
+
+    if (!query || query.length < 1) {
+        if (currentSelectedWard) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+        }
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    clearBtn.style.display = 'block';
+
+    const normalizedQuery = normalizeText(query);
+    const filtered = allWards.filter(ward => {
+        const normalizedName = normalizeText(ward.name);
+        const normalizedDistrict = normalizeText(ward.district);
+        return normalizedName.includes(normalizedQuery) ||
+               normalizedDistrict.includes(normalizedQuery);
+    });
+
+    renderWardOptions(filtered);
+    dropdown.style.display = 'block';
+}
+
+// ========== TARGET ITEMS ==========
+function addTargetItem() {
+    const container = document.getElementById('targetsContainer');
+    const index = targetCounter++;
+
+    const html = `
+        <div class="target-item" data-index="${index}">
+            <div class="target-item-header">
+                <span class="target-number">Chỉ tiêu ${index + 1}</span>
+                <button type="button"
+                        class="remove-target-btn"
+                        onclick="removeTargetItem(this)"
+                        title="Xóa chỉ tiêu">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tên chỉ tiêu <span class="text-danger">*</span></label>
+                <input type="text"
+                       class="form-control"
+                       name="target_name_${index}"
+                       required>
+                <div class="help-text">
+                    <span class="example-badge">Mô tả</span> Chỉ cần tên |
+                    <span class="example-badge">Số liệu</span> Nhập thêm giá trị & đơn vị bên dưới
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label class="form-label">Giá trị <span class="text-muted">(không bắt buộc)</span></label>
+                    <input type="text"
+                           class="form-control"
+                           name="target_value_${index}">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label class="form-label">Đơn vị <span class="text-muted">(không bắt buộc)</span></label>
+                    <input type="text"
+                           class="form-control"
+                           name="target_unit_${index}">
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+    updateTargetCount();
+}
+
+function removeTargetItem(button) {
+    const container = document.getElementById('targetsContainer');
+    const targetItem = button.closest('.target-item');
+
+    if (container.children.length > 1) {
+        targetItem.remove();
+        updateTargetNumbers();
+        updateTargetCount();
+    } else {
+        alert('Cần ít nhất 1 chỉ tiêu');
+    }
+}
+
+function updateTargetNumbers() {
+    const items = document.querySelectorAll('.target-item');
+    items.forEach((item, index) => {
+        const number = item.querySelector('.target-number');
+        if (number) {
+            number.textContent = `Chỉ tiêu ${index + 1}`;
+        }
+    });
+}
+
+function updateTargetCount() {
+    const count = document.querySelectorAll('.target-item').length;
+    document.getElementById('targetCount').value = count;
+}
+
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('wardSearchInput');
+    const dropdown = document.getElementById('wardDropdown');
+
+    // Search input events
+    searchInput.addEventListener('input', function(e) {
+        searchWards(e.target.value);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        if (this.value) {
+            searchWards(this.value);
+        } else if (!currentSelectedWard) {
+            renderWardOptions();
+            dropdown.style.display = 'block';
+        }
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Click outside to close
+    document.addEventListener('click', function(e) {
+        const wrapper = document.querySelector('.custom-select-wrapper');
+        if (!wrapper.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Load wards for default city
+    loadWards();
+
+    // Add first target
+    addTargetItem();
+});
+</script>
+{% endblock %}

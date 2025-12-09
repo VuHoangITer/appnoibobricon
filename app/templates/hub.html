@@ -88,6 +88,15 @@
             <span class="hub-icon-label">Hệ Thống</span>
         </div>
         {% endif %}
+
+        <!-- Icon 5: Map -->
+        <div class="hub-icon-card" onclick="window.location.href='{{ url_for('map.view_map') }}'">
+            <div class="hub-icon-wrapper" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);">
+                <i class="bi bi-map-fill"></i>
+            </div>
+            <span class="hub-icon-label">Bản Đồ</span>
+        </div>
+
     </div>
 
     <!-- MODULE 1: CÔNG VIỆC -->

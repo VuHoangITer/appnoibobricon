@@ -191,6 +191,9 @@ def create_app(config_class=Config):
     from app import marquee_config
     app.register_blueprint(marquee_config.bp)
 
+    from app.map import bp as map_bp
+    app.register_blueprint(map_bp, url_prefix='/map')
+
     # Dashboard route
     @app.route('/')
     def index():

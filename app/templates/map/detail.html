@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}{{ target.district_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+    
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 30px;
+    }
+    
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .detail-header h2 {
+        margin: 0;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    .district-code-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: monospace;
+        margin-top: 8px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .info-section {
+        margin-bottom: 30px;
+    }
+    
+    .info-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+    
+    .info-item i {
+        font-size: 20px;
+        color: #0ea5e9;
+        margin-right: 12px;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .targets-list {
+        display: grid;
+        gap: 15px;
+    }
+    
+    /* CHỈ TIÊU DẠNG SỐ LIỆU */
+    .target-card.numeric {
+        background: black;
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .target-card.numeric .target-name {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 8px;
+    }
+
+    .target-card.numeric .target-value-display {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .target-card.numeric .target-unit {
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    /* CHỈ TIÊU DẠNG MÔ TẢ */
+    .target-card.description {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        border-left: 5px solid #f59e0b;
+    }
+
+    .target-card.description .target-description {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .target-card.description i {
+        font-size: 24px;
+        color: #f59e0b;
+    }
+
+    .notes-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .notes-box i {
+        color: #f59e0b;
+        margin-right: 8px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .detail-container {
+            padding: 15px;
+        }
+
+        .detail-card {
+            padding: 20px;
+        }
+
+        .action-buttons {
+            width: 100%;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        .target-card.numeric .target-value-display {
+            font-size: 24px;
+        }
+
+        .target-card.description .target-description {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h2><i class="bi bi-geo-alt-fill text-danger"></i> {{ target.district_name }}</h2>
+                <span class="district-code-badge">{{ target.district_code }}</span>
+            </div>
+            <div class="action-buttons">
+                <a href="{{ url_for('map.view_map') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-map"></i> Xem bản đồ
+                </a>
+                <a href="{{ url_for('map.edit_target', target_id=target.id) }}" class="btn btn-warning text-white">
+                    <i class="bi bi-pencil"></i> Chỉnh sửa
+                </a>
+                <button class="btn btn-danger"
+                        onclick="confirmDelete()">
+                    <i class="bi bi-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-section">
+            <div class="info-section-title">
+                <i class="bi bi-info-circle"></i> Thông tin chung
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="bi bi-building"></i>
+                    <div>
+                        <div class="info-label">Thành phố</div>
+                        <div class="info-value">{{ target.city }}</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-calendar3"></i>
+                    <div>
+                        <div class="info-label">Cập nhật lần cuối</div>
+                        <div class="info-value">{{ target.updated_at|vn_datetime }}</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-person"></i>
+                    <div>
+                        <div class="info-label">Người tạo</div>
+                        <div class="info-value">{{ target.creator.full_name }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Targets -->
+        <div class="info-section">
+            <div class="info-section-title">
+                <i class="bi bi-bar-chart"></i> Các chỉ tiêu ({{ target.get_targets()|length }})
+            </div>
+
+            {% set targets = target.get_targets() %}
+            {% if targets %}
+            <div class="targets-list">
+                {% for t in targets %}
+                    {% if t.value %}
+                        <!-- CHỈ TIÊU DẠNG SỐ LIỆU -->
+                        <div class="target-card numeric">
+                            <div class="target-name">{{ t.name }}</div>
+                            <div class="target-value-display">
+                                {{ t.value }}
+                                {% if t.unit %}
+                                <span class="target-unit">{{ t.unit }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- CHỈ TIÊU DẠNG MÔ TẢ -->
+                        <div class="target-card description">
+                            <div class="target-description">
+                                <i class="bi bi-check-circle-fill"></i>
+                                {{ t.name }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox" style="font-size: 48px; opacity: 0.3;"></i>
+                <p>Chưa có chỉ tiêu nào</p>
+            </div>
+            {% endif %}
+            
+            {% if target.notes %}
+            <div class="notes-box">
+                <i class="bi bi-sticky"></i>
+                <strong>Ghi chú:</strong> {{ target.notes }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Form -->
+<form id="deleteForm" method="POST" action="{{ url_for('map.delete_target', target_id=target.id) }}" style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete() {
+    if (confirm('Bạn có chắc chắn muốn xóa chỉ tiêu cho "{{ target.district_name }}"?')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Chỉ tiêu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .manage-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .page-header h2 {
+        margin: 0;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    .targets-table {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .table thead {
+        background: #f8fafc;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 15px;
+    }
+    
+    .table td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+    
+    .district-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .district-code {
+        font-size: 12px;
+        color: #64748b;
+        font-family: monospace;
+    }
+    
+    .targets-count {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #dbeafe;
+        color: #1e40af;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    
+    .targets-count.zero {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+    
+    .empty-state i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+    
+    @media (max-width: 768px) {
+        .manage-container {
+            padding: 15px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .table {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manage-container">
+    <div class="page-header">
+        <h2><i class="bi bi-gear-fill"></i> Cài Đặt Chỉ Tiêu</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('map.view_map') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-map"></i>
+            </a>
+            <a href="{{ url_for('map.create_target') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm
+            </a>
+        </div>
+    </div>
+    
+    {% if targets %}
+    <div class="targets-table">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Phường/Quận</th>
+                    <th style="width: 20%;" class="text-center">Số chỉ tiêu</th>
+                    <th style="width: 20%;" class="text-center">Cập nhật</th>
+                    <th style="width: 20%;" class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for target in targets %}
+                <tr>
+                    <td>
+                        <div class="district-name">{{ target.district_name }}</div>
+                        <div class="district-code">{{ target.district_code }}</div>
+                    </td>
+                    <td class="text-center">
+                        {% set target_count = target.get_targets()|length %}
+                        <span class="targets-count {% if target_count == 0 %}zero{% endif %}">
+                            {{ target_count }} chỉ tiêu
+                        </span>
+                    </td>
+                    <td class="text-center text-muted">
+                        {{ target.updated_at|vn_datetime('%d/%m/%Y') }}
+                    </td>
+                    <td class="text-center">
+                        <div class="action-buttons">
+                            <a href="{{ url_for('map.target_detail', target_id=target.id) }}" 
+                               class="btn btn-sm btn-info text-white"
+                               title="Xem chi tiết">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('map.edit_target', target_id=target.id) }}" 
+                               class="btn btn-sm btn-warning text-white"
+                               title="Chỉnh sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger" 
+                                    onclick="confirmDelete({{ target.id }}, '{{ target.district_name }}')"
+                                    title="Xóa">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-geo-alt"></i>
+        <h4>Chưa có chỉ tiêu nào</h4>
+        <p>Nhấp vào "Thêm" để bắt đầu thiết lập chỉ tiêu cho các phường.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Form -->
+<form id="deleteForm" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(targetId, districtName) {
+    if (confirm(`Bạn có chắc chắn muốn xóa chỉ tiêu cho "${districtName}"?`)) {
+        const form = document.getElementById('deleteForm');
+        form.action = `/map/target/${targetId}/delete`;
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

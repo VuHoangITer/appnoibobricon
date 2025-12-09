@@ -1212,6 +1212,59 @@ class TaskChecklist(db.Model):
     completed_by_user = db.relationship('User', foreign_keys=[completed_by])
     approved_by_user = db.relationship('User', foreign_keys=[approved_by])
 
+
+class DistrictTarget(db.Model):
+    """Chỉ tiêu theo phường/quận"""
+    __tablename__ = 'district_targets'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Thông tin địa lý
+    district_code = db.Column(db.String(20), nullable=False, index=True)
+    district_name = db.Column(db.String(200), nullable=False)
+    city = db.Column(db.String(100), default='TP.HCM')
+
+    # Chỉ tiêu (JSON format)
+    targets_data = db.Column(db.Text, default='[]')  # JSON array của các chỉ tiêu
+
+    # Ghi chú
+    notes = db.Column(db.Text)
+
+    # Trạng thái
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Metadata
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+    def get_targets(self):
+        """Lấy danh sách chỉ tiêu"""
+        if self.targets_data:
+            try:
+                return json.loads(self.targets_data)
+            except:
+                return []
+        return []
+
+    def set_targets(self, targets_list):
+        """Set danh sách chỉ tiêu
+        Format: [
+            {'name': 'Doanh số tháng', 'value': '500 triệu', 'unit': 'VNĐ'},
+            {'name': 'Số khách hàng', 'value': '50', 'unit': 'Khách hàng'}
+        ]
+        """
+        self.targets_data = json.dumps(targets_list, ensure_ascii=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('district_code', 'city', name='unique_district_city'),
+    )
+
+    def __repr__(self):
+        return f'<DistrictTarget {self.district_name}>'
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
