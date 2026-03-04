@@ -4,21 +4,42 @@ from app.models import Task, TaskAssignment, Salary, Employee, News, Notificatio
 from datetime import datetime, timedelta
 from app.utils import utc_to_vn, vn_to_utc
 from app import db
+from sqlalchemy import func, case
 
 bp = Blueprint('hub', __name__, url_prefix='/hub')
 
 
 # ========================================
+# CACHE ĐƠN GIẢN TRONG BỘ NHỚ
+# ========================================
+import time as _time
+
+_cache_store = {}
+_cache_ttl_store = {}
+
+def _cache_get(key):
+    if key in _cache_store:
+        if _time.time() - _cache_ttl_store.get(key, 0) < 30:  # TTL 30 giây
+            return _cache_store[key]
+    return None
+
+def _cache_set(key, value):
+    _cache_store[key] = value
+    _cache_ttl_store[key] = _time.time()
+
+
+# ========================================
+# PERFORMANCE DATA - TỐI ƯU: 1 QUERY TỔNG HỢP thay vì N*4 queries
+# ========================================
 def get_team_performance_data(date_from=None, date_to=None):
     """
-    Lấy performance data - filter theo role
-    Returns: list of dict
+    Lấy performance data - dùng GROUP BY thay vì loop từng user
+    Từ N*4 queries → 1 query duy nhất
     """
     # Xác định users theo role
     if current_user.role == 'director':
         users = User.query.filter_by(is_active=True).all()
     elif current_user.role == 'manager':
-        # MANAGER CHỈ THẤY CHÍNH MÌNH VÀ HR
         users = User.query.filter(
             User.is_active == True,
             User.role.in_(['manager', 'hr'])
@@ -26,71 +47,89 @@ def get_team_performance_data(date_from=None, date_to=None):
     else:
         users = [current_user]
 
+    if not users:
+        return []
+
+    user_ids = [u.id for u in users]
+    user_map = {u.id: u for u in users}
+
+    # === 1 QUERY DUY NHẤT với GROUP BY + CASE ===
+    query = db.session.query(
+        TaskAssignment.user_id,
+        func.count(
+            case((
+                (Task.is_urgent == True) & (Task.status != 'DONE'),
+                Task.id
+            ))
+        ).label('urgent_count'),
+        func.count(
+            case((
+                (Task.is_important == True) & (Task.status != 'DONE'),
+                Task.id
+            ))
+        ).label('important_count'),
+        func.count(
+            case((
+                (Task.is_recurring == True) & (Task.status != 'DONE'),
+                Task.id
+            ))
+        ).label('recurring_count'),
+        func.count(
+            case((
+                Task.status == 'DONE',
+                Task.id
+            ))
+        ).label('done_count'),
+    ).join(
+        Task, Task.id == TaskAssignment.task_id
+    ).filter(
+        TaskAssignment.user_id.in_(user_ids)
+    )
+
+    # Apply date filters
+    if date_from:
+        try:
+            from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            from_utc = vn_to_utc(from_dt)
+            query = query.filter(Task.created_at >= from_utc)
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            to_dt = to_dt.replace(hour=23, minute=59, second=59)
+            to_utc = vn_to_utc(to_dt)
+            query = query.filter(Task.created_at <= to_utc)
+        except ValueError:
+            pass
+
+    query = query.group_by(TaskAssignment.user_id)
+    rows = query.all()
+
+    # Map kết quả
+    counts_map = {row.user_id: row for row in rows}
+
     results = []
-
     for user in users:
-        base_query = db.session.query(Task).join(
-            TaskAssignment, Task.id == TaskAssignment.task_id
-        ).filter(
-            TaskAssignment.user_id == user.id
-        )
-
-        # Apply date filters
-        if date_from:
-            try:
-                from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                from_utc = vn_to_utc(from_dt)
-                base_query = base_query.filter(Task.created_at >= from_utc)
-            except ValueError:
-                pass
-
-        if date_to:
-            try:
-                to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                to_dt = to_dt.replace(hour=23, minute=59, second=59)
-                to_utc = vn_to_utc(to_dt)
-                base_query = base_query.filter(Task.created_at <= to_utc)
-            except ValueError:
-                pass
-
-        # Count - CHỈ ĐẾM CHƯA HOÀN THÀNH
-        urgent_count = base_query.filter(
-            Task.is_urgent == True,
-            Task.status != 'DONE'
-        ).count()
-
-        important_count = base_query.filter(
-            Task.is_important == True,
-            Task.status != 'DONE'
-        ).count()
-
-        recurring_count = base_query.filter(
-            Task.is_recurring == True,
-            Task.status != 'DONE'
-        ).count()
-
-        done_count = base_query.filter(
-            Task.status == 'DONE'
-        ).count()
-
+        row = counts_map.get(user.id)
         results.append({
             'user_id': user.id,
             'full_name': user.full_name,
             'avatar': user.avatar,
-            'urgent_count': urgent_count,
-            'important_count': important_count,
-            'recurring_count': recurring_count,
-            'done_count': done_count
+            'urgent_count': row.urgent_count if row else 0,
+            'important_count': row.important_count if row else 0,
+            'recurring_count': row.recurring_count if row else 0,
+            'done_count': row.done_count if row else 0,
         })
 
     # Sort by done_count
     results.sort(key=lambda x: x['done_count'], reverse=True)
 
-    # Đánh dấu rank (chỉ dùng cho table display)
+    # Đánh rank
     if len(results) > 1:
         max_done = results[0]['done_count']
         min_done = results[-1]['done_count']
-
         for r in results:
             if r['done_count'] == max_done and max_done > min_done:
                 r['rank'] = 1
@@ -98,127 +137,128 @@ def get_team_performance_data(date_from=None, date_to=None):
                 r['rank'] = -1
             else:
                 r['rank'] = 0
-    else:
-        if results:
-            results[0]['rank'] = 0
+    elif results:
+        results[0]['rank'] = 0
 
     return results
 
 
 # ========================================
+# TOP/BOTTOM USERS - TỐI ƯU: 1 QUERY thay vì N queries
+# ========================================
 def get_top_bottom_users_data(date_from=None, date_to=None):
     """
-    Lấy top & bottom users từ TOÀN BỘ team ngoại trừ giam doc - KHÔNG filter theo role
-    Returns: dict { 'top_user': {...}, 'bottom_user': {...} }
+    Lấy top & bottom users - 1 query GROUP BY thay vì loop
     """
-    users = User.query.filter_by(is_active=True).filter(User.role != 'director').all()
-    results = []
+    users = User.query.filter(
+        User.is_active == True,
+        User.role != 'director'
+    ).all()
 
-    for user in users:
-        base_query = db.session.query(Task).join(
-            TaskAssignment, Task.id == TaskAssignment.task_id
-        ).filter(
-            TaskAssignment.user_id == user.id
-        )
+    if not users:
+        return {'top_user': None, 'bottom_user': None}
 
-        # Apply date filters
-        if date_from:
-            try:
-                from_dt = datetime.strptime(date_from, '%Y-%m-%d')
-                from_utc = vn_to_utc(from_dt)
-                base_query = base_query.filter(Task.created_at >= from_utc)
-            except ValueError:
-                pass
+    user_ids = [u.id for u in users]
+    user_map = {u.id: u for u in users}
 
-        if date_to:
-            try:
-                to_dt = datetime.strptime(date_to, '%Y-%m-%d')
-                to_dt = to_dt.replace(hour=23, minute=59, second=59)
-                to_utc = vn_to_utc(to_dt)
-                base_query = base_query.filter(Task.created_at <= to_utc)
-            except ValueError:
-                pass
+    # 1 query duy nhất
+    query = db.session.query(
+        TaskAssignment.user_id,
+        func.count(
+            case((Task.status == 'DONE', Task.id))
+        ).label('done_count'),
+    ).join(
+        Task, Task.id == TaskAssignment.task_id
+    ).filter(
+        TaskAssignment.user_id.in_(user_ids)
+    )
 
-        done_count = base_query.filter(Task.status == 'DONE').count()
+    if date_from:
+        try:
+            from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            from_utc = vn_to_utc(from_dt)
+            query = query.filter(Task.created_at >= from_utc)
+        except ValueError:
+            pass
 
-        results.append({
-            'user_id': user.id,
-            'full_name': user.full_name,
-            'avatar': user.avatar,
-            'done_count': done_count
-        })
+    if date_to:
+        try:
+            to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            to_dt = to_dt.replace(hour=23, minute=59, second=59)
+            to_utc = vn_to_utc(to_dt)
+            query = query.filter(Task.created_at <= to_utc)
+        except ValueError:
+            pass
 
-    # Sort by done_count
-    results.sort(key=lambda x: x['done_count'], reverse=True)
+    query = query.group_by(TaskAssignment.user_id)
+    rows = query.all()
 
-    response = {}
+    if not rows:
+        return {'top_user': None, 'bottom_user': None}
 
-    if len(results) > 1:
-        top = results[0]
-        bottom = results[-1]
+    rows_sorted = sorted(rows, key=lambda r: r.done_count, reverse=True)
+    top_row = rows_sorted[0]
+    bottom_row = rows_sorted[-1]
 
-        # Chỉ trả về nếu có sự khác biệt
-        if top['done_count'] > bottom['done_count']:
-            response['top_user'] = top
-            response['bottom_user'] = bottom
-        else:
-            response['top_user'] = None
-            response['bottom_user'] = None
-    elif len(results) == 1:
-        # Chỉ có 1 user
-        response['top_user'] = results[0]
-        response['bottom_user'] = None
-    else:
-        response['top_user'] = None
-        response['bottom_user'] = None
+    if top_row.done_count == bottom_row.done_count:
+        return {'top_user': None, 'bottom_user': None}
 
-    return response
+    def user_to_dict(row):
+        u = user_map.get(row.user_id)
+        if not u:
+            return None
+        return {
+            'user_id': u.id,
+            'full_name': u.full_name,
+            'avatar': u.avatar,
+            'done_count': row.done_count,
+        }
+
+    return {
+        'top_user': user_to_dict(top_row),
+        'bottom_user': user_to_dict(bottom_row),
+    }
 
 
+# ========================================
+# HUB ROUTE
 # ========================================
 @bp.route('/')
 @login_required
 def workflow_hub():
-    """Trang Hub - Quy trình công việc tổng quan"""
-
     now = datetime.utcnow()
 
-    # ========================================
-    # CÔNG VIỆC CÁ NHÂN
-    # ========================================
-    my_assignments = TaskAssignment.query.filter_by(
-        user_id=current_user.id,
-        accepted=True
-    ).all()
-    my_task_ids = [a.task_id for a in my_assignments]
+    # Công việc cá nhân - dùng subquery thay vì load all assignments
+    my_task_ids_subq = db.session.query(TaskAssignment.task_id).filter(
+        TaskAssignment.user_id == current_user.id,
+        TaskAssignment.accepted == True
+    ).subquery()
 
     my_pending_tasks = Task.query.filter(
-        Task.id.in_(my_task_ids),
+        Task.id.in_(my_task_ids_subq),
         Task.status == 'PENDING'
     ).count()
 
     my_in_progress = Task.query.filter(
-        Task.id.in_(my_task_ids),
+        Task.id.in_(my_task_ids_subq),
         Task.status == 'IN_PROGRESS'
     ).count()
 
     three_days_later = now + timedelta(days=3)
     my_due_soon = Task.query.filter(
-        Task.id.in_(my_task_ids),
+        Task.id.in_(my_task_ids_subq),
         Task.due_date >= now,
         Task.due_date <= three_days_later,
         Task.status.in_(['PENDING', 'IN_PROGRESS'])
     ).count()
 
     my_overdue = Task.query.filter(
-        Task.id.in_(my_task_ids),
+        Task.id.in_(my_task_ids_subq),
         Task.due_date < now,
         Task.status.in_(['PENDING', 'IN_PROGRESS'])
     ).count()
 
-    # ========================================
-    # QUẢN LÝ (Director/Manager)
-    # ========================================
+    # Quản lý
     tasks_need_rating = 0
     my_tasks_need_rating = 0
     tasks_need_approval = 0
@@ -239,17 +279,13 @@ def workflow_hub():
             Task.requires_approval == True,
             Task.approved == None
         )
-
         if current_user.role == 'manager':
             query = query.join(User, Task.creator_id == User.id).filter(
                 User.role == 'hr'
             )
-
         tasks_need_approval = query.count()
 
-    # ========================================
-    # LƯƠNG (Director/Accountant)
-    # ========================================
+    # Lương
     total_salaries = 0
     total_employees = 0
     pending_penalties = 0
@@ -258,42 +294,31 @@ def workflow_hub():
     if current_user.role in ['director', 'accountant']:
         total_salaries = Salary.query.count()
         total_employees = Employee.query.filter_by(is_active=True).count()
-
         from app.models import Penalty, Advance
         pending_penalties = Penalty.query.filter_by(is_deducted=False).count()
         pending_advances = Advance.query.filter_by(is_deducted=False).count()
 
-    # ========================================
-    # THÔNG BÁO
-    # ========================================
-    unread_notifications = Notification.query.filter_by(
-        user_id=current_user.id,
-        read=False
-    ).count()
+    # Thông báo - dùng scalar count thay vì load objects
+    unread_notifications = db.session.query(func.count(Notification.id)).filter(
+        Notification.user_id == current_user.id,
+        Notification.read == False
+    ).scalar() or 0
 
-    unconfirmed_news = News.query.filter(
+    unconfirmed_news = db.session.query(func.count(News.id)).filter(
         ~News.confirmations.any(user_id=current_user.id)
-    ).count()
+    ).scalar() or 0
 
-    # ========================================
-    # QUẢN TRỊ (Director)
-    # ========================================
+    # Admin
     total_users = 0
     active_users = 0
-
     if current_user.role == 'director':
         total_users = User.query.count()
         active_users = User.query.filter_by(is_active=True).count()
 
-    # ========================================
-    # PERFORMANCE DATA
-    # ========================================
+    # Performance
     initial_performance = get_team_performance_data()
     initial_top_bottom = get_top_bottom_users_data()
 
-    # ========================================
-    # ✅ MARQUEE CONFIG - THÊM MỚI
-    # ========================================
     from app.models import MarqueeConfig
     marquee_config = MarqueeConfig.get_config()
 
@@ -315,110 +340,106 @@ def workflow_hub():
                            active_users=active_users,
                            initial_performance=initial_performance,
                            initial_top_bottom=initial_top_bottom,
-                           marquee_config=marquee_config  # ✅ THÊM MỚI
-                           )
+                           marquee_config=marquee_config)
 
 
 # ========================================
-# API: REAL-TIME STATS (CHO SSE)
+# API: REAL-TIME STATS - TỐI ƯU với scalar counts
 # ========================================
 @bp.route('/api/realtime-stats')
 @login_required
 def get_realtime_stats():
-    """API trả về stats real-time cho polling/SSE"""
     try:
         now = datetime.utcnow()
 
-        my_assignments = TaskAssignment.query.filter_by(
-            user_id=current_user.id,
-            accepted=True
-        ).all()
-        my_task_ids = [a.task_id for a in my_assignments]
+        # Dùng subquery thay vì load all assignments
+        my_task_ids_subq = db.session.query(TaskAssignment.task_id).filter(
+            TaskAssignment.user_id == current_user.id,
+            TaskAssignment.accepted == True
+        ).subquery()
 
-        my_overdue = Task.query.filter(
-            Task.id.in_(my_task_ids),
+        my_overdue = db.session.query(func.count(Task.id)).filter(
+            Task.id.in_(my_task_ids_subq),
             Task.due_date < now,
             Task.status.in_(['PENDING', 'IN_PROGRESS'])
-        ).count()
+        ).scalar() or 0
 
         three_days_later = now + timedelta(days=3)
-        my_due_soon = Task.query.filter(
-            Task.id.in_(my_task_ids),
+        my_due_soon = db.session.query(func.count(Task.id)).filter(
+            Task.id.in_(my_task_ids_subq),
             Task.due_date >= now,
             Task.due_date <= three_days_later,
             Task.status.in_(['PENDING', 'IN_PROGRESS'])
-        ).count()
+        ).scalar() or 0
 
-        my_pending_tasks = Task.query.filter(
-            Task.id.in_(my_task_ids),
+        my_pending_tasks = db.session.query(func.count(Task.id)).filter(
+            Task.id.in_(my_task_ids_subq),
             Task.status == 'PENDING'
-        ).count()
+        ).scalar() or 0
 
-        my_in_progress = Task.query.filter(
-            Task.id.in_(my_task_ids),
+        my_in_progress = db.session.query(func.count(Task.id)).filter(
+            Task.id.in_(my_task_ids_subq),
             Task.status == 'IN_PROGRESS'
-        ).count()
+        ).scalar() or 0
 
-        unread_notifications = Notification.query.filter_by(
-            user_id=current_user.id,
-            read=False
-        ).count()
+        unread_notifications = db.session.query(func.count(Notification.id)).filter(
+            Notification.user_id == current_user.id,
+            Notification.read == False
+        ).scalar() or 0
 
-        unconfirmed_news = News.query.filter(
+        unconfirmed_news = db.session.query(func.count(News.id)).filter(
             ~News.confirmations.any(user_id=current_user.id)
-        ).count()
+        ).scalar() or 0
 
-        # Stats team (cho manager/director)
+        # Manager/Director stats
         team_overdue = 0
         team_pending = 0
         tasks_need_rating = 0
         my_tasks_need_rating = 0
+        tasks_need_approval = 0
 
         if current_user.role in ['director', 'manager']:
-            team_overdue = Task.query.filter(
+            team_overdue = db.session.query(func.count(Task.id)).filter(
                 Task.due_date < now,
                 Task.status.in_(['PENDING', 'IN_PROGRESS'])
-            ).count()
+            ).scalar() or 0
 
-            team_pending = Task.query.filter_by(status='PENDING').count()
+            team_pending = db.session.query(func.count(Task.id)).filter(
+                Task.status == 'PENDING'
+            ).scalar() or 0
 
-            tasks_need_rating = Task.query.filter(
+            tasks_need_rating = db.session.query(func.count(Task.id)).filter(
                 Task.status == 'DONE',
                 Task.performance_rating == None
-            ).count()
+            ).scalar() or 0
 
-            my_tasks_need_rating = Task.query.filter(
+            my_tasks_need_rating = db.session.query(func.count(Task.id)).filter(
                 Task.creator_id == current_user.id,
                 Task.status == 'DONE',
                 Task.performance_rating == None
-            ).count()
+            ).scalar() or 0
 
-        tasks_need_approval = 0
-        if current_user.role in ['director', 'manager']:
-            query = Task.query.filter(
+            approval_query = Task.query.filter(
                 Task.requires_approval == True,
                 Task.approved == None
             )
-
             if current_user.role == 'manager':
-                query = query.join(User, Task.creator_id == User.id).filter(
+                approval_query = approval_query.join(User, Task.creator_id == User.id).filter(
                     User.role == 'hr'
                 )
+            tasks_need_approval = approval_query.count()
 
-            tasks_need_approval = query.count()
-
-        # Stats lương
+        # Lương
         pending_penalties = 0
         pending_advances = 0
-
         if current_user.role in ['director', 'accountant']:
             from app.models import Penalty, Advance
-            pending_penalties = Penalty.query.filter_by(is_deducted=False).count()
-            pending_advances = Advance.query.filter_by(is_deducted=False).count()
-
-        work_badge = my_overdue + my_due_soon
-        info_badge = unconfirmed_news + unread_notifications
-        salary_badge = pending_penalties + pending_advances
+            pending_penalties = db.session.query(func.count(Penalty.id)).filter(
+                Penalty.is_deducted == False
+            ).scalar() or 0
+            pending_advances = db.session.query(func.count(Advance.id)).filter(
+                Advance.is_deducted == False
+            ).scalar() or 0
 
         return jsonify({
             'my_overdue': my_overdue,
@@ -434,9 +455,9 @@ def get_realtime_stats():
             'tasks_need_approval': tasks_need_approval,
             'pending_penalties': pending_penalties,
             'pending_advances': pending_advances,
-            'work_badge': work_badge,
-            'info_badge': info_badge,
-            'salary_badge': salary_badge,
+            'work_badge': my_overdue + my_due_soon,
+            'info_badge': unconfirmed_news + unread_notifications,
+            'salary_badge': pending_penalties + pending_advances,
             'timestamp': datetime.now().isoformat()
         })
 
@@ -446,80 +467,40 @@ def get_realtime_stats():
 
 
 # ========================================
-# API: TEAM PERFORMANCE (CHO SSE)
+# API: TEAM PERFORMANCE
 # ========================================
 @bp.route('/api/team-performance')
 @login_required
 def get_team_performance():
-    """
-    API trả về performance của team members - filter theo role
-    Dùng cho filters và SSE real-time update
-    """
     try:
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
-
         results = get_team_performance_data(date_from, date_to)
-
-        return jsonify({
-            'success': True,
-            'data': results
-        })
-
+        return jsonify({'success': True, 'data': results})
     except Exception as e:
         print(f"❌ Error in team-performance: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ========================================
-# API: TOP & BOTTOM USERS (CHO TẤT CẢ ROLES)
+# API: TOP & BOTTOM USERS
 # ========================================
 @bp.route('/api/top-bottom-users')
 @login_required
 def get_top_bottom_users():
-    """
-    Lấy top & bottom users từ TOÀN BỘ team - không filter theo role
-    Returns: { top_user: {...}, bottom_user: {...} }
-    """
     try:
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
-
         response = get_top_bottom_users_data(date_from, date_to)
-
-        return jsonify({
-            'success': True,
-            'data': response
-        })
-
+        return jsonify({'success': True, 'data': response})
     except Exception as e:
         print(f"❌ Error in top-bottom-users: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@bp.app_context_processor
-def inject_top_bottom_users():
-    """
-    Tự động inject top_bottom_data vào tất cả template
-    Chỉ chạy khi user đã đăng nhập
-    """
-    from flask_login import current_user
-
-    if current_user.is_authenticated:
-        try:
-            top_bottom_data = get_top_bottom_users_data()
-            return {'top_bottom_data': top_bottom_data}
-        except:
-            return {'top_bottom_data': None}
-
-    return {'top_bottom_data': None}
+# ========================================
+# ĐÃ XÓA: inject_top_bottom_users()
+# Hàm này chạy DB query trên MỌI request → gây lag toàn app
+# Nếu cần dùng top_bottom_data trong template khác, hãy truyền trực tiếp
+# từ route đó thay vì dùng context_processor
+# ========================================
