@@ -102,6 +102,16 @@
     </div>
 </div>
 
+<!-- Summary Stats -->
+{% if salaries %}
+<div class="card border-0 shadow-sm text-center py-3 mb-3" style="background: linear-gradient(135deg, #d4edda, #b8dfc4);">
+    <div class="text-muted small mb-1"><i class="bi bi-coin"></i> Tổng Tiền Lương</div>
+    <div class="fw-bold fs-4 text-success">
+        {{ "{:,.0f}".format(salaries|sum(attribute='net_salary')) }} ₫
+    </div>
+</div>
+{% endif %}
+
 <!-- Salary Table -->
 <div class="card">
     <div class="card-header">
