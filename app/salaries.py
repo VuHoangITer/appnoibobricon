@@ -451,6 +451,18 @@ def delete_salary(salary_id):
         flash('Bạn không có quyền xóa bảng lương này.', 'danger')
         return redirect(url_for('salaries.salary_detail', salary_id=salary_id))
 
+    # Reset tham chiếu trong Penalty và Advance trước khi xóa
+    Penalty.query.filter_by(deducted_in_salary_id=salary_id).update({
+        'deducted_in_salary_id': None,
+        'is_deducted': False,
+        'deducted_at': None
+    })
+    Advance.query.filter_by(deducted_in_salary_id=salary_id).update({
+        'deducted_in_salary_id': None,
+        'is_deducted': False,
+        'deducted_at': None
+    })
+
     db.session.delete(salary)
     db.session.commit()
 
